@@ -69,7 +69,17 @@ def fill_time_array(small_arr, reference_array,versus='asc'):
         small_arr.sort()
     return small_arr
 
-
+# the function returns an array containing the index poisitions of the elements
+# of ref array not present in small array
+def find_index(small_arr, reference_array):
+    difference=Diff(reference_array,small_arr)
+    small_arr=np.array(small_arr)
+    reference_array=np.array(reference_array)
+    index=[]
+    for element in difference:
+        i, = np.where(reference_array==element)
+        index.append(i)
+    return np.array(index)
 
 
 #function takes a .json file from Cryptowatch API and transforms it into a matrix
