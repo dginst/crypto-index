@@ -1,3 +1,5 @@
+import numpy as np
+
 # Return the Initial Divisor for the index. It identifies the position of the initial date in the matrix. 
 # At the moment the initial date is 2016/01/01
 # where:
@@ -19,9 +21,7 @@ def calc_initial_divisor(initial_timestamp = 1451606400 ):
 calc_initial_divisor()
 
 
-
-
- # Return the divisor for each day.
+ # Return an array with the divisor for each day.
  # sr = second requirement matrix, composed by 0 if negativa, 1 if positive
  # final_price matrix of each currency
  # final_volume matrix of each currency
@@ -45,7 +45,7 @@ def divisor_adjustment():
     return divisor_array
 
 
- # Return the daily level of the Index
+ # Return an array of the daily level of the Index
  # where:
  # sr = second requirement matrix, composed by 0 if negativa, 1 if positive
  # p = final price matrix of each currency
@@ -61,3 +61,35 @@ def index_level_calc():
         append(index_level,(p[i] * sm[i] * sr[i] ).sum() / divisor_adjustment()[i])
 
     return index_level
+
+
+
+# Return an array with the value of the smoothing factor for 90 days (0-89)
+# is utilized to calc the EWMA(exponential weighted moving average)
+
+def smoothing_factor():
+
+    lamba1 = 0.94
+
+    i =  []
+
+    for num in range(0,90):
+        i.append(num)
+        
+    i = np.array(i) 
+
+    w = []
+
+    for ind in range(0,len(i)):
+        w.append((1-lamba1)*lamba1**i[ind])
+
+    w = np.array(w)
+
+    w
+
+    return w
+
+
+#Return the 90-days EWMA volume for each currency.
+
+def EMWA_calc():
