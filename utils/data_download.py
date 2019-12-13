@@ -6,43 +6,30 @@ import os
 import pandas as pd
 import io
 import numpy as np
-after = datetime(2019, 5, 26)
-end = datetime(2019, 10, 10)
 
-# def date_gen(start_date, end_date = ''):
-#     after = start_date
-#     if end_date=='':
-#         end_date=datetime.today()
-#     end= end_date
-# 	before = end
-# 	step50 = timedelta(days=2000)
-# 	while(after < end):
-# 		before = after + step50
-# 		yield (str(int(time.mktime(after.timetuple()))), str(int(time.mktime(before.timetuple()))))
-# 		after = before
-
-
-# for pair in ['btc']:
-# 	currencypair_array = [""+pair+"usd", ""+pair+"eur", ""+pair+"cad", ""+pair+"gbp", ""+pair+"usdt", ""+pair+"usdc", ""+pair+"jpy"]
-
-# exchanges = ['bitflyer','bitfinex']
-# d_gen = date_gen()
-
-			
-def CW_extractor(exchange_array,currencypair_array,periods):
-    d_gen = date_gen()
+# function that creates json files downloading the info from Cryptowatch website
+# specifically, given a list of exchange (exchange_array) and a list of currency pair (currencypair_array),	
+# the function creates exchange_arrayXcurrencypair json files with the info retrieved from the websites in the
+# date range specified by start_date and end_date (end_date default is today())
+# the default frequency is daily (86400 seconds)
+# start_date ed end_date has to be inserted in MM-DD-YYYY format		
+def CW_retrive_json(exchange_array,currencypair_array,start_date, end_date = None, periods='86400'):
+    if "/" in start_date:
+        start_date=start_date.replace("/","-") 
+    start_date = datetime.strptime(start_date, '%m-%d-%Y')
+    if end_date == None:
+        end_date=datetime.now().strftime('%m-%d-%Y')
+    end_date = datetime.strptime(end_date, '%m-%d-%Y')
+    start_date=str(int(time.mktime(start_date.timetuple())))
+    end_date=str(int(time.mktime(end_date.timetuple())))
     result = ""
-    periods = "86400"
-    i = 1
-    for after, before in d_gen:
-	    for exchange in exchange_array :
-		    for cp in currencypair_array:
-			    r = "https://api.cryptowat.ch/markets/"+exchange+"/"+cp+"/ohlc?periods="+periods+"&after="+after+"&before="+before
-			    result = get(r).content.decode()
-			    f = open(""+exchange+"_"+cp+".json", "w")
-			    f.write(result)
-			    print("done..." +before)
-			    i += 1
+    for exchange in exchange_array :
+        for cp in currencypair_array:
+            request_URL = "https://api.cryptowat.ch/markets/"+exchange+"/"+cp+"/ohlc?periods="+periods+"&after="+start_date+"&before="+end_date
+            result = get(request_URL).content.decode()
+            file_json = open(""+exchange+"_"+cp+".json", "w")
+            file_json.write(result)
+
     
 #function that downloads the exchange rates from the ECB web page and returns a matrix (pd.DataFrame) that indicates:
 #on the first column the date, on the second tha exchange rate vakue eutro based, on the third the currency, on the fourth the
@@ -81,3 +68,6 @@ def ECB_rates_extractor(key_currency_vector,Start_Period,End_Period=None,frequen
             Exchange_Rate_List=Exchange_Rate_List.append(Main_Data_Frame, sort=True)
             Exchange_Rate_List['USD based rate'][i]=float(Main_Data_Frame['OBS_VALUE'])/cambio_USD_EUR
         return Exchange_Rate_List
+
+
+# def itBit_extractor():
