@@ -30,7 +30,12 @@ def CW_retrive_json(exchange_array,currencypair_array,start_date, end_date = Non
             file_json = open(""+exchange+"_"+cp+".json", "w")
             file_json.write(result)
 
-
+# function that retrives data from th Cryptowatch websites and returns a Data Frame with the following
+# headers ['Time' ,'Open',	'High',	'Low',	'Close Price',Crypto+ " Volume" , Pair+" Volume"]
+# the exchange and currencypair inputs have to be unique value and NOT list
+# date range specified by start_date and end_date (end_date default is today())
+# the default frequency is daily (86400 seconds)
+# start_date ed end_date has to be inserted in MM-DD-YYYY format
 def CW_data_reader(exchange,currencypair,start_date, end_date = None, periods='86400'):
     Crypto=currencypair[:3].upper()
     Pair=currencypair[3:].upper()
