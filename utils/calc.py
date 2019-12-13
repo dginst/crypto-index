@@ -11,13 +11,8 @@ def calc_initial_divisor(initial_timestamp = 1451606400 ):
 
     result = np.where( p == initial_timestamp)
     coord = list(zip(result[0], result[1])) 
-    
     Initial_Divisor =  (p[coord[0]] * v[coord[0]-x] * sr[coord[0]-x]).sum() / 1000
-    
-    
-            
     return Initial_Divisor
-
 calc_initial_divisor()
 
 
@@ -32,19 +27,11 @@ divisor_array = np.array(calc_Initial_divisor())
 def divisor_adjustment():
     
     for i in range(len(sr)):
-        
         if sr[i].sum() == sr[i-1].sum():
-
             divisor_list.append(divisor_list[i-1])
-
         else:
-            
             append(divisor_array,divisor_list[i-1]*( p[i] * v[i] * sr[i]).sum() / ( p[i-1] * v[i-1] * sr[i-1]).sum())
-
-
     return divisor_array
-
-
  # Return an array of the daily level of the Index
  # where:
  # sr = second requirement matrix, composed by 0 if negativa, 1 if positive
@@ -53,13 +40,9 @@ def divisor_adjustment():
  # sm = synthetic market cap derived weight
 
 index_level = np.array([])
-
 def index_level_calc():
-
     for i in range(len(sr)):
-        
         append(index_level,(p[i] * sm[i] * sr[i] ).sum() / divisor_adjustment()[i])
-
     return index_level
 
 
@@ -70,26 +53,32 @@ def index_level_calc():
 def smoothing_factor():
 
     lamba1 = 0.94
-
     i =  []
-
     for num in range(0,90):
-        i.append(num)
-        
+        i.append(num)        
     i = np.array(i) 
-
     w = []
-
     for ind in range(0,len(i)):
         w.append((1-lamba1)*lamba1**i[ind])
-
     w = np.array(w)
-
     w
-
     return w
 
 
 #Return the 90-days EWMA volume for each currency.
 
-def EMWA_calc():
+def EMWA_calc(matrix):
+    emwa_gen=np.array([])
+    for col_id in [0,1,2,3,4,5]:
+        EWMA_coin1 = []
+        c = 0
+        n = 90
+        while c < (len(data)-90) and n < len(data):
+            c += 1
+            n += 1
+            EWMA_coin1.append((matrix[c:n,col_id]*smoothing_factor()).sum())    
+        if emwa_gen.size==0:
+            emwa_gen = np.array(EWMA_coin1)
+        else:
+            emwa_gen= np.column_stack((emwa_gen,EWMA_coin1))       
+    return emwa_gen
