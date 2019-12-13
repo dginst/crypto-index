@@ -90,3 +90,12 @@ total_EMWA_volume = np.array(a)
 
 # creating a matrix of EMWA_weights.
  EMWA_weights_matrix = (EMWA_calc(data)* first_requirement_matrix) / a[:, None]
+
+# creating the return matrix
+
+return_matrix = []
+
+for i in range(1,len(final_prices_matrix)):
+    return_matrix.append((final_prices_matrix[i]-fina_pricesmatrix[i-1])/final_prices_matrix[i-1])
+
+return_matrix = np.array(return_matrix)
