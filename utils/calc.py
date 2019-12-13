@@ -25,7 +25,6 @@ calc_initial_divisor()
 divisor_array = np.array(calc_Initial_divisor())
 
 def divisor_adjustment():
-    
     for i in range(len(sr)):
         if sr[i].sum() == sr[i-1].sum():
             divisor_list.append(divisor_list[i-1])
@@ -73,7 +72,7 @@ def EMWA_calc(matrix):
         EWMA_coin1 = []
         c = 0
         n = 90
-        while c < (len(data)-90) and n < len(data):
+        while c < (len(matrix)-90) and n < len(matrix):
             c += 1
             n += 1
             EWMA_coin1.append((matrix[c:n,col_id]*smoothing_factor()).sum())    
@@ -82,3 +81,21 @@ def EMWA_calc(matrix):
         else:
             emwa_gen= np.column_stack((emwa_gen,EWMA_coin1))       
     return emwa_gen
+
+# creating a vector with the total volumes for each day
+total_EMWA_volume = []
+for i in range(0,len(EMWA_calc(data))):
+     total_EMWA_volume.append(data2[i].sum())    
+total_EMWA_volume = np.array(a)
+
+# creating a matrix of EMWA_weights.
+ EMWA_weights_matrix = (EMWA_calc(data)* first_requirement_matrix) / a[:, None]
+
+# creating the return matrix
+
+return_matrix = []
+
+for i in range(1,len(final_prices_matrix)):
+    return_matrix.append((final_prices_matrix[i]-fina_pricesmatrix[i-1])/final_prices_matrix[i-1])
+
+return_matrix = np.array(return_matrix)
