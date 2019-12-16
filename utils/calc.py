@@ -104,3 +104,28 @@ def price_return(Curr_Price_Matrix):
         np.append(return_matrix, return_calc)
 
     return return_matrix
+
+    
+    
+    #logic_matrix nr.1
+
+col: len(Curr_exchanges_volumes[0]) # this count how many columns has the matrix
+
+for matrix in matrix_volumes_list:
+
+        sum_array = np.sum(matrix[i:i+x,1:col], axis = 0]) # va ciclato su col this gives back an array with the sum of the array. We need to sum a certain range in the matrix.
+
+        requirement = sum_array / matrix[i:i+x,1:col].sum()        #dividiamo l'array per la somma del totale dei volumi scambiati su tutti gli exchange. 
+
+#questo ci da la % dei volumi scambiati per l'i-esimo coin su un dato exchange.
+
+# ora facciamo il check per controllare che i volumi scambiati siano massimo su un exchange. Se un exchange possiede più dell'80% non sarà idoneo
+
+
+if np.any(requirement) > 0.80:
+    
+    req1_matrix[i, j] = 0
+
+else: 
+
+    req1_matrix[i, j] = 1
