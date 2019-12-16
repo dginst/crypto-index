@@ -1,4 +1,5 @@
 import numpy as np
+import datetime
 from datetime import *
 
 
@@ -88,7 +89,7 @@ def emwa_currency_volume(Curr_Volume_Matrix,moving_average_period=90):
 
 # creating a vector with the total volumes for each day
 
-def EMWA_weights(Curr_Volume_Matrix):
+def EMWA_weights(Curr_Volume_Matrix,logic_matrix):
     emwa_volume_curr=emwa_currency_volume(Curr_Volume_Matrix)
     total_EMWA_volume = emwa_volume_curr.sum(axis=1)
     EMWA_weights_matrix = (emwa_volume_curr* logic_matrix) / total_EMWA_volume[:, None]
@@ -100,9 +101,8 @@ def EMWA_weights(Curr_Volume_Matrix):
 def price_return(Curr_Price_Matrix):
     return_matrix = np.array([])
     for i in range(1,len(Curr_Price_Matrix)):
-        return_calc = (p[i+1]-p[i])/p[i]
+        return_calc = (Curr_Price_Matrix[i+1]-Curr_Price_Matrix[i])/Curr_Price_Matrix[i]
         np.append(return_matrix, return_calc)
-
     return return_matrix
 
     

@@ -213,6 +213,3 @@ def Check_null(item):
     except TypeError: 
         pass 
     return False 
-
-def moving_average():
-    return None
