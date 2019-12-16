@@ -93,11 +93,13 @@ def EMWA_weights(Curr_Volume_Matrix):
     return EMWA_weights_matrix
 
 
-# creating the return Curr_Price_Matrix
+# crating a matrix with the returns of the currencies computed from the Curr_Price_Matrix
 
-# return_matrix = []
+def price_return(Curr_Price_Matrix):
+    return_matrix = np.array([])
+    for i in range(1,len(Curr_Price_Matrix)):
+        return_calc = (p[i+1]-p[i])/p[i]
+        np.append(return_matrix, return_calc)
 
-# for i in range(1,len(final_prices_matrix)):
-#     return_matrix.append((p[i]-p[i-1])/p[i-1])
+    return return_matrix
 
-# return_matrix = np.array(return_matrix)
