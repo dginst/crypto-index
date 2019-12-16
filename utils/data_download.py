@@ -30,7 +30,33 @@ def CW_retrive_json(exchange_array,currencypair_array,start_date, end_date = Non
             file_json = open(""+exchange+"_"+cp+".json", "w")
             file_json.write(result)
 
-    
+# function that retrives data from th Cryptowatch websites and returns a Data Frame with the following
+# headers ['Time' ,'Open',	'High',	'Low',	'Close Price',Crypto+ " Volume" , Pair+" Volume"]
+# the exchange and currencypair inputs have to be unique value and NOT list
+# date range specified by start_date and end_date (end_date default is today())
+# the default frequency is daily (86400 seconds)
+# start_date ed end_date has to be inserted in MM-DD-YYYY format
+def CW_data_reader(exchange,currencypair,start_date, end_date = None, periods='86400'):
+    Crypto=currencypair[:3].upper()
+    Pair=currencypair[3:].upper()
+    if "/" in start_date:
+        start_date=start_date.replace("/","-") 
+    start_date = datetime.strptime(start_date, '%m-%d-%Y')
+    if end_date == None:
+        end_date=datetime.now().strftime('%m-%d-%Y')
+    end_date = datetime.strptime(end_date, '%m-%d-%Y')
+    start_date=str(int(time.mktime(start_date.timetuple())))
+    end_date=str(int(time.mktime(end_date.timetuple())))
+    entrypoint = 'https://api.cryptowat.ch/markets/' 
+    key=exchange+"/"+currencypair+"/ohlc?periods="+periods+"&after="+start_date+"&before="+end_date
+    pd.options.mode.chained_assignment = None
+    request_url = entrypoint + key
+    response = requests.get(request_url)
+    response= response.json()
+    header=['Time' ,'Open',	'High',	'Low',	'Close Price',Crypto+" Volume" , Pair+" Volume"]
+    Data_Frame=pd.DataFrame(response['result']['86400'],columns=header)
+    return Data_Frame 
+
 #function that downloads the exchange rates from the ECB web page and returns a matrix (pd.DataFrame) that indicates:
 #on the first column the date, on the second tha exchange rate vakue eutro based, on the third the currency, on the fourth the
 #currency of denomination (always 'EUR') and on the fifth the exchange rate USD based (the one of interest)
