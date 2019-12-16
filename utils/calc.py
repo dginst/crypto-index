@@ -1,4 +1,6 @@
 import numpy as np
+from datetime import *
+
 
 # Return the Initial Divisor for the index. It identifies the position of the initial date in the Curr_Volume_Matrix. 
 # At the moment the initial date is 2016/01/01 or 1451606400 as timestamp
@@ -102,4 +104,3 @@ def price_return(Curr_Price_Matrix):
         np.append(return_matrix, return_calc)
 
     return return_matrix
-
