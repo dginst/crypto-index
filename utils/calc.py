@@ -1,47 +1,52 @@
 import numpy as np
 
 # Return the Initial Divisor for the index. It identifies the position of the initial date in the matrix. 
-# At the moment the initial date is 2016/01/01
+# At the moment the initial date is 2016/01/01 or 1451606400 as timestamp
 # where:
-# sr = second requirement matrix, composed by 0 if negative, 1 if positive
-# p = final price matrix of each currency 
+# logic_matrix = second requirement matrix, composed by 0 if negative, 1 if positive
+# Currency_Price_Matrix = final price matrix of each currency 
 # sm = synthetic market cap derived weight
 
-def calc_initial_divisor(initial_timestamp = 1451606400 ):
-
-    result = np.where( p == initial_timestamp)
-    coord = list(zip(result[0], result[1])) 
-    Initial_Divisor =  (p[coord[0]] * v[coord[0]-x] * sr[coord[0]-x]).sum() / 1000
+def calc_initial_divisor(Currency_Price_Matrix, logic_matrix, sm, initial_date='01-01-2016' ):
+    initial_date = datetime.strptime(initial_date, '%m-%d-%Y')
+    initial_timestamp=str(int(time.mktime(initial_date.timetuple())))
+    index = np.where( Currency_Price_Matrix == initial_timestamp)
+    index_tuple = list(zip(index[0], index[1])) 
+    Initial_Divisor =  (Currency_Price_Matrix[index_tuple[0]] * sm[index_tuple[0]] * logic_matrix[index_tuple[0]]).sum() / 1000
     return Initial_Divisor
-calc_initial_divisor()
+
 
 
  # Return an array with the divisor for each day.
- # sr = second requirement matrix, composed by 0 if negativa, 1 if positive
+ # logic_matrix = second requirement matrix, composed by 0 if negativa, 1 if positive
  # final_price matrix of each currency
  # final_volume matrix of each currency
 
- 
-divisor_array = np.array(calc_Initial_divisor())
-
-def divisor_adjustment():
-    for i in range(len(sr)):
-        if sr[i].sum() == sr[i-1].sum():
-            divisor_list.append(divisor_list[i-1])
+def divisor_adjustment(Currency_Price_Matrix, Currency_Volume_Matrix, logic_matrix, sm, initial_date='01-01-2016'):
+    divisor_array=np.array(calc_initial_divisor(Currency_Price_Matrix, logic_matrix, sm, initial_date))
+    for i in range(len(logic_matrix)-1):
+        if logic_matrix[i+1].sum() == logic_matrix[i].sum():
+            divisor_array=np.append(divisor_array, divisor_array[i])
         else:
-            append(divisor_array,divisor_list[i-1]*( p[i] * v[i] * sr[i]).sum() / ( p[i-1] * v[i-1] * sr[i-1]).sum())
+            new_divisor=divisor_array[i]*( Currency_Price_Matrix[i+1] * Currency_Volume_Matrix[i+1] * logic_matrix[i+1]).sum() / ( Currency_Price_Matrix[i+1] * Currency_Volume_Matrix[i] * logic_matrix[i]).sum()
+            divisor_array=np.append(divisor_array,new_divisor)
     return divisor_array
- # Return an array of the daily level of the Index
+ 
+ 
+
+# Return an array of the daily level of the Index
  # where:
- # sr = second requirement matrix, composed by 0 if negativa, 1 if positive
- # p = final price matrix of each currency
+ # logic_matrix = second requirement matrix, composed by 0 if negativa, 1 if positive
+ # Currency_Price_Matrix = final price matrix of each currency
  # f = final_volume matrix of each currency
  # sm = synthetic market cap derived weight
 
-index_level = np.array([])
-def index_level_calc():
-    for i in range(len(sr)):
-        append(index_level,(p[i] * sm[i] * sr[i] ).sum() / divisor_adjustment()[i])
+def index_level_calc(Currency_Price_Matrix, Currency_Volume_Matrix, logic_matrix, sm, initial_date='01-01-2016'):
+    index_level = np.array([])
+    divisor_array=divisor_adjustment(Currency_Price_Matrix, Currency_Volume_Matrix, logic_matrix, sm, initial_date)
+    for i in range(len(logic_matrix)):
+        new_index_item=(Currency_Price_Matrix[i] * sm[i] * logic_matrix[i]).sum() / divisor_array[i]
+        index_level=np.append(index_level,new_index_item)
     return index_level
 
 
