@@ -11,9 +11,9 @@ def calc_initial_divisor(initial_timestamp = 1451606400 ):
 
     result = np.where( p == initial_timestamp)
     coord = list(zip(result[0], result[1])) 
-    Initial_Divisor =  (p[coord[0]] * v[coord[0]-x] * sr[coord[0]-x]).sum() / 1000
+    Initial_Divisor =  (p[coord[0]-x] * v[coord[0]-x] * sr[coord[0]-x]).sum() / 1000
     return Initial_Divisor
-calc_initial_divisor()
+
 
 
  # Return an array with the divisor for each day.
@@ -52,15 +52,14 @@ def index_level_calc():
 def smoothing_factor():
 
     lamba1 = 0.94
-    i =  []
-    for num in range(0,90):
-        i.append(num)        
-    i = np.array(i) 
+    i =  list(range(1,90))        
+    i = np.array(i)
+
     w = []
     for ind in range(0,len(i)):
         w.append((1-lamba1)*lamba1**i[ind])
     w = np.array(w)
-    w
+    
     return w
 
 
@@ -82,6 +81,7 @@ def EMWA_calc(matrix):
             emwa_gen= np.column_stack((emwa_gen,EWMA_coin1))       
     return emwa_gen
 
+
 # creating a vector with the total volumes for each day
 total_EMWA_volume = []
 for i in range(0,len(EMWA_calc(data))):
@@ -96,6 +96,6 @@ total_EMWA_volume = np.array(a)
 return_matrix = []
 
 for i in range(1,len(final_prices_matrix)):
-    return_matrix.append((final_prices_matrix[i]-fina_pricesmatrix[i-1])/final_prices_matrix[i-1])
+    return_matrix.append((p[i]-p[i-1])/p[i-1])
 
 return_matrix = np.array(return_matrix)
