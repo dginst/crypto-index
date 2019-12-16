@@ -106,26 +106,45 @@ def price_return(Curr_Price_Matrix):
     return return_matrix
 
     
-    
-    #logic_matrix nr.1
+# series of function to create the logic_matrix1
+# 
+#   
+def datetime_diff():
+    datetime_diff = np.array([])
+    for years in [2016,2017,2018,2019]:
+        for months in [1,4,7,10]:
+            difference = datetime.datetime(years,months,1)-datetime.datetime(years,months+2,21)
+            datetime_diff = np.append(datetime_diff,difference)
+    return datetime_diff
 
-col: len(Curr_exchanges_volumes[0]) # this count how many columns has the matrix
+def quarter_initial_position():
+    index = []
+     for years in [2016,2017,2018,2019]:
+        for months in [1,4,7,10]:
+            coord = np.where(curr_matrix_volume == datetime.datetime(years,months,1))
+            coord = list(zip(coord[0], coord[1]))
+            index = index.append(coord[0])
+        return index
 
-for matrix in matrix_volumes_list:
+def perc_volumes_per_exchange():
+    col: len(Curr_exchanges_volumes[0]) 
+    sum_array = np.array([])   
+    for coord in quarter_initial_position():
+        for delta in datetime_diff():
+            for col in range(1,col):
+                sum_array = np.append(sum_array,((curr_volumes_matrix[coord:coord+delta,col]).sum(), axis = 0])
+                requirement = sum_array / (curr_volumes_matrix[coord:coord+delta,1:col]).sum()  
+    return requirement
 
-        sum_array = np.sum(matrix[i:i+x,1:col], axis = 0]) # va ciclato su col this gives back an array with the sum of the array. We need to sum a certain range in the matrix.
 
-        requirement = sum_array / matrix[i:i+x,1:col].sum()        #dividiamo l'array per la somma del totale dei volumi scambiati su tutti gli exchange. 
+def calc_logic_matrix1():
 
-#questo ci da la % dei volumi scambiati per l'i-esimo coin su un dato exchange.
+    if np.any(requirement) > 0.80:
+        
+        req1_matrix[i, j] = 0
 
-# ora facciamo il check per controllare che i volumi scambiati siano massimo su un exchange. Se un exchange possiede più dell'80% non sarà idoneo
+    else: 
 
+        req1_matrix[i, j] = 1
 
-if np.any(requirement) > 0.80:
-    
-    req1_matrix[i, j] = 0
-
-else: 
-
-    req1_matrix[i, j] = 1
+    return
