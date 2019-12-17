@@ -96,6 +96,30 @@ def EMWA_weights(Curr_Volume_Matrix,logic_matrix):
     return EMWA_weights_matrix
 
 
+# function take as input:
+# Curr_Pice_matrix: the Price matrix that has different cryptoasset as column and date as row
+# weight_index: vector that contains the weights for every Crytpo Asset indicated in Curr_Price_matrix
+# synt_matrix_old: the syntethic matrix of the previuos day, on default in None meaning that is the
+# first day after the index rebalancing
+# returns a matrix with the same number and order of column of the Curr Price Matrix containing
+# the value of the syntetic portfolio divided by single currency
+# every c.a. 3 months the index is rebalanced, so the synt_matrix function has to be called anew
+
+def synt_matrix_daily(Curr_Price_Matrix,weight_index, synt_matrix_old=None, synt_ptf_value=100):
+    #returns computed considering that today is the last row and yesterday is the row before
+    daily_return=(Curr_Price_Matrix[len(Curr_Price_Matrix)-1,1:]-Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:])/Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:]
+    synt_matrix_date=np.array(Curr_Price_Matrix[len(Curr_Price_Matrix)-1,0])
+    if synt_matrix_old == None:
+        synt_matrix= weight_index*synt_ptf_value
+        synt_matrix=np.column_stack((synt_matrix_date,synt_matrix))
+    else:
+        synt_matrix_new_value=daily_return*synt_matrix_old[len(synt_matrix_old),1:]
+        synt_matrix_new_row=np.column_stack((synt_matrix_date,synt_matrix_new_value))
+        synt_matrix=np.row_stack((synt_matrix_old,synt_matrix_new_row))
+    return synt_matrix
+
+
+
 # crating a matrix with the returns of the currencies computed from the Curr_Price_Matrix
 
 def price_return(Curr_Price_Matrix):
@@ -129,6 +153,20 @@ def quarter_initial_position(Curr_Volume_Matrix):
 
 
 
+def perc_volumes_per_exchange():
+    col: len(Curr_exchanges_volumes[0]) 
+    sum_array = np.array([])
+    tota_per_row = np.array([])  
+    for coord in quarter_initial_position():
+        for delta in datetime_diff():
+            for col in range(1,col):
+                sum_array = np.append(sum_array,(np.sum(Curr_Volume_Matrix[coord:coord+delta,1:col], axis = 0)))
+                total_per_row = np.append(total_per_row,(Curr_Volume_Matrix[coord:coord+delta,1:col]).sum())
+                requirement = sum_array / total_per_row[:, None]
+    return requirement
+
+
+# it returns a matrix of 0 and 1 following the requirements
 
 def Curr_logic_matrix1(Overall_Requirement_Matrix):
     req1_matrix = np.array([])
@@ -147,24 +185,34 @@ def Curr_logic_matrix1(Overall_Requirement_Matrix):
 
        
 
-# function take as input:
+# function takes as input:
 # Curr_Pice_matrix: the Price matrix that has different cryptoasset as column and date as row
-# weight_index: vector that contains the weights for every Crytpo Asset indicated in Curr_Price_matrix
-# synt_matrix_old: the syntethic matrix of the previuos day, on default in None meaning that is the
-# first day after the index rebalancing
-# returns a matrix with the same number and order of column of the Curr Price Matrix containing
-# the value of the syntetic portfolio divided by single currency
-# every c.a. 3 months the index is rebalanced, so the synt_matrix function has to be called anew
-
-def synt_matrix_daily(Curr_Price_Matrix,weight_index, synt_matrix_old=None, synt_ptf_value=100):
-    #returns computed considering that today is the last row and yesterday is the row before
-    daily_return=(Curr_Price_Matrix[len(Curr_Price_Matrix)-1,1:]-Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:])/Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:])
-    synt_matrix_date=np.array(Curr_Price_Matrix[len(Curr_Price_Matrix)-1,0])
-    if synt_matrix_old == None:
-        synt_matrix= weight_index*synt_ptf_value
-        synt_matrix=np.column_stack((synt_matrix_date,synt_matrix))
-    else:
-        synt_matrix_new_value=daily_return*synt_matrix_old[len(synt_matrix_old),1:]
-        synt_matrix_new_row=np.column_stack((synt_matrix_date,synt_matrix_new_value))
-        synt_matrix=np.row_stack((synt_matrix_old,synt_matrix_new_row))
-    return synt_matrix
+# historic weight_index: matrix that contains the weights for every Crytpo Asset indicated in Curr_Price_matrix
+# comitee_date: vector that contains the past theorical date of comitee reunion
+# as implemented, comitee_date has to be in timestamp format (consider to upgrade)
+# function iterate for every date in comitte_date vector constructing a portfolio with default 100 value
+# rebalanced every comitee_date date; it returns a matrix that simulate the value of the portfolio over history
+#####################################################################################################
+#### consider that doen not makes sense, imo, to have the portfolio reduced (aumented) in value #####
+#### after every commitee: fixing every time the value at 100 do not allow to show #################
+####  the hisorical value constraction of the strategy #########################
+###############################################################################################
+def synt_matrix_historic(Curr_Price_Matrix,historic_weight_index, comitee_date):
+    historical_synt_matrix=np.array([])
+    for i,date in enumerate(comitee_date):
+        start_period, =np.where(Curr_Price_Matrix[:,0]==date)
+        periodic_synt_mat=np.array([])
+        while start_period != comitee_date[i+1]:
+            if periodic_synt_mat.size==0:
+                weight_index=historic_weight_index[start_period]
+                periodic_synt_mat=synt_matrix_daily(Curr_Price_Matrix,weight_index)
+                start_period=start_period+1
+            else:
+                weight_index=historic_weight_index[start_period]
+                periodic_synt_mat=synt_matrix_daily(Curr_Price_Matrix,weight_index, periodic_synt_mat)
+                start_period=start_period+1
+        if historical_synt_matrix.sixe==0:
+            historical_synt_matrix=periodic_synt_mat
+        else:
+            historical_synt_matrix=np.row_stack((historical_synt_matrix,periodic_synt_mat))
+    return historical_synt_matrix

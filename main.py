@@ -3,8 +3,8 @@ import os.path
 from pathlib import Path
 import json
 from datetime import datetime
-import data_setup
-import data_download
+# import data_setup
+# import data_download
 
 for pair in ['btc']:
 	currencypair_array = [""+pair+"usd", ""+pair+"jpy"] #, ""+pair+"cad", ""+pair+"gbp", ""+pair+"usdt", ""+pair+"usdc", ""+pair+"jpy"]
