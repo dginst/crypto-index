@@ -132,44 +132,42 @@ def price_return(Curr_Price_Matrix):
     
 # series of function to create the logic_matrix1
 # 
-#   
+# this create the days between the first day of the quarter and the day of the board meeting.  
 def datetime_diff():
     datetime_diff = np.array([])
     for years in [2016,2017,2018,2019]:
         for months in [1,4,7,10]:
-            difference = datetime.datetime(years,months,1)-datetime.datetime(years,months+2,21)
+            difference = (datetime.datetime(years,months,1)-datetime.datetime(years,months+2,21)).days
             datetime_diff = np.append(datetime_diff,difference)
     return datetime_diff
 
-def quarter_initial_position():
+# this find the cordinate of the first day of each quarter in the curr_matrix_volume 
+def quarter_initial_position(Curr_Volume_Matrix):
     index = []
     for years in [2016,2017,2018,2019]:
         for months in [1,4,7,10]:
-            coord = np.where(curr_matrix_volume == datetime.datetime(years,months,1))
+            coord = np.where(Curr_Volume_Matrix == datetime.datetime(years,months,1))
             coord = list(zip(coord[0], coord[1]))
             index = index.append(coord[0])
     return index
 
-def perc_volumes_per_exchange():
-    col: len(Curr_exchanges_volumes[0]) 
-    sum_array = np.array([])   
-    for coord in quarter_initial_position():
-        for delta in datetime_diff():
-            for col in range(1,col):
-                sum_array = np.append(sum_array,((curr_volumes_matrix[coord:coord+delta,col]).sum(), axis = 0])
-                requirement = sum_array / (curr_volumes_matrix[coord:coord+delta,1:col]).sum()  
-    return requirement
+# this compute the % of the volume exchaged for each currency 
+#def perc_volumes_per_exchange():
+   # col: len(Curr_exchanges_volumes[0]) 
+  #  sum_array = np.array([])   
+   # for coord in quarter_initial_position():
+  #      for delta in datetime_diff():
+  #          for col in range(1,col):
+  #              sum_array = np.append(sum_array,((Curr_Volume_Matrix[coord:coord+delta,1:col]).sum(), axis = 0])
+ #                ho= sum_array / (Curr_Volume_Matrix[coord:coord+delta,1:col]).sum()  
+ #   return requirement
 
 
-# def calc_logic_matrix1():
-
-#     if np.any(requirement) > 0.80:
-        
-#         req1_matrix[i, j] = 0
-
-#     else: 
-
-#         req1_matrix[i, j] = 1
+def calc_logic_matrix1():
+    if np.any(requirement) > 0.80:
+        req1_matrix[i, j] = 0
+    else: 
+        req1_matrix[i, j] = 1
 
 #     return
 
