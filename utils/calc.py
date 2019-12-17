@@ -124,28 +124,28 @@ def quarter_initial_position(Curr_Volume_Matrix):
         for months in [1,4,7,10]:
             coord = np.where(Curr_Volume_Matrix == datetime.datetime(years,months,1))
             coord = list(zip(coord[0], coord[1]))
-            index = index.append(coord[0])
+            index = index.append(coord[0])  
     return index
 
-# this compute the % of the volume exchaged for each currency 
-#def perc_volumes_per_exchange():
-   # col: len(Curr_exchanges_volumes[0]) 
-  #  sum_array = np.array([])   
-   # for coord in quarter_initial_position():
-  #      for delta in datetime_diff():
-  #          for col in range(1,col):
-  #              sum_array = np.append(sum_array,((Curr_Volume_Matrix[coord:coord+delta,1:col]).sum(), axis = 0])
- #                ho= sum_array / (Curr_Volume_Matrix[coord:coord+delta,1:col]).sum()  
- #   return requirement
 
 
-def calc_logic_matrix1():
-    if np.any(requirement) > 0.80:
-        req1_matrix[i, j] = 0
-    else: 
-        req1_matrix[i, j] = 1
 
-    return
+def Curr_logic_matrix1(Overall_Requirement_Matrix):
+    req1_matrix = np.array([])
+    Overall_req1_matrix = np.array([])
+    for curr_matrix in range(len(Overall_req1_matrix)):
+        for row in range(len(Curr_requirement_matrix)):
+            if np.any(Curr_Requirement_matrix[i]) > 0.80:
+                req1_matrix = np.append(req1_matrix, 0)
+            else: 
+                req1_matrix = np.append(req1_matrix, 1)    
+            Overall_req1_matrix = np.column_stack(req1_matrix)    
+
+        return Overall_req1_matrix
+
+
+
+       
 
 # function take as input:
 # Curr_Pice_matrix: the Price matrix that has different cryptoasset as column and date as row
