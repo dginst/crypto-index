@@ -107,7 +107,7 @@ def EMWA_weights(Curr_Volume_Matrix,logic_matrix):
 
 def synt_matrix_daily(Curr_Price_Matrix,weight_index, synt_matrix_old=None, synt_ptf_value=100):
     #returns computed considering that today is the last row and yesterday is the row before
-    daily_return=(Curr_Price_Matrix[len(Curr_Price_Matrix)-1,1:]-Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:])/Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:])
+    daily_return=(Curr_Price_Matrix[len(Curr_Price_Matrix)-1,1:]-Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:])/Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:]
     synt_matrix_date=np.array(Curr_Price_Matrix[len(Curr_Price_Matrix)-1,0])
     if synt_matrix_old == None:
         synt_matrix= weight_index*synt_ptf_value
@@ -169,8 +169,36 @@ def calc_logic_matrix1():
     else: 
         req1_matrix[i, j] = 1
 
-#     return
+#   return
 
-
-
-def synt_matrix_historic():
+# function takes as input:
+# Curr_Pice_matrix: the Price matrix that has different cryptoasset as column and date as row
+# historic weight_index: matrix that contains the weights for every Crytpo Asset indicated in Curr_Price_matrix
+# comitee_date: vector that contains the past theorical date of comitee reunion
+# as implemented, comitee_date has to be in timestamp format (consider to upgrade)
+# function iterate for every date in comitte_date vector constructing a portfolio with default 100 value
+# rebalanced every comitee_date date; it returns a matrix that simulate the value of the portfolio over history
+#####################################################################################################
+#### consider that doen not makes sense, imo, to have the portfolio reduced (aumented) in value #####
+#### after every commitee: fixing every time the value at 100 do not allow to show #################
+####  the hisorical value constraction of the strategy #########################
+###############################################################################################
+def synt_matrix_historic(Curr_Price_Matrix,historic_weight_index, comitee_date):
+    historical_synt_matrix=np.array([])
+    for i,date in enumerate(comitee_date):
+        start_period, =np.where(Curr_Price_Matrix[:,0]==date)
+        periodic_synt_mat=np.array([])
+        while start_period != comitee_date[i+1]:
+            if periodic_synt_mat.size==0:
+                weight_index=historic_weight_index[start_period]
+                periodic_synt_mat=synt_matrix_daily(Curr_Price_Matrix,weight_index)
+                start_period=start_period+1
+            else:
+                weight_index=historic_weight_index[start_period]
+                periodic_synt_mat=synt_matrix_daily(Curr_Price_Matrix,weight_index, periodic_synt_mat)
+                start_period=start_period+1
+        if historical_synt_matrix.sixe==0:
+            historical_synt_matrix=periodic_synt_mat
+        else:
+            historical_synt_matrix=np.row_stack((historical_synt_matrix,periodic_synt_mat))
+    return historical_synt_matrix
