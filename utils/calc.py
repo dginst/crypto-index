@@ -120,13 +120,26 @@ def synt_matrix_daily(Curr_Price_Matrix,weight_index, synt_matrix_old=None, synt
 
 
 
-# crating a matrix with the returns of the currencies computed from the Curr_Price_Matrix
+# function that returns the return matrix for all cryptocurrency
+# the first column of the return_matrix contains date
+# function works on default considering the data placed in date-ascendent way (oldest data in position 0)
+# to consider the opposite case modify the default variable Date_order
 
-def price_return(Curr_Price_Matrix):
+def price_return(Curr_Price_Matrix, date_order='ascendent'):
     return_matrix = np.array([])
-    for i in range(1,len(Curr_Price_Matrix)):
-        return_calc = (Curr_Price_Matrix[i+1]-Curr_Price_Matrix[i])/Curr_Price_Matrix[i]
-        np.append(return_matrix, return_calc)
+    for i in range(len(Curr_Price_Matrix)):
+        if date_order != 'ascendent':
+            return_value = (Curr_Price_Matrix[i+1][1:]-Curr_Price_Matrix[i][1:])/Curr_Price_Matrix[i][1:]
+            return_date = Curr_Price_Matrix[i+1][0]
+            vector=np.column_stack((return_date,return_value))
+        else:
+            return_value = (Curr_Price_Matrix[i][1:]-Curr_Price_Matrix[i+1][1:])/Curr_Price_Matrix[i+1][1:]
+            return_date = Curr_Price_Matrix[i][0]
+            vector=np.column_stack((return_date,return_value))   
+        if return_matrix.size==0:
+            return_matrix=vector
+        else:
+            return_matrix=np.row_stack((return_matrix,vector))
     return return_matrix
 
     
@@ -211,7 +224,7 @@ def synt_matrix_historic(Curr_Price_Matrix,historic_weight_index, comitee_date):
                 weight_index=historic_weight_index[start_period]
                 periodic_synt_mat=synt_matrix_daily(Curr_Price_Matrix,weight_index, periodic_synt_mat)
                 start_period=start_period+1
-        if historical_synt_matrix.sixe==0:
+        if historical_synt_matrix.size==0:
             historical_synt_matrix=periodic_synt_mat
         else:
             historical_synt_matrix=np.row_stack((historical_synt_matrix,periodic_synt_mat))
