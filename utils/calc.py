@@ -143,40 +143,51 @@ def price_return(Curr_Price_Matrix, date_order='ascendent'):
     return return_matrix
 
     
-# series of function to create the logic_matrix1
-# 
-# this create the days between the first day of the quarter and the day of the board meeting.  
-def datetime_diff():
+############### series of function to create the Logic Matrix ############
+
+# function that returns an array that contains the number of days
+# between the first day of the quarter and the day of the board meeting
+# the input values are set on default as starting from 01/01/2016 and ending on 21/10/2019
+# rebalancing of index take place every 3 months and the comitee reunion date is set at the 21th day of the month
+def datetime_diff(years_list=[2016,2017,2018,2019], months_list=[1,4,7,10], comitee_day=21):
     datetime_diff = np.array([])
-    for years in [2016,2017,2018,2019]:
-        for months in [1,4,7,10]:
-            difference = (datetime.datetime(years,months,1)-datetime.datetime(years,months+2,21)).days
+    for years in years_list:
+        for months in months_list:
+            difference = int(abs((datetime.datetime(years,months,1)-datetime.datetime(years,months+2,comitee_day)).days))
             datetime_diff = np.append(datetime_diff,difference)
     return datetime_diff
 
-# this find the cordinate of the first day of each quarter in the curr_matrix_volume 
-def quarter_initial_position(Curr_Volume_Matrix):
+# function returns a list of index in Curr_volume_matrix corresponding to the start date of each quarterly rebalance
+# function takes as input a matrix/vector containing the complet set of date and the default years list and months list 
+def quarter_initial_position(Curr_Volume_Matrix,years_list=[2016,2017,2018,2019], months_list=[1,4,7,10]):
     index = []
-    for years in [2016,2017,2018,2019]:
-        for months in [1,4,7,10]:
-            coord = np.where(Curr_Volume_Matrix == datetime.datetime(years,months,1))
+    for years in years_list:
+        for months in months_list:
+            timestamp=str(int(time.mktime(datetime.datetime(years,months,1).timetuple())))
+            coord = np.where(Curr_Volume_Matrix == timestamp)
             coord = list(zip(coord[0], coord[1]))
             index = index.append(coord[0])  
     return index
 
-
-
-def perc_volumes_per_exchange():
-    col: len(Curr_exchanges_volumes[0]) 
-    sum_array = np.array([])
-    tota_per_row = np.array([])  
-    for coord in quarter_initial_position():
-        for delta in datetime_diff():
-            for col in range(1,col):
-                sum_array = np.append(sum_array,(np.sum(Curr_Volume_Matrix[coord:coord+delta,1:col], axis = 0)))
-                total_per_row = np.append(total_per_row,(Curr_Volume_Matrix[coord:coord+delta,1:col]).sum())
-                requirement = sum_array / total_per_row[:, None]
-    return requirement
+# function that takes as input
+# Curr_Exc_Vol: single Crypto volume matrix with exchanges as columns and date as rows; the matrix dimension has
+# to be standardized not depending of the actual exchanges that trades the single crypto. If a Crypto is not present 
+# in a Exchange the value will be set to 0
+# function sum for every exchange the volume value of each day among one index rebalance and another 
+# it returns a matrix where the first column contains the rebalancing date (timestamp) and the others columns
+# contain the percentage that each exchanges represent on the total volume for the considered period
+############da valutare a quali date associare le varue frazioni. es: 1/1/16 sicuro no poichè iniziamo a contare
+##############da li mentre l'ultimo?
+def perc_volumes_per_exchange(Curr_Exc_Vol):
+    volume_fraction=np.array([])
+    rebalance_interval=datetime_diff()
+    rebalance_start=quarter_initial_position(Curr_Exc_Vol)
+    for i,index in enumerate(rebalance_start):
+        rebalance_row= np.sum(Curr_Exc_Vol[index:(index+rebalance_interval[i][1:])], axis=0)
+        percentage = rebalance_row/rebalance_row.sum()
+        volume_fraction=np.append(volume_fraction,percentage)
+    volume_fraction=np.column_stack((rebalance_start[1:],volume_fraction))
+    return volume_fraction
 
 
 # it returns a matrix of 0 and 1 following the requirements
@@ -203,7 +214,7 @@ def Curr_logic_matrix1(Overall_Requirement_Matrix):
 # historic weight_index: matrix that contains the weights for every Crytpo Asset indicated in Curr_Price_matrix
 # comitee_date: vector that contains the past theorical date of comitee reunion
 # as implemented, comitee_date has to be in timestamp format (consider to upgrade)
-# function iterate for every date in comitte_date vector constructing a portfolio with default 100 value
+# function iterate for every date in comitee_date vector constructing a portfolio with default 100 value
 # rebalanced every comitee_date date; it returns a matrix that simulate the value of the portfolio over history
 #####################################################################################################
 #### consider that doen not makes sense, imo, to have the portfolio reduced (aumented) in value #####
