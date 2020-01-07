@@ -63,6 +63,7 @@ def CW_data_reader(exchange,currencypair,start_date, end_date = None, periods='8
 # key_currency_vector expects a list of currency in International Currency Formatting (ex. USD, GBP, JPY, CAD,...)
 # the functions diplays the information better for a single day data retrival, however can works with multiple date
 # regarding the other default variables consult the ECB api web page
+# Start_Period has to be in YYYY-MM-DD format
 def ECB_rates_extractor(key_currency_vector,Start_Period,End_Period=None,frequency='D', currency_denominat='EUR',typeRates='SP00',series_variation='A'):
     if End_Period == None:
         End_Period=Start_Period
@@ -79,7 +80,10 @@ def ECB_rates_extractor(key_currency_vector,Start_Period,End_Period=None,frequen
         key= frequency+'.'+currency+'.'+currency_denominat+'.'+typeRates+'.'+series_variation
         request_url = entrypoint + resource + '/'+ flowRef + '/' + key
         response = requests.get(request_url, params=parameters, headers={'Accept': 'text/csv'})
-        Data_Frame = pd.read_csv(io.StringIO(response.text))
+        try:
+            Data_Frame = pd.read_csv(io.StringIO(response.text))
+        except:
+            break
         Main_Data_Frame = Data_Frame.filter(['TIME_PERIOD', 'OBS_VALUE','CURRENCY','CURRENCY_DENOM'], axis=1)
         if currency == 'USD':
             cambio_USD_EUR=float(Main_Data_Frame['OBS_VALUE'])
@@ -93,7 +97,7 @@ def ECB_rates_extractor(key_currency_vector,Start_Period,End_Period=None,frequen
         else:
             Exchange_Rate_List=Exchange_Rate_List.append(Main_Data_Frame, sort=True)
             Exchange_Rate_List['USD based rate'][i]=float(Main_Data_Frame['OBS_VALUE'])/cambio_USD_EUR
-        return Exchange_Rate_List
+    return Exchange_Rate_List
 
 
 # def itBit_extractor():
