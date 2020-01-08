@@ -94,7 +94,7 @@ def smoothing_factor(lambda_smooth = 0.94, moving_average_period = 90):
 # takes as input the period that is set on 90 days as default and the 
 # Curr_Volume_Matrix = Volume matrix of each currency (columns are different exchanges)
 
-def emwa_currency_volume(Curr_Volume_Matrix, moving_average_period = 90):
+def emwa_currencies_volume(Curr_Volume_Matrix, moving_average_period = 90):
 
     emwa_gen = np.array([])
     for col_id in range(Curr_Volume_Matrix.shape[1]):
@@ -114,18 +114,16 @@ def emwa_currency_volume(Curr_Volume_Matrix, moving_average_period = 90):
     return emwa_gen
 
 
-
 # function returns a matrix with the weights that every currency should have
 # takes as input the currecny matrix of volume and the logic matrix 
 
 def EMWA_weights(Curr_Volume_Matrix, logic_matrix):
 
-    emwa_volume_curr = emwa_currency_volume(Curr_Volume_Matrix)
+    emwa_volume_curr = emwa_currencies_volume(Curr_Volume_Matrix)
     total_EMWA_volume = emwa_volume_curr.sum(axis = 1)
     EMWA_weights_matrix = (emwa_volume_curr * logic_matrix) / total_EMWA_volume[:, None]
 
     return EMWA_weights_matrix
-
 
 
 # function returns a matrix with the same number and order of column of the Curr Price Matrix containing
@@ -182,6 +180,7 @@ def price_return(Curr_Price_Matrix, date_order='ascendent'):
 # between the first day of the quarter and the day of the board meeting
 # the input values are set on default as starting from 01/01/2016 and ending on 21/10/2019
 # rebalancing of index take place every 3 months and the comitee reunion date is set at the 21th day of the month
+
 def datetime_diff(years_list=[2016,2017,2018,2019], months_list=[1,4,7,10], comitee_day=21):
     datetime_diff = np.array([])
     for years in years_list:
@@ -192,6 +191,7 @@ def datetime_diff(years_list=[2016,2017,2018,2019], months_list=[1,4,7,10], comi
 
 # function returns a list of index in Curr_volume_matrix corresponding to the start date of each quarterly rebalance
 # function takes as input a matrix/vector containing the complet set of date and the default years list and months list 
+
 def quarter_initial_position(Curr_Volume_Matrix,years_list=[2016,2017,2018,2019], months_list=[1,4,7,10]):
     index = []
     for years in years_list:
@@ -211,15 +211,16 @@ def quarter_initial_position(Curr_Volume_Matrix,years_list=[2016,2017,2018,2019]
 # contain the percentage that each exchanges represent on the total volume for the considered period
 ############da valutare a quali date associare le varue frazioni. es: 1/1/16 sicuro no poichè iniziamo a contare
 ##############da li mentre l'ultimo?
+
 def perc_volumes_per_exchange(Curr_Exc_Vol):
-    volume_fraction=np.array([])
-    rebalance_interval=datetime_diff()
-    rebalance_start=quarter_initial_position(Curr_Exc_Vol)
+    volume_fraction = np.array([])
+    rebalance_interval = datetime_diff()
+    rebalance_start = quarter_initial_position(Curr_Exc_Vol)
     for i,index in enumerate(rebalance_start):
-        rebalance_row= np.sum(Curr_Exc_Vol[index:(index+rebalance_interval[i][1:])], axis=0)
+        rebalance_row = np.sum(Curr_Exc_Vol[index:(index+rebalance_interval[i][1:])], axis=0)
         percentage = rebalance_row/rebalance_row.sum()
-        volume_fraction=np.append(volume_fraction,percentage)
-    volume_fraction=np.column_stack((rebalance_start[1:],volume_fraction))
+        volume_fraction = np.append(volume_fraction,percentage)
+    volume_fraction = np.column_stack((rebalance_start[1:],volume_fraction))
     return volume_fraction
 
 
@@ -228,35 +229,65 @@ def perc_volumes_per_exchange(Curr_Exc_Vol):
 # between the reconstitution day and the committe meeting day on any single pricing source.
 # If the requirement is respected the function will had the value 1 on the matrix, if not it will add 0.
 
-def Curr_logic_matrix1(Overall_Requirement_Matrix):
+def Curr_logic_matrix1(perc_volumes_per_exchange()):
 
-    req1_matrix = np.array([])
-    Overall_req1_matrix = np.array([])
-    for curr_matrix in range(len(Overall_req1_matrix)):
-        for row in range(len(Curr_requirement_matrix)):
+    curr_logic_matrix1 = np.array([]):
+    volume_perc = perc_volumes_per_exchange()
 
-            # check if any of the value in array row is > than 0.80. If yes add a 0 value in the req1_matrix
-            # if not add value 1 in the req_matrix
-            if np.any(Curr_Requirement_matrix[i]) > 0.80:
-                req1_matrix = np.append(req1_matrix, 0)
-            else: 
-                req1_matrix = np.append(req1_matrix, 1)    
-            Overall_req1_matrix = np.column_stack(req1_matrix)    
+    for row in range(len(volume_perc)):
 
-        return Overall_req1_matrix
+        # check if any of the value in array row is > than 0.80. If yes add a 0 value in the req1_matrix
+        # if not add value 1 in the req_matrix
+        if np.any(volume_perc[i]) > 0.80:
+            req1_matrix = np.append(req1_matrix, 0)
+        else: 
+            req1_matrix = np.append(req1_matrix, 1)    
 
+    return curr_logic_matrix1
 
 
-# This function creates a matrix of 0 and 1 checking if the first requirement is respected.
-# 2nd requirement : The crypto-asset's average  trailing trading volume between the reconstitution day and the committe meeting day 
-# is not less to the 2° percentile of the aggregate average  trading volume for the same period 
+
+# This function gives back the % of the EWMA-volume of any single coin compared to the aggregate EMWA-volume
+# over the period between the reconstitution day and the board meeting day.
+# Is is the pillar of the function to verify if the 2nd requirement is respected.
+
+def perc_emwa_per_curr(emwa_currencies_volume):
+
+    emwa_volume_fraction = np.array([])
+    rebalance_interval = datetime_diff()
+    rebalance_start = quarter_initial_position(Curr_Exc_Vol)
+
+    for i,index in enumerate(rebalance_start):
+        rebalance_row = np.sum(emwa_currencies_volume[index:(index+rebalance_interval[i][1:])], axis=0)
+        percentage = rebalance_row/rebalance_row.sum()
+        curr_req2_matrix = np.append(curr_req2_matrix,percentage)
+        emwa_volume_fraction = np.column_stack((rebalance_start[1:],ewma_volume_fraction))
+
+    return emwa_volume_fraction
+
+
+# This function creates a matrix of 0 and 1 checking if the second requirement is respected.
+# 2nd requirement : The crypto-asset's   trailing trading volume between the reconstitution day and the committe meeting day 
+# is not less to the 2° percentile of the aggregate  trading volume for the same period 
 # of available crypto-assets after the application of the precedent eligibility Rules.
 # If the requirement is respected the function will had the value 1 on the matrix, if not it will add 0.
 
-def Curr_logic_matrix2(EMWA_weights):
+def Curr_logic_matrix2(perc_emwa_per_curr):
 
+    logic_row = np.array([])
+    curr_logic_matrix2 = np.array([])
+    perc = perc_emwa_per_curr()
 
+    for i in range(perc.shape[0]):
+        for j in range(perc.shape[1]):
+            if perc[i,j] > 0.2:
+                logic_row = np.append(logic_row, 1)
+            else:
+                logic_row = np.append(logic_row, 0)
+    
+    curr_logic_matrix2 = np.column_stack((logic_row,curr_logic_matrix2))
 
+    return curr_logic_matrix2
 
 
 # function takes as input:
