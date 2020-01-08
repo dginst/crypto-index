@@ -42,7 +42,7 @@ import data_setup
 # start_date ed end_date has to be inserted in MM-DD-YYYY format
 
 
-def CW_data_reader(exchange, currencypair, start_date, end_date = None, periods='86400'):
+def CW_data_reader(exchange, currencypair, start_date = '01-01-2016', end_date = None, periods='86400'):
 
     Crypto = currencypair[:3].upper()
     Pair = currencypair[3:].upper()
