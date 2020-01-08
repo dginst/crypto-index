@@ -14,10 +14,10 @@ import time
 # default format is in second since the epoch, type timeST='N' for date in format YY-mm-dd
 # write all date in MM/DD/YYYY format
 
-def date_array_gen(start_date, end_date = '', timeST = 'Y'):
+def date_array_gen(start_date, end_date = None, timeST = 'Y'):
 
     # set end_date = today if empty
-    if end_date == '':
+    if end_date == None:
         end_date = datetime.now().strftime('%m-%d-%Y')
 
     date_index = pd.date_range(start_date, end_date)
@@ -36,9 +36,7 @@ def date_array_gen(start_date, end_date = '', timeST = 'Y'):
 
 def period_array(start_date, period, direction = 'backward', timeST='Y'):
 
-    # TODO: create a new function to check date format
-    if "/" in start_date:
-        start_date=start_date.replace("/","-")  
+    start_date = date_reformat(start_date, '-')
 
     if direction == 'backward':
         end_date = datetime.strptime(start_date,'%m-%d-%Y') - timedelta(days = period) 
@@ -231,10 +229,28 @@ def json_to_matrix(file_path, Crypto='',Pair=''):
     
     return matrix
 
+# function that checks if a item(array, matrix, string,...) is null
 
 def Check_null(item): 
     try:
-        return len(item)==0 
+        return len(item) == 0 
     except TypeError: 
         pass 
     return False 
+
+# function that reforms the inserted date according to the choosen separator
+# function takes as input date with "/" seprator and without separator for 
+# both the YY ans YYYY format; works on default with MM-DD_YYYY format and 
+# if different has to be specified ('YYYY-DD-MM' or 'YYYY-MM-DD')
+
+def date_reformat(date_to_check, separator, order = 'MM-DD-YYYY'):
+    if ("/" in date_to_check and len(date_to_check) == 10):
+        return_date = date_to_check.replace("/", separator)  
+    elif ("/" in date_to_check and len(date_to_check) == 8):
+        return_date = date_to_check.replace("/", separator)
+    elif ("/" not in date_to_check and (len(date_to_check) == 8 or len(date_to_check) == 6)):
+        if (order == 'YYYY-DD-MM' or order == 'YYYY-MM-DD'):
+            return_date = date_to_check[:4] + separator + date_to_check[4:6] + separator + date_to_check[6:]
+        else:
+            return_date = date_to_check[:2] + separator + date_to_check[2:4] + separator + date_to_check[4:]
+    return return_date
