@@ -10,105 +10,138 @@ from datetime import *
 # Curr_Price_Matrix = final price Curr_Volume_Matrix of each currency 
 # sm = synthetic market cap derived weight
 
-def calc_initial_divisor(Curr_Price_Matrix, logic_matrix, sm, initial_date='01-01-2016' ):
+def calc_initial_divisor(Curr_Price_Matrix, logic_matrix, sm, initial_date = '01-01-2016'):
+
+    # convert the date into timestamp 
     initial_date = datetime.strptime(initial_date, '%m-%d-%Y')
-    initial_timestamp=str(int(time.mktime(initial_date.timetuple())))
-    index = np.where( Curr_Price_Matrix == initial_timestamp)
+    initial_timestamp = str(int(time.mktime(initial_date.timetuple())))
+
+    # find the toimestamp related index in the data matrix
+    index = np.where(Curr_Price_Matrix == initial_timestamp)
     index_tuple = list(zip(index[0], index[1])) 
+
+    # computing the divisor 
     Initial_Divisor =  (Curr_Price_Matrix[index_tuple[0]] * sm[index_tuple[0]] * logic_matrix[index_tuple[0]]).sum() / 1000
+
     return Initial_Divisor
 
 
 
- # Return an array with the divisor for each day.
+ # function that returns an array with the divisor for each day, the inputs are:
  # logic_matrix = second requirement Curr_Volume_Matrix, composed by 0 if negativa, 1 if positive
  # final_price Curr_Volume_Matrix of each currency
  # final_volume Curr_Volume_Matrix of each currency
+ # initial date set by default in 01/01/16
 
-def divisor_adjustment(Curr_Price_Matrix, Curr_Volume_Matrix, logic_matrix, sm, initial_date='01-01-2016'):
-    divisor_array=np.array(calc_initial_divisor(Curr_Price_Matrix, logic_matrix, sm, initial_date))
+def divisor_adjustment(Curr_Price_Matrix, Curr_Volume_Matrix, logic_matrix, sm, initial_date = '01-01-2016'):
+
+    # use the function to compute the initial divisor
+    divisor_array = np.array(calc_initial_divisor(Curr_Price_Matrix, logic_matrix, sm, initial_date))
+
+    # for loop that iterates through all the date (length of logic matrix)
+    # returning a divisor for each day
     for i in range(len(logic_matrix)-1):
         if logic_matrix[i+1].sum() == logic_matrix[i].sum():
             divisor_array=np.append(divisor_array, divisor_array[i])
         else:
-            new_divisor=divisor_array[i]*(Curr_Price_Matrix[i+1] * Curr_Volume_Matrix[i+1] * logic_matrix[i+1]).sum() / (Curr_Price_Matrix[i+1] * Curr_Volume_Matrix[i] * logic_matrix[i]).sum()
-            divisor_array=np.append(divisor_array,new_divisor)
+            new_divisor = divisor_array[i]*(Curr_Price_Matrix[i+1] * Curr_Volume_Matrix[i+1] * logic_matrix[i+1]).sum() / (Curr_Price_Matrix[i+1] * Curr_Volume_Matrix[i] * logic_matrix[i]).sum()
+            divisor_array = np.append(divisor_array, new_divisor)
+
     return divisor_array
  
  
 
-# Return an array of the daily level of the Index
- # where:
- # logic_matrix = second requirement Curr_Volume_Matrix, composed by 0 if negativa, 1 if positive
- # Curr_Price_Matrix = final price Curr_Volume_Matrix of each currency
- # f = final_volume Curr_Volume_Matrix of each currency
- # sm = synthetic market cap derived weight
+# function that returns an array of the daily level of the Index, where:
+# logic_matrix = second requirement Curr_Volume_Matrix, composed by 0 if negativa, 1 if positive
+# Curr_Price_Matrix = final price of each currency (columns are different exchanges)
+# Curr_Volume_Matrix = Volume matrix of each currency (columns are different exchanges)
+# sm = synthetic market cap derived weight
+# initial date default value set at 01/01/2016
 
 def index_level_calc(Curr_Price_Matrix, Curr_Volume_Matrix, logic_matrix, sm, initial_date='01-01-2016'):
+
+    # find the divisor related to each day starting from initil date
+    divisor_array = divisor_adjustment(Curr_Price_Matrix, Curr_Volume_Matrix, logic_matrix, sm, initial_date)
+
     index_level = np.array([])
-    divisor_array=divisor_adjustment(Curr_Price_Matrix, Curr_Volume_Matrix, logic_matrix, sm, initial_date)
     for i in range(len(logic_matrix)):
-        new_index_item=(Curr_Price_Matrix[i] * sm[i] * logic_matrix[i]).sum() / divisor_array[i]
-        index_level=np.append(index_level,new_index_item)
+        new_index_item = (Curr_Price_Matrix[i] * sm[i] * logic_matrix[i]).sum() / divisor_array[i]
+        index_level = np.append(index_level,new_index_item)
+
     return index_level
 
 
 
-# Return an array with the value of the smoothing factor for 90 days (0-89)
+# function that returns an array with the value of the smoothing factor for 90 days (0-89)
 # is utilized to calc the EWMA(exponential weighted moving average)
+# default lambda value is a standard and the period is set on default to be 90 days
 
-def smoothing_factor(lambda_smooth=0.94, moving_average_period=90):
-    num_vector =  np.array([range(moving_average_period)])        
+def smoothing_factor(lambda_smooth = 0.94, moving_average_period = 90):
+
+    # creates a vector of number between 0 and 89 
+    num_vector =  np.array([range(moving_average_period)])    
+
     smooth_factor_array = np.array([])
     for index in num_vector:
-        new_lambda=(1-lambda_smooth)*lambda_smooth**(index)
-        smooth_factor_array=np.append(smooth_factor_array,new_lambda)    
+        new_lambda = (1 - lambda_smooth) * (lambda_smooth ** (index))
+        smooth_factor_array = np.append(smooth_factor_array, new_lambda)    
+
     return smooth_factor_array
 
 
 
-#Return the 90-days EWMA volume for each currency.
+# function that returns the 90-days EWMA volume for each currency.
+# takes as input the period that is set on 90 days as default and the 
+# Curr_Volume_Matrix = Volume matrix of each currency (columns are different exchanges)
 
-def emwa_currency_volume(Curr_Volume_Matrix,moving_average_period=90):
-    emwa_gen=np.array([])
+def emwa_currency_volume(Curr_Volume_Matrix, moving_average_period = 90):
+
+    emwa_gen = np.array([])
     for col_id in range(Curr_Volume_Matrix.shape[1]):
         EWMA_coin = np.array([])
         period_start = 0
         period_end = moving_average_period-1
-        while period_start < (len(Curr_Volume_Matrix)-moving_average_period) and period_end < len(Curr_Volume_Matrix):
+        while (period_start < (len(Curr_Volume_Matrix) - moving_average_period) and period_end < len(Curr_Volume_Matrix)):
             period_start += 1
             period_end += 1
-            period_average=(Curr_Volume_Matrix[period_start:period_end,col_id]*smoothing_factor()).sum()
-            EWMA_coin=np.append(EWMA_coin,period_average)    
-        if emwa_gen.size==0:
+            period_average = (Curr_Volume_Matrix[period_start:period_end, col_id] * smoothing_factor()).sum()
+            EWMA_coin = np.append(EWMA_coin, period_average)    
+        if emwa_gen.size == 0:
             emwa_gen = np.array(EWMA_coin)
         else:
-            emwa_gen= np.column_stack((emwa_gen,EWMA_coin))       
+            emwa_gen = np.column_stack((emwa_gen, EWMA_coin))   
+
     return emwa_gen
 
 
-# creating a vector with the total volumes for each day
 
-def EMWA_weights(Curr_Volume_Matrix,logic_matrix):
-    emwa_volume_curr=emwa_currency_volume(Curr_Volume_Matrix)
-    total_EMWA_volume = emwa_volume_curr.sum(axis=1)
-    EMWA_weights_matrix = (emwa_volume_curr* logic_matrix) / total_EMWA_volume[:, None]
+# function returns a matrix with the weights that every currency should have
+# takes as input the currecny matrix of volume and the logic matrix 
+
+def EMWA_weights(Curr_Volume_Matrix, logic_matrix):
+
+    emwa_volume_curr = emwa_currency_volume(Curr_Volume_Matrix)
+    total_EMWA_volume = emwa_volume_curr.sum(axis = 1)
+    EMWA_weights_matrix = (emwa_volume_curr * logic_matrix) / total_EMWA_volume[:, None]
+
     return EMWA_weights_matrix
 
 
+
+# function returns a matrix with the same number and order of column of the Curr Price Matrix containing
+# the value of the syntetic portfolio divided by single currency
 # function take as input:
-# Curr_Pice_matrix: the Price matrix that has different cryptoasset as column and date as row
+# Curr_Price_matrix: the Price matrix that has different cryptoasset as column and date as row
 # weight_index: vector that contains the weights for every Crytpo Asset indicated in Curr_Price_matrix
 # synt_matrix_old: the syntethic matrix of the previuos day, on default in None meaning that is the
 # first day after the index rebalancing
-# returns a matrix with the same number and order of column of the Curr Price Matrix containing
-# the value of the syntetic portfolio divided by single currency
 # every c.a. 3 months the index is rebalanced, so the synt_matrix function has to be called anew
 
-def synt_matrix_daily(Curr_Price_Matrix,weight_index, synt_matrix_old=None, synt_ptf_value=100):
+def synt_matrix_daily(Curr_Price_Matrix, weight_index, synt_matrix_old = None, synt_ptf_value = 100):
+
     #returns computed considering that today is the last row and yesterday is the row before
-    daily_return=(Curr_Price_Matrix[len(Curr_Price_Matrix)-1,1:]-Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:])/Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:]
-    synt_matrix_date=np.array(Curr_Price_Matrix[len(Curr_Price_Matrix)-1,0])
+    daily_return = (Curr_Price_Matrix[len(Curr_Price_Matrix)-1,1:]-Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:])/Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:]
+    synt_matrix_date = np.array(Curr_Price_Matrix[len(Curr_Price_Matrix)-1,0])
     if synt_matrix_old == None:
         synt_matrix= weight_index*synt_ptf_value
         synt_matrix=np.column_stack((synt_matrix_date,synt_matrix))
