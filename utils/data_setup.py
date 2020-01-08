@@ -6,6 +6,7 @@ from pathlib import Path
 from datetime import datetime
 from datetime import *
 import time
+import data_download
 
 
 
@@ -105,20 +106,23 @@ def fill_time_array(broken_array, ref_array, versus = 'asc'):
 # the return matrix have items as first column and index as second column
 
 def find_index(list_to_find, where_to_find):
-    list_to_find=np.array(list_to_find)
-    where_to_find=np.array(where_to_find)
-    index=[]
-    item=[]
+
+    list_to_find = np.array(list_to_find)
+    where_to_find = np.array(where_to_find)
+    index = []
+    item = []
     for element in list_to_find:
+
         if element in where_to_find:
-            i, = np.where(where_to_find==element)
+            i, = np.where(where_to_find == element)
             index.append(i)
             item.append(element)
     
-    index=np.array(index)
-    item=np.array(item)
-    indexed_item=np.column_stack((item,index))
-    indexed_item=indexed_item[indexed_item[:,0].argsort()]
+    index = np.array(index)
+    item = np.array(item)
+    indexed_item = np.column_stack((item, index))
+    indexed_item = indexed_item[indexed_item[:,0].argsort()]
+
     return indexed_item
 
 
@@ -128,21 +132,25 @@ def find_index(list_to_find, where_to_find):
 #the second column contains the relative weighted variations between T and T-1, the third column contains the T volume
 # specified by "position"(4=close price, 5= volume in crypto, 6=volume in pair)
 
-def substitute_finder(broken_array, reference_array, where_to_lookup,position):
-    missing_item=Diff(reference_array,broken_array)
-    indexed_list=find_index(missing_item, where_to_lookup[:,1])
-    weighted_variations=[]
-    volumes=[]
+def substitute_finder(broken_array, reference_array, where_to_lookup, position):
+
+    missing_item = Diff(reference_array, broken_array)
+    indexed_list = find_index(missing_item, where_to_lookup[:,1])
+
+    weighted_variations = []
+    volumes = []
     for element in indexed_list[:,1]:
-        variation=(where_to_lookup(element,position)-where_to_lookup(element-1,position))/where_to_lookup(element-1,position)
-        volume=where_to_lookup(element,6)
-        weighted_variation=variation*volume
+        variation = (where_to_lookup(element, position) - where_to_lookup(element - 1, position)) / where_to_lookup(element -1 , position)
+        volume = where_to_lookup(element, 6)
+        weighted_variation = variation * volume
         weighted_variations.append(weighted_variation)
         volumes.append(volume)
-    volumes=np.array(volumes)
-    weighted_variations=np.array(weighted_variations)
-    variation_matrix=np.column_stack((indexed_list[:,0],weighted_variations))
-    volume_matrix=np.column_stack((indexed_list[:,0],volumes))
+
+    volumes = np.array(volumes)
+    weighted_variations = np.array(weighted_variations)
+    variation_matrix = np.column_stack((indexed_list[:,0], weighted_variations))
+    volume_matrix = np.column_stack((indexed_list[:,0], volumes))
+    
     return variation_matrix, volume_matrix
 
 
@@ -151,11 +159,14 @@ def substitute_finder(broken_array, reference_array, where_to_lookup,position):
 #the function returns where_to_insert updated with the missing items
 
 def insert_items(index_list, what_to_insert, where_to_insert):
-    index_list=np.array(index_list)
-    what_to_insert=np.array(what_to_insert)
-    where_to_insert=np.array(where_to_insert)
+
+    index_list = np.array(index_list)
+    what_to_insert = np.array(what_to_insert)
+    where_to_insert = np.array(where_to_insert)
+
     for i,index in enumerate(index_list):
-        where_to_insert=np.insert(where_to_insert,index,what_to_insert[i])
+        where_to_insert = np.insert(where_to_insert,index,what_to_insert[i])
+
     return where_to_insert
 
 
@@ -163,12 +174,14 @@ def insert_items(index_list, what_to_insert, where_to_insert):
 #given an index list containing the index value of certain items as founded in where_to_insert
 #the function return an array of element in position i-1, searched in where_to_insert
 
-def find_previous(index_list, where_to_insert):
-    index_list=np.array(index_list)
-    where_to_insert=np.array(where_to_insert)
-    previous_list=[]
+def find_previous(index_list, where_to_insert): 
+
+    index_list = np.array(index_list)
+    where_to_insert = np.array(where_to_insert)
+    previous_list = []
     for index in index_list:
         previous_list.append(where_to_insert[index-1])
+
     return np.array(previous_list)
 
 
@@ -179,30 +192,46 @@ def find_previous(index_list, where_to_insert):
 # based on the info_pos choice the function returns a fixed vector that contain also the values obtained as volume weighted average
 # (of close price, volume crypto or volume in pair) of the daily variations of every exchange in the crypto+pair 
 
-def fix_missing(broken_matrix, reference_array, cryptocurrency, exchange, pair, info_position):
+def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, start_date, end_date = None):
+
+    # set end_date = today if empty
+    if end_date == None:
+        end_date = datetime.now().strftime('%m-%d-%Y')
+
+    # creating the reference date array from start date to end date
+    reference_array = date_array_gen(start_date, end_date)
     broken_array=broken_matrix[:,0]
     ccy_pair=cryptocurrency+pair
+
+    # set the list af all exchanges and then pop out the one in subject
     exchange_list = ['bitflyer', 'bitfinex', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini','kraken']#aggungere itbit
     exchange_list.remove(exchange)
-    fixing_variation=np.array([])
-    fixing_volume=np.array([])
+
+    # iteratively find the missing value in all the exchanges
+    fixing_variation = np.array([])
+    fixing_volume = np.array([])
     for elements in exchange_list:
-        path_name=os.path.join("C:\\","Users","fcodega","hello")
-        file_name=""+elements+"_"+ccy_pair+".json"
-        path=os.path.join(path_name, str(file_name))
-        json_matrix=np.array(json_to_matrix(path))
-        variations, volumes =substitute_finder(broken_array,reference_array,json_matrix, info_position)
-        if fixing_variation.size==0:
-            fixing_variation=variations[:,1]
-            fixing_volume=volumes[:,1]
+
+        matrix = data_download.CW_data_reader(elements, ccy_pair, start_date, end_date)
+        variations, volumes = substitute_finder(broken_array, reference_array, matrix, info_position)
+
+        if fixing_variation.size == 0:
+            fixing_variation = variations[:,1]
+            fixing_volume = volumes[:,1]
         else:
-            fixing_variation=np.column_stack((fixing_variation,variations[:,1]))
-            fixing_volume=np.column_stack((fixing_volume,volumes[:,1]))
-    weighted_variation_value=fixing_variation.sum(axis=1)/fixing_volume.sum(axis=1)
-    index_list=find_index(variations[:,0],broken_matrix[:,0])
-    previous_values=find_previous(index_list[:,1],broken_matrix[:,info_position])
-    value_to_insert=weighted_variation_value*previous_values
-    fixed_column=insert_items(index_list,value_to_insert,broken_matrix[:,info_position])
+            fixing_variation = np.column_stack((fixing_variation, variations[:,1]))
+            fixing_volume = np.column_stack((fixing_volume, volumes[:,1]))
+
+    # find the volume weighted variation and then the value to insert multiplying
+    # the average variation with the previuos value
+    weighted_variation_value = fixing_variation.sum(axis = 1) / fixing_volume.sum(axis = 1)
+    index_list = find_index(variations[:,0], broken_matrix[:,0])
+    previous_values = find_previous(index_list[:,1], broken_matrix[:, info_position])
+    value_to_insert  = weighted_variation_value * previous_values
+
+    # inserting the computed value into the vector
+    fixed_column = insert_items(index_list, value_to_insert, broken_matrix[:, info_position])
+
     return fixed_column
 
 
