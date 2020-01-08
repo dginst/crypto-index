@@ -223,13 +223,20 @@ def perc_volumes_per_exchange(Curr_Exc_Vol):
     return volume_fraction
 
 
-# it returns a matrix of 0 and 1 following the requirements
+# This function creates a matrix of 0 and 1 checking if the first requirement is respected.
+# First_requirement : The crypto-asset has no more than 80% of its combined trading volume 
+# between the reconstitution day and the committe meeting day on any single pricing source.
+# If the requirement is respected the function will had the value 1 on the matrix, if not it will add 0.
 
 def Curr_logic_matrix1(Overall_Requirement_Matrix):
+
     req1_matrix = np.array([])
     Overall_req1_matrix = np.array([])
     for curr_matrix in range(len(Overall_req1_matrix)):
         for row in range(len(Curr_requirement_matrix)):
+
+            # check if any of the value in array row is > than 0.80. If yes add a 0 value in the req1_matrix
+            # if not add value 1 in the req_matrix
             if np.any(Curr_Requirement_matrix[i]) > 0.80:
                 req1_matrix = np.append(req1_matrix, 0)
             else: 
@@ -240,7 +247,17 @@ def Curr_logic_matrix1(Overall_Requirement_Matrix):
 
 
 
-       
+# This function creates a matrix of 0 and 1 checking if the first requirement is respected.
+# 2nd requirement : The crypto-asset's average  trailing trading volume between the reconstitution day and the committe meeting day 
+# is not less to the 2° percentile of the aggregate average  trading volume for the same period 
+# of available crypto-assets after the application of the precedent eligibility Rules.
+# If the requirement is respected the function will had the value 1 on the matrix, if not it will add 0.
+
+def Curr_logic_matrix2(EMWA_weights):
+
+
+
+
 
 # function takes as input:
 # Curr_Pice_matrix: the Price matrix that has different cryptoasset as column and date as row
@@ -273,3 +290,8 @@ def synt_matrix_historic(Curr_Price_Matrix,historic_weight_index, comitee_date):
         else:
             historical_synt_matrix=np.row_stack((historical_synt_matrix,periodic_synt_mat))
     return historical_synt_matrix
+
+
+
+
+
