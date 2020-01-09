@@ -79,8 +79,8 @@ def Diff(list_1, list_2):
 
 
 # return a sorted array of the size of reference_array.
-# if there are more element in ref array, broken_array is filled with the missing elements
-# broken_array HAS TO BE smaller than reference vector
+# if there are more elements in ref array, broken_array is filled with the missing elements
+# broken_array HAS TO BE smaller than reference array
 # default sorting is in ascending way, if descending is needed specify versus='desc'
 
 def fill_time_array(broken_array, ref_array, versus = 'asc'):
@@ -102,7 +102,7 @@ def fill_time_array(broken_array, ref_array, versus = 'asc'):
 
 
 # function that given a list of item, find the items and relative indexes in another list/vector
-# if one or more items in list_to_find are not included in where_to_find the fucntion simply go ahead
+# if one or more items in list_to_find are not included in where_to_find the function simply goes ahead
 # the return matrix have items as first column and index as second column
 
 def find_index(list_to_find, where_to_find):
@@ -127,9 +127,9 @@ def find_index(list_to_find, where_to_find):
 
 
 
-#given a matrix (where_to_lookup), a date reference array and, broken date array with missing date
-#function returns a matrix where the first column contains the list of date that broken array miss
-#the second column contains the relative weighted variations between T and T-1, the third column contains the T volume
+# given a matrix (where_to_lookup), a date reference array and, broken date array with missing date
+# function returns a matrix where the first column contains the list of date that broken array miss
+# the second column contains the relative weighted variations between T and T-1, the third column contains the T volume
 # specified by "position"(4=close price, 5= volume in crypto, 6=volume in pair)
 
 def substitute_finder(broken_array, reference_array, where_to_lookup, position):
@@ -137,7 +137,7 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
     missing_item = Diff(reference_array, broken_array)
     indexed_list = find_index(missing_item, where_to_lookup[:,1])
 
-    weighted_variations = []
+    weighted_variations = [] #####se sono zero tutti? se più di uno è zero? deve completrae al 100% dei casi #####
     volumes = []
     for element in indexed_list[:,1]:
         variation = (where_to_lookup(element, position) - where_to_lookup(element - 1, position)) / where_to_lookup(element -1 , position)
@@ -150,15 +150,18 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
     weighted_variations = np.array(weighted_variations)
     variation_matrix = np.column_stack((indexed_list[:,0], weighted_variations))
     volume_matrix = np.column_stack((indexed_list[:,0], volumes))
-    
+
     return variation_matrix, volume_matrix
 
 
+# function that fills a vector with specified elelments in specified positions
+# function takes as input:
+# where_to_insert = list where insert the item included in what_to_insert
+# what_to_insert = list of items to be inserted
+# index_list = the index position that the items should have in where_to_insert
+# the function returns where_to_insert updated with the missing items 
 
-# given a list of items (what_to_insert) and the index position that the items should have in where_to_insert
-#the function returns where_to_insert updated with the missing items
-
-def insert_items(index_list, what_to_insert, where_to_insert):
+def insert_items(what_to_insert, where_to_insert, index_list):
 
     index_list = np.array(index_list)
     what_to_insert = np.array(what_to_insert)
