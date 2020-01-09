@@ -101,8 +101,8 @@ def fill_time_array(broken_array, ref_array, versus = 'asc'):
 
 
 
-# function that given a list of item, find the items and relative indexes in another list/vector
-# if one or more items in list_to_find are not included in where_to_find the function simply goes ahead
+# function that given a list of items, find the items and relative indexes in another list/vector
+# if one or more items in list_to_find are not included in where_to_find the function return None as position
 # the return matrix have items as first column and index as second column
 
 def find_index(list_to_find, where_to_find):
@@ -117,7 +117,10 @@ def find_index(list_to_find, where_to_find):
             i, = np.where(where_to_find == element)
             index.append(i)
             item.append(element)
-    
+        else:
+            index.append(None)
+            item.append(element)
+
     index = np.array(index)
     item = np.array(item)
     indexed_item = np.column_stack((item, index))
@@ -134,17 +137,24 @@ def find_index(list_to_find, where_to_find):
 
 def substitute_finder(broken_array, reference_array, where_to_lookup, position):
 
+    # find the elements of ref array not included in broken array (the one to check)
     missing_item = Diff(reference_array, broken_array)
+    # find the position in a matrix (row index) of each elements missing in broken array
     indexed_list = find_index(missing_item, where_to_lookup[:,1])
 
     weighted_variations = [] #####se sono zero tutti? se più di uno è zero? deve completrae al 100% dei casi #####
     volumes = []
     for element in indexed_list[:,1]:
-        variation = (where_to_lookup(element, position) - where_to_lookup(element - 1, position)) / where_to_lookup(element -1 , position)
-        volume = where_to_lookup(element, 6)
-        weighted_variation = variation * volume
-        weighted_variations.append(weighted_variation)
-        volumes.append(volume)
+
+        if element != None:
+            variation = (where_to_lookup(element, position) - where_to_lookup(element - 1, position)) / where_to_lookup(element -1 , position)
+            volume = where_to_lookup(element, 6)
+            weighted_variation = variation * volume
+            weighted_variations.append(weighted_variation)
+            volumes.append(volume)
+        else:
+            weighted_variations.append(None) ## 0 or None?
+            volumes.append(None)
 
     volumes = np.array(volumes)
     weighted_variations = np.array(weighted_variations)
@@ -168,7 +178,8 @@ def insert_items(what_to_insert, where_to_insert, index_list):
     where_to_insert = np.array(where_to_insert)
 
     for i,index in enumerate(index_list):
-        where_to_insert = np.insert(where_to_insert,index,what_to_insert[i])
+        where_to_insert = np.insert(where_to_insert,
+        index,what_to_insert[i])
 
     return where_to_insert
 
@@ -183,7 +194,7 @@ def find_previous(index_list, where_to_insert):
     where_to_insert = np.array(where_to_insert)
     previous_list = []
     for index in index_list:
-        previous_list.append(where_to_insert[index-1])
+        previous_list.append(where_to_insert[index - 1])
 
     return np.array(previous_list)
 
@@ -216,6 +227,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
     for elements in exchange_list:
 
         matrix = data_download.CW_data_reader(elements, ccy_pair, start_date, end_date)
+        # TODO : add exception if API does not work
         variations, volumes = substitute_finder(broken_array, reference_array, matrix, info_position)
 
         if fixing_variation.size == 0:
@@ -227,6 +239,10 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
 
     # find the volume weighted variation and then the value to insert multiplying
     # the average variation with the previuos value
+    for i in range(len(reference_array)):
+        count_none = 0
+        ####to be finished
+
     weighted_variation_value = fixing_variation.sum(axis = 1) / fixing_volume.sum(axis = 1)
     index_list = find_index(variations[:,0], broken_matrix[:,0])
     previous_values = find_previous(index_list[:,1], broken_matrix[:, info_position])
