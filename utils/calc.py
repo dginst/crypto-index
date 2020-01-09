@@ -248,7 +248,7 @@ def perc_volumes_per_exchange(Curr_Exc_Vol):
 
 def Curr_logic_matrix1(perc_volumes_per_exchange):
 
-    curr_logic_matrix1 = np.array([]):
+    curr_logic_matrix1 = np.array([])
     volume_perc = perc_volumes_per_exchange()
 
     for row in range(len(volume_perc)):
@@ -277,8 +277,8 @@ def perc_emwa_per_curr(emwa_currencies_volume):
     for i,index in enumerate(rebalance_start):
         rebalance_row = np.sum(emwa_currencies_volume[index:(index+rebalance_interval[i][1:])], axis=0)
         percentage = rebalance_row/rebalance_row.sum()
-        curr_req2_matrix = np.append(curr_req2_matrix, percentage)
-        emwa_volume_fraction = np.column_stack((rebalance_start[1:],vewma_volume_fraction))
+        emwa_volume_fraction = np.append(emwa_volume_fraction, percentage)
+        emwa_volume_fraction = np.column_stack((rebalance_start[1:], ewma_volume_fraction))
 
     return emwa_volume_fraction
 
@@ -295,9 +295,12 @@ def Curr_logic_matrix2(perc_emwa_per_curr):
     curr_logic_matrix2 = np.array([])
     perc = perc_emwa_per_curr()
 
+    # for loop that checks if the value j of the row i is bigger than 0.02 
+    # where i is the row of the matrix emwa_volume_fraction
+    # j = e percentage of the 90-days ewma volume against the aggreate 90-days ewma volume of the curr j
     for i in range(perc.shape[0]):
         for j in range(perc.shape[1]):
-            if perc[i,j] > 0.2:
+            if perc[i,j] > 0.02:
                 logic_row = np.append(logic_row, 1)
             else:
                 logic_row = np.append(logic_row, 0)
