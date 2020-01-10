@@ -241,6 +241,10 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
     # the average variation with the previuos value
     for i in range(len(reference_array)):
         count_none = 0
+        for j in range(len(exchange_list)):
+            if fixing_variation[i,j] = None:
+                count_none = count_none + 1
+        if count_none > 
         ####to be finished
 
     weighted_variation_value = fixing_variation.sum(axis = 1) / fixing_volume.sum(axis = 1)
@@ -301,4 +305,6 @@ def date_reformat(date_to_check, separator, order = 'MM-DD-YYYY'):
             return_date = date_to_check[:4] + separator + date_to_check[4:6] + separator + date_to_check[6:]
         else:
             return_date = date_to_check[:2] + separator + date_to_check[2:4] + separator + date_to_check[4:]
+    else:
+        return_date = date_to_check
     return return_date
