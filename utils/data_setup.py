@@ -214,8 +214,8 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
 
     # creating the reference date array from start date to end date
     reference_array = date_array_gen(start_date, end_date)
-    broken_array=broken_matrix[:,0]
-    ccy_pair=cryptocurrency+pair
+    broken_array = broken_matrix[:,0]
+    ccy_pair = cryptocurrency + pair
 
     # set the list af all exchanges and then pop out the one in subject
     exchange_list = ['bitflyer', 'bitfinex', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini','kraken']#aggungere itbit
@@ -224,9 +224,16 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
     # iteratively find the missing value in all the exchanges
     fixing_variation = np.array([])
     fixing_volume = np.array([])
+    weighted_variation_value = np.array([])
+    count_exchange = 0
     for elements in exchange_list:
 
+        # create a data frame connecting to CryptoWatch API
         matrix = data_download.CW_data_reader(elements, ccy_pair, start_date, end_date)
+        # checking if data frame is empty: if not then the ccy_pair exists in the exchange
+        if Check_null(matrix) == False:
+            count_exchange = count_exchange + 1
+
         # TODO : add exception if API does not work
         variations, volumes = substitute_finder(broken_array, reference_array, matrix, info_position)
 
@@ -242,15 +249,22 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
     for i in range(len(reference_array)):
         count_none = 0
         for j in range(len(exchange_list)):
-            if fixing_variation[i,j] = None:
+            if fixing_variation[i,j] == None:
                 count_none = count_none + 1
-        if count_none > 
-        ####to be finished
+                fixing_variation[i,j] = 0
+                fixing_volume[i,j] = 0
+        # checking if single date is missing in all the exchanges
+        # if yes a 
+        # if no 
+        if count_none == count_exchange:
+            weighted_variation_value[i] = 0
+        else:
+            weighted_variation_value[i] = fixing_variation[i].sum(axis = 1) / fixing_volume[i].sum(axis = 1)
 
-    weighted_variation_value = fixing_variation.sum(axis = 1) / fixing_volume.sum(axis = 1)
+ 
     index_list = find_index(variations[:,0], broken_matrix[:,0])
     previous_values = find_previous(index_list[:,1], broken_matrix[:, info_position])
-    value_to_insert  = weighted_variation_value * previous_values
+    value_to_insert  =(weighted_variation_value + 1) * previous_values
 
     # inserting the computed value into the vector
     fixed_column = insert_items(index_list, value_to_insert, broken_matrix[:, info_position])
@@ -295,7 +309,7 @@ def Check_null(item):
 # both the YY ans YYYY format; works on default with MM-DD_YYYY format and 
 # if different has to be specified ('YYYY-DD-MM' or 'YYYY-MM-DD')
 
-def date_reformat(date_to_check, separator, order = 'MM-DD-YYYY'):
+def date_reformat(date_to_check, separator = '-', order = 'MM-DD-YYYY'):
     if ("/" in date_to_check and len(date_to_check) == 10):
         return_date = date_to_check.replace("/", separator)  
     elif ("/" in date_to_check and len(date_to_check) == 8):
@@ -307,4 +321,5 @@ def date_reformat(date_to_check, separator, order = 'MM-DD-YYYY'):
             return_date = date_to_check[:2] + separator + date_to_check[2:4] + separator + date_to_check[4:]
     else:
         return_date = date_to_check
+
     return return_date

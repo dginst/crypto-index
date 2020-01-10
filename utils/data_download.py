@@ -48,7 +48,7 @@ def CW_data_reader(exchange, currencypair, start_date = '01-01-2016', end_date =
     Pair = currencypair[3:].upper()
     
     # check date format
-    start_date = data_setup.date_reformat(start_date, '-')
+    start_date = data_setup.date_reformat(start_date)
     start_date = datetime.strptime(start_date, '%m-%d-%Y')
 
     # set end_date = today if empty
