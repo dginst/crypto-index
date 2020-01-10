@@ -6,7 +6,7 @@ import os
 import pandas as pd
 import io
 import numpy as np
-import data_setup
+import utils.data_setup as data_setup
 
 # function that creates json files downloading the info from Cryptowatch website
 # specifically, given a list of exchange (exchange_array) and a list of currency pair (currencypair_array),	
