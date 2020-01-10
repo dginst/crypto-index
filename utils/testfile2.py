@@ -29,6 +29,6 @@ import numpy as np
 # t=np.row_stack((a,b))
 # print(t)
 
-a = data_download.CW_data_reader('coinbase_pro', 'btcusd', '01-01-2020')
+a = data_download.CW_data_reader('coinbase-pro', 'btcusdct', '01/01/2020')
 
 print(a)
