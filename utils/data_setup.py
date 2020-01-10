@@ -214,7 +214,9 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
 
     # creating the reference date array from start date to end date
     reference_array = date_array_gen(start_date, end_date)
+    # select just the date on broken_matrix
     broken_array = broken_matrix[:,0]
+    
     ccy_pair = cryptocurrency + pair
 
     # set the list af all exchanges and then pop out the one in subject
@@ -235,8 +237,9 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
             count_exchange = count_exchange + 1
 
         # TODO : add exception if API does not work
-        variations, volumes = substitute_finder(broken_array, reference_array, matrix, info_position)
 
+        # find variation and volume of the selected exchange and assign them to the related matrix
+        variations, volumes = substitute_finder(broken_array, reference_array, matrix, info_position)
         if fixing_variation.size == 0:
             fixing_variation = variations[:,1]
             fixing_volume = volumes[:,1]
@@ -253,18 +256,19 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
                 count_none = count_none + 1
                 fixing_variation[i,j] = 0
                 fixing_volume[i,j] = 0
+
         # checking if single date is missing in all the exchanges
-        # if yes a 
-        # if no 
+        # if yes assign zero variation (the prevoius day value will be taken)
+        # if no compute the weighted variation
         if count_none == count_exchange:
             weighted_variation_value[i] = 0
         else:
             weighted_variation_value[i] = fixing_variation[i].sum(axis = 1) / fixing_volume[i].sum(axis = 1)
 
- 
+    # find related index, previuos value and compute the value to insert 
     index_list = find_index(variations[:,0], broken_matrix[:,0])
     previous_values = find_previous(index_list[:,1], broken_matrix[:, info_position])
-    value_to_insert  =(weighted_variation_value + 1) * previous_values
+    value_to_insert = (weighted_variation_value + 1) * previous_values
 
     # inserting the computed value into the vector
     fixed_column = insert_items(index_list, value_to_insert, broken_matrix[:, info_position])
