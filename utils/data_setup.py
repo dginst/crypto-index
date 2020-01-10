@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import datetime
 from datetime import *
 import time
-import data_download
+import utils.data_download as data_download
 
 
 
@@ -15,7 +15,7 @@ import data_download
 # default format is in second since the epoch, type timeST='N' for date in format YY-mm-dd
 # write all date in MM/DD/YYYY format
 
-def date_array_gen(start_date, end_date = None, timeST = 'Y'):
+def date_array_gen(start_date, end_date = None, timeST = 'Y', EoD = 'Y'):
 
     # set end_date = today if empty
     if end_date == None:
@@ -24,7 +24,10 @@ def date_array_gen(start_date, end_date = None, timeST = 'Y'):
     date_index = pd.date_range(start_date, end_date)
     
     DateList = date_list(date_index, timeST)
-    
+
+    if EoD == 'Y':
+        DateList = DateList[:len(DateList)-1]
+
     return DateList
 
 
@@ -59,14 +62,18 @@ def date_list(date_index, timeST = 'Y'):
     DateList=[]
     
     for date in date_index:
-        DateList.append(str(int(time.mktime(date.timetuple()))))
-    
+        val=int(time.mktime(date.timetuple()))
+        val=val+3600
+        DateList.append(val)
+   
+    NoStamp = []
     if timeST=='N':
         for string in DateList:
             value = int(string)
-            DateList.append(datetime.utcfromtimestamp(value).strftime('%Y-%m-%d'))
-
-    return DateList
+            NoStamp.append(datetime.utcfromtimestamp(value).strftime('%Y-%m-%d'))
+        return NoStamp
+    else:
+        return DateList
 
 
 
@@ -185,14 +192,19 @@ def insert_items(what_to_insert, where_to_insert, index_list):
 
 
 
-#given an index list containing the index value of certain items as founded in where_to_insert
-#the function return an array of element in position i-1, searched in where_to_insert
+# function returns an array of elements in position i-1, as founded in where_to_insert, according
+# to the position contained in index_list
+# function takes as input:
+# index_list = a list/array of indexes (position) related to elelments of interest
+# where_to_insert = a vector where search the previous elements according to the index given
 
 def find_previous(index_list, where_to_insert): 
 
+    # turn vectors into numpy array
     index_list = np.array(index_list)
     where_to_insert = np.array(where_to_insert)
     previous_list = []
+
     for index in index_list:
         previous_list.append(where_to_insert[index - 1])
 
@@ -215,8 +227,8 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
     # creating the reference date array from start date to end date
     reference_array = date_array_gen(start_date, end_date)
     # select just the date on broken_matrix
-    broken_array = broken_matrix[:,0]
-    
+   ### broken_array = broken_matrix[:,0]
+    broken_array = broken_matrix['Time']
     ccy_pair = cryptocurrency + pair
 
     # set the list af all exchanges and then pop out the one in subject
