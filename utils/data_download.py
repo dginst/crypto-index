@@ -75,7 +75,10 @@ def CW_data_reader(exchange, currencypair, start_date = '01-01-2016', end_date =
     # do not show unuseful messages
     pd.options.mode.chained_assignment = None
     
-    Data_Frame = pd.DataFrame(response['result']['86400'], columns = header)
+    try:
+        Data_Frame = pd.DataFrame(response['result']['86400'], columns = header)
+    except:
+        Data_Frame = np.array([])
     
     return Data_Frame 
 
