@@ -16,13 +16,10 @@ The DGI crypto Index is a volume-weighted index and is composed of the most rele
 
 ## Implementation
 
-The software download the daily crypto-asset data in terms of trade volume and prica of the 8 selected pricing sources that proved to be reliable in matter of real volumes and legal compliance: 
+The software downloads the daily crypto-asset data in terms of trade volume and price of the 8 selected pricing sources that proved to be reliable in matter of real volumes and legal compliance: 
 
 <p float="left">
-  <img src="https://www.google.com/search?q=bitflyer+logo&safe=active&sxsrf=ACYBGNTIOQgOa9vLaW_If0JYGbanoggjHQ:1578672547663&source=lnms&tbm=isch&sa=X&ved=2ahUKEwj3863DtfnmAhUBPewKHbOkCvkQ_AUoAXoECAwQAw&biw=1536&bih=722#imgrc=Fg7P2S13YQqUqM:?raw=true" width="100" />
-
-  <img src="https://www.google.com/url?sa=i&source=images&cd=&ved=2ahUKEwj165XstfnmAhXJAGMBHeGrD5QQjRx6BAgBEAQ&url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FFile%3ABitstamp_logo_(2017).png&psig=AOvVaw2zKj4ZDWwyb-8Gx6NNNeG4&ust=1578759024735392?raw=true" width="100" /> 
-
-  <img src="https://www.google.com/url?sa=i&source=images&cd=&ved=2ahUKEwir95KptvnmAhVmAGMBHSeBAH0QjRx6BAgBEAQ&url=https%3A%2F%2Fforexreviewz.com%2Fcoinbase-pro-review%2F&psig=AOvVaw2iFT6dmItqlkjg5iyTtJOc&ust=1578759159435078?raw=True" width="100" />
+  <img src="https://www.google.com/search?q=bitflyer+logo&safe=active&sxsrf=ACYBGNTIOQgOa9vLaW_If0JYGbanoggjHQ:1578672547663&source=lnms&tbm=isch&sa=X&ved=2ahUKEwj3863DtfnmAhUBPewKHbOkCvkQ_AUoAXoECAwQAw&biw=1536&bih=722#imgrc=Fg7P2S13YQqUqM:?raw=true"  />
 </p>
 BitFlyer, BitStamp, Bittrex, Coinbase-Pro, Gemini, itBit, Kraken, Pooniex. The Data of these Exchanges are downloaded through the REST API of the website https://cryptowat.ch/ except for itBit's data that are downloaded through the REST API of itBit website.
+
