@@ -1,6 +1,7 @@
 import numpy as np
 import datetime
 from datetime import *
+from datetime import date, datetime, timedelta
 
 
 # Return the Initial Divisor for the index. It identifies the position of the initial date in the Curr_Volume_Matrix. 
@@ -116,6 +117,59 @@ def emwa_currencies_volume(Curr_Volume_Matrix, moving_average_period = 90):
 
     return emwa_gen
 
+# this function return a range of data in a certain interval. Is usefull because is it possible  to iterate on it.
+
+def perdelta(start, end, delta):
+
+    curr = start
+    while curr < end:
+        yield curr
+        curr += delta
+
+    return 
+
+
+# this function generates an array cointaing the date of the start of each quarter from the start of the index till the current day.
+def start_q(perdelta): 
+
+    start_q = np.array([])
+    for result in perdelta(datetime.date(2016, 1, 1), datetime.date.today(), relativedelta(months=3)):
+        start_q = np.append(start_q, result)
+    
+    return start_q
+
+
+# this fuction checks if a day is a business day or not.
+# returns a bool value 
+
+def is_business_day(date):
+    
+    return bool(len(pd.bdate_range(date, date)))
+
+
+def board_meeting_day():
+    
+    board_day = np.array([])
+
+    for result in perdelta(datetime.date(2015, 12, 21), datetime.date.today(), relativedelta(months=3)):
+        # checks if the date generated is a business day, if yes the date is added to the array
+        # if not, the fuction go 1 day back and makes the same check. If the condition is still not respected, is going back another day.
+        # the if statement goes back two days maximum: Sunday and Saturday.
+        if is_business_day(result) == True:
+            board_day = np.append(board_day, result)
+        elif is_business_day(result-datetime.timedelta(days= 1)) == True:
+            board_day = np.append(board_day, result-datetime.timedelta(days= 1))
+        else:
+           board_day = np.append(board_day result-datetime.timedelta(days= 2))
+    
+    return board_day
+
+
+# returns an array with the day before of each board meeting.
+
+def day_before_board():
+
+    before_board_day = board_meeting_day() - datetime.timedelta(days= 1)
 
 # function returns a matrix with the weights that every currency should have
 # takes as input the currecny matrix of volume and the logic matrix 
@@ -127,6 +181,17 @@ def EMWA_weights(Curr_Volume_Matrix, logic_matrix):
     EMWA_weights_matrix = (emwa_volume_curr * logic_matrix) / total_EMWA_volume[:, None]
 
     return EMWA_weights_matrix
+
+
+#function that returns a matrix containing the starting weights of the index for the Quarter.
+# takes as input the EMWA_weights_matrix selecting the relevant date.
+
+def quarter_weight(EMWA_weights):
+
+
+
+
+
 
 
 # function returns a matrix with the same number and order of column of the Curr Price Matrix containing
@@ -308,6 +373,7 @@ def Curr_logic_matrix2(perc_emwa_per_curr):
     curr_logic_matrix2 = np.column_stack((logic_row,curr_logic_matrix2))
 
     return curr_logic_matrix2
+
 
 
 # function takes as input:
