@@ -133,7 +133,7 @@ def perdelta(start, end, delta):
 def start_q(perdelta): 
 
     start_q = np.array([])
-    for result in perdelta(datetime.date(2016, 1, 1), datetime.date.today(), relativedelta(months=3)):
+    for result in perdelta(datetime.datetime(2016, 1, 1), datetime.datetime.today(), relativedelta(months=3)):
         start_q = np.append(start_q, result)
     
     return start_q
@@ -146,21 +146,23 @@ def is_business_day(date):
     
     return bool(len(pd.bdate_range(date, date)))
 
+# this function generates an array cointaing the date of the boeard meeting in each quarter on the 21st of 
+# the third month of the quarter.
 
 def board_meeting_day():
     
     board_day = np.array([])
 
-    for result in perdelta(datetime.date(2015, 12, 21), datetime.date.today(), relativedelta(months=3)):
+    for result in perdelta(datetime.datetime(2015, 12, 21), datetime.datetime.today(), relativedelta(months=3)):
         # checks if the date generated is a business day, if yes the date is added to the array
         # if not, the fuction go 1 day back and makes the same check. If the condition is still not respected, is going back another day.
         # the if statement goes back two days maximum: Sunday and Saturday.
         if is_business_day(result) == True:
-            board_day = np.append(board_day, result)
-        elif is_business_day(result-datetime.timedelta(days= 1)) == True:
-            board_day = np.append(board_day, result-datetime.timedelta(days= 1))
+            board_day = np.append(board_day, result.timestamp())
+        elif is_business_day(result - (datetime.timedelta(days= 1)).timestamp()) == True:
+            board_day = np.append(board_day, (result - datetime.timedelta(days= 1)).timestamp())
         else:
-           board_day = np.append(board_day result-datetime.timedelta(days= 2))
+            board_day = np.append(board_day, (result - datetime.timedelta(days= 2)).timestamp())
     
     return board_day
 
@@ -169,9 +171,11 @@ def board_meeting_day():
 
 def day_before_board():
 
-    before_board_day = board_meeting_day() - datetime.timedelta(days= 1)
+    before_board_day = board_meeting_day() - 86400
 
     return before_board_day
+
+
 
 # function returns a matrix with the weights that every currency should have
 # takes as input the currecny matrix of volume and the logic matrix 
@@ -185,17 +189,30 @@ def EMWA_weights(Curr_Volume_Matrix, logic_matrix):
     return EMWA_weights_matrix
 
 
-#function that returns a matrix containing the starting weights of the index for the Quarter.
-# takes as input the EMWA_weights_matrix selecting the relevant date.
+# return a matrix of the index weights at the start of each quarter
+# takes as imput the array with the dates = the day before the meeing day ( day_before_board() )
+# takes as imput the matrix EWMA_weights
 
-def quarter_weight(EMWA_weights):
+def q_weights(day_before_board, EWMA_weights):
+    
+    dates = day_before_board()
+    weights = EWMA_weights()
+    q_weights = np.array([])
+    
+    for date in dates:
+
+        if q_weights == None:
+            row = weights[weights[:, 0] == date]
+            q_weights = np.append(q_weights, row)
+        
+        else:
+            row = weights[weights[:, 0] == date]
+            q_weights = np.stack((q_weights, row))
+
+    return q_weights
 
 
-
-
-
-
-
+    
 # function returns a matrix with the same number and order of column of the Curr Price Matrix containing
 # the value of the syntetic portfolio divided by single currency
 # function take as input:
