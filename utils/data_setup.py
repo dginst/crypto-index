@@ -345,3 +345,39 @@ def date_reformat(date_to_check, separator = '-', order = 'MM-DD-YYYY'):
         return_date = date_to_check
 
     return return_date
+
+
+# TODO description
+# TODO finish
+
+def ECB_setup (key_curr_vector, Start_Period, End_Period):
+
+    date = date_array_gen(Start_Period, End_Period, timeST = 'N')
+    print(date)
+    header = ['Date', 'Currency', 'Rate']
+    Exchange_Matrix = np.array([])
+    for i, single_date in enumerate(date):
+
+        single_date_ex_matrix = data_download.ECB_rates_extractor(key_curr_vector, date[i])
+        
+        if Check_null(single_date_ex_matrix) == False:
+            date_arr = np.full(len(key_curr_vector),single_date)
+            curr_arr = single_date_ex_matrix['CURRENCY'] + '/USD'
+            curr_arr = np.where(curr_arr == 'USD/USD', 'EUR/USD', curr_arr)
+            rate_arr = single_date_ex_matrix['USD based rate']
+            rate_arr = np.where(rate_arr == 1.000000, 1/single_date_ex_matrix['OBS_VALUE'][0], rate_arr)
+            array = np.column_stack((date_arr, curr_arr, rate_arr))
+            if Exchange_Matrix.size == 0:
+                Exchange_Matrix = array
+            else:
+                Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
+        # else:
+        #     while Check_null()
+        #     exception_date = date(i) - timedelta(1)
+        #     exception_matrix = data_download.ECB_rates_extractor(key_curr_vector, exception_date)
+        #     if Check_null(exception_matrix) == False:
+
+
+
+    return pd.DataFrame(Exchange_Matrix, columns = header)
+

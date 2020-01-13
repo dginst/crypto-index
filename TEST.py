@@ -11,27 +11,32 @@ import time
 
 
 crypto = ['btc', 'eth']
-pair = ['usd', 'jpy', 'gbp'] #, 'eur', 'cad', 'usdt', 'usdc'
-currencypair_array = []
-for i in crypto:
-    for j in pair:
-        crypto_pair = i + j
-        currencypair_array.append(crypto_pair)
+pair_array = ['usd', 'jpy', 'gbp'] #, 'eur', 'cad', 'usdt', 'usdc'
+
+# for i in crypto:
+#     for j in pair:
+#         crypto_pair = i + j
+#         currencypair_array.append(crypto_pair)
 
 Crypto_Asset = ['BTC', 'ETH']
-Exchanges = ['bitfinex','bitflyer']
+Exchanges = ['bitfinex'] #,'bitflyer'
 start_date = '01-01-2020'
-print(currencypair_array)
 reference_date_vector = np.array(data_setup.date_array_gen(start_date, timeST='Y'))
-print(reference_date_vector)
+
+
+
+#print(reference_date_vector)
 Crypto_Asset_Prices = np.matrix([])
 Crypto_Asset_Volume = np.matrix([])
 
 for CryptoA in Crypto_Asset:
     print(CryptoA)
+    currencypair_array = []
     Exchange_Price = np.matrix([])
     Exchange_Volume = np.matrix([])
     Ex_PriceVol = np.matrix([])
+    for i in pair_array:
+        currencypair_array.append(CryptoA.lower() + i)
 
     for exchange in Exchanges:
         
@@ -105,11 +110,16 @@ for CryptoA in Crypto_Asset:
             Exchange_Price = np.column_stack((Exchange_Price, Ccy_Pair_Price))
             Exchange_Volume = np.column_stack((Exchange_Volume, Ccy_Pair_Volume))
             Ex_PriceVol = np.column_stack((Ex_PriceVol, Ccy_Pair_PxV))
-        
-    # computing the volume weighted average price of the single Crypto_Asset ("CryptoA") into a single vector
-    Exchange_Price = Ex_PriceVol.sum(axis = 1) / Exchange_Volume.sum(axis = 1) 
-    # computing the total volume  average price of the single Crypto_Asset ("CryptoA") into a single vector
-    Exchange_Volume = Exchange_Volume.sum(axis = 1)
+       
+   
+    try:
+        # computing the volume weighted average price of the single Crypto_Asset ("CryptoA") into a single vector
+        Exchange_Price = Ex_PriceVol.sum(axis = 1) / Exchange_Volume.sum(axis = 1) 
+        # computing the total volume  average price of the single Crypto_Asset ("CryptoA") into a single vector
+        Exchange_Volume = Exchange_Volume.sum(axis = 1)
+    except np.AxisError:
+        Exchange_Price = Exchange_Price
+        Exchange_Volume = Exchange_Volume
 
     # creating every loop the matrices containing the data referred to all the Cryptoassets
     # Crypto_Asset_Price contains the prices of all the cryptocurrencies
@@ -121,5 +131,6 @@ for CryptoA in Crypto_Asset:
         Crypto_Asset_Prices = np.column_stack((Crypto_Asset_Prices, Exchange_Price))
         Crypto_Asset_Volume = np.column_stack((Crypto_Asset_Volume, Exchange_Volume))
 
-
+Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns = Crypto_Asset)
+Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns = Crypto_Asset)
 print(Crypto_Asset_Prices)
