@@ -70,8 +70,8 @@ def CW_data_reader(exchange, currencypair, start_date = '01-01-2016', end_date =
     # API call
     response = requests.get(request_url)
     response = response.json()
-    header = ['Time', 'Open', 'High', 'Low', 'Close Price', Crypto + " Volume", Pair + " Volume"]
-    
+    #header = ['Time', 'Open', 'High', 'Low', 'Close Price', Crypto + " Volume", Pair + " Volume"]
+    header = ['Time', 'Open', 'High', 'Low', 'Close Price', "Crypto Volume", "Pair Volume"]
     # do not show unuseful messages
     pd.options.mode.chained_assignment = None
     
