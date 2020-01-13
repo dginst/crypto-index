@@ -171,6 +171,8 @@ def day_before_board():
 
     before_board_day = board_meeting_day() - datetime.timedelta(days= 1)
 
+    return before_board_day
+
 # function returns a matrix with the weights that every currency should have
 # takes as input the currecny matrix of volume and the logic matrix 
 
