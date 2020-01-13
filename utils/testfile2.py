@@ -13,6 +13,7 @@ import numpy as np
 
 
 # a=[1000,3,4,5,6,2,7]
+# a=[1,3,4,5,6,2,7]
 # b=[2,3,4,5,6,7,8]
 # a=np.array(a)
 # b=np.array(b)

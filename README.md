@@ -16,6 +16,8 @@ The DGI crypto Index is a volume-weighted index and is composed of the most rele
 
 ## Implementation
 
+# Data Download
+
 The software downloads the daily crypto-asset data in terms of trade volume and price of the 8 selected pricing sources that proved to be reliable in matter of real volumes and legal compliance: 
 
 <p float="left">
@@ -23,3 +25,9 @@ The software downloads the daily crypto-asset data in terms of trade volume and 
 </p>
 BitFlyer, BitStamp, Bittrex, Coinbase-Pro, Gemini, itBit, Kraken, Pooniex. The Data of these Exchanges are downloaded through the REST API of the website https://cryptowat.ch/ except for itBit's data that are downloaded through the REST API of itBit website.
 
+Is it possible to find the functions in the utils/data_download.py file.
+
+# Data Setup
+
+
+# Index Computation
