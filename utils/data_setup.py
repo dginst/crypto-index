@@ -12,7 +12,9 @@ import utils.data_download as data_download
 
 # function that generate an array of date starting from start_date to end_date
 # if not specified end_date = today() 
-# default format is in second since the epoch, type timeST='N' for date in format YY-mm-dd
+# default format is in second since the epoch (timeST = 'Y'), type timeST='N' for date in format YY-mm-dd
+# function considers End of Day price series so, if not otherwise specified,
+# the returned array of date will be from start to today - 1
 # write all date in MM/DD/YYYY format
 
 def date_array_gen(start_date, end_date = None, timeST = 'Y', EoD = 'Y'):
@@ -139,17 +141,21 @@ def find_index(list_to_find, where_to_find):
 
 # given a matrix (where_to_lookup), a date reference array and, broken date array with missing date
 # function returns a matrix where the first column contains the list of date that broken array miss
-# the second column contains the relative weighted variations between T and T-1, the third column contains the T volume
-# specified by "position"(4=close price, 5= volume in crypto, 6=volume in pair)
+# the second column contains the relative weighted variations between T and T-1, the third column contains
+# the T volume specified by "position"(4=close price, 5= volume in crypto, 6=volume in pair)
 
 def substitute_finder(broken_array, reference_array, where_to_lookup, position):
 
     # find the elements of ref array not included in broken array (the one to check)
     missing_item = Diff(reference_array, broken_array)
     # find the position in a matrix (row index) of each elements missing in broken array
-    indexed_list = find_index(missing_item, where_to_lookup[:,1])
+    indexed_list = find_index(missing_item, where_to_lookup['Time'])
 
-    weighted_variations = [] #####se sono zero tutti? se più di uno è zero? deve completrae al 100% dei casi #####
+    # setting position as column name
+    header = ['Time', 'Open', 'High', 'Low', 'Close Price', "Crypto Volume", "Pair Volume"]
+    position = header[position]
+
+    weighted_variations = [] #####se sono zero tutti? se più di uno è zero? deve completare al 100% dei casi #####
     volumes = []
     for element in indexed_list[:,1]:
 
@@ -248,19 +254,19 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
         if Check_null(matrix) == False:
             count_exchange = count_exchange + 1
 
-        # TODO : add exception if API does not work
-
-        # find variation and volume of the selected exchange and assign them to the related matrix
-        variations, volumes = substitute_finder(broken_array, reference_array, matrix, info_position)
-        if fixing_variation.size == 0:
-            fixing_variation = variations[:,1]
-            fixing_volume = volumes[:,1]
-        else:
-            fixing_variation = np.column_stack((fixing_variation, variations[:,1]))
-            fixing_volume = np.column_stack((fixing_volume, volumes[:,1]))
+            # if the matrix is not null, find variation and volume of the selected exchange
+            # and assign them to the related matrix
+            variations, volumes = substitute_finder(broken_array, reference_array, matrix, info_position)
+            if fixing_variation.size == 0:
+                fixing_variation = variations[:,1]
+                fixing_volume = volumes[:,1]
+            else:
+                fixing_variation = np.column_stack((fixing_variation, variations[:,1]))
+                fixing_volume = np.column_stack((fixing_volume, volumes[:,1]))
 
     # find the volume weighted variation and then the value to insert multiplying
     # the average variation with the previuos value
+    print(fixing_variation)
     for i in range(len(reference_array)):
         count_none = 0
         for j in range(len(exchange_list)):
