@@ -10,8 +10,9 @@ for pair in ['btc']:
 	currencypair_array = [""+pair+"usd", ""+pair+"jpy"] #, ""+pair+"cad", ""+pair+"gbp", ""+pair+"usdt", ""+pair+"usdc", ""+pair+"jpy"]
 Crypto_Asset = ['BTC']
 Exchanges = ['bitfinex','bitflyer']
+start_date = '01-01-2020'
 
-reference_date_vector = np.array(data_setup.date_array_gen('01-01-2016'))
+reference_date_vector = np.array(data_setup.date_array_gen(start_date))
 Crypto_Asset_Prices = np.matrix([])
 Crypto_Asset_Volume = np.matrix([])
 
@@ -32,7 +33,7 @@ for CryptoA in Crypto_Asset:
             crypto = cp[:3]
             pair = cp[3:]
             # create the matrix for the single currency_pair connecting to CryptoWatch website
-            matrix=data_download.CW_data_reader(exchange,cp,'01-01-2016')
+            matrix=data_download.CW_data_reader(exchange, cp, start_date)
 
             # creates the to-be matrix of the cp assigning the reference date vector as first column
             cp_matrix = reference_date_vector
@@ -44,7 +45,7 @@ for CryptoA in Crypto_Asset:
                 if matrix.size != reference_date_vector.size:
                                     
                     for i in range(7):
-                        fixed_vector = data_setup.fix_missing(matrix, exchange, crypto, pair, i+1, '01-01-2016')
+                        fixed_vector = data_setup.fix_missing(matrix, exchange, crypto, pair, i+1, start_date)
                         cp_matrix = np.column_stack((cp_matrix, fixed_vector))
                     
                 # then retrieves the wanted data 

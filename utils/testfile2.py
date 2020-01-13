@@ -12,11 +12,7 @@ import numpy as np
 # a = 'bitfinex'
 
 
-<<<<<<< HEAD
 # a=[1000,3,4,5,6,2,7]
-=======
-# a=[1,3,4,5,6,2,7]
->>>>>>> 3b92781b0b89ee0ccfe078526a0afdcb85bb5e79
 # b=[2,3,4,5,6,7,8]
 # a=np.array(a)
 # b=np.array(b)
@@ -34,7 +30,6 @@ import numpy as np
 # print(c*2)
 # t=np.row_stack((a,b))
 # print(t)
-<<<<<<< HEAD
 # y=[1,2,3,4,5,6,7,8]
 # y=np.array(y)
 # print(y)
@@ -89,11 +84,10 @@ import numpy as np
 # print(len(c[:,0]))
 # print(c)
 
-s=data_setup.date_reformat('12-01-1991','-')
-print(s)
-=======
-
-a = data_download.CW_data_reader('coinbase-pro', 'btcusdct', '01/01/2020')
-
-print(a)
->>>>>>> 3b92781b0b89ee0ccfe078526a0afdcb85bb5e79
+# s=data_download.CW_data_reader('coinbase-pro','btcusdt','01-01-2020')
+# print(s)
+end_date = datetime.now().strftime('%m-%d-%Y')
+print(end_date)
+start_date='01-01-2020'
+date_index = pd.date_range(start_date, end_date)
+print(date_index)

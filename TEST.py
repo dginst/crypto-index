@@ -10,20 +10,25 @@ from datetime import *
 import time
 
 
+crypto = ['btc', 'eth']
+pair = ['usd', 'jpy', 'gbp'] #, 'eur', 'cad', 'usdt', 'usdc'
+currencypair_array = []
+for i in crypto:
+    for j in pair:
+        crypto_pair = i + j
+        currencypair_array.append(crypto_pair)
 
-for pair in ['btc']:
-	currencypair_array = [""+pair+"usd", ""+pair+"jpy"] #, ""+pair+"cad", ""+pair+"gbp", ""+pair+"usdt", ""+pair+"usdc", ""+pair+"jpy"]
-Crypto_Asset = ['BTC']
+Crypto_Asset = ['BTC', 'ETH']
 Exchanges = ['bitfinex','bitflyer']
 start_date = '01-01-2020'
-
+print(currencypair_array)
 reference_date_vector = np.array(data_setup.date_array_gen(start_date, timeST='Y'))
 print(reference_date_vector)
 Crypto_Asset_Prices = np.matrix([])
 Crypto_Asset_Volume = np.matrix([])
 
 for CryptoA in Crypto_Asset:
-
+    print(CryptoA)
     Exchange_Price = np.matrix([])
     Exchange_Volume = np.matrix([])
     Ex_PriceVol = np.matrix([])
@@ -40,9 +45,11 @@ for CryptoA in Crypto_Asset:
             pair = cp[3:]
             # create the matrix for the single currency_pair connecting to CryptoWatch website
             matrix=data_download.CW_data_reader(exchange, cp, start_date)
-            print(matrix)
-            print(matrix['Time'])
+            print(cp)
+            print(exchange)
             print(matrix.shape[0])
+            print(matrix)
+            
 
 
             # creates the to-be matrix of the cp assigning the reference date vector as first column
@@ -60,7 +67,6 @@ for CryptoA in Crypto_Asset:
 
                 else:
                     cp_matrix = matrix.to_numpy()
-                    print(cp_matrix)
 
                 # then retrieves the wanted data 
                 priceXvolume = cp_matrix[:,4] * cp_matrix[:,6]
@@ -75,12 +81,17 @@ for CryptoA in Crypto_Asset:
                     Ccy_Pair_PriceVolume = np.column_stack((Ccy_Pair_PriceVolume, priceXvolume))
                     Ccy_Pair_Volume = np.column_stack((Ccy_Pair_Volume, volume))
                     
-       
+        print(Ccy_Pair_PriceVolume)
         # computing the volume weighted average price of the single exchange
-        Ccy_Pair_Price = Ccy_Pair_PriceVolume.sum(axis = 1) / Ccy_Pair_Volume.sum(axis = 1)  
-        # computing the total volume of the exchange
-        Ccy_Pair_Volume = Ccy_Pair_Volume.sum(axis = 1) 
-        # computing price X volume of the exchange
+        try:
+            Ccy_Pair_Price = Ccy_Pair_PriceVolume.sum(axis = 1) / Ccy_Pair_Volume.sum(axis = 1)  
+            # computing the total volume of the exchange
+            Ccy_Pair_Volume = Ccy_Pair_Volume.sum(axis = 1) 
+            # computing price X volume of the exchange
+        except np.AxisError:
+            Ccy_Pair_Price = Ccy_Pair_Price
+            Ccy_Pair_Volume =  Ccy_Pair_Volume
+        
         Ccy_Pair_PxV = Ccy_Pair_Price * Ccy_Pair_Volume
 
         # creating every loop the matrices containing the data referred to all the exchanges
@@ -109,3 +120,6 @@ for CryptoA in Crypto_Asset:
     else:
         Crypto_Asset_Prices = np.column_stack((Crypto_Asset_Prices, Exchange_Price))
         Crypto_Asset_Volume = np.column_stack((Crypto_Asset_Volume, Exchange_Volume))
+
+
+print(Crypto_Asset_Prices)
