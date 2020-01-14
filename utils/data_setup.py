@@ -395,7 +395,7 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
         # if the first API call returns an empty matrix, function will takes values of the
         # last useful day        
         else:
-            
+
             exception_date = datetime.strptime(date[i], '%Y-%m-%d') - timedelta(days = 1)
             date_str = exception_date.strftime('%Y-%m-%d')            
             exception_matrix = data_download.ECB_rates_extractor(key_curr_vector, date_str)
@@ -429,3 +429,33 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
     return pd.DataFrame(Exchange_Matrix, columns = header)
 
+
+
+# function returns the Data Frame relative to a specified exchange/crypto/pair
+# with the "pair" value converted in USD, more specifically converts the columns
+# 'Close Price' and 'Pair Volume' into USD
+# function takes as input:
+# CW_matrix = CryptoWatch dataframe to be changed
+# Ex_Rate_matrix = data frame of ECB exchange rates
+# currency = string that specify the currency of CW_matrix (EUR, CAD, GBP,...)
+
+def CW_data_setup (CW_matrix, Ex_Rate_matrix, currency):
+
+    currency = currency.upper()
+
+    if currency != 'USD':
+            
+        ex_curr = currency + '/USD'
+
+        for i in range ((CW_matrix.shape[0])):
+            
+            date = CW_matrix['Time'][i]
+            rate = Ex_Rate_matrix[(Ex_Rate_matrix['Date'] == date) & (Ex_Rate_matrix['Currency'] == ex_curr)]
+            CW_matrix['Close Price'][i] = int(CW_matrix['Close Price'][i] / rate['Rate'])
+            CW_matrix['Pair Volume'][i] = int(CW_matrix['Pair Volume'][i] / rate['Rate'])
+    
+    else:
+        CW_matrix = CW_matrix
+
+    return CW_matrix
+        
