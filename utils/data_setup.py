@@ -265,7 +265,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
                 fixing_volume = np.column_stack((fixing_volume, volumes[:,1]))
 
     # find the volume weighted variation and then the value to insert multiplying
-    # the average variation with the previuos value
+    # the average variation with the day_lag value
     print(fixing_variation)
     for i in range(len(reference_array)):
         count_none = 0
@@ -283,7 +283,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
         else:
             weighted_variation_value[i] = fixing_variation[i].sum(axis = 1) / fixing_volume[i].sum(axis = 1)
 
-    # find related index, previuos value and compute the value to insert 
+    # find related index, day_lag value and compute the value to insert 
     index_list = find_index(variations[:,0], broken_matrix[:,0])
     previous_values = find_previous(index_list[:,1], broken_matrix[:, info_position])
     value_to_insert = (weighted_variation_value + 1) * previous_values
@@ -347,37 +347,77 @@ def date_reformat(date_to_check, separator = '-', order = 'MM-DD-YYYY'):
     return return_date
 
 
-# TODO description
-# TODO finish
+# function returns a matrix of exchange rates USD based that contains
+# Date, Exchange indicator (ex. USD/GBP) and rate of a defined period
+# retrieving data from the website of European Central Bank
+# the function, if data is missing (holiday and weekends), finds the first previous
+# day with data and takes its values
+# inputs are:
+# key_curr_vector that passes the list of currencies of interest
+# start_Period and End_Period
 
 def ECB_setup (key_curr_vector, Start_Period, End_Period):
 
+    # defining the array of date to be used
     date = date_array_gen(Start_Period, End_Period, timeST = 'N')
-    print(date)
+    # defining the headers of the returning data frame
     header = ['Date', 'Currency', 'Rate']
+
+    # for each date in "date" array the funcion retrieves data from ECB website
+    # and append the result in the returning matrix
     Exchange_Matrix = np.array([])
     for i, single_date in enumerate(date):
-
+        
+        # retrieving data from ECB website
         single_date_ex_matrix = data_download.ECB_rates_extractor(key_curr_vector, date[i])
         
+        # check if the API actually returns values 
         if Check_null(single_date_ex_matrix) == False:
+
             date_arr = np.full(len(key_curr_vector),single_date)
+            # creating the array with 'XXX/USD' format
             curr_arr = single_date_ex_matrix['CURRENCY'] + '/USD'
             curr_arr = np.where(curr_arr == 'USD/USD', 'EUR/USD', curr_arr)
+            # creating the array with rate values USD based
+            # since ECB displays rate EUR based some changes needs to be done
             rate_arr = single_date_ex_matrix['USD based rate']
             rate_arr = np.where(rate_arr == 1.000000, 1/single_date_ex_matrix['OBS_VALUE'][0], rate_arr)
+
+            # stacking the array together
             array = np.column_stack((date_arr, curr_arr, rate_arr))
+
+            # filling the return matrix
             if Exchange_Matrix.size == 0:
                 Exchange_Matrix = array
             else:
                 Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
-        # else:
-        #     while Check_null()
-        #     exception_date = date(i) - timedelta(1)
-        #     exception_matrix = data_download.ECB_rates_extractor(key_curr_vector, exception_date)
-        #     if Check_null(exception_matrix) == False:
 
+        # if the first API call returns an empty matrix, function will takes values of the
+        # last useful day        
+        else:
+            day_lag = 1
+            exception_date = datetime.strptime(date[i], '%Y-%m-%d') - timedelta(days = day_lag)
+            date_str = exception_date.strftime('%Y-%m-%d')            
+            exception_matrix = data_download.ECB_rates_extractor(key_curr_vector, date_str)
 
+            while not Check_null(exception_matrix) == False:
+
+                day_lag = day_lag + 1
+                exception_date = exception_date - timedelta(days = day_lag)
+                date_str = exception_date.strftime('%Y-%m-%d') 
+                exception_matrix = data_download.ECB_rates_extractor(key_curr_vector, date_str)
+
+            date_arr = np.full(len(key_curr_vector),single_date)
+            curr_arr = exception_matrix['CURRENCY'] + '/USD'
+            curr_arr = np.where(curr_arr == 'USD/USD', 'EUR/USD', curr_arr)
+            rate_arr = exception_matrix['USD based rate']
+            rate_arr = np.where(rate_arr == 1.000000, 1/exception_matrix['OBS_VALUE'][0], rate_arr)
+            array = np.column_stack((date_arr, curr_arr, rate_arr))
+
+            if Exchange_Matrix.size == 0:
+                Exchange_Matrix = array
+            else:
+                Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
 
     return pd.DataFrame(Exchange_Matrix, columns = header)
 
