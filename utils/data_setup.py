@@ -59,17 +59,17 @@ def period_array(start_date, period, direction = 'backward', timeST='Y'):
 
 
 # TODO: add description 
-def date_list(date_index, timeST = 'Y'):
+def date_list(date_index, timeST = 'Y', lag_adj = 3600):
     
-    DateList=[]
+    DateList = []
     
     for date in date_index:
-        val=int(time.mktime(date.timetuple()))
-        val=val+3600
+        val = int(time.mktime(date.timetuple()))
+        val = val + lag_adj
         DateList.append(val)
    
     NoStamp = []
-    if timeST=='N':
+    if timeST =='N':
         for string in DateList:
             value = int(string)
             NoStamp.append(datetime.utcfromtimestamp(value).strftime('%Y-%m-%d'))
@@ -356,7 +356,7 @@ def date_reformat(date_to_check, separator = '-', order = 'MM-DD-YYYY'):
 # key_curr_vector that passes the list of currencies of interest
 # start_Period and End_Period
 
-def ECB_setup (key_curr_vector, Start_Period, End_Period):
+def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
     # defining the array of date to be used
     date = date_array_gen(Start_Period, End_Period, timeST = 'N')
@@ -395,15 +395,14 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period):
         # if the first API call returns an empty matrix, function will takes values of the
         # last useful day        
         else:
-            day_lag = 1
-            exception_date = datetime.strptime(date[i], '%Y-%m-%d') - timedelta(days = day_lag)
+            
+            exception_date = datetime.strptime(date[i], '%Y-%m-%d') - timedelta(days = 1)
             date_str = exception_date.strftime('%Y-%m-%d')            
             exception_matrix = data_download.ECB_rates_extractor(key_curr_vector, date_str)
 
-            while not Check_null(exception_matrix) == False:
+            while Check_null(exception_matrix) != False:
 
-                day_lag = day_lag + 1
-                exception_date = exception_date - timedelta(days = day_lag)
+                exception_date = exception_date - timedelta(days = 1)
                 date_str = exception_date.strftime('%Y-%m-%d') 
                 exception_matrix = data_download.ECB_rates_extractor(key_curr_vector, date_str)
 
@@ -418,6 +417,15 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period):
                 Exchange_Matrix = array
             else:
                 Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
+    
+    if timeST != 'N':
+
+        for j, element in enumerate(Exchange_Matrix[:,0]):
+
+            to_date = datetime.strptime(element, '%Y-%m-%d')
+            time_stamp = datetime.timestamp(to_date) + 3600
+            Exchange_Matrix[j,0] = int(time_stamp)
+
 
     return pd.DataFrame(Exchange_Matrix, columns = header)
 
