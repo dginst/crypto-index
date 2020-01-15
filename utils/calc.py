@@ -159,10 +159,10 @@ def board_meeting_day():
         # the if statement goes back two days maximum: Sunday and Saturday.
         if is_business_day(result) == True:
             board_day = np.append(board_day, result.timestamp())
-        elif is_business_day(result - (datetime.timedelta(days= 1)).timestamp()) == True:
-            board_day = np.append(board_day, (result - datetime.timedelta(days= 1)).timestamp())
+        elif is_business_day(result - (datetime.timedelta(days = 1)).timestamp()) == True:
+            board_day = np.append(board_day, (result - datetime.timedelta(days = 1)).timestamp())
         else:
-            board_day = np.append(board_day, (result - datetime.timedelta(days= 2)).timestamp())
+            board_day = np.append(board_day, (result - datetime.timedelta(days = 2)).timestamp())
     
     return board_day
 
@@ -210,6 +210,27 @@ def q_weights(day_before_board, EWMA_weights):
             q_weights = np.stack((q_weights, row))
 
     return q_weights
+
+
+# this function converts the q_weights matrix and return the matrix with the quarter start date and weights
+def weight_index(q_weights):
+
+    init_q_days = np.array([])
+    q_weights = q_weights()
+
+    for date in q_weightsd[:,0]:
+
+        conv = datetime.datetime.fromtimestamp(date)
+        conv = conv.replace(day=1) + relativedelta(months=1)
+        conv = conv.timestamp()
+
+        init_q_days = np.append(init_q_days, conv)
+
+    init_q_days = np.column_stack(init_q_days, q_weights[:, 1 : q_weights.shape[1]])
+
+    return init_q_days   
+# questa matrice sarà sicuramente più corta delle altre, quindi o allungarla oppure cambiare la funzion
+# la funzione di synt_matrix_daily
 
 
     
