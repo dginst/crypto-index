@@ -20,7 +20,7 @@ The DGI crypto Index is a volume-weighted index and is composed of the most rele
 
 The software downloads the daily crypto-asset data in terms of trade volume and price of the 8 selected pricing sources that proved to be reliable in matter of real volumes and legal compliance: 
 
-<img align="left" src="https://www.coinbase.com/assets/press/coinbase-logos/coinbase-a673b0735e63d6ea6513e464a83c41165fca9b99b2216b5de70e5187356dd47d.png?raw=true" alt="Made with Angular" title="Angular" hspace="20" width="200"/>
+<img align="left" src="https://www.coinbase.com/assets/press/coinbase-logos/coinbase-a673b0735e63d6ea6513e464a83c41165fca9b99b2216b5de70e5187356dd47d.png?raw=true" alt="Made with Angular" title="Angular" hspace="20" width="200" eight = "30" />
 <img align="left" src="https://cdn.freelogovectors.net/svg03/kraken-logo.svg?raw=true" alt="Made with Bootstrap" title="Bootstrap" hspace="20" width="200"/>
 <img align="left" src="https://dgi.io/img/logo/dgi-logo.svg?raw=true" alt="Developed using Browsersync" title="Browsersync" hspace="20" width="200"/>
 <br/><br/><br/><br/><br/>
