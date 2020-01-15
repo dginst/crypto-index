@@ -15,13 +15,13 @@ pair_array = ['jpy', 'gbp', 'usd'] #, 'eur', 'cad', 'usdt', 'usdc'
 
 
 Crypto_Asset = ['BTC', 'ETH']
-Exchanges = ['bitfinex'] #,'bitflyer'
+Exchanges = ['bitfinex','bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini']#,'kraken']
 start_date = '01-01-2020'
 reference_date_vector = np.array(data_setup.date_array_gen(start_date, timeST='Y'))
 
 
 key= ['USD', 'GBP', 'CAD', 'JPY']
-rates = data_setup.ECB_setup(key, '2020-01-01', '2020-01-14', timeST='Y')
+rates = data_setup.ECB_setup(key, '2020-01-01', '2020-01-15', timeST='Y')
 print(rates)
 
 
@@ -43,6 +43,7 @@ for CryptoA in Crypto_Asset:
         # initialize the matrices that will contain the data related to all currencypair for the single exchange
         Ccy_Pair_PriceVolume = np.matrix([])
         Ccy_Pair_Volume = np.matrix([])
+        Ccy_Pair_Price = np.matrix([])
         
         for cp in currencypair_array:
 
@@ -50,9 +51,12 @@ for CryptoA in Crypto_Asset:
             pair = cp[3:]
             # create the matrix for the single currency_pair connecting to CryptoWatch website
             matrix=data_download.CW_data_reader(exchange, cp, start_date)
-            
+            print(exchange)
+            print(cp)
+            print(matrix.shape[0])
+            print(matrix)
             # changing the "fiat" values into USD (Close Price and Volume)
-            matrix = data_setup.CW_data_setup(matrix, rates, pair)
+            matrix= data_setup.CW_data_setup(matrix, rates, pair)
             print(matrix)
 
             # creates the to-be matrix of the cp assigning the reference date vector as first column
@@ -83,31 +87,47 @@ for CryptoA in Crypto_Asset:
                 else:
                     Ccy_Pair_PriceVolume = np.column_stack((Ccy_Pair_PriceVolume, priceXvolume))
                     Ccy_Pair_Volume = np.column_stack((Ccy_Pair_Volume, volume))
-                    
+
+        print('Ccy_Pair_PriceVolume')           
         print(Ccy_Pair_PriceVolume)
+        print('Ccy_Pair_Volume')  
+        print( Ccy_Pair_Volume)
+        print( Ccy_Pair_Volume.shape)
+
         # computing the volume weighted average price of the single exchange
-        try:
+        if Ccy_Pair_Volume.size != 0 and Ccy_Pair_Volume.size > reference_date_vector.size:
             Ccy_Pair_Price = Ccy_Pair_PriceVolume.sum(axis = 1) / Ccy_Pair_Volume.sum(axis = 1)  
             # computing the total volume of the exchange
             Ccy_Pair_Volume = Ccy_Pair_Volume.sum(axis = 1) 
             # computing price X volume of the exchange
-        except np.AxisError:
-            Ccy_Pair_Price = Ccy_Pair_Price
-            Ccy_Pair_Volume =  Ccy_Pair_Volume
+            Ccy_Pair_PxV = Ccy_Pair_Price * Ccy_Pair_Volume
         
-        Ccy_Pair_PxV = Ccy_Pair_Price * Ccy_Pair_Volume
+        elif Ccy_Pair_Volume.size != 0 and Ccy_Pair_Volume.size == reference_date_vector.size:
 
+            Ccy_Pair_Price = Ccy_Pair_PriceVolume / Ccy_Pair_Volume
+            Ccy_Pair_PxV = Ccy_Pair_Price * Ccy_Pair_Volume
+
+        else:
+            Ccy_Pair_Price = np.array([])
+            Ccy_Pair_Volume =  np.array([])
+            Ccy_Pair_PxV = np.array([])
+        print('Ccy_Pair_Price')
+        print(Ccy_Pair_Price)
+        #Ccy_Pair_PxV = Ccy_Pair_Price * Ccy_Pair_Volume
+        print(Ccy_Pair_PxV)
         # creating every loop the matrices containing the data referred to all the exchanges
         # Exchange_Price contains the crypto ("cp") prices in all the different Exchanges
         # Exchange_Volume contains the crypto ("cp") volume in all the different Exchanges
         if Exchange_Price.size == 0:
-            Exchange_Price = Ccy_Pair_Price
-            Exchange_Volume = Ccy_Pair_Volume
-            Ex_PriceVol = Ccy_Pair_PxV
+            if Ccy_Pair_Volume.size != 0:
+                Exchange_Price = Ccy_Pair_Price
+                Exchange_Volume = Ccy_Pair_Volume
+                Ex_PriceVol = Ccy_Pair_PxV
         else:
-            Exchange_Price = np.column_stack((Exchange_Price, Ccy_Pair_Price))
-            Exchange_Volume = np.column_stack((Exchange_Volume, Ccy_Pair_Volume))
-            Ex_PriceVol = np.column_stack((Ex_PriceVol, Ccy_Pair_PxV))
+            if Ccy_Pair_Volume.size != 0:
+                Exchange_Price = np.column_stack((Exchange_Price, Ccy_Pair_Price))
+                Exchange_Volume = np.column_stack((Exchange_Volume, Ccy_Pair_Volume))
+                Ex_PriceVol = np.column_stack((Ex_PriceVol, Ccy_Pair_PxV))
        
    
     try:

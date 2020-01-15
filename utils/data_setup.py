@@ -451,6 +451,7 @@ def CW_data_setup (CW_matrix, Ex_Rate_matrix, currency):
             
             date = CW_matrix['Time'][i]
             rate = Ex_Rate_matrix[(Ex_Rate_matrix['Date'] == date) & (Ex_Rate_matrix['Currency'] == ex_curr)]
+            new_close = CW_matrix['Close Price'][i] / rate['Rate']
             CW_matrix['Close Price'][i] = int(CW_matrix['Close Price'][i] / rate['Rate'])
             CW_matrix['Pair Volume'][i] = int(CW_matrix['Pair Volume'][i] / rate['Rate'])
     
