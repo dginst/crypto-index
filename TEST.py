@@ -96,6 +96,7 @@ for CryptoA in Crypto_Asset:
 
         # computing the volume weighted average price of the single exchange
         if Ccy_Pair_Volume.size != 0 and Ccy_Pair_Volume.size > reference_date_vector.size:
+            
             Ccy_Pair_Price = Ccy_Pair_PriceVolume.sum(axis = 1) / Ccy_Pair_Volume.sum(axis = 1)  
             # computing the total volume of the exchange
             Ccy_Pair_Volume = Ccy_Pair_Volume.sum(axis = 1) 
@@ -123,13 +124,24 @@ for CryptoA in Crypto_Asset:
                 Exchange_Price = Ccy_Pair_Price
                 Exchange_Volume = Ccy_Pair_Volume
                 Ex_PriceVol = Ccy_Pair_PxV
+            else:
+                Exchange_Price = np.zeros(reference_date_vector.size)
+                Exchange_Volume = np.zeros(reference_date_vector.size)
         else:
             if Ccy_Pair_Volume.size != 0:
                 Exchange_Price = np.column_stack((Exchange_Price, Ccy_Pair_Price))
                 Exchange_Volume = np.column_stack((Exchange_Volume, Ccy_Pair_Volume))
                 Ex_PriceVol = np.column_stack((Ex_PriceVol, Ccy_Pair_PxV))
-       
-   
+            else:
+                Exchange_Price = np.column_stack((Exchange_Price, np.zeros(reference_date_vector.size)))
+                Exchange_Volume = np.column_stack((Exchange_Volume, np.zeros(reference_date_vector.size)))
+                Ex_PriceVol = np.column_stack((Ex_PriceVol, np.zeros(reference_date_vector.size)))
+
+    # dataframes that contain volume and price of a single crytpo for all the exchanges.
+    # if an exchange does not have value in the crypto will be insertd a column with zero
+    Exchange_Vol_DF = pd.DataFrame(Exchange_Volume, columns = Exchanges)
+    Exchange_Price_DF = pd.DataFrame(Exchange_Price, columns = Exchanges)
+    print(Exchange_Vol_DF)
     try:
         # computing the volume weighted average price of the single Crypto_Asset ("CryptoA") into a single vector
         Exchange_Price = Ex_PriceVol.sum(axis = 1) / Exchange_Volume.sum(axis = 1) 
@@ -138,7 +150,7 @@ for CryptoA in Crypto_Asset:
     except np.AxisError:
         Exchange_Price = Exchange_Price
         Exchange_Volume = Exchange_Volume
-
+    print(Exchange_Volume)
     # creating every loop the matrices containing the data referred to all the Cryptoassets
     # Crypto_Asset_Price contains the prices of all the cryptocurrencies
     # Crypto_Asset_Volume contains the volume of all the cryptocurrencies
