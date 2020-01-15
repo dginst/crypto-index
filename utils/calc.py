@@ -359,10 +359,10 @@ def Curr_logic_matrix1(perc_volumes_per_exchange):
 
         # check if any of the value in array row is > than 0.80. If yes add a 0 value in the req1_matrix
         # if not add value 1 in the req_matrix
-        if np.any(volume_perc[i]) > 0.80:
-            req1_matrix = np.append(req1_matrix, 0)
+        if np.any(volume_perc[row]) > 0.80:
+            curr_logic_matrix1 = np.append(curr_logic_matrix1, 0)
         else: 
-            req1_matrix = np.append(req1_matrix, 1)    
+            curr_logic_matrix1 = np.append(curr_logic_matrix1, 1)    
 
     return curr_logic_matrix1
 

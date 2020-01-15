@@ -9,19 +9,18 @@ import pandas as pd
 from datetime import *
 import time
 
-
 crypto = ['btc']#, 'eth']
 pair_array = ['jpy', 'gbp', 'usd'] #, 'eur', 'cad', 'usdt', 'usdc'
 
 
 Crypto_Asset = ['BTC', 'ETH']
 Exchanges = ['bitfinex','bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini']#,'kraken']
-start_date = '01-01-2016'
+start_date = '01-10-2020'
 reference_date_vector = np.array(data_setup.date_array_gen(start_date, timeST='Y'))
 
 
 key= ['USD', 'GBP', 'CAD', 'JPY']
-rates = data_setup.ECB_setup(key, '2016-01-01', '2020-01-15', timeST='Y')
+rates = data_setup.ECB_setup(key, '2020-01-01', '2020-01-15', timeST='Y')
 print(rates)
 
 
