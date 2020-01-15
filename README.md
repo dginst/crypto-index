@@ -20,10 +20,13 @@ The DGI crypto Index is a volume-weighted index and is composed of the most rele
 
 The software downloads the daily crypto-asset data in terms of trade volume and price of the 8 selected pricing sources that proved to be reliable in matter of real volumes and legal compliance: 
 
-<img align="left" src="https://www.coinbase.com/assets/press/coinbase-logos/coinbase-a673b0735e63d6ea6513e464a83c41165fca9b99b2216b5de70e5187356dd47d.png?raw=true" alt="Made with Angular" title="Angular" hspace="20" width="200" eight = "10" />
-<img align="left" src="https://cdn.freelogovectors.net/svg03/kraken-logo.svg?raw=true" alt="Made with Bootstrap" title="Bootstrap" hspace="20" width="200"/>
-<img align="left" src="https://dgi.io/img/logo/dgi-logo.svg?raw=true" alt="Developed using Browsersync" title="Browsersync" hspace="20" width="200"/>
-<br/><br/><br/><br/><br/>
+ <div class="image-block-outer-wrapper layout-caption-below design-layout-inline combination-animation-none individual-animation-none individual-text-animation-none">
+        <div class="intrinsic" style="max-width:800.0px;">
+            <div style="padding-bottom:15.625%;" class="image-block-wrapper   has-aspect-ratio" data-animation-tier="1" data-description="" >
+              <noscript><img src="https://images.squarespace-cdn.com/content/v1/58daeda9414fb59dd3de3ccd/1555698546039-MYT45RC6TLXVMKYBWCFT/ke17ZwdGBToddI8pDm48kLK43TW2B3oKMB1ocDFW8HtZw-zPPgdn4jUwVcJE1ZvWQUxwkmyExglNqGp0IvTJZamWLI2zvYWH8K3-s_4yszcp2ryTI0HqTOaaUohrI8PIroehUutD7l49RnYZal-1OuVWBm1siO-GLcUj7cncWEI/Poloniex-logo-800px.png" alt="Poloniex-logo-800px.png" /></noscript><img class="thumb-image" data-src="https://images.squarespace-cdn.com/content/v1/58daeda9414fb59dd3de3ccd/1555698546039-MYT45RC6TLXVMKYBWCFT/ke17ZwdGBToddI8pDm48kLK43TW2B3oKMB1ocDFW8HtZw-zPPgdn4jUwVcJE1ZvWQUxwkmyExglNqGp0IvTJZamWLI2zvYWH8K3-s_4yszcp2ryTI0HqTOaaUohrI8PIroehUutD7l49RnYZal-1OuVWBm1siO-GLcUj7cncWEI/Poloniex-logo-800px.png" data-image="https://images.squarespace-cdn.com/content/v1/58daeda9414fb59dd3de3ccd/1555698546039-MYT45RC6TLXVMKYBWCFT/ke17ZwdGBToddI8pDm48kLK43TW2B3oKMB1ocDFW8HtZw-zPPgdn4jUwVcJE1ZvWQUxwkmyExglNqGp0IvTJZamWLI2zvYWH8K3-s_4yszcp2ryTI0HqTOaaUohrI8PIroehUutD7l49RnYZal-1OuVWBm1siO-GLcUj7cncWEI/Poloniex-logo-800px.png" data-image-dimensions="800x125" data-image-focal-point="0.5,0.5" alt="Poloniex-logo-800px.png" data-load="false" data-image-id="5cba1371e79c70f84317b031" data-type="image" />
+            </div>
+          </div>
+      </div>
 
 
 
