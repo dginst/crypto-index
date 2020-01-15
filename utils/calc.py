@@ -218,7 +218,7 @@ def weight_index(q_weights):
     init_q_days = np.array([])
     q_weights = q_weights()
 
-    for date in q_weightsd[:,0]:
+    for date in q_weights[:,0]:
 
         conv = datetime.datetime.fromtimestamp(date)
         conv = conv.replace(day=1) + relativedelta(months=1)
@@ -231,33 +231,6 @@ def weight_index(q_weights):
     return init_q_days   
 # questa matrice sarà sicuramente più corta delle altre, quindi o allungarla oppure cambiare la funzion
 # la funzione di synt_matrix_daily
-
-
-    
-# function returns a matrix with the same number and order of column of the Curr Price Matrix containing
-# the value of the syntetic portfolio divided by single currency
-# function take as input:
-# Curr_Price_matrix: the Price matrix that has different cryptoasset as column and date as row
-# weight_index: vector that contains the weights for every Crytpo Asset indicated in Curr_Price_matrix
-# synt_matrix_old: the syntethic matrix of the previuos day, on default in None meaning that is the
-# first day after the index rebalancing
-# every c.a. 3 months the index is rebalanced, so the synt_matrix function has to be called anew
-
-def synt_matrix_daily(Curr_Price_Matrix, weight_index, synt_matrix_old = None, synt_ptf_value = 100):
-
-    #returns computed considering that today is the last row and yesterday is the row before
-    daily_return = (Curr_Price_Matrix[len(Curr_Price_Matrix)-1,1:]-Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:])/Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:]
-    synt_matrix_date = np.array(Curr_Price_Matrix[len(Curr_Price_Matrix)-1,0])
-
-    if synt_matrix_old == None:
-        synt_matrix= weight_index*synt_ptf_value
-        synt_matrix=np.column_stack((synt_matrix_date,synt_matrix))
-    else:
-        synt_matrix_new_value = daily_return*synt_matrix_old[len(synt_matrix_old), 1:]
-        synt_matrix_new_row = np.column_stack((synt_matrix_date, synt_matrix_new_value))
-        synt_matrix = np.row_stack((synt_matrix_old, synt_matrix_new_row))
-
-    return synt_matrix
 
 
 
@@ -285,6 +258,32 @@ def price_return(Curr_Price_Matrix, date_order = 'ascendent'):
             return_matrix = np.row_stack((return_matrix, vector))
 
     return return_matrix
+
+
+# function returns a matrix with the same number and order of column of the Curr Price Matrix containing
+# the value of the syntetic portfolio divided by single currency
+# function take as input:
+# Curr_Price_matrix: the Price matrix that has different cryptoasset as column and date as row
+# weight_index: vector that contains the weights for every Crytpo Asset indicated in Curr_Price_matrix
+# synt_matrix_old: the syntethic matrix of the previuos day, on default in None meaning that is the
+# first day after the index rebalancing
+# every c.a. 3 months the index is rebalanced, so the synt_matrix function has to be called anew
+
+def synt_matrix_daily(Curr_Price_Matrix, weight_index, synt_matrix_old = None, synt_ptf_value = 100):
+
+    #returns computed considering that today is the last row and yesterday is the row before
+    daily_return = (Curr_Price_Matrix[len(Curr_Price_Matrix)-1,1:]-Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:])/Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:]
+    synt_matrix_date = np.array(Curr_Price_Matrix[len(Curr_Price_Matrix)-1,0])
+
+    if synt_matrix_old == None:
+        synt_matrix= weight_index*synt_ptf_value
+        synt_matrix=np.column_stack((synt_matrix_date,synt_matrix))
+    else:
+        synt_matrix_new_value = daily_return*synt_matrix_old[len(synt_matrix_old), 1:]
+        synt_matrix_new_row = np.column_stack((synt_matrix_date, synt_matrix_new_value))
+        synt_matrix = np.row_stack((synt_matrix_old, synt_matrix_new_row))
+
+    return synt_matrix
 
     
 ############### series of function to create the Logic Matrix ############
