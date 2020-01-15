@@ -11,12 +11,8 @@ import time
 
 
 crypto = ['btc', 'eth']
-pair_array = ['usd', 'jpy', 'gbp'] #, 'eur', 'cad', 'usdt', 'usdc'
+pair_array = ['jpy', 'gbp', 'usd'] #, 'eur', 'cad', 'usdt', 'usdc'
 
-# for i in crypto:
-#     for j in pair:
-#         crypto_pair = i + j
-#         currencypair_array.append(crypto_pair)
 
 Crypto_Asset = ['BTC', 'ETH']
 Exchanges = ['bitfinex'] #,'bitflyer'
@@ -24,8 +20,12 @@ start_date = '01-01-2020'
 reference_date_vector = np.array(data_setup.date_array_gen(start_date, timeST='Y'))
 
 
+key= ['USD', 'GBP', 'CAD', 'JPY']
+rates = data_setup.ECB_setup(key, '2020-01-01', '2020-01-14', timeST='Y')
+print(rates)
 
-#print(reference_date_vector)
+
+
 Crypto_Asset_Prices = np.matrix([])
 Crypto_Asset_Volume = np.matrix([])
 
@@ -50,12 +50,10 @@ for CryptoA in Crypto_Asset:
             pair = cp[3:]
             # create the matrix for the single currency_pair connecting to CryptoWatch website
             matrix=data_download.CW_data_reader(exchange, cp, start_date)
-            print(cp)
-            print(exchange)
-            print(matrix.shape[0])
-            print(matrix)
             
-
+            # changing the "fiat" values into USD (Close Price and Volume)
+            matrix = data_setup.CW_data_setup(matrix, rates, pair)
+            print(matrix)
 
             # creates the to-be matrix of the cp assigning the reference date vector as first column
             cp_matrix = reference_date_vector
@@ -131,6 +129,6 @@ for CryptoA in Crypto_Asset:
         Crypto_Asset_Prices = np.column_stack((Crypto_Asset_Prices, Exchange_Price))
         Crypto_Asset_Volume = np.column_stack((Crypto_Asset_Volume, Exchange_Volume))
 
-Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns = Crypto_Asset)
-Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns = Crypto_Asset)
-print(Crypto_Asset_Prices)
+# Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns = Crypto_Asset)
+# Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns = Crypto_Asset)
+# print(Crypto_Asset_Prices)
