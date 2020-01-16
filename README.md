@@ -9,7 +9,7 @@ The DGI crypto Index is a volume-weighted index and is composed of the most rele
 
 **Key Features:**
 
-* use volume as a resource for weight computation
+* use volume as resource for weight computation
 * selected exchanges based on security, real-volume and law compliance
 * selected constituents on quantitative and qualitative criteria
 * designed to be replicable by investors thanks to the buy and hold daily solution.
@@ -20,14 +20,18 @@ The DGI crypto Index is a volume-weighted index and is composed of the most rele
 
 The software downloads the daily crypto-asset data in terms of trade volume and price of the 8 selected pricing sources that proved to be reliable in matter of real volumes and legal compliance: 
 BitFlyer, BitStamp, Bittrex, Coinbase-Pro, Gemini, itBit, Kraken, Pooniex. The Data of these Exchanges are downloaded through the REST API of the website https://cryptowat.ch/ except for itBit's data that are downloaded through the REST API of itBit website.
-
 Cryptowatch, demonstrated to be a reliable data bank for Crypto-Assets; It is owned by the Kraken exchange and was founded in 2014 by Artur Sapek.
 
-Is it possible to find the functions in the utils/data_download.py file.
+Because the Index is denominated in USD all prices from the non-Crypto/USD pairs are reported in USD; to do so, all the daily relevant exchange rates of the  Fiat/USD pairs and Fiat/StableCoin pairs are obtained respectively, from the European Central Bank (ECB) Website and the data provider CoinGecko; these pairs are  later used to convert all the prices in USD.
+
+All the Crypto/Crypto pairs will be taken into account at a later moment.
+
+
+Is it possible to find the download functions in the utils/data_download.py file.
 
 
 # Data Setup
 
-Once the relevant data are downloaded, they're processed, fixing missing and convert all the Crypto-assets price in USD 
+Once the relevant data are downloaded, they're processed.  
 
 # Index Computation
