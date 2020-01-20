@@ -15,14 +15,17 @@ pair_array = ['jpy', 'gbp', 'usd'] #, 'eur', 'cad', 'usdt', 'usdc'
 
 
 Crypto_Asset = ['BTC', 'ETH']
-Exchanges = ['bitfinex','bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini']#,'kraken']
+#Exchanges = ['bitfinex','bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini']#,'kraken']
+Exchanges = ['kraken']
 start_date = '01-01-2020'
+today = datetime.now().strftime('%Y-%m-%d')
+print(today)
 reference_date_vector = np.array(data_setup.date_array_gen(start_date, timeST='Y'))
-
+print(reference_date_vector)
 
 key= ['USD', 'GBP', 'CAD', 'JPY']
-rates = data_setup.ECB_setup(key, '2020-01-01', '2020-01-15', timeST='Y')
-print(rates)
+rates = data_setup.ECB_setup(key, '2020-01-01', today, timeST='Y')
+#print(rates)
 
 
 

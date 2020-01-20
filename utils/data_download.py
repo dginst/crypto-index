@@ -77,6 +77,7 @@ def CW_data_reader(exchange, currencypair, start_date = '01-01-2016', end_date =
     
     try:
         Data_Frame = pd.DataFrame(response['result']['86400'], columns = header)
+        Data_Frame = Data_Frame.drop(columns = ['Open', 'High', 'Low'])
     except:
         Data_Frame = np.array([])
     
