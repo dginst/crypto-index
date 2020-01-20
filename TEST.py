@@ -19,7 +19,6 @@ Crypto_Asset = ['BTC', 'ETH']
 Exchanges = ['kraken']
 start_date = '01-01-2020'
 today = datetime.now().strftime('%Y-%m-%d')
-print(today)
 reference_date_vector = np.array(data_setup.date_array_gen(start_date, timeST='Y'))
 print(reference_date_vector)
 
@@ -58,9 +57,7 @@ for CryptoA in Crypto_Asset:
             print(cp)
             print(matrix.shape[0])
             print(matrix)
-            # changing the "fiat" values into USD (Close Price and Volume)
-            matrix= data_setup.CW_data_setup(matrix, rates, pair)
-            print(matrix)
+
 
             # creates the to-be matrix of the cp assigning the reference date vector as first column
             cp_matrix = reference_date_vector
@@ -70,18 +67,23 @@ for CryptoA in Crypto_Asset:
 
                 # checking if the matrix has missing data and if ever fixing it
                 if matrix.shape[0] != reference_date_vector.size:
-                                    
-                    for i in range(7):
-                        fixed_vector = data_setup.fix_missing(matrix, exchange, crypto, pair, i+1, start_date)
-                        cp_matrix = np.column_stack((cp_matrix, fixed_vector))
 
-                else:
-                    cp_matrix = matrix.to_numpy()
+                    matrix= data_setup.fix_missing(matrix, exchange, crypto, pair, start_date)
+                    print(matrix)
+
+
+                # changing the "fiat" values into USD (Close Price and Volume)
+                matrix= data_setup.CW_data_setup(matrix, rates, pair)
+                print(matrix)
+                cp_matrix = matrix.to_numpy()
 
                 # then retrieves the wanted data 
-                priceXvolume = cp_matrix[:,4] * cp_matrix[:,6]
-                volume = cp_matrix[:,6]
-                price = cp_matrix[:,4]
+                priceXvolume = cp_matrix[:,1] * cp_matrix[:,2]
+                volume = cp_matrix[:,2]
+                price = cp_matrix[:,1]
+                priceXvolume = cp_matrix[:,1] * cp_matrix[:,2]
+                volume = cp_matrix[:,2]
+                price = cp_matrix[:,1]
 
                 # every "cp" the for loop adds a column in the matrices referred to the single "exchange"
                 if Ccy_Pair_PriceVolume.size == 0:
@@ -164,6 +166,6 @@ for CryptoA in Crypto_Asset:
         Crypto_Asset_Prices = np.column_stack((Crypto_Asset_Prices, Exchange_Price))
         Crypto_Asset_Volume = np.column_stack((Crypto_Asset_Volume, Exchange_Volume))
 
-# Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns = Crypto_Asset)
-# Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns = Crypto_Asset)
-# print(Crypto_Asset_Prices)
+Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns = Crypto_Asset)
+Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns = Crypto_Asset)
+print(Crypto_Asset_Prices)

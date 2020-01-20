@@ -153,10 +153,6 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
     # find the elements of ref array not included in broken array (the one to check)
     missing_item = Diff(reference_array, broken_array)
 
-    # setting position as column name
-    header = ['Time', 'Close Price', "Crypto Volume", "Pair Volume"]
-    position = header[position]
-
     variations = [] 
     volumes = []
     for element in missing_item:
@@ -249,13 +245,13 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
     # set the list af all exchanges and then pop out the one in subject
     exchange_list = ['bitflyer', 'bitfinex', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini','kraken']#aggungere itbit
     exchange_list.remove(exchange)
+    print(exchange_list)
 
     # iteratively find the missing value in all the exchanges
     fixing_price = np.array([])
     fixing_cry_vol = np.array([])
     fixing_pair_vol = np.array([])
     fixing_volume = np.array([])
-    weighted_variation_value = np.array([])
 
     # variable that count how many exchanges actually have values for the selected crypto+pair 
     count_exchange = 0
@@ -269,13 +265,13 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
         # then add to the count variable 
         if Check_null(matrix) == False:
             count_exchange = count_exchange + 1
-
+            print(elements)
             # if the matrix is not null, find variation and volume of the selected exchange
             # and assign them to the related matrix
             variations_price, volumes = substitute_finder(broken_array, reference_array, matrix, 'Close Price')
             variations_cry_vol, volumes = substitute_finder(broken_array, reference_array, matrix, 'Crypto Volume')
             variations_pair_vol, volumes = substitute_finder(broken_array, reference_array, matrix, 'Pair Volume')
-
+            print(variations_price)
             if fixing_price.size == 0:
 
                 fixing_price = variations_price[:,1]
@@ -291,7 +287,9 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
                 fixing_volume = np.column_stack((fixing_volume, volumes[:,1]))
     
     # find the volume weighted variation for all the variables
-
+    print(count_exchange)
+    print(fixing_price.size)
+    print(fixing_price)
     weighted_var_price = []
     weighted_cry_vol = []
     weighted_pair_vol = []
@@ -322,9 +320,9 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
             
         # 
         elif count_none != count_exchange and count_exchange > 1 and fixing_price.size > count_exchange:
-            price = fixing_price[i,:].sum(axis = 1) / fixing_volume[i,:].sum(axis = 1)
-            cry_vol = fixing_cry_vol[i,:].sum(axis = 1) / fixing_volume[i,:].sum(axis = 1)
-            pair_vol = fixing_pair_vol[i,:].sum(axis = 1) / fixing_volume[i,:].sum(axis = 1)
+            price = fixing_price[i,:].sum() / fixing_volume[i,:].sum()
+            cry_vol = fixing_cry_vol[i,:].sum() / fixing_volume[i,:].sum()
+            pair_vol = fixing_pair_vol[i,:].sum() / fixing_volume[i,:].sum()
             weighted_var_price.append(price)
             weighted_cry_vol.append(cry_vol)
             weighted_pair_vol.append(pair_vol)
@@ -519,7 +517,6 @@ def CW_data_setup (CW_matrix, Ex_Rate_matrix, currency):
             
             date = CW_matrix['Time'][i]
             rate = Ex_Rate_matrix[(Ex_Rate_matrix['Date'] == date) & (Ex_Rate_matrix['Currency'] == ex_curr)]
-            new_close = CW_matrix['Close Price'][i] / rate['Rate']
             CW_matrix['Close Price'][i] = int(CW_matrix['Close Price'][i] / rate['Rate'])
             CW_matrix['Pair Volume'][i] = int(CW_matrix['Pair Volume'][i] / rate['Rate'])
     
