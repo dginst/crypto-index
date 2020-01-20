@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import datetime
 from datetime import *
 from datetime import date, datetime, timedelta
@@ -226,7 +227,7 @@ def weight_index(q_weights):
 
         init_q_days = np.append(init_q_days, conv)
 
-    init_q_days = np.column_stack(init_q_days, q_weights[:, 1 : q_weights.shape[1]])
+    init_q_days = np.column_stack((init_q_days, q_weights[:, 1 : q_weights.shape[1]]))
 
     return init_q_days   
 # questa matrice sarà sicuramente più corta delle altre, quindi o allungarla oppure cambiare la funzion
