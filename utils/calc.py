@@ -269,19 +269,53 @@ def price_return(Curr_Price_Matrix, date_order = 'ascendent'):
 # first day after the index rebalancing
 # every c.a. 3 months the index is rebalanced, so the synt_matrix function has to be called anew
 
-def synt_matrix_daily(Curr_Price_Matrix, weight_index, synt_matrix_old = None, synt_ptf_value = 100):
+#def synt_matrix_daily(Curr_Price_Matrix, weight_index, synt_matrix_old = None, synt_ptf_value = 100):
 
     #returns computed considering that today is the last row and yesterday is the row before
-    daily_return = (Curr_Price_Matrix[len(Curr_Price_Matrix)-1,1:]-Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:])/Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:]
-    synt_matrix_date = np.array(Curr_Price_Matrix[len(Curr_Price_Matrix)-1,0])
+  #  daily_return = (Curr_Price_Matrix[len(Curr_Price_Matrix)-1,1:]-Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:])/Curr_Price_Matrix[len(Curr_Price_Matrix)-2,1:]
+  #  synt_matrix_date = np.array(Curr_Price_Matrix[len(Curr_Price_Matrix)-1,0])
 
-    if synt_matrix_old == None:
-        synt_matrix= weight_index*synt_ptf_value
-        synt_matrix=np.column_stack((synt_matrix_date,synt_matrix))
-    else:
-        synt_matrix_new_value = daily_return*synt_matrix_old[len(synt_matrix_old), 1:]
-        synt_matrix_new_row = np.column_stack((synt_matrix_date, synt_matrix_new_value))
-        synt_matrix = np.row_stack((synt_matrix_old, synt_matrix_new_row))
+  #  if synt_matrix_old == None:
+  #      synt_matrix= weight_index*synt_ptf_value
+  #      synt_matrix=np.column_stack((synt_matrix_date,synt_matrix))
+  #  else:
+ #     synt_matrix_new_value = daily_return*synt_matrix_old[len(synt_matrix_old), 1:]
+ #       synt_matrix_new_row = np.column_stack((synt_matrix_date, synt_matrix_new_value))
+   #     synt_matrix = np.row_stack((synt_matrix_old, synt_matrix_new_row))
+
+ #   return synt_matrix
+
+
+ #function that return the syntethic weight for the index at the end of the day of the first day of each quarter 
+
+def q_synt_matrix(Curr_Price_Matrix, weight_index, synt_matrix_old = None, synt_ptf_value = 100):
+
+    daily_return = price_return()
+    weights = q_weights()
+    logic_check = logic_matrix1()
+    q_synt = np.append([])
+
+    for date in q_weights[:,0]:
+
+        calc1 = q_weights[q_weights[:,0] == date][0][1:d.shape[1]] * 100
+        calc2 = price_return[price_return[:,0] == date][0][1:d.shape[1]] 
+        calc3 = logic_matrix1[logic_matrix1[:,0] == date][0][1:d.shape[1]]
+        calc_fin = (calc1 + calc1*calc2)*calc3
+        q_synt = np.append(q_synt, calc_fin)
+
+    q_synt_w = np.array([])
+
+    for i in range(q_synt.shape[0]):
+        tot = q_synt[i:1:q_synt.shape[1]].sum()
+        weights = q_synt[i:1:q_synt.shape[1]] / tot
+        q_synt_w = np.append(q_synt_w, weights)
+    
+    q_synt_w = np.column_stack(q_weights[:,0], q_synt_w)
+
+    return q_synt_w
+
+
+    
 
     return synt_matrix
 
