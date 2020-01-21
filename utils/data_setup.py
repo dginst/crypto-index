@@ -77,6 +77,7 @@ def date_list(date_index, timeST = 'Y', lag_adj = 3600):
     else:
         return DateList
 
+####################### DATA FIXING FUNCTIONS ###################################
 
 
 # return a list containing the elements of list_1 (bigger one) non included in list_2 (smaller one)
@@ -140,48 +141,44 @@ def find_index(list_to_find, where_to_find):
 
 
 # given a matrix (where_to_lookup), a date reference array and, broken date array with missing date
-# function returns a matrix where the first column contains the list of date that broken array miss
-# the second column contains the relative weighted variations between T and T-1, the third column contains
-# the T volume specified by "position"(4=close price, 5= volume in crypto, 6=volume in pair)
+# function returns two matrices:
+# the first one is about the "position" information and can be "Close Price", "Crypto Volume" or "Pair Volume"
+# where the first column contains the list of date that broken array misses and
+# the second column contains the variations of the "position" info between T and T-1
+# the second one contains the volume variations as seconda column and date as first
+
 
 def substitute_finder(broken_array, reference_array, where_to_lookup, position):
 
     # find the elements of ref array not included in broken array (the one to check)
     missing_item = Diff(reference_array, broken_array)
-    print('miss_it')
-    print(missing_item)
-    # find the position in a matrix (row index) of each elements missing in broken array
-    indexed_list = find_index(missing_item, where_to_lookup['Time'])
-    print('index')
-    print(indexed_list)
-    # setting position as column name
-    header = ['Time', 'Open', 'High', 'Low', 'Close Price', "Crypto Volume", "Pair Volume"]
-    position = header[position]
 
-    weighted_variations = [] #####se sono zero tutti? se più di uno è zero? deve completare al 100% dei casi #####
+    variations = [] 
     volumes = []
-    for element in indexed_list[:,1]:
-
-        if element != None:
-
-            today_value = where_to_lookup[position][element]
-            yesterday_value = where_to_lookup[position][element - 1]
+    for element in missing_item:
+        
+        # for each missing element try to find it in where to look up, if KeyError occurred 
+        # meaning the searched item is not found, then append zero
+        try:
+            today_value = float(where_to_lookup[where_to_lookup['Time'] == element][position])
+            yesterday_value = float(where_to_lookup[where_to_lookup['Time'] == element - 86400][position])
             variation = (today_value - yesterday_value) / yesterday_value
-            volume = where_to_lookup['Pair Volume'][element]
-            weighted_variation = variation * volume
-            weighted_variations.append(weighted_variation)
+            volume = float(where_to_lookup[where_to_lookup['Time'] == element]['Crypto Volume'])
+            variation = variation * volume
+            variations.append(variation)
             volumes.append(volume)
-        else:
-            weighted_variations.append(0) ## 0 or None?
+
+        except KeyError:
+
+            variations.append(0) 
             volumes.append(0)
 
     volumes = np.array(volumes)
-    weighted_variations = np.array(weighted_variations)
-    variation_matrix = np.column_stack((indexed_list[:,0], weighted_variations))
-    volume_matrix = np.column_stack((indexed_list[:,0], volumes))
+    variations = np.array(variations)
+    variation_matrix = np.column_stack((missing_item, variations))
+    volume_matrix = np.column_stack((missing_item, volumes))
 
     return variation_matrix, volume_matrix
-
 
 # function that fills a vector with specified elelments in specified positions
 # function takes as input:
@@ -190,37 +187,37 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
 # index_list = the index position that the items should have in where_to_insert
 # the function returns where_to_insert updated with the missing items 
 
-def insert_items(what_to_insert, where_to_insert, index_list):
+# def insert_items(what_to_insert, where_to_insert, index_list):
 
-    index_list = np.array(index_list)
-    what_to_insert = np.array(what_to_insert)
-    where_to_insert = np.array(where_to_insert)
+#     index_list = np.array(index_list)
+#     what_to_insert = np.array(what_to_insert)
+#     where_to_insert = np.array(where_to_insert)
 
-    for i,index in enumerate(index_list):
-        where_to_insert = np.insert(where_to_insert,
-        index,what_to_insert[i])
+#     for i,index in enumerate(index_list):
+#         where_to_insert = np.insert(where_to_insert,
+#         index,what_to_insert[i])
 
-    return where_to_insert
+#     return where_to_insert
 
 
 
 # function returns an array of elements in position i-1, as founded in where_to_insert, according
 # to the position contained in index_list
 # function takes as input:
-# index_list = a list/array of indexes (position) related to elelments of interest
+# index_list = a list/array of indexes (position) related to elements of interest
 # where_to_insert = a vector where search the previous elements according to the index given
 
-def find_previous(index_list, where_to_insert): 
+# def find_previous(index_list, where_to_insert): 
 
-    # turn vectors into numpy array
-    index_list = np.array(index_list)
-    where_to_insert = np.array(where_to_insert)
-    previous_list = []
+#     # turn vectors into numpy array
+#     index_list = np.array(index_list)
+#     where_to_insert = np.array(where_to_insert)
+#     previous_list = []
 
-    for index in index_list:
-        previous_list.append(where_to_insert[index - 1])
+#     for index in index_list:
+#         previous_list.append(where_to_insert[index - 1])
 
-    return np.array(previous_list)
+#     return np.array(previous_list)
 
 
 
@@ -230,7 +227,10 @@ def find_previous(index_list, where_to_insert):
 # based on the info_pos choice the function returns a fixed vector that contain also the values obtained as volume weighted average
 # (of close price, volume crypto or volume in pair) of the daily variations of every exchange in the crypto+pair 
 
-def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, start_date, end_date = None):
+def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_date = None):
+
+    # define DataFrame header
+    header = ['Time', 'Close Price', 'Crypto Volume', 'Pair Volume']
 
     # set end_date = today if empty
     if end_date == None:
@@ -245,13 +245,15 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
     # set the list af all exchanges and then pop out the one in subject
     exchange_list = ['bitflyer', 'bitfinex', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini','kraken']#aggungere itbit
     exchange_list.remove(exchange)
+    print(exchange_list)
 
     # iteratively find the missing value in all the exchanges
-    fixing_variation = np.array([])
+    fixing_price = np.array([])
+    fixing_cry_vol = np.array([])
+    fixing_pair_vol = np.array([])
     fixing_volume = np.array([])
-    weighted_variation_value = np.array([])
 
-    # variable that count how many exchanges have values for the selected crypto+pair 
+    # variable that count how many exchanges actually have values for the selected crypto+pair 
     count_exchange = 0
 
     for elements in exchange_list:
@@ -260,54 +262,55 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
         matrix = data_download.CW_data_reader(elements, ccy_pair, start_date, end_date)
       
         # checking if data frame is empty: if not then the ccy_pair exists in the exchange
+        # then add to the count variable 
         if Check_null(matrix) == False:
             count_exchange = count_exchange + 1
-
+            print(elements)
             # if the matrix is not null, find variation and volume of the selected exchange
             # and assign them to the related matrix
             variations_price, volumes = substitute_finder(broken_array, reference_array, matrix, 'Close Price')
             variations_cry_vol, volumes = substitute_finder(broken_array, reference_array, matrix, 'Crypto Volume')
             variations_pair_vol, volumes = substitute_finder(broken_array, reference_array, matrix, 'Pair Volume')
-
-           
+            print(variations_price)
             if fixing_price.size == 0:
+
                 fixing_price = variations_price[:,1]
                 fixing_cry_vol = variations_cry_vol[:,1]
                 fixing_pair_vol = variations_pair_vol[:,1]
                 fixing_volume = volumes[:,1]
+
             else:
+
                 fixing_price = np.column_stack((fixing_price, variations_price[:,1]))
                 fixing_cry_vol = np.column_stack((fixing_cry_vol, variations_cry_vol[:,1]))
                 fixing_pair_vol = np.column_stack((fixing_pair_vol, variations_pair_vol[:,1]))
                 fixing_volume = np.column_stack((fixing_volume, volumes[:,1]))
     
-    # find the volume weighted variation and then the value to insert multiplying
-    # the average variation with the day_lag value
-
+    # find the volume weighted variation for all the variables
+    print(count_exchange)
+    print(fixing_price.size)
+    print(fixing_price)
     weighted_var_price = []
     weighted_cry_vol = []
     weighted_pair_vol = []
-    for i in range(len(fixing_price)): # i deve essere grande come le differrezne
-        count_none = 0
-        print(i)
+    for i in range(len(fixing_price)): 
+        count_none = 0 
+
         for j in range(count_exchange):
-            print(j)
+        
             if fixing_price[i,j] == 0:
                 count_none = count_none + 1
-                #fixing_variation[i,j] = 0
-                #fixing_volume[i,j] = 0
 
         # checking if single date is missing in all the exchanges
-        # if yes assign zero variation (the prevoius day value will be taken)
-        # if no compute the weighted variation
+        # if yes assign zero variation (the previous day value will be taken)
         if count_none == count_exchange:
             weighted_var_price.append(0)
             weighted_cry_vol.append(0)
             weighted_pair_vol.append(0)
 
-        # condition that assure: 1) not all values are 0/none, 2) there is more than 1 exchange (= more than 1 columns)
+        # condition that assure: 1) not all values are 0, 2) there is more than 1 exchange (= more than 1 columns)
         # 3) if true, there is just an element to fix, so fixing variation is a 1d array
-        elif count_none != count_exchange and count_exchange > 1 and fixing_variation.size == count_exchange:
+        elif count_none != count_exchange and count_exchange > 1 and fixing_price.size == count_exchange:
             price = fixing_price[i,:].sum() / fixing_volume[i,:].sum()
             cry_vol = fixing_cry_vol[i,:].sum() / fixing_volume[i,:].sum()
             pair_vol = fixing_pair_vol[i,:].sum() / fixing_volume[i,:].sum()
@@ -315,30 +318,46 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, info_position, st
             weighted_cry_vol.append(cry_vol)
             weighted_pair_vol.append(pair_vol)
             
-        # aggiustaree
-        elif count_none != count_exchange and count_exchange > 1 and fixing_variation.size > count_exchange:
-            weight_value = fixing_variation[i,:].sum(axis = 1) / fixing_volume[i,:].sum(axis = 1)
-            weighted_variation_value[i] = fixing_variation[i,:].sum(axis = 1) / fixing_volume[i,:].sum(axis = 1)
+        # 
+        elif count_none != count_exchange and count_exchange > 1 and fixing_price.size > count_exchange:
+            price = fixing_price[i,:].sum() / fixing_volume[i,:].sum()
+            cry_vol = fixing_cry_vol[i,:].sum() / fixing_volume[i,:].sum()
+            pair_vol = fixing_pair_vol[i,:].sum() / fixing_volume[i,:].sum()
+            weighted_var_price.append(price)
+            weighted_cry_vol.append(cry_vol)
+            weighted_pair_vol.append(pair_vol)
 
 
-    # find related index, day_lag value and compute the value to insert 
+    # create a matrix with columns: timestamp date, weighted variatons of prices, weightes variations of volume both crypto and pair
+    variation_matrix = np.column_stack((variations_price[:,0], weighted_var_price, weighted_cry_vol, weighted_pair_vol))
 
-    index_list = find_index(variations_price[:,0], broken_matrix['Time'])
+    for i, row in enumerate(variation_matrix[:,0]):
 
-    # finds all the previous prices, crypto volume and pair volume
-    previous_price = find_previous(index_list[:,1], broken_matrix['Close Price'])
-    previous_cry_vol = find_previous(index_list[:,1], broken_matrix['Crypto Volume'])
-    previous_pair_vol = find_previous(index_list[:,1], broken_matrix['Pair Volume']) ###########
+        previous_values = broken_matrix[broken_matrix['Time'] == row - 86400].iloc[:,1:4]
 
-    # compute the values to insert
-    price_to_insert = (weighted_var_price + 1) * previous_price
-    cryvol_to_insert = (weighted_cry_vol + 1) * previous_cry_vol
-    pairvol_to_insert = (weighted_pair_vol + 1) * previous_pair_vol 
+        new_values = previous_values * (1 + variation_matrix[i, 1:])
 
-    # inserting the computed value into the vector
-    fixed_column = insert_items(index_list, value_to_insert, broken_matrix['Close Price'])
+        new_values = pd.DataFrame(np.column_stack((row, new_values)), columns = header)
+        broken_matrix = broken_matrix.append(new_values)
+        broken_matrix = broken_matrix.sort_values(by = ['Time'])
+        broken_matrix = broken_matrix.reset_index(drop = True)
 
-    return fixed_column
+
+
+
+    # # finds all the previous prices, crypto volume and pair volume
+    # previous_price = find_previous(index_list[:,1], broken_matrix['Close Price'])
+    # previous_cry_vol = find_previous(index_list[:,1], broken_matrix['Crypto Volume'])
+    # previous_pair_vol = find_previous(index_list[:,1], broken_matrix['Pair Volume']) ###########
+
+    # # compute the values to insert
+    # price_to_insert = (weighted_var_price + 1) * previous_price
+    # cryvol_to_insert = (weighted_cry_vol + 1) * previous_cry_vol
+    # pairvol_to_insert = (weighted_pair_vol + 1) * previous_pair_vol 
+
+    fixed_matrix = broken_matrix
+
+    return fixed_matrix
 
 
 
@@ -498,7 +517,6 @@ def CW_data_setup (CW_matrix, Ex_Rate_matrix, currency):
             
             date = CW_matrix['Time'][i]
             rate = Ex_Rate_matrix[(Ex_Rate_matrix['Date'] == date) & (Ex_Rate_matrix['Currency'] == ex_curr)]
-            new_close = CW_matrix['Close Price'][i] / rate['Rate']
             CW_matrix['Close Price'][i] = int(CW_matrix['Close Price'][i] / rate['Rate'])
             CW_matrix['Pair Volume'][i] = int(CW_matrix['Pair Volume'][i] / rate['Rate'])
     
