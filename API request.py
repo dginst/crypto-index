@@ -9,14 +9,15 @@
 import requests
 from requests import get
 from datetime import datetime
+import datetime
 import pandas as pd
 import numpy as np
 
 def date_gen():
-    start = datetime(2016, 1, 1)
-    end = datetime(2019, 12, 1)
+    start = datetime.datetime(2016, 1, 1)
+    end = datetime.datetime(2019, 12, 1)
     pace = end
-    delta = timedelta(days=50)
+    delta = datetime.timedelta(days=50)
     while(start < end):
         pace = start + delta
         yield (str(start.isoformat()), str(pace.isoformat()))
