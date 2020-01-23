@@ -63,7 +63,7 @@ Coinbase = dataframe.drop(columns = ['open', 'high', 'low'])
 
     
 #############################################################àààà
-#questa da il problema della chiave
+#questa da il problema della chiave. questa si potrebbe anche evitare 
 import requests
 from requests import get
 from datetime import *
@@ -74,7 +74,7 @@ from time import sleep
 def date_gen():
     start = datetime(2016, 1, 1)
     stop = datetime(2019, 12, 1)
-    pace = stop
+    end = stop
     delta = timedelta(days=49)
     while(start < stop):
         end = start + delta
@@ -94,7 +94,7 @@ d = {}
 
 for assets in crypto:
     for fiat in curr:
-        for start,stop in d_gen:
+        for start,end in d_gen:
             sleep(0.35)
             entrypoint = 'https://api.pro.coinbase.com/products'
             key = assets+"-"+fiat+"/candles?start="+start+"&end="+end+"&granularity="+granularity
