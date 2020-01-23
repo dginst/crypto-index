@@ -220,7 +220,7 @@ def Coinbase_API(Crypto, Fiat, Start_Date, End_Date = None, granularity = '86400
     ################################     GEMINI     #####################################################
     #####################################################################################################
     
-    #gives back data from 1 year before, that's bad
+    # it gives back data from 1 year before, that's bad
 
 
     def Gemini_API(Start_Date, End_Date, Crypto, Fiat, time_frame = '1day', ):
@@ -263,4 +263,8 @@ def Coinbase_API(Crypto, Fiat, Start_Date, End_Date = None, granularity = '86400
 
 
 
-    
+    #####################################################################################################
+    ################################    BITSTAMP    #####################################################
+    #####################################################################################################
+
+    # https://www.bitstamp.net/api/ api actually not working for historical data 
