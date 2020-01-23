@@ -160,7 +160,10 @@ def Coinbase_API(Crypto, Fiat, Start_Date, End_Date = None, granularity = '86400
 
     def Poloniex_API(Start_Date, End_Date, Crypto, Fiat, period = '86400', ):
 
-    date_object = date_gen_timestamp('01-01-2019','12-01-2019',49)
+    if End_Date == None:
+        End_Date = datetime.now().strftime('%m-%d-%Y')
+   
+    date_object = date_gen(Start_Date, End_Date, 49)
     df = np.array([])
     header = ['Time', 'low', 'high', 'open', 'Close Price', 'Crypto Volume']
     d = {}
@@ -203,7 +206,11 @@ def Coinbase_API(Crypto, Fiat, Start_Date, End_Date = None, granularity = '86400
 
     def itBit_API(Start_Date, End_Date, Crypto, Fiat, period = '86400', ):
 
-    date_object = date_gen_timestamp('01-01-2019','12-01-2019',49)
+    if End_Date == None:
+        End_Date = datetime.now().strftime('%m-%d-%Y')
+
+        date_object = date_gen(Start_Date, End_Date, 49)
+   
     df = np.array([])
     header = ['Time', 'low', 'high', 'open', 'Close Price', 'Crypto Volume']
     d = {}
