@@ -68,6 +68,6 @@ def Coinbase_API(Start_Date, End_Date, Crypto, Fiat, granularity = '86400', ):
     #             d["df_{}_{}".format(assets, fiat)] = dataframe ##perche???????
 
     Coinbase_df = pd.DataFrame(df, columns=header)        
-    Coinbase_df = Coinbase.drop(columns = ['open', 'high', 'low'])      
-    
+    Coinbase_df = Coinbase_df.drop(columns = ['open', 'high', 'low'])      
+
     return Coinbase_df    
