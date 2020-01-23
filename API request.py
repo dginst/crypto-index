@@ -136,13 +136,13 @@ def Coinbase_API(Crypto, Fiat, Start_Date, End_Date = None, granularity = '86400
     Coinbase_df = pd.DataFrame(df, columns=header)        
     Coinbase_df = Coinbase_df.drop(columns = ['open', 'high', 'low'])      
 
-    return kraken_df    
+    return Kraken_df    
 
 
 
 
     #####################################################################################################
-    ################################      BITTREX    #####################################################
+    ################################     BITTREX    #####################################################
     #####################################################################################################
 
     # https://bittrex.github.io/api/v3 api actually not working for historical data
@@ -151,7 +151,7 @@ def Coinbase_API(Crypto, Fiat, Start_Date, End_Date = None, granularity = '86400
 
 
     #####################################################################################################
-    ################################    Poloniex    #####################################################
+    ################################    POLONIEX    #####################################################
     #####################################################################################################
 
 
@@ -199,18 +199,36 @@ def Coinbase_API(Crypto, Fiat, Start_Date, End_Date = None, granularity = '86400
 
 
     #####################################################################################################
-    ################################     itBit      #####################################################
+    ################################      ITBIT     #####################################################
     #####################################################################################################
 
+    # https://www.itbit.com/api api actually not working for historical data 
 
 
-    def itBit_API(Start_Date, End_Date, Crypto, Fiat, period = '86400', ):
+
+
+    #####################################################################################################
+    ################################    BITFLYER    #####################################################
+    #####################################################################################################
+
+    # https://lightning.bitflyer.com/docs?lang=en api actually not working for historical data 
+
+
+
+
+    #####################################################################################################
+    ################################     GEMINI     #####################################################
+    #####################################################################################################
+    
+    #gives back data from 1 year before, that's bad
+
+
+    def Gemini_API(Start_Date, End_Date, Crypto, Fiat, time_frame = '1day', ):
 
     if End_Date == None:
         End_Date = datetime.now().strftime('%m-%d-%Y')
-
-        date_object = date_gen(Start_Date, End_Date, 49)
    
+    date_object = date_gen(Start_Date, End_Date, 49)
     df = np.array([])
     header = ['Time', 'low', 'high', 'open', 'Close Price', 'Crypto Volume']
     d = {}
@@ -221,8 +239,8 @@ def Coinbase_API(Crypto, Fiat, Start_Date, End_Date = None, granularity = '86400
             
             for start,stop in date_object:
 
-                entrypoint = 'https://poloniex.com/public?command=returnChartData&currencyPair='
-                key = asset+'_'fiat+'&start='+start+'&end='+stop+'&period='+period
+                entrypoint = 'https://api.gemini.com/v2'
+                key = '/candles/'+Crypto+Fiat+'/'+time_frame
                 request_url = entrypoint + key
 
                 response = requests.get(request_url)
@@ -242,3 +260,7 @@ def Coinbase_API(Crypto, Fiat, Start_Date, End_Date = None, granularity = '86400
     Coinbase_df = Coinbase_df.drop(columns = ['open', 'high', 'low'])      
 
     return Poloniex_df    
+
+
+
+    
