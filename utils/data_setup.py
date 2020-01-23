@@ -243,7 +243,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
     ccy_pair = cryptocurrency + pair
 
     # set the list af all exchanges and then pop out the one in subject
-    exchange_list = ['bitflyer', 'bitfinex', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini','kraken']#aggungere itbit
+    exchange_list = ['bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini','kraken']#aggungere itbit
     exchange_list.remove(exchange)
     print(exchange_list)
 
@@ -296,10 +296,16 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
     for i in range(len(fixing_price)): 
         count_none = 0 
 
+
         for j in range(count_exchange):
-        
-            if fixing_price[i,j] == 0:
-                count_none = count_none + 1
+            try:
+
+                if fixing_price[i,j] == 0:
+                    count_none = count_none + 1
+
+            except IndexError:
+                pass
+
 
         # checking if single date is missing in all the exchanges
         # if yes assign zero variation (the previous day value will be taken)
@@ -317,7 +323,14 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
             weighted_var_price.append(price)
             weighted_cry_vol.append(cry_vol)
             weighted_pair_vol.append(pair_vol)
-            
+
+        elif count_none != count_exchange and count_exchange == 1:
+            price = fixing_price[i].sum() / fixing_volume[i].sum()
+            cry_vol = fixing_cry_vol[i].sum() / fixing_volume[i].sum()
+            pair_vol = fixing_pair_vol[i].sum() / fixing_volume[i].sum()
+            weighted_var_price.append(price)
+            weighted_cry_vol.append(cry_vol)
+            weighted_pair_vol.append(pair_vol)   
         # 
         elif count_none != count_exchange and count_exchange > 1 and fixing_price.size > count_exchange:
             price = fixing_price[i,:].sum() / fixing_volume[i,:].sum()

@@ -15,7 +15,7 @@ pair_array = ['jpy', 'gbp', 'usd'] #, 'eur', 'cad', 'usdt', 'usdc'
 
 
 Crypto_Asset = ['BTC', 'ETH']
-#Exchanges = ['bitfinex','bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini']#,'kraken']
+#Exchanges = ['bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini']#,'kraken']
 Exchanges = ['kraken']
 start_date = '01-01-2020'
 today = datetime.now().strftime('%Y-%m-%d')
