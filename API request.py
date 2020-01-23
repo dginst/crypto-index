@@ -19,101 +19,55 @@ import pandas as pd
 import numpy as np
 from time import sleep
 
-def date_gen():
-    start = datetime(2016, 1, 1)
-    stop = datetime(2019, 12, 1)
-    pace = stop
-    delta = timedelta(days=50)
-    while(start < stop):
-        end = start + delta
-        yield (str(start.isoformat()), str(end.isoformat()))
-        start = end
-        
-d_gen = date_gen()
-#print(d_gen)
-crypto = 'BTC'#, 'XRP', 'LTC', '']
-fiat = 'USD'#], 'GBP', 'USDC', 'USD']
 
-granularity = '86400'
+#questa da il problema della chiave
+def date_gen(Start_Date, End_Date, delta):
+    start = datetime.strptime(Start_Date,'%m-%d-%Y') 
+    stop = datetime.strptime(End_Date,'%m-%d-%Y') 
+    delta = timedelta(days=delta)
+    pace = start
+    while (pace < stop):
+        end = pace + delta
+        if end > stop:
+            end = stop
+        yield (str(pace.isoformat()), str(end.isoformat()))
+        pace = end + timedelta(days = 1)
 
-arr = np.array([])
-header = ['Time', 'low', 'high', 'open', 'Close Price', 'Crypto Volume']
 
-for start,pace in d_gen:
-    print(start)
-    print(pace)
-    entrypoint = 'https://api.pro.coinbase.com/products/'
-    key = crypto+'-'+fiat+'/candles?start='+start+'&end='+pace+'&granularity='+granularity
-    request_url = entrypoint + key
-    response = requests.get(request_url)
-    response= response.json()
-    response = np.array(response)
-    print(response)
-
-    if arr.size == 0 :
-        dataframe = pd.DataFrame(response, columns = header)
-        arr = np.append(arr,response)
-    else:
-        dataframe = dataframe.append(pd.DataFrame(response, columns = header)) 
-    
-    # coinbase-pro allows 4 calls per seconds maximum so we use a sleep 
-    sleep(0.25)
-
-Coinbase = dataframe.drop(columns = ['open', 'high', 'low'])       
-
-    
-#############################################################àààà
-#questa da il problema della chiave. questa si potrebbe anche evitare 
-import requests
-from requests import get
-from datetime import *
-import pandas as pd
-import numpy as np
-from time import sleep
-
-def date_gen():
-    start = datetime(2016, 1, 1)
-    stop = datetime(2019, 12, 1)
-    end = stop
-    delta = timedelta(days=49)
-    while(start < stop):
-        end = start + delta
-        yield (str(start.isoformat()), str(end.isoformat()))
-        start = end
-        
-d_gen = date_gen()
-#print(d_gen)
 crypto =  ['BTC']
 curr = ['USD']#, 'USDC', 'USD']
 
-granularity = '86400'
+def Coinbase_API(Start_Date, End_Date, Crypto, Fiat, granularity = '86400', ):
 
-df = np.array([])
-header = ['Time', 'low', 'high', 'open', 'Close Price', 'Crypto Volume']
-d = {}
+    date_object = date_gen('01-01-2019','12-01-2019',49)
+    df = np.array([])
+    header = ['Time', 'low', 'high', 'open', 'Close Price', 'Crypto Volume']
+    d = {}
 
-for assets in crypto:
-    for fiat in curr:
-        for start,end in d_gen:
-            sleep(0.35)
-            entrypoint = 'https://api.pro.coinbase.com/products'
-            key = assets+"-"+fiat+"/candles?start="+start+"&end="+end+"&granularity="+granularity
-            request_url = entrypoint + key
-            response = requests.get(request_url)
-            response= response.json()
-            response = np.array(response)
-            print(response)
-            try :
-                if df.size == 0 :
-                    header = ['Time', 'low', 'high', 'open', 'Close Price', 'Crypto Volume']
-                    dataframe = pd.DataFrame(response, columns = header)
-                    alo = np.append(alo,response)
-                else:
-                    dataframe = dataframe.append(pd.DataFrame(response, columns = header))
-                    
-            except:        
-                continue
+    for assets in Crypto:
 
-            d["df_{}_{}".format(assets, fiat)] = dataframe
+        for fiat in Fiat:
             
-#Coinbase = dataframe.drop(columns = ['open', 'high', 'low'])          
+            for start,stop in date_object:
+
+                entrypoint = 'https://api.pro.coinbase.com/products/'
+                key = assets+"-"+fiat+"/candles?start="+start+"&end="+stop+"&granularity="+granularity
+                request_url = entrypoint + key
+
+                response = requests.get(request_url)
+                sleep(0.25)
+
+                response = response.json()
+
+                if df.size == 0 :
+                    df = np.array(response)
+                else:
+                    df = np.row_stack((df, response))
+                
+               
+    #             d["df_{}_{}".format(assets, fiat)] = dataframe ##perche???????
+
+    Coinbase_df = pd.DataFrame(df, columns=header)        
+    Coinbase_df = Coinbase.drop(columns = ['open', 'high', 'low'])      
+    
+    return Coinbase_df    
