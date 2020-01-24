@@ -2,9 +2,13 @@
 import API_request
 
 from pymongo import MongoClient
+
+#connecting to mongo in local
 connection = MongoClient('localhost', 27017)
+#creating the database called index
 db = connection.index
 db.rawdata.create_index([ ("id", -1) ])
+#creating the empty collection rawdata within the database index
 collection = db.rawdata
 
 #-----------------------------------------------------------------------------------------------------------
