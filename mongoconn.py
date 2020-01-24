@@ -11,7 +11,7 @@ collection = db.rawdata
 
 # i don't know why, it stops after first cicle BTCUSD
 
-def Coinbase_API(Start_Date='01-01-2019', End_Date='12-01-2019', Crypto = ['BTC', 'ETH'], Fiat=['USD'], granularity = '86400', ):
+def Coinbase_API(Start_Date='01-01-2019', End_Date='12-01-2019', Crypto = ['BTC'], Fiat=['USD'], granularity = '86400', ):
 
     date_object = API_request.date_gen_isoformat('01-01-2019','12-01-2019',49)
     df = np.array([])
