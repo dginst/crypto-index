@@ -16,7 +16,7 @@ def Coinbase_API(Start_Date='01-01-2019', End_Date='12-01-2019', Crypto = ['BTC'
     date_object = API_request.date_gen_isoformat('01-01-2019','12-01-2019',49)
     df = np.array([])
     header = ['Time', 'low', 'high', 'open', 'Close Price', 'Crypto Volume']
-    d = {}
+    
     
     for asset in Crypto:
 
