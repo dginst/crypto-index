@@ -1,6 +1,6 @@
 #this code block has to be put before all the download functions.
 import API_request
-from utils.API_request import date_gen_isoformat
+import utils.API_request as api
 from pymongo import MongoClient
 
 #connecting to mongo in local
@@ -17,7 +17,7 @@ collection = db.rawdata
     
 def Coinbase_API(Start_Date='01-01-2017', End_Date='12-01-2019', Crypto = ['ETH', 'BTC'], Fiat=['USD','EUR'], granularity = '86400', ):
 
-    date_object = date_gen_isoformat(Start_Date,End_Date,49)
+    date_object = api.date_gen_isoformat(Start_Date,End_Date,49)
     df = np.array([])
     header = ['Time', 'low', 'high', 'open', 'Close Price', 'Crypto Volume']
     d = {}
@@ -58,3 +58,14 @@ def Coinbase_API(Start_Date='01-01-2017', End_Date='12-01-2019', Crypto = ['ETH'
 
             
     return response 
+
+
+mydb = connection["index"]
+mycol = mydb["rawdata"]
+
+myquery = { "Pair": "BTCUSD" }
+
+mydoc = mycol.find(myquery)
+
+for x in mydoc:
+    print(x)
