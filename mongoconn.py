@@ -9,7 +9,8 @@ connection = MongoClient('localhost', 27017)
 db = connection.index
 db.rawdata.create_index([ ("id", -1) ])
 #creating the empty collection rawdata within the database index
-collection = db.rawdata
+collection_raw = db.rawdata
+collection_clean = db.cleandata
 
 #-----------------------------------------------------------------------------------------------------------
 
@@ -60,12 +61,65 @@ def Coinbase_API(Start_Date='01-01-2017', End_Date='12-01-2019', Crypto = ['ETH'
     return response 
 
 
-mydb = connection["index"]
-mycol = mydb["rawdata"]
+#function to easily query on mongo:
+#db_name = name of the database
+#coll_name = nome of the collection
+#field = field of the search ( ex. time, pair etc)
+#request = specific parameter for the search in the field
+#all the inserted value must be string
+#result will be a dictionary
 
-myquery = { "Pair": "BTCUSD" }
+def query_mongo(db_name, coll_name, field, request ):
 
-mydoc = mycol.find(myquery)
+    mydb = connection[db_name]
+    mycol = mydb[coll_name]
 
-for x in mydoc:
-    print(x)
+    myquery = { field : request }
+
+    mydoc = mycol.find(myquery)
+
+    return mydoc
+
+    
+
+
+
+
+#function to import rawdata downloaded from CryptoWatch directly to MongoDB
+#saves the data downloaded from mongo
+
+def CW_mongoraw(exchange, response, asset, fiat ):
+
+    for i in range(len(response)):
+        r = response
+        Exchange = Exchange
+        Pair = asset+fiat
+        Time = r[i][0]
+        Open = r[i][1] 
+        High = r[i][2]
+        Low = r[i][3]
+        Close_Price = r[i][4]
+        Crypto_Volume = r[i][5]
+        Quote_Volume = r[i][6]
+
+        rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time' : Time, 'Low' : Low,
+           'High' : High, 'Open' : Open, 'Close Price' : Close_Price,
+           'Crypto Volume' : Crypto_Volume}
+        
+        collection.insert_one(rawdata)
+
+
+
+
+#this function takes the pd dataframes, turns them in dictionary
+#then it store the data in mongo db day-by-day
+#dataframe = the dataframe that we want to insert in mongodb
+#collection = the collection where we want to save the dataframe data
+
+def CW_mongoclean(dataframe, collection ):
+
+    #first transform the pandas dataframe to a dictionary
+    data = dataframe.to_dict(orient='records')  # Here's our added param..
+    collection.insert_many(data)
+
+    return
