@@ -365,14 +365,17 @@ def quarter_initial_position(Curr_Volume_Matrix,years_list=[2016,2017,2018,2019]
 ############da valutare a quali date associare le varue frazioni. es: 1/1/16 sicuro no poichè iniziamo a contare
 ##############da li mentre l'ultimo?
 
-def perc_volumes_per_exchange(Curr_Exc_Vol):
+def perc_volumes_per_exchange(Crypto_Ex_Vol):
 
+    Crypto_Ex_Vol = Crypto_Ex_Vol.to_numpy() 
     volume_fraction = np.array([])
     rebalance_interval = datetime_diff()
-    rebalance_start = quarter_initial_position(Curr_Exc_Vol)
+    rebalance_start = quarter_initial_position(Crypto_Ex_Vol)
 
-    for i,index in enumerate(rebalance_start):
-        rebalance_row = np.sum(Curr_Exc_Vol[index:(index+rebalance_interval[i][1:])], axis=0)
+    for i, index in enumerate(rebalance_start):
+
+        rebalance_row = np.sum(Crypto_Ex_Vol[index:(index+rebalance_interval[i][1:])], axis=0)
+        
         percentage = rebalance_row/rebalance_row.sum()
         volume_fraction = np.append(volume_fraction,percentage)
     volume_fraction = np.column_stack((rebalance_start[1:],volume_fraction))
@@ -385,10 +388,10 @@ def perc_volumes_per_exchange(Curr_Exc_Vol):
 # between the reconstitution day and the committe meeting day on any single pricing source.
 # If the requirement is respected the function will had the value 1 on the matrix, if not it will add 0.
 
-def Curr_logic_matrix1(perc_volumes_per_exchange):
+def Curr_logic_matrix1(Crypto_Ex_Vol):
 
     curr_logic_matrix1 = np.array([])
-    volume_perc = perc_volumes_per_exchange()
+    volume_perc = perc_volumes_per_exchange(Crypto_Ex_Vol)
 
     for row in range(len(volume_perc)):
 
