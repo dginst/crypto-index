@@ -126,7 +126,8 @@ def CW_mongoclean(dataframe, collection ):
 
     return
 
-
+#this function adds to the def ecb rates exctrator stored in data download to code lines
+#to add all the raw downloaded data from ecb to mongo
 
 def ECB_rates_extractor_with_mongo(key_curr_vector, Start_Period, End_Period = None, freq = 'D', 
                         curr_den = 'EUR', type_rates = 'SP00', series_var = 'A'):
@@ -186,4 +187,22 @@ def ECB_rates_extractor_with_mongo(key_curr_vector, Start_Period, End_Period = N
     return Exchange_Rate_List
 
 
+#this function query the ecbraw data stored in mongo.
+# in this case the function query all the data that in index.ecb_raw, respect
+# time period = 2016-01-04 and the currency selected from key_curr_vector
+
+def query_ecb_mongo(key_curr_vector):
+
+    for curr in key_curr_vector:
+
+        mydb = connection["index"]
+        mycol = mydb["ecb_raw"]
+
+        myquery = { "TIME_PERIOD": "2016-01-04", "CURRENCY": curr }
+
+        mydoc = mycol.find(myquery)
+        
+        dataframe = pd.DataFrame(mydoc)
+
+    return dataframe
 
