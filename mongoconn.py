@@ -195,12 +195,12 @@ def query_ecb_mongo(key_curr_vector):
 
     for curr in key_curr_vector:
 
-        mydb = connection["index"]
-        mycol = mydb["ecb_raw"]
+        db = connection["index"]
+        coll = db["ecb_raw"]
 
         myquery = { "TIME_PERIOD": "2016-01-04", "CURRENCY": curr }
 
-        mydoc = mycol.find(myquery)
+        doc = coll.find(myquery)
         
         dataframe = pd.DataFrame(mydoc)
 
