@@ -18,6 +18,7 @@ db.rawdata.create_index([ ("id", -1) ])
 #creating the empty collection rawdata within the database index
 collection_raw = db.rawdata
 collection_clean = db.cleandata
+collection_ECB_raw = db.ecb_raw
 
 
 crypto = ['btc', 'eth']
