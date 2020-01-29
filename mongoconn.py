@@ -15,12 +15,12 @@ collection_clean = db.cleandata
 collection_ECB_raw = db.ecb_raw
 
 #-----------------------------------------------------------------------------------------------------------
-
-# i don't know why, it stops after first cicle BTCUSD
+#####################################################################################################
+##########################  FUNCTIONS TO SAVE RAW DATA IN MONGO  ####################################
+#####################################################################################################
     
 def Coinbase_API(Start_Date='01-01-2017', End_Date='12-01-2019', Crypto = ['ETH', 'BTC'], Fiat=['USD','EUR'], granularity = '86400', ):
 
-    date_object = api.date_gen_isoformat(Start_Date,End_Date,49)
     df = np.array([])
     header = ['Time', 'low', 'high', 'open', 'Close Price', 'Crypto Volume']
     d = {}
@@ -28,7 +28,7 @@ def Coinbase_API(Start_Date='01-01-2017', End_Date='12-01-2019', Crypto = ['ETH'
     for asset in Crypto:
         print(asset)
         for fiat in Fiat:
-            print(fiat)    
+            date_object = api.date_gen_isoformat(Start_Date,End_Date,49)
             for start,stop in date_object:
                 print(start,stop)
                 
@@ -63,29 +63,6 @@ def Coinbase_API(Start_Date='01-01-2017', End_Date='12-01-2019', Crypto = ['ETH'
     return response 
 
 
-#function to easily query on mongo:
-#db_name = name of the database
-#coll_name = nome of the collection
-#field = field of the search ( ex. time, pair etc)
-#request = specific parameter for the search in the field
-#all the inserted value must be string
-#result will be a dictionary
-
-def query_mongo(db_name, coll_name, field, request ):
-
-    mydb = connection[db_name]
-    mycol = mydb[coll_name]
-
-    myquery = { field : request }
-
-    mydoc = mycol.find(myquery)
-
-    return mydoc
-
-    
-
-
-
 
 #function to import rawdata downloaded from CryptoWatch directly to MongoDB
 #saves the data downloaded from mongo
@@ -113,18 +90,7 @@ def CW_mongoraw(exchange, response, asset, fiat ):
 
 
 
-#this function takes the pd dataframes, turns them in dictionary
-#then it store the data in mongo db day-by-day
-#dataframe = the dataframe that we want to insert in mongodb
-#collection = the collection where we want to save the dataframe data
 
-def CW_mongoclean(dataframe, collection ):
-
-    #first transform the pandas dataframe to a dictionary
-    data = dataframe.to_dict(orient='records')  # Here's our added param..
-    collection_clean.insert_many(data)
-
-    return
 
 #this function adds to the def ecb rates exctrator stored in data download to code lines
 #to add all the raw downloaded data from ecb to mongo
@@ -187,6 +153,32 @@ def ECB_rates_extractor_with_mongo(key_curr_vector, Start_Period, End_Period = N
     return Exchange_Rate_List
 
 
+
+
+#####################################################################################################
+########################  FUNCTIONS TO SAVE MANIPULATED DATA IN MONGO  ##############################
+#####################################################################################################
+
+
+
+#this function takes the pd dataframes, turns them in dictionary
+#then it store the data in mongo db day-by-day
+#dataframe = the dataframe that we want to insert in mongodb
+#collection = the collection where we want to save the dataframe data
+
+def CW_mongoclean(dataframe, collection ):
+
+    #first transform the pandas dataframe to a dictionary
+    data = dataframe.to_dict(orient='records')  # Here's our added param..
+    collection_clean.insert_many(data)
+
+    return
+
+
+#####################################################################################################
+########################  FUNCTIONS TO QUERY RAW DATA IN MONGO  #####################################
+#####################################################################################################
+
 #this function query the ecbraw data stored in mongo.
 # in this case the function query all the data that in index.ecb_raw, respect
 # time period = 2016-01-04 and the currency selected from key_curr_vector
@@ -206,3 +198,6 @@ def query_ecb_mongo(key_curr_vector):
 
     return dataframe
 
+#####################################################################################################
+########################  FUNCTIONS TO QUERY MANIPULATED DATA IN MONGO  #############################
+#####################################################################################################
