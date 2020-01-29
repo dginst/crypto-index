@@ -128,7 +128,7 @@ def CW_mongoclean(dataframe, collection ):
 
 
 
-def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq = 'D', 
+def ECB_rates_extractor_with_mongo(key_curr_vector, Start_Period, End_Period = None, freq = 'D', 
                         curr_den = 'EUR', type_rates = 'SP00', series_var = 'A'):
     
     Start_Period = data_setup.date_reformat(Start_Period, '-', 'YYYY-MM-DD')
@@ -172,7 +172,7 @@ def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq =
         Main_Data_Frame['TIME_PERIOD'] = pd.to_datetime(Main_Data_Frame['TIME_PERIOD'])
         data = Main_Data_Frame.to_dict(orient='records')  
         collection_ECB_raw.insert_many(data)
-        
+
         # Set 'TIME_PERIOD' to be the index
         Main_Data_Frame = Main_Data_Frame.set_index('TIME_PERIOD')
         
@@ -184,4 +184,6 @@ def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq =
             Exchange_Rate_List['USD based rate'][i] = float(Main_Data_Frame['OBS_VALUE']) / cambio_USD_EUR
 
     return Exchange_Rate_List
+
+
 
