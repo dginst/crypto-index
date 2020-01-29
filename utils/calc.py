@@ -365,22 +365,38 @@ def quarter_initial_position(Curr_Volume_Matrix,years_list=[2016,2017,2018,2019]
 ############da valutare a quali date associare le varue frazioni. es: 1/1/16 sicuro no poichè iniziamo a contare
 ##############da li mentre l'ultimo?
 
-def perc_volumes_per_exchange(Crypto_Ex_Vol):
+def perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges):
 
-    Crypto_Ex_Vol = Crypto_Ex_Vol.to_numpy() 
+    
     volume_fraction = np.array([])
     rebalance_interval = datetime_diff()
     rebalance_start = quarter_initial_position(Crypto_Ex_Vol)
+    stop_vector = np.array([])
 
-    for i, index in enumerate(rebalance_start):
+    for start, stop in rebalance_start:
 
-        rebalance_row = np.sum(Crypto_Ex_Vol[index:(index+rebalance_interval[i][1:])], axis=0)
-        
-        percentage = rebalance_row/rebalance_row.sum()
-        volume_fraction = np.append(volume_fraction,percentage)
-    volume_fraction = np.column_stack((rebalance_start[1:],volume_fraction))
 
-    return volume_fraction
+        quarter_matrix = Crypto_Ex_Vol[Exchanges][Crypto_Ex_Vol['Time'].between(start, stop, inclusive = True)]
+        quarter_sum = quarter_matrix.sum()
+        exchange_percentage = quarter_sum / quarter_sum.sum()
+        if stop_vector.size == 0:
+            stop_vector = stop
+            volume_fraction = np.array(exchange_percentage)
+            
+        else:
+            stop_vector = np.column_stack((stop_vector, stop))
+            volume_fraction = np.column_stack((volume_fraction, np.array(exchange_percentage)))
+        # rebalance_row = np.sum(Crypto_Ex_Vol[index:(index+rebalance_interval[i][1:])], axis=0)
+        # percentage = rebalance_row/rebalance_row.sum()
+        # volume_fraction = np.append(volume_fraction,percentage)
+
+    rebalance_date_perc = np.row_stack((stop_vector, volume_fraction))
+
+    header = ['Time']
+    header.extend(Exchanges)
+    rebalance_date_perc = pd.DataFrame(rebalance_date_perc, columns = header)
+
+    return rebalance_date_perc
 
 
 # This function creates a matrix of 0 and 1 checking if the first requirement is respected.
