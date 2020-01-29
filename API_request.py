@@ -144,11 +144,11 @@ def Coinbase_API(Crypto, Fiat, Start_Date, End_Date = None, granularity = '86400
 
 # function that given Crypto (ex. BTC), Fiat (ex. USD), start DAte and End Date 
 # retrieve the Historical Series from start date to End Date of the definend Crypto + Fiat
-# on the Kraken Exchange
+# on the Kraken Exchange. "interval" is set on default as 1440 minutes that is equal to a day
 # the output will be displayed in three columns containing: 'Time' in timestamp format,
 # 'Close Price' in "Fiat" currency, 'Crypto Volume' in "Crypto" amount
 
-def kraken_API(Start_Date, End_Date, Crypto, Fiat, interval  = '1440', ):
+def kraken_API(Start_Date, End_Date, Crypto, Fiat, interval  = '1440'):
 
     df = np.array([])
     header = ['Time', 'open', 'high', 'low', 'Crypto Price', 'vwap', 'Crypto Volume', 'count']
@@ -216,7 +216,7 @@ def Poloniex_API(Start_Date, End_Date, Crypto, Fiat, period = '86400'):
             for start,stop in date_object:
 
                 entrypoint = 'https://poloniex.com/public?command=returnChartData&currencyPair='
-                key = asset+'_'+fiat+'&start='+start+'&end='+stop+'&period='+period
+                key = asset + '_' + fiat + '&start=' + start + '&end=' + stop + '&period=' + period
                 request_url = entrypoint + key
 
                 response = requests.get(request_url)
@@ -247,7 +247,30 @@ def Poloniex_API(Start_Date, End_Date, Crypto, Fiat, period = '86400'):
 
 # https://www.itbit.com/api api actually not working for historical data 
 
+def itbit_ticker (Crypto, Fiat):
 
+    header = ['pair', 'bid', 'bidAmt', 'ask', 'askAmt', 'lastPrice', 'lastAmt', 'volume24h', \
+            'volumeToday', 'high24h', 'low24h', 'highToday','lowToday','openToday', 'vwapToday',\
+            'vwap24h', 'serverTimeUTC']
+
+    for asset in Crypto:
+        asset = asset.upper()
+
+        for fiat in Fiat:
+
+            fiat = fiat.upper()
+            entrypoint = 'https://api.itbit.com/v1/markets/'
+            key = asset + fiat + '/ticker'
+            request_url = entrypoint + key
+
+            response = requests.get(request_url)
+
+            response = response.json()   
+
+    itbit_df = pd.DataFrame(response, columns=header)        
+    itbit_df = itbit_df.drop(columns = ['open', 'high', 'low', 'vwap', 'volume usd'])      
+
+    return itbit_df    
 
 #####################################################################################################
 ################################    BITFLYER    #####################################################
@@ -256,6 +279,30 @@ def Poloniex_API(Start_Date, End_Date, Crypto, Fiat, period = '86400'):
 # https://lightning.bitflyer.com/docs?lang=en api actually not working for historical data 
 
 
+
+def bitflyer_ticker (Crypto, Fiat):
+
+    header = [  "product_code", "timestamp", "tick_id", "best_bid", "best_ask", "best_bid_size",
+                "best_ask_size", "total_bid_depth", "total_ask_depth", "ltp", "volume", "volume_by_product"]
+
+    for asset in Crypto:
+
+        asset = asset.upper()
+        for fiat in Fiat:
+
+            fiat = fiat.upper()
+            entrypoint = 'https://api.bitflyer.com/v1/'
+            key = 'getticker?product_code=' + asset + '_' + fiat
+            request_url = entrypoint + key
+
+            response = requests.get(request_url)
+
+            response = response.json()   
+
+    bitflyer_df = pd.DataFrame(response, columns=header)        
+    bitflyer_df = bitflyer_df.drop(columns = ['open', 'high', 'low', 'vwap', 'volume usd'])      
+
+    return bitflyer_df
 
 
 #####################################################################################################
@@ -307,3 +354,27 @@ def Gemini_API(Start_Date, End_Date, Crypto, Fiat, time_frame = '1day'):
     #####################################################################################################
 
     # https://www.bitstamp.net/api/ api actually not working for historical data 
+
+
+def bitstamp_ticker (Crypto, Fiat):
+
+    header = ["high", "last", "timestamp", "bid", "vwap", "volume", "low", "ask", "open"]
+
+    for asset in Crypto:
+
+        asset = asset.lower()
+        for fiat in Fiat:
+
+            fiat = fiat.lower()
+            entrypoint = 'https://www.bitstamp.net/api/v2/ticker/'
+            key = asset + fiat
+            request_url = entrypoint + key
+
+            response = requests.get(request_url)
+
+            response = response.json()   
+
+    bitstamp_df = pd.DataFrame(response, columns=header)        
+    bitstamp_df = bitstamp_df.drop(columns = ['open', 'high', 'low', 'vwap', 'volume usd'])      
+
+    return bitstamp_df
