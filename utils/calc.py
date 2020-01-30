@@ -3,6 +3,7 @@ import pandas as pd
 import datetime
 from datetime import *
 from datetime import date, datetime, timedelta
+from dateutil.relativedelta import relativedelta
 
 
 # Return the Initial Divisor for the index. It identifies the position of the initial date in the Curr_Volume_Matrix. 
@@ -118,26 +119,45 @@ def emwa_currencies_volume(Curr_Volume_Matrix, moving_average_period = 90):
 
     return emwa_gen
 
-# this function return a range of data in a certain interval. Is usefull because is it possible  to iterate on it.
+# this function return a range of data in a certain interval. Is usefull because is it possible 
+# to iterate on it.
 
 def perdelta(start, end, delta):
 
-    curr = start
-    while curr < end:
-        yield curr
-        curr += delta
-
-    return 
+    current = start
+    while current < end:
+        yield current
+        current += delta
 
 
-# this function generates an array cointaing the date of the start of each quarter from the start of the index till the current day.
-def start_q(perdelta): 
 
-    start_q = np.array([])
-    for result in perdelta(datetime.datetime(2016, 1, 1), datetime.datetime.today(), relativedelta(months=3)):
-        start_q = np.append(start_q, result)
-    
-    return start_q
+# this function generates an array cointaing the date of the start of each quarter from the start of the index
+# till the current day.
+
+def start_q(start_date = '01-01-2016', stop_date = None, delta = None, timeST = 'Y', lag_adj = 3600): 
+
+    start_date = datetime.strptime(start_date,'%m-%d-%Y')
+
+    if delta == None:
+
+        delta = relativedelta(months = 3)
+    if stop_date == None:
+
+        stop_date = datetime.now().strftime('%m-%d-%Y')
+        stop_date = datetime.strptime(stop_date,'%m-%d-%Y')
+
+    start_day_arr = np.array([])
+
+    for result in perdelta(start_date, stop_date, delta):
+        if timeST == 'Y':
+            result = int(result.timestamp())
+            result = result + lag_adj
+        else:
+            result = result.strftime('%m-%d-%Y')
+        
+        start_day_arr = np.append(start_day_arr, result)
+
+    return start_day_arr
 
 
 # this fuction checks if a day is a business day or not.
@@ -147,24 +167,51 @@ def is_business_day(date):
     
     return bool(len(pd.bdate_range(date, date)))
 
+
+############
+
+def previuos_business_day(date):
+
+    while is_business_day(date) == False:
+        date = date - timedelta(days = 1)
+    
+    return date
+##############
+
 # this function generates an array cointaing the date of the boeard meeting in each quarter on the 21st of 
 # the third month of the quarter.
 
-def board_meeting_day():
+def board_meeting_day(start_date = '12-21-2015', stop_date = None, delta = None, timeST = 'Y', lag_adj = 3600):
     
+    start_date = datetime.strptime(start_date,'%m-%d-%Y')
+
+    if delta == None:
+
+        delta = relativedelta(months = 3)
+    if stop_date == None:
+
+        stop_date = datetime.now().strftime('%m-%d-%Y')
+        stop_date = datetime.strptime(stop_date,'%m-%d-%Y')
+
     board_day = np.array([])
 
-    for result in perdelta(datetime.datetime(2015, 12, 21), datetime.datetime.today(), relativedelta(months=3)):
+    for result in perdelta(start_date, stop_date, delta):
         # checks if the date generated is a business day, if yes the date is added to the array
         # if not, the fuction go 1 day back and makes the same check. If the condition is still not respected, is going back another day.
         # the if statement goes back two days maximum: Sunday and Saturday.
-        if is_business_day(result) == True:
-            board_day = np.append(board_day, result.timestamp())
-        elif is_business_day(result - (datetime.timedelta(days = 1)).timestamp()) == True:
-            board_day = np.append(board_day, (result - datetime.timedelta(days = 1)).timestamp())
+        result = previuos_business_day(result) 
+
+        if timeST == 'Y':
+
+            result = int(result.timestamp())
+            result = result + lag_adj
         else:
-            board_day = np.append(board_day, (result - datetime.timedelta(days = 2)).timestamp())
-    
+
+            result = result.strftime('%m-%d-%Y')
+
+        board_day = np.append(board_day, result)
+
+
     return board_day
 
 
@@ -384,13 +431,13 @@ def perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges):
             volume_fraction = np.array(exchange_percentage)
             
         else:
-            stop_vector = np.column_stack((stop_vector, stop))
-            volume_fraction = np.column_stack((volume_fraction, np.array(exchange_percentage)))
+            stop_vector = np.row_stack((stop_vector, stop))
+            volume_fraction = np.row_stack((volume_fraction, np.array(exchange_percentage)))
         # rebalance_row = np.sum(Crypto_Ex_Vol[index:(index+rebalance_interval[i][1:])], axis=0)
         # percentage = rebalance_row/rebalance_row.sum()
         # volume_fraction = np.append(volume_fraction,percentage)
 
-    rebalance_date_perc = np.row_stack((stop_vector, volume_fraction))
+    rebalance_date_perc = np.column_stack((stop_vector, volume_fraction))
 
     header = ['Time']
     header.extend(Exchanges)
