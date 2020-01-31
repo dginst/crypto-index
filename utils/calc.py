@@ -6,6 +6,264 @@ from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 
+
+# function that check if a date is a business day
+# returns "True" is the date is a BD, "False" otherwise
+
+def is_business_day(date):
+    
+    return bool(len(pd.bdate_range(date, date)))
+
+
+
+# function that returns the previous nearest date to "date_to_check" (second since epoch date input variable)
+# looking into "date_array" array
+
+
+def minus_nearer_date(date_array, date_to_check):
+
+    only_lesser = np.array([])
+    for element in date_array:
+
+        if element < date_to_check:
+
+            only_lesser = np.append(only_lesser, element)
+
+    nearest_date = only_lesser[only_lesser.size - 1]     
+    ## alternative with minimun distance #####
+    # min_dist = np.absolute(only_lesser - date_to_check)
+    # nearest_date = np.amin(min_dist) + date_to_check
+
+    return nearest_date
+
+
+
+# function that returns the first previous business day of the imput date
+
+def previuos_business_day(date):
+
+    while is_business_day(date) == False:
+        date = date - timedelta(days = 1)
+    
+    return date
+
+
+
+# this function return/ yield a series of value between "start" and "end" with "delta" increase
+# it works with date as well
+
+def perdelta(start, end, delta):
+
+    current = start
+    while current < end:
+        yield current
+        current += delta
+
+
+
+# this function generates an array cointaing the first date of each quarter,
+# function starts counting from the start_date (01-01-2016 as default) to stop_date (today as default)
+# function returns the list of date in timestamp format (second simce epoch) if no otherwise specified
+
+def start_q(start_date = '01-01-2016', stop_date = None, delta = None, timeST = 'Y', lag_adj = 3600): 
+
+    start_date = datetime.strptime(start_date,'%m-%d-%Y')
+
+    if delta == None:
+
+        delta = relativedelta(months = 3)
+    if stop_date == None:
+
+        stop_date = datetime.now().strftime('%m-%d-%Y')
+        stop_date = datetime.strptime(stop_date,'%m-%d-%Y')
+
+    start_day_arr = np.array([])
+
+    for result in perdelta(start_date, stop_date, delta):
+        if timeST == 'Y':
+            result = int(result.timestamp())
+            result = result + lag_adj
+        else:
+            result = result.strftime('%m-%d-%Y')
+        
+        start_day_arr = np.append(start_day_arr, result)
+
+    return start_day_arr
+
+
+# function that returns an array containing the stop_date of each quarterly based on the array containing 
+# the start date that the function takes as input
+
+def stop_q(start_q_array):
+
+    stop_q_array = np.array([])
+
+    for i in range(start_q_array.size - 1):
+
+        stop_date = start_q_array[i + 1] - 86400
+        stop_q_array = np.append(stop_q_array, stop_date)
+    
+    delta = relativedelta(months = 3)
+    last_start = start_q_array[start_q_array.size - 1]
+    last_stop = datetime.fromtimestamp(last_start)
+    last_stop = last_stop + delta
+    last_stop = int(last_stop.timestamp()) - 86400
+    stop_q_array = np.append(stop_q_array, last_stop)
+
+    return stop_q_array
+
+
+
+
+
+# this function generates an array cointaing the date of the boeard meeting in each quarter on the 21st of 
+# the third month of the quarter.
+
+def board_meeting_day(start_date = '12-21-2015', stop_date = None, delta = None, timeST = 'Y', lag_adj = 3600):
+    
+    start_date = datetime.strptime(start_date,'%m-%d-%Y')
+
+    if delta == None:
+
+        delta = relativedelta(months = 3)
+    if stop_date == None:
+
+        stop_date = datetime.now().strftime('%m-%d-%Y')
+        stop_date = datetime.strptime(stop_date,'%m-%d-%Y')
+
+    board_day = np.array([])
+
+    for result in perdelta(start_date, stop_date, delta):
+        
+        # checks if the date generated is a business day, if not finds the first previous BD
+        result = previuos_business_day(result) 
+
+        if timeST == 'Y':
+
+            result = int(result.timestamp())
+            result = result + lag_adj
+        else:
+
+            result = result.strftime('%m-%d-%Y')
+
+        board_day = np.append(board_day, result)
+
+
+    return board_day
+
+
+# returns an array with the day before of each board meeting.
+
+def day_before_board(board_meet_array = None):
+
+    if board_meet_array == None:
+
+        before_board_day = board_meeting_day() - 86400
+    else:
+        before_board_day = board_meet_array - 86400
+
+
+    return before_board_day
+
+
+# function that returns/yields a couple of values representing the start date and end date of each quarter
+
+def quarterly_period(start_date = '01-01-2016', stop_date = None):
+
+    start_date = datetime.strptime(start_date,'%m-%d-%Y')
+
+    if stop_date == None:
+
+        stop_date = datetime.now().strftime('%m-%d-%Y')
+        stop_date = datetime.strptime(stop_date,'%m-%d-%Y')
+
+    start_quarter = start_q(start_date, stop_date)
+    stop_quarter = start_quarter - 86400
+
+    for i in range(start_quarter.size - 1):
+        yield (start_quarter[i], stop_quarter[i+1])
+
+############### series of function to create the Logic Matrix ############
+
+# function that returns an array that contains the number of days
+# between the first day of the quarter and the day of the board meeting
+# the input values are set on default as starting from 01/01/2016 and ending on 21/10/2019
+# rebalancing of index take place every 3 months and the comitee reunion date is set at the 21th day of the month
+
+def datetime_diff(years_list = [2016, 2017, 2018, 2019], months_list = [1, 4, 7, 10], comitee_day = 21):
+
+    datetime_diff = np.array([])
+
+    for years in years_list:
+        for months in months_list:
+            difference = int(abs((datetime.datetime(years, months, 1)-datetime.datetime(years ,months+2 , comitee_day)).days))
+            datetime_diff = np.append(datetime_diff, difference)
+
+    return datetime_diff
+
+# function returns a list of index in Curr_volume_matrix corresponding to the start date of each quarterly rebalance
+# function takes as input a matrix/vector containing the complet set of date and the default years list and months list 
+
+def quarter_initial_position(Curr_Volume_Matrix,years_list=[2016,2017,2018,2019], months_list=[1,4,7,10]):
+
+    index = []
+
+    for years in years_list:
+        for months in months_list:
+            timestamp = str(int(time.mktime(datetime.datetime(years , months, 1).timetuple())))
+            coord = np.where(Curr_Volume_Matrix == timestamp)
+            coord = list(zip(coord[0], coord[1]))
+            index = index.append(coord[0])
+
+    return index
+
+# function that takes as input
+# Curr_Exc_Vol: single Crypto volume matrix with exchanges as columns and date as rows; the matrix dimension has
+# to be standardized not depending of the actual exchanges that trades the single crypto. If a Crypto is not present 
+# in a Exchange the value will be set to 0
+# function sum for every exchange the volume value of each day among one index rebalance and another 
+# it returns a matrix where the first column contains the rebalancing date (timestamp) and the others columns
+# contain the percentage that each exchanges represent on the total volume for the considered period
+############da valutare a quali date associare le varue frazioni. es: 1/1/16 sicuro no poichè iniziamo a contare
+##############da li mentre l'ultimo?
+
+def perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016', end_date = None):
+
+    if end_date == None:
+
+        end_date = datetime.now().strftime('%m-%d-%Y')
+        end_date = datetime.strptime(end_date,'%m-%d-%Y')
+
+    volume_fraction = np.array([])
+
+    ########inserire funzione quarterly_period ######################
+
+    rebalance_start = quarterly_period(start_date, end_date)
+    #####################################
+    stop_vector = np.array([])
+
+    for start, stop in rebalance_start:
+
+
+        quarter_matrix = Crypto_Ex_Vol[Exchanges][Crypto_Ex_Vol['Time'].between(start, stop, inclusive = True)]
+        quarter_sum = quarter_matrix.sum()
+        exchange_percentage = quarter_sum / quarter_sum.sum()
+        if stop_vector.size == 0:
+            stop_vector = stop
+            volume_fraction = np.array(exchange_percentage)
+            
+        else:
+            stop_vector = np.row_stack((stop_vector, stop))
+            volume_fraction = np.row_stack((volume_fraction, np.array(exchange_percentage)))
+
+    rebalance_date_perc = np.column_stack((stop_vector, volume_fraction))
+
+    header = ['Time']
+    header.extend(Exchanges)
+    rebalance_date_perc = pd.DataFrame(rebalance_date_perc, columns = header)
+
+    return rebalance_date_perc
+
 # Return the Initial Divisor for the index. It identifies the position of the initial date in the Curr_Volume_Matrix. 
 # At the moment the initial date is 2016/01/01 or 1451606400 as timestamp
 # where:
@@ -119,109 +377,6 @@ def emwa_currencies_volume(Curr_Volume_Matrix, moving_average_period = 90):
 
     return emwa_gen
 
-# this function return a range of data in a certain interval. Is usefull because is it possible 
-# to iterate on it.
-
-def perdelta(start, end, delta):
-
-    current = start
-    while current < end:
-        yield current
-        current += delta
-
-
-
-# this function generates an array cointaing the date of the start of each quarter from the start of the index
-# till the current day.
-
-def start_q(start_date = '01-01-2016', stop_date = None, delta = None, timeST = 'Y', lag_adj = 3600): 
-
-    start_date = datetime.strptime(start_date,'%m-%d-%Y')
-
-    if delta == None:
-
-        delta = relativedelta(months = 3)
-    if stop_date == None:
-
-        stop_date = datetime.now().strftime('%m-%d-%Y')
-        stop_date = datetime.strptime(stop_date,'%m-%d-%Y')
-
-    start_day_arr = np.array([])
-
-    for result in perdelta(start_date, stop_date, delta):
-        if timeST == 'Y':
-            result = int(result.timestamp())
-            result = result + lag_adj
-        else:
-            result = result.strftime('%m-%d-%Y')
-        
-        start_day_arr = np.append(start_day_arr, result)
-
-    return start_day_arr
-
-
-# this fuction checks if a day is a business day or not.
-# returns a bool value 
-
-def is_business_day(date):
-    
-    return bool(len(pd.bdate_range(date, date)))
-
-
-############
-
-def previuos_business_day(date):
-
-    while is_business_day(date) == False:
-        date = date - timedelta(days = 1)
-    
-    return date
-##############
-
-# this function generates an array cointaing the date of the boeard meeting in each quarter on the 21st of 
-# the third month of the quarter.
-
-def board_meeting_day(start_date = '12-21-2015', stop_date = None, delta = None, timeST = 'Y', lag_adj = 3600):
-    
-    start_date = datetime.strptime(start_date,'%m-%d-%Y')
-
-    if delta == None:
-
-        delta = relativedelta(months = 3)
-    if stop_date == None:
-
-        stop_date = datetime.now().strftime('%m-%d-%Y')
-        stop_date = datetime.strptime(stop_date,'%m-%d-%Y')
-
-    board_day = np.array([])
-
-    for result in perdelta(start_date, stop_date, delta):
-        # checks if the date generated is a business day, if yes the date is added to the array
-        # if not, the fuction go 1 day back and makes the same check. If the condition is still not respected, is going back another day.
-        # the if statement goes back two days maximum: Sunday and Saturday.
-        result = previuos_business_day(result) 
-
-        if timeST == 'Y':
-
-            result = int(result.timestamp())
-            result = result + lag_adj
-        else:
-
-            result = result.strftime('%m-%d-%Y')
-
-        board_day = np.append(board_day, result)
-
-
-    return board_day
-
-
-# returns an array with the day before of each board meeting.
-
-def day_before_board():
-
-    before_board_day = board_meeting_day() - 86400
-
-    return before_board_day
 
 
 
@@ -368,82 +523,6 @@ def q_synt_matrix(Curr_Price_Matrix, weight_index, synt_matrix_old = None, synt_
     return synt_matrix
 
     
-############### series of function to create the Logic Matrix ############
-
-# function that returns an array that contains the number of days
-# between the first day of the quarter and the day of the board meeting
-# the input values are set on default as starting from 01/01/2016 and ending on 21/10/2019
-# rebalancing of index take place every 3 months and the comitee reunion date is set at the 21th day of the month
-
-def datetime_diff(years_list = [2016, 2017, 2018, 2019], months_list = [1, 4, 7, 10], comitee_day = 21):
-
-    datetime_diff = np.array([])
-
-    for years in years_list:
-        for months in months_list:
-            difference = int(abs((datetime.datetime(years, months, 1)-datetime.datetime(years ,months+2 , comitee_day)).days))
-            datetime_diff = np.append(datetime_diff, difference)
-
-    return datetime_diff
-
-# function returns a list of index in Curr_volume_matrix corresponding to the start date of each quarterly rebalance
-# function takes as input a matrix/vector containing the complet set of date and the default years list and months list 
-
-def quarter_initial_position(Curr_Volume_Matrix,years_list=[2016,2017,2018,2019], months_list=[1,4,7,10]):
-
-    index = []
-
-    for years in years_list:
-        for months in months_list:
-            timestamp = str(int(time.mktime(datetime.datetime(years , months, 1).timetuple())))
-            coord = np.where(Curr_Volume_Matrix == timestamp)
-            coord = list(zip(coord[0], coord[1]))
-            index = index.append(coord[0])
-
-    return index
-
-# function that takes as input
-# Curr_Exc_Vol: single Crypto volume matrix with exchanges as columns and date as rows; the matrix dimension has
-# to be standardized not depending of the actual exchanges that trades the single crypto. If a Crypto is not present 
-# in a Exchange the value will be set to 0
-# function sum for every exchange the volume value of each day among one index rebalance and another 
-# it returns a matrix where the first column contains the rebalancing date (timestamp) and the others columns
-# contain the percentage that each exchanges represent on the total volume for the considered period
-############da valutare a quali date associare le varue frazioni. es: 1/1/16 sicuro no poichè iniziamo a contare
-##############da li mentre l'ultimo?
-
-def perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges):
-
-    
-    volume_fraction = np.array([])
-    rebalance_interval = datetime_diff()
-    rebalance_start = quarter_initial_position(Crypto_Ex_Vol)
-    stop_vector = np.array([])
-
-    for start, stop in rebalance_start:
-
-
-        quarter_matrix = Crypto_Ex_Vol[Exchanges][Crypto_Ex_Vol['Time'].between(start, stop, inclusive = True)]
-        quarter_sum = quarter_matrix.sum()
-        exchange_percentage = quarter_sum / quarter_sum.sum()
-        if stop_vector.size == 0:
-            stop_vector = stop
-            volume_fraction = np.array(exchange_percentage)
-            
-        else:
-            stop_vector = np.row_stack((stop_vector, stop))
-            volume_fraction = np.row_stack((volume_fraction, np.array(exchange_percentage)))
-        # rebalance_row = np.sum(Crypto_Ex_Vol[index:(index+rebalance_interval[i][1:])], axis=0)
-        # percentage = rebalance_row/rebalance_row.sum()
-        # volume_fraction = np.append(volume_fraction,percentage)
-
-    rebalance_date_perc = np.column_stack((stop_vector, volume_fraction))
-
-    header = ['Time']
-    header.extend(Exchanges)
-    rebalance_date_perc = pd.DataFrame(rebalance_date_perc, columns = header)
-
-    return rebalance_date_perc
 
 
 # This function creates a matrix of 0 and 1 checking if the first requirement is respected.

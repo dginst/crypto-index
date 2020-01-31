@@ -20,7 +20,23 @@ Crypto_Asset = ['BTC', 'ETH']
 Exchanges = ['kraken', 'bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini']
 start_date = '01-01-2020'
 today = datetime.now().strftime('%Y-%m-%d')
+today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
+
 reference_date_vector = np.array(data_setup.date_array_gen(start_date, timeST='Y'))
+
+##
+# define the array containing the rebalance start date
+rebalance_start_date = calc.start_q('01-01-2016', today)
+rebalance_stop_date = calc.stop_q(rebalance_start_date)
+
+board_date = calc.board_meeting_day()
+board_date_eve = calc.day_before_board(board_date)
+##
+
+# potrei dire che si attiva il calcolo del rebalance solo quando (today in rebalance start date o end date
+# quidi solo in quella occasione cambia il vettore di 0 e 1
+
+
 print(reference_date_vector)
 
 key= ['USD', 'GBP', 'CAD', 'JPY']
@@ -148,6 +164,26 @@ for CryptoA in Crypto_Asset:
     print('this is the single crytpo matrix fr every exch' )
     Exchange_Vol_DF = pd.DataFrame(Exchange_Volume, columns = Exchanges)
     Exchange_Price_DF = pd.DataFrame(Exchange_Price, columns = Exchanges)
+
+    # adding "Time" column to both Exchanges dataframe
+    Exchange_Vol_DF['Time'] = reference_date_vector
+    Exchange_Price_DF['Time'] = reference_date_vector
+
+    # check if today is a rebalance date and then compute the new logic matrix 1
+    if today_TS in board_date_eve:
+
+        start_calc = calc.minus_nearer_date(rebalance_start_date, today_TS)
+        crypto_reb_perc = calc.perc_volumes_per_exchange(Exchange_Vol_DF, Exchanges, start_calc)
+    
+    # elif today_TS in rebalance_start_date:
+
+
+
+
+##### capire come inserire il fatto che, suki dati giornalieri deve consiederae solo l'ultima start date
+# sui dati storici tutti
+
+
     print(Exchange_Vol_DF)
     try:
         # computing the volume weighted average price of the single Crypto_Asset ("CryptoA") into a single vector
