@@ -93,6 +93,7 @@ def start_q(start_date = '01-01-2016', stop_date = None, delta = None, timeST = 
 
 # function that returns an array containing the stop_date of each quarterly based on the array containing 
 # the start date that the function takes as input
+# the first element of stop_q will be the first element of the start_array plus 3 months
 
 def stop_q(start_q_array):
 
@@ -178,54 +179,22 @@ def quarterly_period(start_date = '01-01-2016', stop_date = None):
         stop_date = datetime.strptime(stop_date,'%m-%d-%Y')
 
     start_quarter = start_q(start_date, stop_date)
-    stop_quarter = start_quarter - 86400
+    stop_quarter = stop_date(start_quarter)
 
+# aggiungere check se end date > di today ############
     for i in range(start_quarter.size - 1):
-        yield (start_quarter[i], stop_quarter[i+1])
+        yield (start_quarter[i], stop_quarter[i])
 
-############### series of function to create the Logic Matrix ############
 
-# function that returns an array that contains the number of days
-# between the first day of the quarter and the day of the board meeting
-# the input values are set on default as starting from 01/01/2016 and ending on 21/10/2019
-# rebalancing of index take place every 3 months and the comitee reunion date is set at the 21th day of the month
-
-def datetime_diff(years_list = [2016, 2017, 2018, 2019], months_list = [1, 4, 7, 10], comitee_day = 21):
-
-    datetime_diff = np.array([])
-
-    for years in years_list:
-        for months in months_list:
-            difference = int(abs((datetime.datetime(years, months, 1)-datetime.datetime(years ,months+2 , comitee_day)).days))
-            datetime_diff = np.append(datetime_diff, difference)
-
-    return datetime_diff
-
-# function returns a list of index in Curr_volume_matrix corresponding to the start date of each quarterly rebalance
-# function takes as input a matrix/vector containing the complet set of date and the default years list and months list 
-
-def quarter_initial_position(Curr_Volume_Matrix,years_list=[2016,2017,2018,2019], months_list=[1,4,7,10]):
-
-    index = []
-
-    for years in years_list:
-        for months in months_list:
-            timestamp = str(int(time.mktime(datetime.datetime(years , months, 1).timetuple())))
-            coord = np.where(Curr_Volume_Matrix == timestamp)
-            coord = list(zip(coord[0], coord[1]))
-            index = index.append(coord[0])
-
-    return index
-
+######################################## FIRST LOGIC MATRIX #########################################################
 # function that takes as input
 # Curr_Exc_Vol: single Crypto volume matrix with exchanges as columns and date as rows; the matrix dimension has
 # to be standardized not depending of the actual exchanges that trades the single crypto. If a Crypto is not present 
 # in a Exchange the value will be set to 0
-# function sum for every exchange the volume value of each day among one index rebalance and another 
+# Exchanges: is the list of all the Exchanges used to retrieve values
+# function sum, for every exchange, the volume value of each day among one index rebalance and the boards day eve
 # it returns a matrix where the first column contains the rebalancing date (timestamp) and the others columns
 # contain the percentage that each exchanges represent on the total volume for the considered period
-############da valutare a quali date associare le varue frazioni. es: 1/1/16 sicuro no poichè iniziamo a contare
-##############da li mentre l'ultimo?
 
 def perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016', end_date = None):
 
@@ -235,26 +204,32 @@ def perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016
         end_date = datetime.strptime(end_date,'%m-%d-%Y')
 
     volume_fraction = np.array([])
-
-    ########inserire funzione quarterly_period ######################
-
-    rebalance_start = quarterly_period(start_date, end_date)
-    #####################################
     stop_vector = np.array([])
 
+    # calling the function that creates the array containing the boards date eve series
+    board_eve = day_before_board()
+
+    # calling the function that yields the start and stop date couple
+    rebalance_start = quarterly_period(start_date, end_date)
+
+    # for every start and stop date couple compute the relative logic matrix 
+    i = 1
     for start, stop in rebalance_start:
 
-
-        quarter_matrix = Crypto_Ex_Vol[Exchanges][Crypto_Ex_Vol['Time'].between(start, stop, inclusive = True)]
+        quarter_matrix = Crypto_Ex_Vol[Exchanges][Crypto_Ex_Vol['Time'].between(start, board_eve[i], inclusive = True)]
         quarter_sum = quarter_matrix.sum()
         exchange_percentage = quarter_sum / quarter_sum.sum()
+
         if stop_vector.size == 0:
+
             stop_vector = stop
             volume_fraction = np.array(exchange_percentage)
             
         else:
             stop_vector = np.row_stack((stop_vector, stop))
             volume_fraction = np.row_stack((volume_fraction, np.array(exchange_percentage)))
+        
+        i = i + 1
 
     rebalance_date_perc = np.column_stack((stop_vector, volume_fraction))
 
@@ -263,6 +238,41 @@ def perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016
     rebalance_date_perc = pd.DataFrame(rebalance_date_perc, columns = header)
 
     return rebalance_date_perc
+
+
+# This function creates a matrix of 0 and 1 checking if the first requirement is respected.
+# First_requirement : The crypto-asset has no more than 80% of its combined trading volume 
+# between the reconstitution day and the committe meeting day on any single pricing source.
+# If the requirement is respected the function will had the value 1 on the matrix, if not it will add 0.
+
+def Crypto_logic_matrix(exchange_vol_percentage, Exchanges):
+
+    first_logic_matrix = np.array([])
+
+    for stop_date in exchange_vol_percentage['Time']:
+
+        row = np.array(exchange_vol_percentage[Exchanges][exchange_vol_percentage['Time'][stop_date]])
+
+        # check if any of the value in array row is > than 0.80. If yes add a 0 value in the first_logic_matrix
+        # if not add value 1 in the first_logic_matrix
+        if np.any(row) > 0.80:
+
+            first_logic_matrix = np.append(first_logic_matrix, 0)
+
+        else: 
+
+            first_logic_matrix = np.append(first_logic_matrix, 1)    
+
+    first_logic_matrix = np.column_stack((np.array(exchange_vol_percentage['Time']), first_logic_matrix))
+
+    return first_logic_matrix
+
+
+###################################################################################################################
+
+
+
+
 
 # Return the Initial Divisor for the index. It identifies the position of the initial date in the Curr_Volume_Matrix. 
 # At the moment the initial date is 2016/01/01 or 1451606400 as timestamp
@@ -332,6 +342,7 @@ def index_level_calc(Curr_Price_Matrix, Curr_Volume_Matrix, logic_matrix, sm, in
     return index_level
 
 
+####################### EXPONENTIAL MOVING AVERAGE FUNCTIONS ##############################
 
 # function that returns an array with the value of the smoothing factor for 90 days (0-89)
 # is utilized to calc the EWMA(exponential weighted moving average)
@@ -353,41 +364,60 @@ def smoothing_factor(lambda_smooth = 0.94, moving_average_period = 90):
 
 # function that returns the 90-days EWMA volume for each currency.
 # takes as input the period that is set on 90 days as default and the 
-# Curr_Volume_Matrix = Volume matrix of each currency (columns are different exchanges)
+# Curr_Volume_Matrix = Volume matrix where columns are crypto and rows timestamp format days
 
-def emwa_currencies_volume(Curr_Volume_Matrix, moving_average_period = 90):
+def emwa_currencies_volume(Curr_Volume_Matrix, Crypto_list, reference_date_array, moving_average_period = 90, time_column = 'N'):
 
-    emwa_gen = np.array([])
+    emwa_matrix = np.array([])
+    smoothing_array = smoothing_factor()
 
-    for col_id in range(Curr_Volume_Matrix.shape[1]):
-        EWMA_coin = np.array([])
-        period_start = 0
-        period_end = moving_average_period-1
+    for date in reference_date_array:
+        stop = date
+        start = date - 86400 * 89
+        try:
 
-        while (period_start < (len(Curr_Volume_Matrix) - moving_average_period) and period_end < len(Curr_Volume_Matrix)):
-            period_start += 1
-            period_end += 1
-            period_average = (Curr_Volume_Matrix[period_start:period_end, col_id] * smoothing_factor()).sum()
-            EWMA_coin = np.append(EWMA_coin, period_average) 
+            period_volume = Curr_Volume_Matrix[Crypto_list][Curr_Volume_Matrix['Time'].between(start, stop, inclusive = True)]
+            period_average = (period_volume * smoothing_array).sum()
+            if emwa_matrix.size == 0:
+                
+                emwa_matrix = np.array(period_average)
+            
+            else:
 
-        if emwa_gen.size == 0:
-            emwa_gen = np.array(EWMA_coin)
-        else:
-            emwa_gen = np.column_stack((emwa_gen, EWMA_coin))   
+                emwa_matrix = np.row_stack((emwa_matrix, np.array(period_average)))
+        except:
 
-    return emwa_gen
+            zero_array = np.zeros(len(Crypto_list))
+            if emwa_matrix.size == 0:
+                
+                emwa_matrix = zero_array
+            
+            else:
 
+                emwa_matrix = np.row_stack((emwa_matrix, zero_array))
+    
+    emwa_matrix = np.column_stack((reference_date_array, emwa_matrix))
 
+    if time_column != 'N':
+        header = ['Time']
+        header.extend(Crypto_list)
+    else:
+        header = Crypto_list
+
+    emwa_DF = pd.DataFrame(emwa_matrix, columns = header)
+
+    return emwa_DF
+  
 
 
 # function returns a matrix with the weights that every currency should have
 # takes as input the currecny matrix of volume and the logic matrix 
 
-def EMWA_weights(Curr_Volume_Matrix, logic_matrix):
+def EMWA_weights(Curr_Volume_Matrix, first_logic_matrix, Crypto_list, reference_date_array):
 
-    emwa_volume_curr = emwa_currencies_volume(Curr_Volume_Matrix)
+    emwa_volume_curr = emwa_currencies_volume(Curr_Volume_Matrix, Crypto_list, reference_date_array)
     total_EMWA_volume = emwa_volume_curr.sum(axis = 1)
-    EMWA_weights_matrix = (emwa_volume_curr * logic_matrix) / total_EMWA_volume[:, None]
+    EMWA_weights_matrix = (emwa_volume_curr * first_logic_matrix) / total_EMWA_volume[:, None]
 
     return EMWA_weights_matrix
 
@@ -518,34 +548,15 @@ def q_synt_matrix(Curr_Price_Matrix, weight_index, synt_matrix_old = None, synt_
     return q_synt_w
 
 
-    
-
-    return synt_matrix
 
     
 
 
-# This function creates a matrix of 0 and 1 checking if the first requirement is respected.
-# First_requirement : The crypto-asset has no more than 80% of its combined trading volume 
-# between the reconstitution day and the committe meeting day on any single pricing source.
-# If the requirement is respected the function will had the value 1 on the matrix, if not it will add 0.
 
-def Curr_logic_matrix1(Crypto_Ex_Vol):
 
-    curr_logic_matrix1 = np.array([])
-    volume_perc = perc_volumes_per_exchange(Crypto_Ex_Vol)
 
-    for row in range(len(volume_perc)):
 
-        # check if any of the value in array row is > than 0.80. If yes add a 0 value in the req1_matrix
-        # if not add value 1 in the req_matrix
-        if np.any(volume_perc[row]) > 0.80:
-            curr_logic_matrix1 = np.append(curr_logic_matrix1, 0)
-        else: 
-            curr_logic_matrix1 = np.append(curr_logic_matrix1, 1)    
-
-    return curr_logic_matrix1
-
+######################## SECOND LOGIC MATRIX ####################################################
 
 
 # This function gives back the % of the EWMA-volume of any single coin compared to the aggregate EMWA-volume
@@ -636,3 +647,34 @@ def synt_matrix_historic(Curr_Price_Matrix,historic_weight_index, comitee_date):
 
 
 
+# function that returns an array that contains the number of days
+# between the first day of the quarter and the day of the board meeting
+# the input values are set on default as starting from 01/01/2016 and ending on 21/10/2019
+# rebalancing of index take place every 3 months and the comitee reunion date is set at the 21th day of the month
+
+def datetime_diff(years_list = [2016, 2017, 2018, 2019], months_list = [1, 4, 7, 10], comitee_day = 21):
+
+    datetime_diff = np.array([])
+
+    for years in years_list:
+        for months in months_list:
+            difference = int(abs((datetime.datetime(years, months, 1)-datetime.datetime(years ,months+2 , comitee_day)).days))
+            datetime_diff = np.append(datetime_diff, difference)
+
+    return datetime_diff
+
+# function returns a list of index in Curr_volume_matrix corresponding to the start date of each quarterly rebalance
+# function takes as input a matrix/vector containing the complet set of date and the default years list and months list 
+
+def quarter_initial_position(Curr_Volume_Matrix,years_list=[2016,2017,2018,2019], months_list=[1,4,7,10]):
+
+    index = []
+
+    for years in years_list:
+        for months in months_list:
+            timestamp = str(int(time.mktime(datetime.datetime(years , months, 1).timetuple())))
+            coord = np.where(Curr_Volume_Matrix == timestamp)
+            coord = list(zip(coord[0], coord[1]))
+            index = index.append(coord[0])
+
+    return index
