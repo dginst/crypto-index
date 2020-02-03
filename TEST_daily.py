@@ -54,6 +54,8 @@ for CryptoA in Crypto_Asset:
     Exchange_Price = np.matrix([])
     Exchange_Volume = np.matrix([])
     Ex_PriceVol = np.matrix([])
+    first_logic_matrix = np.matrix([])
+    new_first_logic_matrix = np.matrix([])
     for i in pair_array:
         currencypair_array.append(CryptoA.lower() + i)
 
@@ -174,8 +176,12 @@ for CryptoA in Crypto_Asset:
 
         start_calc = calc.minus_nearer_date(rebalance_start_date, today_TS)
         crypto_reb_perc = calc.perc_volumes_per_exchange(Exchange_Vol_DF, Exchanges, start_calc)
-    
-    # elif today_TS in rebalance_start_date:
+        if new_first_logic_matrix.size == 0:
+            new_first_logic_matrix = crypto_reb_perc
+        else:
+            new_first_logic_matrix = np.column_stack((new_first_logic_matrix, crypto_reb_perc))
+
+
 
 
 
@@ -203,6 +209,12 @@ for CryptoA in Crypto_Asset:
     else:
         Crypto_Asset_Prices = np.column_stack((Crypto_Asset_Prices, Exchange_Price))
         Crypto_Asset_Volume = np.column_stack((Crypto_Asset_Volume, Exchange_Volume))
+
+
+if today_TS in rebalance_start_date:
+
+    first_logic_matrix = new_first_logic_matrix
+
 
 Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns = Crypto_Asset)
 Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns = Crypto_Asset)
