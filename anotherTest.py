@@ -10,32 +10,47 @@ import requests
 
 
 
-def date_gen(Start_Date, End_Date, delta):
-    start = datetime.strptime(Start_Date,'%m-%d-%Y') 
-    stop = datetime.strptime(End_Date,'%m-%d-%Y') 
-    delta = timedelta(days=delta)
-    pace = start
-    if Start_Date != End_Date:
+# def date_gen(Start_Date, End_Date, delta):
+#     start = datetime.strptime(Start_Date,'%m-%d-%Y') 
+#     stop = datetime.strptime(End_Date,'%m-%d-%Y') 
+#     delta = timedelta(days=delta)
+#     pace = start
+#     if Start_Date != End_Date:
 
-        while (pace < stop):
+#         while (pace < stop):
 
-            end = pace + delta
+#             end = pace + delta
 
-            if end > stop:
-                end = stop
-            yield (str(pace.isoformat()), str(end.isoformat()))
-            pace = end + timedelta(days = 1)
+#             if end > stop:
+#                 end = stop
+#             yield (str(pace.isoformat()), str(end.isoformat()))
+#             pace = end + timedelta(days = 1)
 
-    else:
-        yield (str(start.isoformat()), str(stop.isoformat()))
+#     else:
+#         yield (str(start.isoformat()), str(stop.isoformat()))
 
-for pace, end in date_gen('01-01-2019','01-01-2019',49):
-    print (pace)
-    print(end)
+# for pace, end in date_gen('01-01-2019','01-01-2019',49):
+#     print (pace)
+#     print(end)
 
-# a= dw.CW_data_reader('bitfinex','btcusd','01-01-2020')
-# header = ['Time', 'Close Price', "Crypto Volume", "Pair Volume"]
-# print(a)
+a= dw.CW_data_reader('bitfinex','btcusd','01-01-2020')
+header = ['Close Price', "Crypto Volume", "Pair Volume"]
+start = 1577923200 
+stop = 1578528000
+b = a[header][a['Time'].between(start, stop, inclusive = True)]
+c= b.sum()
+d = c.sum()
+e= c/c.sum()
+f= np.array(e)
+print(a)
+print(b)
+print(c)
+print(c/c.sum())
+print(f)
+print(d)
+head = ['Time']
+head.extend(header)
+print(head)
 # c=1578096000
 # d = a[a['Time'] == c]['Close Price']
 # print(float(d))

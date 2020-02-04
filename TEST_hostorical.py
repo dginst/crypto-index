@@ -16,8 +16,8 @@ pair_array = ['jpy', 'gbp', 'usd'] #, 'eur', 'cad', 'usdt', 'usdc'
 
 
 Crypto_Asset = ['BTC', 'ETH']
-#Exchanges = ['bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini']#,'kraken']
-Exchanges = ['kraken', 'bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini']
+
+Exchanges = ['kraken', 'bitflyer', 'poloniex' ] #, 'bitstamp','bittrex','coinbase-pro','gemini']
 start_date = '01-01-2020'
 today = datetime.now().strftime('%Y-%m-%d')
 today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
@@ -26,11 +26,11 @@ reference_date_vector = np.array(data_setup.date_array_gen(start_date, timeST='Y
 
 ##
 # define the array containing the rebalance start date
-rebalance_start_date = calc.start_q('01-01-2016', today)
+rebalance_start_date = calc.start_q('01-01-2016')
 rebalance_stop_date = calc.stop_q(rebalance_start_date)
 
 board_date = calc.board_meeting_day()
-board_date_eve = calc.day_before_board(board_date)
+board_date_eve = calc.day_before_board()
 ##
 
 # potrei dire che si attiva il calcolo del rebalance solo quando (today in rebalance start date o end date
@@ -72,10 +72,6 @@ for CryptoA in Crypto_Asset:
             pair = cp[3:]
             # create the matrix for the single currency_pair connecting to CryptoWatch website
             matrix=data_download.CW_data_reader(exchange, cp, start_date)
-            print(exchange)
-            print(cp)
-            print(matrix.shape[0])
-            print(matrix)
 
 
             # creates the to-be matrix of the cp assigning the reference date vector as first column
@@ -88,12 +84,10 @@ for CryptoA in Crypto_Asset:
                 if matrix.shape[0] != reference_date_vector.size:
 
                     matrix= data_setup.fix_missing(matrix, exchange, crypto, pair, start_date)
-                    print(matrix)
 
 
                 # changing the "fiat" values into USD (Close Price and Volume)
                 matrix= data_setup.CW_data_setup(matrix, rates, pair)
-                print(matrix)
                 cp_matrix = matrix.to_numpy()
 
                 # then retrieves the wanted data 
@@ -112,11 +106,6 @@ for CryptoA in Crypto_Asset:
                     Ccy_Pair_PriceVolume = np.column_stack((Ccy_Pair_PriceVolume, priceXvolume))
                     Ccy_Pair_Volume = np.column_stack((Ccy_Pair_Volume, volume))
 
-        # print('Ccy_Pair_PriceVolume')           
-        # print(Ccy_Pair_PriceVolume)
-        # print('Ccy_Pair_Volume')  
-        # print( Ccy_Pair_Volume)
-        # print( Ccy_Pair_Volume.shape)
 
         # computing the volume weighted average price of the single exchange
         if Ccy_Pair_Volume.size != 0 and Ccy_Pair_Volume.size > reference_date_vector.size:
@@ -136,10 +125,7 @@ for CryptoA in Crypto_Asset:
             Ccy_Pair_Price = np.array([])
             Ccy_Pair_Volume =  np.array([])
             Ccy_Pair_PxV = np.array([])
-        # print('Ccy_Pair_Price')
-        # print(Ccy_Pair_Price)
-        # #Ccy_Pair_PxV = Ccy_Pair_Price * Ccy_Pair_Volume
-        # print(Ccy_Pair_PxV)
+
         # creating every loop the matrices containing the data referred to all the exchanges
         # Exchange_Price contains the crypto ("cp") prices in all the different Exchanges
         # Exchange_Volume contains the crypto ("cp") volume in all the different Exchanges
@@ -190,7 +176,7 @@ for CryptoA in Crypto_Asset:
 # sui dati storici tutti
 
 
-    print(Exchange_Vol_DF)
+
     try:
         # computing the volume weighted average price of the single Crypto_Asset ("CryptoA") into a single vector
         Exchange_Price = Ex_PriceVol.sum(axis = 1) / Exchange_Volume.sum(axis = 1) 
@@ -199,7 +185,8 @@ for CryptoA in Crypto_Asset:
     except np.AxisError:
         Exchange_Price = Exchange_Price
         Exchange_Volume = Exchange_Volume
-    print(Exchange_Volume)
+
+
     # creating every loop the matrices containing the data referred to all the Cryptoassets
     # Crypto_Asset_Price contains the prices of all the cryptocurrencies
     # Crypto_Asset_Volume contains the volume of all the cryptocurrencies
@@ -219,3 +206,5 @@ if today_TS in rebalance_start_date:
 Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns = Crypto_Asset)
 Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns = Crypto_Asset)
 print(Crypto_Asset_Prices)
+price_ret = Crypto_Asset_Prices.pct_change()
+print(price_ret)
