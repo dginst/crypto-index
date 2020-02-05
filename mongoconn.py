@@ -1,8 +1,15 @@
 #this code block has to be put before all the download functions.
-import API_request
-import utils.API_request as api
+import API_request as api
 from pymongo import MongoClient
-import utils.data_download as data_download
+from datetime import *
+from requests import get
+import time
+import requests
+import os
+import pandas as pd
+import io
+import numpy as np
+import utils.data_setup as data_setup
 
 #connecting to mongo in local
 connection = MongoClient('localhost', 27017)
@@ -62,34 +69,93 @@ def Coinbase_API(Start_Date='01-01-2017', End_Date='12-01-2019', Crypto = ['ETH'
             
     return response 
 
+##########################################################################################################################################################################################
 
-
-#function to import rawdata downloaded from CryptoWatch directly to MongoDB
 #saves the data downloaded from mongo
 
-def CW_mongoraw(exchange, response, asset, fiat ):
+def CW_data_reader(exchange, currencypair, collection_raw, start_date = '01-01-2016', end_date = None, periods='86400'):
 
+    Crypto = currencypair[:3].upper()
+    Pair = currencypair[3:].upper()
+    
+    # check date format
+    start_date = data_setup.date_reformat(start_date)
+    start_date = datetime.strptime(start_date, '%m-%d-%Y')
+
+    # set end_date = today if empty
+    if end_date == None:
+        end_date = datetime.now().strftime('%m-%d-%Y')
+    else:
+        end_date = data_setup.date_reformat(end_date, '-')
+    end_date = datetime.strptime(end_date, '%m-%d-%Y')
+
+    # transform date into timestamps
+    start_date = str(int(time.mktime(start_date.timetuple())))
+    end_date = str(int(time.mktime(end_date.timetuple())))
+
+    # API settings
+    entrypoint = 'https://api.cryptowat.ch/markets/' 
+    key = exchange + "/" + currencypair + "/ohlc?periods=" + periods + "&after=" + start_date + "&before=" + end_date
+    request_url = entrypoint + key
+    
+    # API call
+    response = requests.get(request_url)
+    response = response.json()
+    ['Time', 'Open', 'High', 'Low', 'Close Price', "Crypto Volume", "Pair Volume"]
+    #print(response)
     for i in range(len(response)):
-        r = response
-        Exchange = exchange
-        Pair = asset+fiat
-        Time = r[i][0]
-        Open = r[i][1] 
-        High = r[i][2]
-        Low = r[i][3]
-        Close_Price = r[i][4]
-        Crypto_Volume = r[i][5]
-        Quote_Volume = r[i][6]
-
-        rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time' : Time, 'Low' : Low,
-           'High' : High, 'Open' : Open, 'Close Price' : Close_Price,
-        'Crypto Volume' : Crypto_Volume, 'Quote_Volume' = Quote_Volume}
         
+        try:
+            r = response
+            Exchange = exchange
+            Pair = currencypair
+            Time = r[i][0]
+            Open  = r[i][1] 
+            High = r[i][2]
+            Low = r[i][3]
+            Close_Price = r[i][4]
+            Crypto_Volume = r[i][5]
+            Pair_Volume = r[i][6]
+
+        except e:
+
+            r = response
+            Exchange = exchange
+            Pair = currencypair
+            Time = 0
+            Open  = 0
+            High = 0
+            Low = 0
+            Close_Price = 0
+            Crypto_Volume = 0
+            Pair_Volume = 0
+
+
+        rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time':Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume}
+
         collection_raw.insert_one(rawdata)
+     
+    return collection_raw.insert_one(rawdata) 
+
+###################################################################################################################à
+
+def query_raw_mongo(currencypair):
+
+    for cp in currencypair:
+
+        db = connection["index"]
+        coll = db["data_raw"]
+
+        myquery = { "Pair": curr }
+
+        doc = coll.find(myquery)
+        
+        matrix= pd.DataFrame(mydoc)
+
+    return matrix
 
 
-
-
+####################################################################################################################################################################################################
 
 
 #this function adds to the def ecb rates exctrator stored in data download to code lines
