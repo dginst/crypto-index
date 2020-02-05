@@ -62,34 +62,58 @@ def Coinbase_API(Start_Date='01-01-2017', End_Date='12-01-2019', Crypto = ['ETH'
             
     return response 
 
-
+##########################################################################################################################################################################################
 
 #function to import rawdata downloaded from CryptoWatch directly to MongoDB
 #saves the data downloaded from mongo
 
-def CW_mongoraw(exchange, response, asset, fiat ):
+def CW_data_reader(exchange, currencypair, start_date = '01-01-2016', end_date = None, periods='86400'):
 
-    for i in range(len(response)):
-        r = response
-        Exchange = exchange
-        Pair = asset+fiat
-        Time = r[i][0]
-        Open = r[i][1] 
-        High = r[i][2]
-        Low = r[i][3]
-        Close_Price = r[i][4]
-        Crypto_Volume = r[i][5]
-        Quote_Volume = r[i][6]
+    Crypto = currencypair[:3].upper()
+    Pair = currencypair[3:].upper()
+    
+    # check date format
+    start_date = data_setup.date_reformat(start_date)
+    start_date = datetime.strptime(start_date, '%m-%d-%Y')
 
-        rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time' : Time, 'Low' : Low,
-           'High' : High, 'Open' : Open, 'Close Price' : Close_Price,
-        'Crypto Volume' : Crypto_Volume, 'Quote_Volume' = Quote_Volume}
-        
-        collection_raw.insert_one(rawdata)
+    # set end_date = today if empty
+    if end_date == None:
+        end_date = datetime.now().strftime('%m-%d-%Y')
+    else:
+        end_date = data_setup.date_reformat(end_date, '-')
+    end_date = datetime.strptime(end_date, '%m-%d-%Y')
+
+    # transform date into timestamps
+    start_date = str(int(time.mktime(start_date.timetuple())))
+    end_date = str(int(time.mktime(end_date.timetuple())))
+
+    # API settings
+    entrypoint = 'https://api.cryptowat.ch/markets/' 
+    key = exchange + "/" + currencypair + "/ohlc?periods=" + periods + "&after=" + start_date + "&before=" + end_date
+    request_url = entrypoint + key
+    
+    # API call
+    response = requests.get(request_url)
+    response = response.json()
+    #header = ['Time', 'Open', 'High', 'Low', 'Close Price', Crypto + " Volume", Pair + " Volume"]
+    header = ['Time', 'Open', 'High', 'Low', 'Close Price', "Crypto Volume", "Pair Volume"]
+    # do not show unuseful messages
+    pd.options.mode.chained_assignment = None
+    
+    try:
+        Data_Frame = pd.DataFrame(response['result']['86400'], columns = header)
+        Data_Frame = Data_Frame.drop(columns = ['Open', 'High', 'Low'])
+    except:
+        Data_Frame = np.array([])
+
+    data = Data_Frame.to_dict(orient='records')  
+    collection_raw.insert_many(data)
+    
+    return Data_Frame 
 
 
 
-
+####################################################################################################################################################################################################
 
 
 #this function adds to the def ecb rates exctrator stored in data download to code lines
