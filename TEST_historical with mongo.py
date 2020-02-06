@@ -83,7 +83,7 @@ for CryptoA in Crypto_Asset:
             crypto = cp[:3]
             pair = cp[3:]
             # create the matrix for the single currency_pair connecting to CryptoWatch website
-            mongo.CW_data_reader(exchange, cp, start_date)
+            mongo.CW_dato_reader(exchange, cp, start_date)
             matrix = mongo.query_raw_mongo(cp)
 
             

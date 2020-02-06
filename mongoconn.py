@@ -71,9 +71,7 @@ def Coinbase_API(Start_Date='01-01-2017', End_Date='12-01-2019', Crypto = ['ETH'
 
 ##########################################################################################################################################################################################
 
-#saves the data downloaded from mongo
-
-def CW_data_reader(exchange, currencypair, collection_raw, start_date = '01-01-2016', end_date = None, periods='86400'):
+def CW_dato_reader(exchange, currencypair, collection_raw, start_date = '01-01-2016', end_date = None, periods='86400'):
 
     Crypto = currencypair[:3].upper()
     Pair = currencypair[3:].upper()
@@ -101,12 +99,11 @@ def CW_data_reader(exchange, currencypair, collection_raw, start_date = '01-01-2
     # API call
     response = requests.get(request_url)
     response = response.json()
-    ['Time', 'Open', 'High', 'Low', 'Close Price', "Crypto Volume", "Pair Volume"]
     #print(response)
     for i in range(len(response)):
         
         try:
-            r = response
+            r = response['result']['86400']
             Exchange = exchange
             Pair = currencypair
             Time = r[i][0]
@@ -117,7 +114,7 @@ def CW_data_reader(exchange, currencypair, collection_raw, start_date = '01-01-2
             Crypto_Volume = r[i][5]
             Pair_Volume = r[i][6]
 
-        except e:
+        except:
 
             r = response
             Exchange = exchange
@@ -131,27 +128,29 @@ def CW_data_reader(exchange, currencypair, collection_raw, start_date = '01-01-2
             Pair_Volume = 0
 
 
-        rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time':Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume}
+        rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time':Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
 
-        collection_raw.insert_one(rawdata)
-     
-    return collection_raw.insert_one(rawdata) 
+        inserted_collection = collection_raw.insert_one(rawdata)
+
+    return  
 
 ###################################################################################################################à
 
-def query_raw_mongo(currencypair):
+def query_raw_mongo(cp):
 
-    for cp in currencypair:
+    db = connection["index"]
+    coll = db["rawdata"]
+    
+    myquery = { "Pair": cp }
 
-        db = connection["index"]
-        coll = db["data_raw"]
+    doc = coll.find(myquery)
+    print(doc)
 
-        myquery = { "Pair": curr }
+    matrix= pd.DataFrame.from_records(doc)
+    print(matrix)
+    matrix = matrix.drop(columns = ['_id','Exchange', 'Pair','Open', 'High', 'Low', 'Pair Volume'])
 
-        doc = coll.find(myquery)
-        
-        matrix= pd.DataFrame(mydoc)
-
+    print(matrix)
     return matrix
 
 
@@ -249,20 +248,20 @@ def CW_mongoclean(dataframe, collection ):
 # in this case the function query all the data that in index.ecb_raw, respect
 # time period = 2016-01-04 and the currency selected from key_curr_vector
 
-def query_ecb_mongo(key_curr_vector):
+#def query_ecb_mongo(key_curr_vector):
+#
+ #   for curr in key_curr_vector:
 
-    for curr in key_curr_vector:
+#        db = connection["index"]
+ #       coll = db["ecb_raw"]
 
-        db = connection["index"]
-        coll = db["ecb_raw"]
+#        myquery = { "TIME_PERIOD": "2016-01-04", "CURRENCY": curr }
 
-        myquery = { "TIME_PERIOD": "2016-01-04", "CURRENCY": curr }
-
-        doc = coll.find(myquery)
+##        doc = coll.find(myquery)
         
-        dataframe = pd.DataFrame(mydoc)
+#        dataframe = pd.DataFrame(mydoc)
 
-    return dataframe
+ #   return dataframe
 
 #####################################################################################################
 ########################  FUNCTIONS TO QUERY MANIPULATED DATA IN MONGO  #############################
