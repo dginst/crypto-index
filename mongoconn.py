@@ -99,33 +99,39 @@ def CW_dato_reader(exchange, currencypair, collection_raw, start_date = '01-01-2
     # API call
     response = requests.get(request_url)
     response = response.json()
-    #print(response)
-    for i in range(len(response)):
+    print(len(response))
+    
+    try: 
+        for i in range(len(response['result']['86400'])):
+
+            try:
+                r = response['result']['86400']
+                print(r)
+                Exchange = exchange
+                Pair = currencypair
+                Time = r[i][0]
+                Open  = r[i][1] 
+                High = r[i][2]
+                Low = r[i][3]
+                Close_Price = r[i][4]
+                Crypto_Volume = r[i][5]
+                Pair_Volume = r[i][6]
+
+            except:
+
+                r = response
+                Exchange = exchange
+                Pair = currencypair
+                Time = 0
+                Open  = 0
+                High = 0
+                Low = 0
+                Close_Price = 0
+                Crypto_Volume = 0
+                Pair_Volume = 0
+    except:
         
-        try:
-            r = response['result']['86400']
-            Exchange = exchange
-            Pair = currencypair
-            Time = r[i][0]
-            Open  = r[i][1] 
-            High = r[i][2]
-            Low = r[i][3]
-            Close_Price = r[i][4]
-            Crypto_Volume = r[i][5]
-            Pair_Volume = r[i][6]
-
-        except:
-
-            r = response
-            Exchange = exchange
-            Pair = currencypair
-            Time = 0
-            Open  = 0
-            High = 0
-            Low = 0
-            Close_Price = 0
-            Crypto_Volume = 0
-            Pair_Volume = 0
+        print('ciao')
 
 
         rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time':Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
@@ -148,7 +154,7 @@ def query_raw_mongo(cp):
 
     matrix= pd.DataFrame.from_records(doc)
     print(matrix)
-    matrix = matrix.drop(columns = ['_id','Exchange', 'Pair','Open', 'High', 'Low', 'Pair Volume'])
+    matrix = matrix.drop(columns = ['_id','Exchange', 'Pair','Open', 'High', 'Low'])
 
     print(matrix)
     return matrix
