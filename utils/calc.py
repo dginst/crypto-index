@@ -394,7 +394,7 @@ def emwa_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array, 
 
 # ADD DESCRIPTION
 
-def emwa_logic_check(first_logic_matrix, emwa_dataframe, reference_date_array, Crypto_list, start_date = '01-01-2016', end_date = None, time_column = 'N'):
+def emwa_first_logic_check(first_logic_matrix, emwa_dataframe, reference_date_array, Crypto_list, start_date = '01-01-2016', end_date = None, time_column = 'N'):
 
     reshaped_logic_m = first_logic_matrix_reshape(first_logic_matrix, reference_date_array, Crypto_list)
 
@@ -431,7 +431,7 @@ def emwa_period_fraction(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, 
     # find the EMWA of the volume
     emwa_crypto_vol = emwa_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array, start_date, end_date, time_column = 'N')
     # check the EMWA dataframe using the first logic matrix
-    emwa_logic = emwa_logic_check(first_logic_matrix, emwa_crypto_vol, reference_date_array, Crypto_list, start_date, end_date, time_column = 'Y')
+    emwa_logic = emwa_first_logic_check(first_logic_matrix, emwa_crypto_vol, reference_date_array, Crypto_list, start_date, end_date, time_column = 'Y')
 
     emwa_volume_fraction = np.array([])
     stop_vector = np.array([])
@@ -498,8 +498,164 @@ def second_logic_matrix(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, r
     return second_logic_matrix
 
 
+
+# function that returns the second logic matrix for the full array of date
+# takes as input the full second logic matrix (that has as many row as number of baord meeting
+# and as many columns as Cryptoasset ibn Cryptolist) and copies the boolean 1 and 0 for the 
+# period between start and stop date.
+# this function allows the logic matrix to have the same dimension as the other matrix/dataframe
+# and thus allowing calculation
+
+def second_logic_matrix_reshape(second_logic_matrix, reference_date_array, Crypto_list, start_date = '01-01-2016', end_date = None):
+
+    # calling the function that yields the start and stop date couple
+    rebalance_start = quarterly_period(start_date, end_date)
+
+    # define the reshaped logic matrix as a dataframe with 'Time' in first column and the reference date array as rows
+    reshaped_matrix = pd.DataFrame(reference_date_array, columns = 'Time')
+
+    # for every start and stop date couple fill the reshaped matrix with the logic value finded in the input logic matrix
+    for start, stop in rebalance_start:
+
+        copied_element = np.array(first_logic_matrix.loc[second_logic_matrix.Time == stop])
+        reshaped_matrix.loc[reshaped_matrix.Time.between(start, stop, inclusive = True), Crypto_list] = copied_element
+
+    return reshaped_matrix.drop(columns = 'Time')
+
+
 #############################################################################################################
-#     
+
+#################################### WEIGHTS COMPUTATION ############################################
+
+# ADD DESCRIPTION
+
+def emwa_second_logic_check(first_logic_matrix, second_logic_matrix, emwa_dataframe, reference_date_array, Crypto_list, start_date = '01-01-2016', end_date = None, time_column = 'N'):
+
+    reshaped_first_logic_m = first_logic_matrix_reshape(first_logic_matrix, reference_date_array, Crypto_list)
+
+    reshaped_second_logic_m = second_logic_matrix_reshape(second_logic_matrix, reference_date_array, Crypto_list)
+
+    emwa_first_checked = emwa_dataframe * reshaped_first_logic_m
+
+    emwa_second_checked = emwa_first_checked * reshaped_second_logic_m
+
+    if time_column != 'N':
+
+        emwa_checked['Time'] = reference_date_array
+
+    return emwa_checked
+
+
+
+# function returns a dataframe (cryptoasset as columns, date as row) containing the weights for
+# each cryptoasset already cleaned by the non-eligible cryptoassets
+# takes as imput:
+# emwa_double_logic_checked : emwa matrix (crypto as columns, ref_array_date as rows) already checked 
+# by the first and second logic matrix
+# date : array containing single or muptiple date where the weights want to be computed
+# Crytpo_list : vector with all the Cryptoassets
+# Note that the function should be used to find weights only on every boards eve date
+
+def quarter_weights(emwa_double_logic_checked, date, Crypto_list):
+    
+
+    quarter_weights = np.matrix([])
+    
+    for day in date:
+
+        row = emwa_double_logic_checked.loc[emwa_double_logic_checked.Time == day, Crypto_list]
+
+        weighted_row = np.array(row / row.sum())
+        np.append(quarter_weights, weighted_row)
+
+
+    quarter_weights = pd.DataFrame(quarter_weights, columns = Crypto_list)
+
+    quarter_weights_array['Time'] = date
+
+    return quarter_weights
+
+
+#############################################################################################################
+
+####################################### SYNTHETIC MATRIX ####################################################
+ #function that return the syntethic weight for the index at the end of the day of the first day of each quarter 
+
+def quarterly_synt_matrix(Curr_Price_Matrix, weight_index, reference_date_array, day_before_board, EMWA_weights_matrix, Crypto_list, synt_matrix_old = None, synt_ptf_value = 100):
+
+    # computing the percentage returns of cryptoasset prices (first row will be a NaN)
+    # result is a pandas DF with columns = Crypto_list
+    price_return = Curr_Price_Matrix.pct_change()
+    # adding the 'Time' column to proce_return DF
+    price_return['Time'] = reference_date_array
+
+    weights = quarter_weights(day_before_board, EMWA_weights_matrix, Crypto_list)
+
+    #logic_check = logic_matrix1()
+
+    q_synt = np.array([])
+
+    for date in weights['Time']:
+
+        calc1 = (weights[Crypto_list][weights['Time'] == date]) * 100
+
+        calc2 = price_return[Crypto_list][price_return['Time'] == date]
+
+        #calc3 = logic_matrix1[logic_matrix1[:,0] == date][0][1:d.shape[1]]
+        calc_fin = (calc1 + calc1*calc2)#*calc3
+        q_synt = np.append(q_synt, calc_fin)
+
+    q_synt_w = np.array([])
+
+    for i in range(q_synt.shape[0]):
+        tot = q_synt[i:1:q_synt.shape[1]].sum()
+        weights = q_synt[i:1:q_synt.shape[1]] / tot
+        q_synt_w = np.append(q_synt_w, weights)
+    
+    q_synt_w = np.column_stack(q_weights[:,0], q_synt_w)
+
+    return q_synt_w
+
+
+# function takes as input:
+# Curr_Pice_matrix: the Price matrix that has different cryptoasset as column and date as row
+# historic weight_index: matrix that contains the weights for every Crytpo Asset indicated in Curr_Price_matrix
+# comitee_date: vector that contains the past theorical date of comitee reunion
+# as implemented, comitee_date has to be in timestamp format (consider to upgrade)
+# function iterate for every date in comitee_date vector constructing a portfolio with default 100 value
+# rebalanced every comitee_date date; it returns a matrix that simulate the value of the portfolio over history
+#####################################################################################################
+#### consider that doen not makes sense, imo, to have the portfolio reduced (aumented) in value #####
+#### after every commitee: fixing every time the value at 100 do not allow to show #################
+####  the hisorical value constraction of the strategy #########################
+###############################################################################################
+def synt_matrix_historic(Curr_Price_Matrix,historic_weight_index, comitee_date):
+
+    historical_synt_matrix=np.array([])
+
+    for i,date in enumerate(comitee_date):
+        start_period, = np.where(Curr_Price_Matrix[:,0]==date)
+        periodic_synt_mat = np.array([])
+
+        while start_period != comitee_date[i+1]:
+            if periodic_synt_mat.size == 0:
+                weight_index = historic_weight_index[start_period]
+                periodic_synt_mat = synt_matrix_daily(Curr_Price_Matrix, weight_index)
+                start_period = start_period+1
+            else:
+                weight_index = historic_weight_index[start_period]
+                periodic_synt_mat = synt_matrix_daily(Curr_Price_Matrix, weight_index, periodic_synt_mat)
+                start_period = start_period+1
+
+        if historical_synt_matrix.size == 0:
+            historical_synt_matrix = periodic_synt_mat
+        else:
+            historical_synt_matrix = np.row_stack((historical_synt_matrix, periodic_synt_mat))
+
+    return historical_synt_matrix
+
+#############################################################################################################
+
 #################################### INITIAL DIVISOR COMPUTATION ############################################
 # Return the Initial Divisor for the index. It identifies the position of the initial date in the Crypto_Volume_Matrix. 
 # At the moment the initial date is 2016/01/01 or 1451606400 as timestamp
@@ -568,6 +724,7 @@ def index_level_calc(Curr_Price_Matrix, Crypto_Volume_Matrix, logic_matrix, sm, 
 
     return index_level
 
+
 ##################################################################################################
 
 
@@ -576,27 +733,10 @@ def index_level_calc(Curr_Price_Matrix, Crypto_Volume_Matrix, logic_matrix, sm, 
 
 
 
-# function returns a matrix containing the weights for each cryptoasset at the start of each quarter
-# takes as imput the array with the dates = the day before the meeing day ( day_before_board() )
-# takes as imput the matrix EWMA_weights
-
-def quarter_weights(day_before_board, EMWA_weights_matrix, Crypto_list):
-    
-    dates = day_before_board()
-
-    quarter_weights_array = np.matrix([])
-    
-    for date in dates:
-
-        row = EMWA_weights_matrix[Crypto_list][EMWA_weights_matrix['Time'] == date]
-        np.append(quarter_weights_array, row)
 
 
-    quarter_weights_array = pd.DataFrame(quarter_weights_array, columns = Crypto_list)
 
-    quarter_weights_array['Time'] = dates
 
-    return quarter_weights_array
 
 
 ############RIVEDERE MI SEMBRA INUTILE, quasi inutile###################
@@ -622,125 +762,8 @@ def weight_index(q_weights):
 
 
 
- #function that return the syntethic weight for the index at the end of the day of the first day of each quarter 
+ 
 
-def quarterly_synt_matrix(Curr_Price_Matrix, weight_index, reference_date_array, day_before_board, EMWA_weights_matrix, Crypto_list, synt_matrix_old = None, synt_ptf_value = 100):
-
-    # computing the percentage returns of cryptoasset prices (first row will be a NaN)
-    # result is a pandas DF with columns = Crypto_list
-    price_return = Curr_Price_Matrix.pct_change()
-    # adding the 'Time' column to proce_return DF
-    price_return['Time'] = reference_date_array
-
-    weights = quarter_weights(day_before_board, EMWA_weights_matrix, Crypto_list)
-
-    #logic_check = logic_matrix1()
-
-    q_synt = np.array([])
-
-    for date in weights['Time']:
-
-        calc1 = (weights[Crypto_list][weights['Time'] == date]) * 100
-
-        calc2 = price_return[Crypto_list][price_return['Time'] == date]
-
-        #calc3 = logic_matrix1[logic_matrix1[:,0] == date][0][1:d.shape[1]]
-        calc_fin = (calc1 + calc1*calc2)#*calc3
-        q_synt = np.append(q_synt, calc_fin)
-
-    q_synt_w = np.array([])
-
-    for i in range(q_synt.shape[0]):
-        tot = q_synt[i:1:q_synt.shape[1]].sum()
-        weights = q_synt[i:1:q_synt.shape[1]] / tot
-        q_synt_w = np.append(q_synt_w, weights)
-    
-    q_synt_w = np.column_stack(q_weights[:,0], q_synt_w)
-
-    return q_synt_w
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-# function takes as input:
-# Curr_Pice_matrix: the Price matrix that has different cryptoasset as column and date as row
-# historic weight_index: matrix that contains the weights for every Crytpo Asset indicated in Curr_Price_matrix
-# comitee_date: vector that contains the past theorical date of comitee reunion
-# as implemented, comitee_date has to be in timestamp format (consider to upgrade)
-# function iterate for every date in comitee_date vector constructing a portfolio with default 100 value
-# rebalanced every comitee_date date; it returns a matrix that simulate the value of the portfolio over history
-#####################################################################################################
-#### consider that doen not makes sense, imo, to have the portfolio reduced (aumented) in value #####
-#### after every commitee: fixing every time the value at 100 do not allow to show #################
-####  the hisorical value constraction of the strategy #########################
-###############################################################################################
-def synt_matrix_historic(Curr_Price_Matrix,historic_weight_index, comitee_date):
-
-    historical_synt_matrix=np.array([])
-
-    for i,date in enumerate(comitee_date):
-        start_period, = np.where(Curr_Price_Matrix[:,0]==date)
-        periodic_synt_mat = np.array([])
-
-        while start_period != comitee_date[i+1]:
-            if periodic_synt_mat.size == 0:
-                weight_index = historic_weight_index[start_period]
-                periodic_synt_mat = synt_matrix_daily(Curr_Price_Matrix, weight_index)
-                start_period = start_period+1
-            else:
-                weight_index = historic_weight_index[start_period]
-                periodic_synt_mat = synt_matrix_daily(Curr_Price_Matrix, weight_index, periodic_synt_mat)
-                start_period = start_period+1
-
-        if historical_synt_matrix.size == 0:
-            historical_synt_matrix = periodic_synt_mat
-        else:
-            historical_synt_matrix = np.row_stack((historical_synt_matrix, periodic_synt_mat))
-
-    return historical_synt_matrix
-
-
-
-
-
-
-
-    ################ INUTILE ##########
-
-    # function that returns the return matrix for all cryptocurrency
-# the first column of the return_matrix contains date
-# function works on default considering the data placed in date-ascendent way (oldest data in position 0)
-# to consider the opposite case modify the default variable Date_order
-
-def price_return(Curr_Price_Matrix, date_order = 'ascendent'):
-
-    return_matrix = np.array([])
-
-    for i in range(len(Curr_Price_Matrix)):
-        if date_order != 'ascendent':
-            return_value = (Curr_Price_Matrix[i+1][1:]-Curr_Price_Matrix[i][1:])/Curr_Price_Matrix[i][1:]
-            return_date = Curr_Price_Matrix[i+1][0]
-            vector=np.column_stack((return_date, return_value))
-        else:
-            return_value = (Curr_Price_Matrix[i][1:]-Curr_Price_Matrix[i+1][1:])/Curr_Price_Matrix[i+1][1:]
-            return_date = Curr_Price_Matrix[i][0]
-            vector = np.column_stack((return_date, return_value))   
-        if return_matrix.size == 0:
-            return_matrix = vector
-        else:
-            return_matrix = np.row_stack((return_matrix, vector))
-
-    return return_matrix
 
 
 # function returns a matrix with the same number and order of column of the Curr Price Matrix containing
