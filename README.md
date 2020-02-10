@@ -19,26 +19,41 @@ The DGI crypto Index is a volume-weighted index and is composed of the most rele
 ## Index Definition Process - Workflow
 
 <p align="center">
-  <img src="https://github.com/dginst/crypto-index/blob/master/WF.png?raw=true" alt="Crypto-Index WF"  height="500" width="700"/>
+  <img src="https://github.com/dginst/crypto-index/blob/master/WF.png?raw=true" alt="Crypto-Index WF"/>
 </p>
 
 
 ## Data Download
 
 The software downloads the daily crypto-asset data in terms of trade volume and price of the 8 selected pricing sources that proved to be reliable in matter of real volumes and legal compliance: 
-BitFlyer, BitStamp, Bittrex, Coinbase-Pro, Gemini, itBit, Kraken, Pooniex. The Data of these Exchanges are downloaded through the REST API of the website https://cryptowat.ch/ except for itBit's data that are downloaded through the REST API of itBit website.
-Cryptowatch, demonstrated to be a reliable data bank for Crypto-Assets; It is owned by the Kraken exchange and was founded in 2014 by Artur Sapek.
+BitFlyer, BitStamp, Bittrex, Coinbase-Pro, Gemini, itBit, Kraken, Poloniex. The Data of these Exchanges are downloaded through two main provider:
+  - the REST API of the Cryptowatch website https://cryptowat.ch/ 
+  - the REST API of each single Exchange obtaining the daily ticker
+  
+Cryptowatch demonstrate to be a reliable data bank for Crypto-Assets, it is owned by the Kraken exchange and was founded in 2014 by Artur Sapek. Note that Cryptowatch has the historical values of all the selected Exchanges except for itBit's data that are downloaded only through the REST API of itBit website.
 
-Because the Index denomination is in USD all prices from the non-USD  are reported in USD; to do so, all the daily relevant exchange rates of the  Fiat/USD pairs and Fiat/StableCoin pairs are obtained respectively, from the European Central Bank (ECB) Website and the data provider CoinGecko; these pairs are  later used to convert all the prices in USD.
+Because the Index denomination is in USD all prices from the non-USD are reported in USD; to do so, all the daily relevant exchange rates of the  Fiat/USD pairs and Fiat/StableCoin pairs are obtained respectively, from the European Central Bank (ECB) Website and the data provider CoinGecko; these pairs are  later used to convert all the prices in USD.
 
-All the Crypto/Crypto pairs will be taken into account at a later moment.
+The Data Download procesess consists in downloading the data on daily basis from the described API and store it, as raw data, into the database Mongo DB.
+
+The Mongo DB chosen tree structure is the following:
+  - database name: Crypto - Index
+  - collection names: CW_raw, XCH_raw, ECB_raw
+  - documents: equivalent of a row, can be identified through specific "fields" (ex {'Pair': 'BTCUSD', 'Exchange': 'Kraken'})
 
 
 Is it possible to find the download functions in the utils/data_download.py file.
 
 
-## Data Setup
+## Data Management
 
+The Data Management process mainly consists in: retriving the raw data from Mongo DB through querying, manipulating the data and structuring them as needed for the Index computation.
+
+### Querying from Mongo DB
+
+### Historical Series Manipulation
+
+### Querying from Mongo DB
 Once the relevant data are downloaded, they're processed.  
 
 # Index Computation
