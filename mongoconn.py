@@ -103,35 +103,31 @@ def CW_dato_reader(exchange, currencypair, collection_raw, start_date = '01-01-2
     
     try: 
         for i in range(len(response['result']['86400'])):
+            
+            r = response['result']['86400']
+            print(r)
+            Exchange = exchange
+            Pair = currencypair
+            Time = r[i][0]
+            Open  = r[i][1] 
+            High = r[i][2]
+            Low = r[i][3]
+            Close_Price = r[i][4]
+            Crypto_Volume = r[i][5]
+            Pair_Volume = r[i][6]
 
-            try:
-                r = response['result']['86400']
-                print(r)
-                Exchange = exchange
-                Pair = currencypair
-                Time = r[i][0]
-                Open  = r[i][1] 
-                High = r[i][2]
-                Low = r[i][3]
-                Close_Price = r[i][4]
-                Crypto_Volume = r[i][5]
-                Pair_Volume = r[i][6]
-
-            except:
-
-                r = response
-                Exchange = exchange
-                Pair = currencypair
-                Time = 0
-                Open  = 0
-                High = 0
-                Low = 0
-                Close_Price = 0
-                Crypto_Volume = 0
-                Pair_Volume = 0
     except:
         
-        print('ciao')
+        r = response
+        Exchange = exchange
+        Pair = currencypair
+        Time = 0
+        Open  = 0
+        High = 0
+        Low = 0
+        Close_Price = 0
+        Crypto_Volume = 0
+        Pair_Volume = 0
 
 
         rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time':Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
@@ -141,22 +137,26 @@ def CW_dato_reader(exchange, currencypair, collection_raw, start_date = '01-01-2
     return  
 
 ###################################################################################################################à
+# function that takes as arguments:
+# database = database name [index_raw, index_cleaned, index_cleaned]
+# collection = the name of the collection of interest
+# query_dict = mongo db uses dictionary structure to do query ex:  
+# {"Exchange" : "kraken", "Pair" : "btcjpy", "Time" : { "$gte": 1580774400} }, this query call all the documents 
+# that contains kraken as exchange, the pair btcjpy and the time value is greater than 1580774400
 
-def query_raw_mongo(cp):
+def query_mongo(database, collection, query_dict):
 
-    db = connection["index"]
-    coll = db["rawdata"]
+    db = connection[db]
+    coll = db[collection]
     
-    myquery = { "Pair": cp }
-
+    myquery = query_dict
     doc = coll.find(myquery)
-    print(doc)
+    
 
     matrix= pd.DataFrame.from_records(doc)
-    print(matrix)
     matrix = matrix.drop(columns = ['_id','Exchange', 'Pair','Open', 'High', 'Low'])
 
-    print(matrix)
+    
     return matrix
 
 
