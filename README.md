@@ -5,12 +5,12 @@
 
 # DGI Crypto-Asset Index
 
-The DGI crypto Index is a volume-weighted index and is composed of the most relevant crypto-assets in terms of liquidity and qualitative criteria. Designed and developed by a heterogeneous group of professionals with significant experience and relevant expertise related to Financial Benchmarks, Crypto–Assets and Financial Industry, the DGI Crypto Index is intended to give to private and institutional investors a replicable tool that best represent and synthesize the Crypto-assets markets. This Benchmark is denominated in USD and it is simulated from 2016/01/01.
+The DGI crypto Index is a volume-weighted index and is composed of the most relevant crypto-assets in terms of liquidity and qualitative criteria. Designed and developed by an heterogeneous group of professionals with significant experience and relevant expertise related to Financial Benchmarks, Crypto–Assets and Financial Industry, the DGI Crypto Index is intended to provide to private and institutional investors a replicable tool that best represent and synthesize the Crypto-assets market. This Benchmark is denominated in USD and it is simulated from 2016/01/01.
 
 **Key Features:**
 
 * use volume as resource for weight computation
-* selected exchanges based on security, real-volume and law compliance
+* selected pricing sources based on security, real-volume and law compliance
 * selected constituents on quantitative and qualitative criteria
 * designed to be replicable by investors thanks to the buy and hold daily solution.
 
@@ -26,17 +26,28 @@ The DGI crypto Index is a volume-weighted index and is composed of the most rele
 ## Data Download
 
 The software downloads the daily crypto-asset data in terms of trade volume and price of the 8 selected pricing sources that proved to be reliable in matter of real volumes and legal compliance: 
-BitFlyer, BitStamp, Bittrex, Coinbase-Pro, Gemini, itBit, Kraken, Poloniex. The Data of these Exchanges are downloaded through two main provider:
-  - the REST API of the Cryptowatch website https://cryptowat.ch/ 
-  - the REST API of each single Exchange obtaining the daily ticker
+
+- BitFlyer
+- BitStamp
+- Bittrex
+- Coinbase-Pro
+- Gemini
+- itBit
+- Poloniex
+
+The Data of these Exchanges are downloaded through two main provider:
+
+- the REST API of the Cryptowatch website https://cryptowat.ch/  
+- the REST API of each single Exchange obtaining the daily ticker
   
 Cryptowatch demonstrate to be a reliable data bank for Crypto-Assets, it is owned by the Kraken exchange and was founded in 2014 by Artur Sapek. Note that Cryptowatch has the historical values of all the selected Exchanges except for itBit's data that are downloaded only through the REST API of itBit website.
 
-Because the Index denomination is in USD all prices from the non-USD are reported in USD; to do so, all the daily relevant exchange rates of the  Fiat/USD pairs and Fiat/StableCoin pairs are obtained respectively, from the European Central Bank (ECB) Website and the data provider CoinGecko; these pairs are  later used to convert all the prices in USD.
+Because the Index denomination is in USD all prices from the non-USD pairs are reported in USD; to do so, all the daily relevant exchange-rates of the Fiat/USD pairs and Fiat/StableCoin pairs are obtained respectively, from the European Central Bank (ECB) Website and the data provider CoinGecko; 
 
 The Data Download procesess consists in downloading the data on daily basis from the described API and store it, as raw data, into the database Mongo DB.
 
 The Mongo DB chosen tree structure is the following:
+
   - database name: Crypto - Index
   - collection names: CW_raw, XCH_raw, ECB_raw
   - documents: equivalent of a row, can be identified through specific "fields" (ex {'Pair': 'BTCUSD', 'Exchange': 'Kraken'})
@@ -62,12 +73,12 @@ Is possible to split the index calculation in six main parts.
 
 1) First logic matrix computation
 
-  The first logic matrix has the role of a first scrrening of all the cryptoasset in order to decide wheter or not the single cryptoasset can be eligible, for the index composition, in a determined interval of time. The interval of interest goes from each start date of the quarter to the end date of the quarter itself; follows that the specified interval is the period of application where a cryptoasset can be cnsidered eligible. For the actual computation of the eligible cryptoassets is considered the period between the start date of each quarter and the day before the board day meeting of the quarter itself. Here the rule: if, for a single cryptoasset, one single exchange has traded more than the 80% of the total volume of the period, the cryptoasset is excluded
+  The first logic matrix has the role of a first screening of all the crypto-assets in order to decide wheter or not the single crypto-asset can be eligible, for the index composition, in a determined interval of time. The interval of interest goes from each start date of the quarter to the end date of the quarter itself; follows that the specified interval is the period of application where a cryptoasset can be considered eligible. For the actual computation of the eligible cryptoassets is considered the period between the start date of each quarter and the day before the board day meeting of the quarter itself. Here the rule: if, for a single cryptoasset, one single exchange has traded more than the 80% of the total volume of the period, the cryptoasset is excluded.
 
-2) Exponential Moving Weighted Average (EMWA) computation
+2) Exponential Weighted Movin Average (EWMA) computation
 
-  The emwa is performed on the traded volume levels and with a moving average period of 90 days. The code takes the data frame containing the total daily volume for each cryptoassets (cryptos as columns, days as rows) and compute the daily emwa considering the last 90 days volume values multiplied per the relative lambda, and then summarizing them.
-  The index uses a lambda that decraeses exponentially starting from a value of 0.94 and followuing the formula:
+  The ewma is performed on the traded volume levels and with a moving average period of 90 days. The code takes the data frame containing the total daily volume for each crypto-asset (cryptos as columns, days as rows) and compute the daily ewma considering the last 90 days volume values multiplied per the relative lambda, and then summarizing them.
+  The index uses a fixed lambda value of 0.94  that decraeses exponentially starting from a value of 0.94 and followuing the formula:
 
     daily_lambda = (1 - 0.94) * (0.94 ^ (index))
 

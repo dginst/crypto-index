@@ -84,7 +84,12 @@ for CryptoA in Crypto_Asset:
             pair = cp[3:]
             # create the matrix for the single currency_pair connecting to CryptoWatch website
             mongo.CW_dato_reader(exchange, cp, start_date)
-            matrix = mongo.query_raw_mongo(cp)
+            # query data from mongo. Syntax : { "field" : "value", "field": "value" }, Syntax with logic operators(LO) : { "field" : {"$LO" : "value"} }
+            # for daily calculation  it is necessary to put the third condition : {"Time" : x}
+            db = "index"
+            collection = "rawdata"
+            query_dict = {"Exchange" : exchange, "Pair": cp }
+            matrix = mongo.query_raw_mongo(db, collection, query_dict)
 
             
 
