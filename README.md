@@ -19,7 +19,7 @@ The DGI crypto Index is a volume-weighted index and is composed of the most rele
 ## Index Definition Process - Workflow
 
 <p align="center">
-  <img src="https://dgi.io/img/logo/dgi-logo.svg?raw=true" alt="Crypto-Index WF"/>
+  <img src="https://github.com/dginst/crypto-index/blob/master/WF.png?raw=true" alt="Crypto-Index WF"/>
 </p>
 
 
