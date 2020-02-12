@@ -12,22 +12,28 @@ import time
 
 
 crypto = ['btc', 'eth']
-pair_array = ['jpy', 'gbp', 'usd'] #, 'eur', 'cad', 'usdt', 'usdc'
+pair_array = ['gbp', 'usd'] #, 'jpy','eur', 'cad', 'usdt', 'usdc'
 
 
 Crypto_Asset = ['BTC', 'ETH']
 
-Exchanges = ['kraken', 'bitflyer', 'poloniex' ] #, 'bitstamp','bittrex','coinbase-pro','gemini']
-start_date = '01-01-2020'
+Exchanges = [ 'coinbase-pro', 'bitflyer', 'poloniex', 'bitstamp' ] #, ,'bittrex','coinbase-pro','gemini','kraken',]
+start_date = '01-01-2019'
 today = datetime.now().strftime('%Y-%m-%d')
 today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
 
 reference_date_vector = np.array(data_setup.date_array_gen(start_date, timeST='Y'))
+print(len(reference_date_vector))
 
 ##
 # define the array containing the rebalance start date
 rebalance_start_date = calc.start_q('01-01-2016')
 rebalance_stop_date = calc.stop_q(rebalance_start_date)
+print(len(rebalance_stop_date))
+print(rebalance_stop_date)
+quarterly_date = calc.quarterly_period()
+for start, stop in quarterly_date:
+    print(stop)
 
 board_date = calc.board_meeting_day()
 board_date_eve = calc.day_before_board()
@@ -37,16 +43,17 @@ board_date_eve = calc.day_before_board()
 # quidi solo in quella occasione cambia il vettore di 0 e 1
 
 
-print(reference_date_vector)
+#print(reference_date_vector)
 
 key= ['USD', 'GBP', 'CAD', 'JPY']
-rates = data_setup.ECB_setup(key, '2020-01-01', today, timeST='Y')
+#rates = data_setup.ECB_setup(key, '2020-01-01', today, timeST='Y')
 #print(rates)
 
 
 
 Crypto_Asset_Prices = np.matrix([])
 Crypto_Asset_Volume = np.matrix([])
+logic_matrix_one = np.matrix([])
 
 for CryptoA in Crypto_Asset:
     print(CryptoA)
@@ -60,6 +67,7 @@ for CryptoA in Crypto_Asset:
         currencypair_array.append(CryptoA.lower() + i)
 
     for exchange in Exchanges:
+        print(exchange)
         
         # initialize the matrices that will contain the data related to all currencypair for the single exchange
         Ccy_Pair_PriceVolume = np.matrix([])
@@ -70,8 +78,10 @@ for CryptoA in Crypto_Asset:
 
             crypto = cp[:3]
             pair = cp[3:]
+            print(pair)
             # create the matrix for the single currency_pair connecting to CryptoWatch website
             matrix=data_download.CW_data_reader(exchange, cp, start_date)
+            print(matrix)
 
 
             # creates the to-be matrix of the cp assigning the reference date vector as first column
@@ -83,11 +93,11 @@ for CryptoA in Crypto_Asset:
                 # checking if the matrix has missing data and if ever fixing it
                 if matrix.shape[0] != reference_date_vector.size:
 
-                    matrix= data_setup.fix_missing(matrix, exchange, crypto, pair, start_date)
+                    matrix = data_setup.fix_missing(matrix, exchange, crypto, pair, start_date)
 
 
                 # changing the "fiat" values into USD (Close Price and Volume)
-                matrix= data_setup.CW_data_setup(matrix, rates, pair)
+                ####matrix= data_setup.CW_data_setup(matrix, rates, pair)
                 cp_matrix = matrix.to_numpy()
 
                 # then retrieves the wanted data 
@@ -158,14 +168,22 @@ for CryptoA in Crypto_Asset:
     Exchange_Price_DF['Time'] = reference_date_vector
 
     # check if today is a rebalance date and then compute the new logic matrix 1
-    if today_TS in board_date_eve:
+    # if today_TS in board_date_eve:
 
-        start_calc = calc.minus_nearer_date(rebalance_start_date, today_TS)
-        crypto_reb_perc = calc.perc_volumes_per_exchange(Exchange_Vol_DF, Exchanges, start_calc)
-        if new_first_logic_matrix.size == 0:
-            new_first_logic_matrix = crypto_reb_perc
-        else:
-            new_first_logic_matrix = np.column_stack((new_first_logic_matrix, crypto_reb_perc))
+    #     start_calc = calc.minus_nearer_date(rebalance_start_date, today_TS)
+    #     crypto_reb_perc = calc.perc_volumes_per_exchange(Exchange_Vol_DF, Exchanges, start_calc)
+    #     if new_first_logic_matrix.size == 0:
+    #         new_first_logic_matrix = crypto_reb_perc
+    #     else:
+    #         new_first_logic_matrix = np.column_stack((new_first_logic_matrix, crypto_reb_perc))
+    logic1 = calc.first_logic_matrix(Exchange_Vol_DF, Exchanges)
+    print('logic1')
+    print(logic1)
+    if logic_matrix_one.size == 0:
+        logic_matrix_one = logic1
+    else:
+        logic_matrix_one = np.column_stack((logic_matrix_one, logic1))
+        
 
 
 
@@ -205,6 +223,9 @@ if today_TS in rebalance_start_date:
 
 Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns = Crypto_Asset)
 Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns = Crypto_Asset)
+first_logic_matrix = pd.DataFrame(logic_matrix_one, columns = Crypto_Asset)
+#first_logic_matrix['Time'] = rebalance_stop_date
 print(Crypto_Asset_Prices)
 price_ret = Crypto_Asset_Prices.pct_change()
 print(price_ret)
+print(first_logic_matrix)

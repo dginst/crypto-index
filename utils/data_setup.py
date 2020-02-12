@@ -152,7 +152,8 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
 
     # find the elements of ref array not included in broken array (the one to check)
     missing_item = Diff(reference_array, broken_array)
-
+    print(missing_item)
+    print(len(missing_item))
     variations = [] 
     volumes = []
     for element in missing_item:
@@ -160,6 +161,8 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
         # for each missing element try to find it in where to look up, if KeyError occurred 
         # meaning the searched item is not found, then append zero
         try:
+            today_alt = where_to_lookup[where_to_lookup['Time'] == element][position]
+            print(today_alt)
             today_value = float(where_to_lookup[where_to_lookup['Time'] == element][position])
             yesterday_value = float(where_to_lookup[where_to_lookup['Time'] == element - 86400][position])
             variation = (today_value - yesterday_value) / yesterday_value
@@ -243,7 +246,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
     ccy_pair = cryptocurrency + pair
 
     # set the list af all exchanges and then pop out the one in subject
-    exchange_list = ['bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini','kraken']#aggungere itbit
+    exchange_list = ['bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini'] #,'kraken']#aggungere itbit
     exchange_list.remove(exchange)
     print(exchange_list)
 
@@ -260,7 +263,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
         
         # create a data frame connecting to CryptoWatch API
         matrix = data_download.CW_data_reader(elements, ccy_pair, start_date, end_date)
-      
+        print(matrix)
         # checking if data frame is empty: if not then the ccy_pair exists in the exchange
         # then add to the count variable 
         if Check_null(matrix) == False:
@@ -271,6 +274,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
             variations_price, volumes = substitute_finder(broken_array, reference_array, matrix, 'Close Price')
             variations_cry_vol, volumes = substitute_finder(broken_array, reference_array, matrix, 'Crypto Volume')
             variations_pair_vol, volumes = substitute_finder(broken_array, reference_array, matrix, 'Pair Volume')
+            variation_time = variations_price[:,0]
             print(variations_price)
             if fixing_price.size == 0:
 
@@ -342,20 +346,19 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
 
 
     # create a matrix with columns: timestamp date, weighted variatons of prices, weightes variations of volume both crypto and pair
-    variation_matrix = np.column_stack((variations_price[:,0], weighted_var_price, weighted_cry_vol, weighted_pair_vol))
+    try:
+        variation_matrix = np.column_stack((variation_time, weighted_var_price, weighted_cry_vol, weighted_pair_vol))
 
-    for i, row in enumerate(variation_matrix[:,0]):
+        for i, row in enumerate(variation_matrix[:,0]):
 
-        previous_values = broken_matrix[broken_matrix['Time'] == row - 86400].iloc[:,1:4]
+            previous_values = broken_matrix[broken_matrix['Time'] == row - 86400].iloc[:,1:4]
 
-        new_values = previous_values * (1 + variation_matrix[i, 1:])
+            new_values = previous_values * (1 + variation_matrix[i, 1:])
 
-        new_values = pd.DataFrame(np.column_stack((row, new_values)), columns = header)
-        broken_matrix = broken_matrix.append(new_values)
-        broken_matrix = broken_matrix.sort_values(by = ['Time'])
-        broken_matrix = broken_matrix.reset_index(drop = True)
-
-
+            new_values = pd.DataFrame(np.column_stack((row, new_values)), columns = header)
+            broken_matrix = broken_matrix.append(new_values)
+            broken_matrix = broken_matrix.sort_values(by = ['Time'])
+            broken_matrix = broken_matrix.reset_index(drop = True)
 
 
     # # finds all the previous prices, crypto volume and pair volume
@@ -368,8 +371,12 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
     # cryvol_to_insert = (weighted_cry_vol + 1) * previous_cry_vol
     # pairvol_to_insert = (weighted_pair_vol + 1) * previous_pair_vol 
 
-    fixed_matrix = broken_matrix
+        fixed_matrix = broken_matrix
 
+    except UnboundLocalError:
+
+        fixed_matrix = np.array([])
+        
     return fixed_matrix
 
 
@@ -538,3 +545,78 @@ def CW_data_setup (CW_matrix, Ex_Rate_matrix, currency):
 
     return CW_matrix
         
+
+##############################
+
+def ECB_holiday (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
+
+    # defining the array of date to be used
+    date = date_array_gen(Start_Period, End_Period, timeST = 'N')
+    # defining the headers of the returning data frame
+    header = ['Date', 'Currency', 'Rate']
+
+    # for each date in "date" array the funcion retrieves data from ECB website
+    # and append the result in the returning matrix
+    Exchange_Matrix = np.array([])
+    for i, single_date in enumerate(date):
+        
+        # retrieving data from ECB website
+        single_date_ex_matrix = data_download.ECB_rates_extractor(key_curr_vector, date[i])
+        
+        # check if the API actually returns values 
+        if Check_null(single_date_ex_matrix) == False:
+
+            date_arr = np.full(len(key_curr_vector),single_date)
+            # creating the array with 'XXX/USD' format
+            curr_arr = single_date_ex_matrix['CURRENCY'] + '/USD'
+            curr_arr = np.where(curr_arr == 'USD/USD', 'EUR/USD', curr_arr)
+            # creating the array with rate values USD based
+            # since ECB displays rate EUR based some changes needs to be done
+            rate_arr = single_date_ex_matrix['USD based rate']
+            rate_arr = np.where(rate_arr == 1.000000, 1/single_date_ex_matrix['OBS_VALUE'][0], rate_arr)
+
+            # stacking the array together
+            array = np.column_stack((date_arr, curr_arr, rate_arr))
+
+            # filling the return matrix
+            if Exchange_Matrix.size == 0:
+                Exchange_Matrix = array
+            else:
+                Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
+
+        # if the first API call returns an empty matrix, function will takes values of the
+        # last useful day        
+        else:
+
+            exception_date = datetime.strptime(date[i], '%Y-%m-%d') - timedelta(days = 1)
+            date_str = exception_date.strftime('%Y-%m-%d')            
+            exception_matrix = data_download.ECB_rates_extractor(key_curr_vector, date_str)
+
+            while Check_null(exception_matrix) != False:
+
+                exception_date = exception_date - timedelta(days = 1)
+                date_str = exception_date.strftime('%Y-%m-%d') 
+                exception_matrix = data_download.ECB_rates_extractor(key_curr_vector, date_str)
+
+            date_arr = np.full(len(key_curr_vector),single_date)
+            curr_arr = exception_matrix['CURRENCY'] + '/USD'
+            curr_arr = np.where(curr_arr == 'USD/USD', 'EUR/USD', curr_arr)
+            rate_arr = exception_matrix['USD based rate']
+            rate_arr = np.where(rate_arr == 1.000000, 1/exception_matrix['OBS_VALUE'][0], rate_arr)
+            array = np.column_stack((date_arr, curr_arr, rate_arr))
+
+            if Exchange_Matrix.size == 0:
+                Exchange_Matrix = array
+            else:
+                Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
+    
+    if timeST != 'N':
+
+        for j, element in enumerate(Exchange_Matrix[:,0]):
+
+            to_date = datetime.strptime(element, '%Y-%m-%d')
+            time_stamp = datetime.timestamp(to_date) + 3600
+            Exchange_Matrix[j,0] = int(time_stamp)
+
+
+    return pd.DataFrame(Exchange_Matrix, columns = header)

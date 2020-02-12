@@ -16,6 +16,16 @@ def is_business_day(date):
 
 
 
+def validate_date(date_to_check):
+
+    if isinstance(date_to_check, datetime) == True:
+        response = True
+    else:
+        response = False
+
+    return response
+
+
 # function that returns the previous nearest date to "date_to_check" (second since epoch date input variable)
 # looking into "date_array" array
 
@@ -52,7 +62,7 @@ def previuos_business_day(date):
 # this function return/ yield a series of value between "start" and "end" with "delta" increase
 # it works with date as well
 
-def perdelta(start, end, delta):
+def perdelta(start, end, delta = relativedelta(months = 3)):
 
     current = start
     while current < end:
@@ -65,13 +75,12 @@ def perdelta(start, end, delta):
 # function starts counting from the start_date (01-01-2016 as default) to the stop_date (today as default)
 # function returns the list of date in timestamp format (second simce epoch) if no otherwise specified
 
-def start_q(start_date = '01-01-2016', stop_date = None, delta = None, timeST = 'Y', lag_adj = 3600): 
+def start_q(start_date = '01-01-2016', stop_date = None, delta = relativedelta(months = 3), timeST = 'Y', lag_adj = 3600): 
 
-    start_date = datetime.strptime(start_date,'%m-%d-%Y')
+    if validate_date(start_date) == False:
 
-    if delta == None:
-
-        delta = relativedelta(months = 3)
+        start_date = datetime.strptime(start_date,'%m-%d-%Y')
+    
     if stop_date == None:
 
         stop_date = datetime.now().strftime('%m-%d-%Y')
@@ -79,7 +88,7 @@ def start_q(start_date = '01-01-2016', stop_date = None, delta = None, timeST = 
 
     start_day_arr = np.array([])
 
-    for result in perdelta(start_date, stop_date, delta):
+    for result in perdelta(start_date, stop_date, delta = relativedelta(months = 3)):
         if timeST == 'Y':
             result = int(result.timestamp())
             result = result + lag_adj
@@ -208,11 +217,6 @@ def quarterly_period(start_date = '01-01-2016', stop_date = None, timeST = 'Y'):
 
 def perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016', end_date = None, time_column = 'N'):
 
-    if end_date == None:
-
-        end_date = datetime.now().strftime('%m-%d-%Y')
-        end_date = datetime.strptime(end_date,'%m-%d-%Y')
-
     volume_fraction = np.array([])
     stop_vector = np.array([])
 
@@ -251,8 +255,11 @@ def perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016
     
     else:
 
+        rebalance_date_perc = volume_fraction
         header = Exchanges
 
+    print('rebalance_date_perc')
+    print(rebalance_date_perc)
     rebalance_date_perc = pd.DataFrame(rebalance_date_perc, columns = header)
 
     return rebalance_date_perc
@@ -270,22 +277,27 @@ def perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016
 def first_logic_matrix(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016', end_date = None):
 
     exchange_vol_percentage = perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges, start_date, end_date, time_column = 'Y')
-
+    print(exchange_vol_percentage)
+    print((np.array(exchange_vol_percentage['Time'])))
     first_logic_matrix = np.array([])
 
     for stop_date in exchange_vol_percentage['Time']:
 
-        row = np.array(exchange_vol_percentage[Exchanges][exchange_vol_percentage['Time'][stop_date]])
+        row =  exchange_vol_percentage.loc[exchange_vol_percentage.Time == stop_date, Exchanges]
+        row = np.array(row)
+        #row = np.array(exchange_vol_percentage[Exchanges][exchange_vol_percentage['Time'][stop_date]])
 
         # check if any of the value in array row is > than 0.80. If yes add a 0 value in the first_logic_matrix
         # if not add value 1 in the first_logic_matrix
-        if np.any(row) > 0.80:
+        if np.any(row > 0.8):
 
             first_logic_matrix = np.append(first_logic_matrix, 0)
 
         else: 
-
-            first_logic_matrix = np.append(first_logic_matrix, 1)    
+            if np.any(np.isnan(row)):
+                first_logic_matrix = np.append(first_logic_matrix, np.nan) ## consider 0
+            else:
+                first_logic_matrix = np.append(first_logic_matrix, 1)    
 
     # time column may be unuseful
     #first_logic_matrix = np.column_stack((np.array(exchange_vol_percentage['Time']), first_logic_matrix))
