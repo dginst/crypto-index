@@ -20,6 +20,7 @@ db.rawdata.create_index([ ("id", -1) ])
 collection_raw = db.rawdata
 collection_clean = db.cleandata
 collection_ECB_raw = db.ecb_raw
+collection_ECB_clean = db.ecb_clean
 
 #-----------------------------------------------------------------------------------------------------------
 #####################################################################################################
@@ -71,8 +72,9 @@ def Coinbase_API(Start_Date='01-01-2017', End_Date='12-01-2019', Crypto = ['ETH'
 
 ###########################################################################################################################################################################################
 
-def CW_dato_reader(exchange, currencypair, collection_raw, start_date = '01-01-2016', end_date = None, periods='86400'):
+def CW_dato_reader(exchange, currencypair, start_date = '01-01-2016', end_date = None, periods='86400'):
 
+    
     Crypto = currencypair[:3].upper()
     Pair = currencypair[3:].upper()
     
@@ -99,13 +101,13 @@ def CW_dato_reader(exchange, currencypair, collection_raw, start_date = '01-01-2
     # API call
     response = requests.get(request_url)
     response = response.json()
-    print(len(response))
+    #print(len(response))
     
     try: 
         for i in range(len(response['result']['86400'])):
             
             r = response['result']['86400']
-            print(r)
+            #print(r)
             Exchange = exchange
             Pair = currencypair
             Time = r[i][0]
@@ -115,6 +117,10 @@ def CW_dato_reader(exchange, currencypair, collection_raw, start_date = '01-01-2
             Close_Price = r[i][4]
             Crypto_Volume = r[i][5]
             Pair_Volume = r[i][6]
+
+            rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time':Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
+
+            collection_raw.insert_one(rawdata)
 
     except:
         
@@ -132,7 +138,7 @@ def CW_dato_reader(exchange, currencypair, collection_raw, start_date = '01-01-2
 
         rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time':Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
 
-        inserted_collection = collection_raw.insert_one(rawdata)
+        collection_raw.insert_one(rawdata)
 
     return  
 
@@ -146,7 +152,7 @@ def CW_dato_reader(exchange, currencypair, collection_raw, start_date = '01-01-2
 
 def query_mongo(database, collection, query_dict):
 
-    db = connection[db]
+    db = connection[database]
     coll = db[collection]
     
     myquery = query_dict
@@ -198,11 +204,13 @@ def ECB_rates_extractor_with_mongo(key_curr_vector, Start_Period, End_Period = N
         # if data is empty, it is an holiday, therefore exit
         try:
             Data_Frame = pd.read_csv(io.StringIO(response.text))
+            print("pinsoglio")
+            print(Data_Frame)
         except:
             break
         
         Main_Data_Frame = Data_Frame.filter(['TIME_PERIOD', 'OBS_VALUE', 'CURRENCY', 'CURRENCY_DENOM'], axis=1)
-
+        
         if currency == 'USD':
             cambio_USD_EUR = float(Main_Data_Frame['OBS_VALUE'])
 
@@ -224,6 +232,84 @@ def ECB_rates_extractor_with_mongo(key_curr_vector, Start_Period, End_Period = N
     return Exchange_Rate_List
 
 
+
+def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
+
+    # defining the array of date to be used
+    date = data_setup.date_array_gen(Start_Period, End_Period, timeST = 'N')
+    # defining the headers of the returning data frame
+    header = ['Date', 'Currency', 'Rate']
+
+    # for each date in "date" array the funcion retrieves data from ECB website
+    # and append the result in the returning matrix
+    Exchange_Matrix = np.array([])
+    for i, single_date in enumerate(date):
+        
+        # retrieving data from ECB website
+        single_date_ex_matrix = ECB_rates_extractor_with_mongo(key_curr_vector, date[i])
+        
+        # check if the API actually returns values 
+        if data_setup.Check_null(single_date_ex_matrix) == False:
+
+            date_arr = np.full(len(key_curr_vector),single_date)
+            # creating the array with 'XXX/USD' format
+            curr_arr = single_date_ex_matrix['CURRENCY'] + '/USD'
+            curr_arr = np.where(curr_arr == 'USD/USD', 'EUR/USD', curr_arr)
+            # creating the array with rate values USD based
+            # since ECB displays rate EUR based some changes needs to be done
+            rate_arr = single_date_ex_matrix['USD based rate']
+            rate_arr = np.where(rate_arr == 1.000000, 1/single_date_ex_matrix['OBS_VALUE'][0], rate_arr)
+
+            # stacking the array together
+            array = np.column_stack((date_arr, curr_arr, rate_arr))
+
+            # filling the return matrix
+            if Exchange_Matrix.size == 0:
+                Exchange_Matrix = array
+            else:
+                Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
+
+        # if the first API call returns an empty matrix, function will takes values of the
+        # last useful day        
+        else:
+
+            exception_date = datetime.strptime(date[i], '%Y-%m-%d') - timedelta(days = 1)
+            date_str = exception_date.strftime('%Y-%m-%d')            
+            exception_matrix = ECB_rates_extractor_with_mongo(key_curr_vector, date_str)
+
+            while data_setup.Check_null(exception_matrix) != False:
+
+                exception_date = exception_date - timedelta(days = 1)
+                date_str = exception_date.strftime('%Y-%m-%d') 
+                exception_matrix = ECB_rates_extractor_with_mongo(key_curr_vector, date_str)
+
+            date_arr = np.full(len(key_curr_vector),single_date)
+            curr_arr = exception_matrix['CURRENCY'] + '/USD'
+            curr_arr = np.where(curr_arr == 'USD/USD', 'EUR/USD', curr_arr)
+            rate_arr = exception_matrix['USD based rate']
+            rate_arr = np.where(rate_arr == 1.000000, 1/exception_matrix['OBS_VALUE'][0], rate_arr)
+            array = np.column_stack((date_arr, curr_arr, rate_arr))
+
+            if Exchange_Matrix.size == 0:
+                Exchange_Matrix = array
+            else:
+                Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
+    
+    if timeST != 'N':
+
+        for j, element in enumerate(Exchange_Matrix[:,0]):
+
+            to_date = datetime.strptime(element, '%Y-%m-%d')
+            time_stamp = datetime.timestamp(to_date) + 3600
+            Exchange_Matrix[j,0] = int(time_stamp)
+            
+            fin_matrix = pd.DataFrame(Exchange_Matrix, columns = header)
+
+            data = fin_matrix.to_dict(orient='records')  
+            collection_ECB_clean.insert_many(data)
+
+
+    return fin_matrix
 
 
 #####################################################################################################
