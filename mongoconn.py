@@ -204,8 +204,8 @@ def ECB_rates_extractor_with_mongo(key_curr_vector, Start_Period, End_Period = N
         # if data is empty, it is an holiday, therefore exit
         try:
             Data_Frame = pd.read_csv(io.StringIO(response.text))
-            print("pinsoglio")
-            print(Data_Frame)
+            #print("pinsoglio")
+            #print(Data_Frame)
         except:
             break
         
@@ -274,9 +274,12 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
         else:
 
             exception_date = datetime.strptime(date[i], '%Y-%m-%d') - timedelta(days = 1)
+            print('pirandello')
+            print (exception_date)
             date_str = exception_date.strftime('%Y-%m-%d')            
             exception_matrix = ECB_rates_extractor_with_mongo(key_curr_vector, date_str)
-
+            print('la maschera')
+            print(exception_matrix)
             while data_setup.Check_null(exception_matrix) != False:
 
                 exception_date = exception_date - timedelta(days = 1)
@@ -358,3 +361,51 @@ def CW_mongoclean(dataframe, collection ):
 #####################################################################################################
 ########################  FUNCTIONS TO QUERY MANIPULATED DATA IN MONGO  #############################
 #####################################################################################################
+
+def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq = 'D', 
+                        curr_den = 'EUR', type_rates = 'SP00', series_var = 'A'):
+    
+    Start_Period = data_setup.date_reformat(Start_Period, '-', 'YYYY-MM-DD')
+    # set end_period = start_period if empty
+    if End_Period == None:
+        End_Period = Start_Period
+    else:
+        End_Period = data_setup.date_reformat(End_Period, '-', 'YYYY-MM-DD')
+
+    # API settings
+    entrypoint = 'https://sdw-wsrest.ecb.europa.eu/service/' 
+    resource = 'data'           
+    flow_ref = 'EXR'
+    param = {
+        'startPeriod': Start_Period, 
+        'endPeriod': End_Period    
+    }
+
+    Exchange_Rate_List = pd.DataFrame()
+    pd.options.mode.chained_assignment = None
+
+    for i, currency in enumerate(key_curr_vector):
+        key = freq + '.' + currency + '.' + curr_den + '.' + type_rates + '.' + series_var
+        request_url = entrypoint + resource + '/' + flow_ref + '/' + key
+        
+        # API call
+        response = get(request_url, params = param, headers = {'Accept': 'text/csv'})
+        
+        # if data is empty, it is an holiday, therefore exit
+        try:
+            Data_Frame = pd.read_csv(io.StringIO(response.text))
+        except:
+            break
+        
+        Main_Data_Frame = Data_Frame.filter(['TIME_PERIOD', 'OBS_VALUE', 'CURRENCY', 'CURRENCY_DENOM'], axis=1)
+    
+        Main_Data_Frame['TIME_PERIOD'] = pd.to_datetime(Main_Data_Frame['TIME_PERIOD'])
+
+        if Exchange_Rate_List.size == 0:
+            Exchange_Rate_List = Main_Data_Frame
+        else:
+            Exchange_Rate_List = Exchange_Rate_List.append(Main_Data_Frame, sort=True)
+
+
+        
+    return Exchange_Rate_List
