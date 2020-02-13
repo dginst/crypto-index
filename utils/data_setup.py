@@ -23,14 +23,13 @@ def timestamp_gen(start_date, end_date = None,  EoD = 'Y'):
 
     array = np.array([start])
     date = start
-    print(end)
    
     while date < end:
         date = date + 86400
         array = np.append(array, date)
     
     array = array[:len(array) - 1]
-    
+
     return array
 
 

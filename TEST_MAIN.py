@@ -10,68 +10,69 @@ import pandas as pd
 from datetime import *
 import time
 
+############################################# INITIAL SETTINGS #############################################
 
+# we choose just a couple of crypto and fiat
+# other fiat and crypto needs more test due to historical series incompletness
 crypto = ['btc', 'eth']
-pair_array = ['gbp', 'usd'] #, 'jpy','eur', 'cad', 'usdt', 'usdc'
-
-
+pair_array = ['gbp', 'usd'] 
 Crypto_Asset = ['BTC', 'ETH']
 
-Exchanges = [ 'coinbase-pro', 'bitflyer', 'poloniex', 'bitstamp' ] #, ,'bittrex','coinbase-pro','gemini','kraken',]
+# we use all the xchanges except for Kraken that needs some more test in order to be introduced without error
+Exchanges = [ 'coinbase-pro', 'bitflyer', 'poloniex', 'bitstamp', 'gemini', 'bittrex'] #'kraken'
+#############################################################################################################
+
+##################################### DATE SETTINGS ###################################################
+
+# we choose a start date that ensures the presence of multiple quarter period and avoids some problem 
+# related to older date that has to be tested more deeply
 start_date = '01-01-2019'
+
+# define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
 today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
 
-# reference_date_vector = np.array(data_setup.date_array_gen(start_date, timeST='Y'))
+# define the variable containing all the date from start_date to today.
+# the date are displayed as timestamp and each day refers to 12:00 am UTC
 reference_date_vector = data_setup.timestamp_gen('01-01-2019')
-print(len(reference_date_vector))
-print(reference_date_vector)
 
-##
-# define the array containing the rebalance start date
+# define all the useful arrays containing the rebalance start date, stop date, board meeting date 
+# we use the complete set of date (from 01-01-2016) to today, the code will take care of that
 rebalance_start_date = calc.start_q('01-01-2016')
 rebalance_stop_date = calc.stop_q(rebalance_start_date)
-print(len(rebalance_start_date))
-print(rebalance_start_date)
-print(len(rebalance_stop_date))
-print(rebalance_stop_date)
+board_date = calc.board_meeting_day()
+board_date_eve = calc.day_before_board()
+
+# call the function that creates a object containing the couple of quarterly start-stop date
 quarterly_date = calc.quarterly_period()
 
-board_date = calc.board_meeting_day()
-print(len(board_date))
-board_date_eve = calc.day_before_board()
-print(len(board_date_eve))
-##
+#############################################################################################################
 
-# potrei dire che si attiva il calcolo del rebalance solo quando (today in rebalance start date o end date
-# quidi solo in quella occasione cambia il vettore di 0 e 1
+##################################### MAIN PART ###################################################
+# due to the required amount of time  (A LOT) for the rates download from ECB and relative conversion off all
+# the values (both volumes and prices) into USD, we choose to turn off the functions that allow the conversion.
+# this choice affects teh result, but it is just temporary because we are working on the moving towards Mongo DB.
 
 
-#print(reference_date_vector)
-
-key= ['USD', 'GBP', 'CAD', 'JPY']
-#rates = data_setup.ECB_setup(key, '2020-01-01', today, timeST='Y')
-#print(rates)
-
-
-
+# initialize the matrices that will contain the prices and volumes of all the cryptoasset
 Crypto_Asset_Prices = np.matrix([])
 Crypto_Asset_Volume = np.matrix([])
+# initialize the matrix that will contain the complete first logic matrix
 logic_matrix_one = np.matrix([])
 
 for CryptoA in Crypto_Asset:
-    print(CryptoA)
+
+    # initialize useful matrices 
     currencypair_array = []
     Exchange_Price = np.matrix([])
     Exchange_Volume = np.matrix([])
     Ex_PriceVol = np.matrix([])
-    first_logic_matrix = np.matrix([])
-    new_first_logic_matrix = np.matrix([])
-    for i in pair_array:
-        currencypair_array.append(CryptoA.lower() + i)
+
+    # create the crypto-fiat strings useful to download from CW
+    for pair in pair_array:
+        currencypair_array.append(CryptoA.lower() + pair)
 
     for exchange in Exchanges:
-        print(exchange)
         
         # initialize the matrices that will contain the data related to all currencypair for the single exchange
         Ccy_Pair_PriceVolume = np.matrix([])
@@ -80,16 +81,8 @@ for CryptoA in Crypto_Asset:
         
         for cp in currencypair_array:
 
-            crypto = cp[:3]
-            pair = cp[3:]
-            print(pair)
             # create the matrix for the single currency_pair connecting to CryptoWatch website
-            matrix=data_download.CW_data_reader(exchange, cp, start_date)
-            print(matrix)
-
-
-            # creates the to-be matrix of the cp assigning the reference date vector as first column
-            cp_matrix = reference_date_vector
+            matrix = data_download.CW_data_reader(exchange, cp, start_date)
 
             # checking if the matrix is not empty
             if data_setup.Check_null(matrix) == False:
@@ -99,12 +92,13 @@ for CryptoA in Crypto_Asset:
 
                     matrix = data_setup.fix_missing(matrix, exchange, crypto, pair, start_date)
 
-
-                # changing the "fiat" values into USD (Close Price and Volume)
-                ####matrix= data_setup.CW_data_setup(matrix, rates, pair)
+                ######## TEMPORARILY TURNED OFF ########################################
+                ## changing the "fiat" values into USD (Close Price and Volume)
+                #matrix= data_setup.CW_data_setup(matrix, rates, pair)
+                ####################################################################
                 cp_matrix = matrix.to_numpy()
 
-                # then retrieves the wanted data 
+                # retrieves the wanted data from the matrix
                 priceXvolume = cp_matrix[:,1] * cp_matrix[:,2]
                 volume = cp_matrix[:,2]
                 price = cp_matrix[:,1]
@@ -163,7 +157,6 @@ for CryptoA in Crypto_Asset:
 
     # dataframes that contain volume and price of a single crytpo for all the exchanges.
     # if an exchange does not have value in the crypto will be insertd a column with zero
-    print('this is the single crytpo matrix fr every exch' )
     Exchange_Vol_DF = pd.DataFrame(Exchange_Volume, columns = Exchanges)
     Exchange_Price_DF = pd.DataFrame(Exchange_Price, columns = Exchanges)
 
@@ -171,33 +164,15 @@ for CryptoA in Crypto_Asset:
     Exchange_Vol_DF['Time'] = reference_date_vector
     Exchange_Price_DF['Time'] = reference_date_vector
 
-    # check if today is a rebalance date and then compute the new logic matrix 1
-    # if today_TS in board_date_eve:
-
-    #     start_calc = calc.minus_nearer_date(rebalance_start_date, today_TS)
-    #     crypto_reb_perc = calc.perc_volumes_per_exchange(Exchange_Vol_DF, Exchanges, start_calc)
-    #     if new_first_logic_matrix.size == 0:
-    #         new_first_logic_matrix = crypto_reb_perc
-    #     else:
-    #         new_first_logic_matrix = np.column_stack((new_first_logic_matrix, crypto_reb_perc))
+    # for each CryptoAsset compute the first logic array
     first_logic_array = calc.first_logic_matrix(Exchange_Vol_DF, Exchanges)
-    print('first_logic_array')
-    print(first_logic_array)
+
+    # put the logic array into the logic matrix
     if logic_matrix_one.size == 0:
         logic_matrix_one = first_logic_array
     else:
         logic_matrix_one = np.column_stack((logic_matrix_one, first_logic_array))
         
-
-
-
-
-
-
-##### capire come inserire il fatto che, suki dati giornalieri deve consiederae solo l'ultima start date
-# sui dati storici tutti
-
-
 
     try:
         # computing the volume weighted average price of the single Crypto_Asset ("CryptoA") into a single vector
@@ -207,7 +182,6 @@ for CryptoA in Crypto_Asset:
     except np.AxisError:
         Exchange_Price = Exchange_Price
         Exchange_Volume = Exchange_Volume
-
 
     # creating every loop the matrices containing the data referred to all the Cryptoassets
     # Crypto_Asset_Price contains the prices of all the cryptocurrencies
@@ -219,57 +193,57 @@ for CryptoA in Crypto_Asset:
         Crypto_Asset_Prices = np.column_stack((Crypto_Asset_Prices, Exchange_Price))
         Crypto_Asset_Volume = np.column_stack((Crypto_Asset_Volume, Exchange_Volume))
 
-
-if today_TS in rebalance_start_date:
-
-    first_logic_matrix = new_first_logic_matrix
-
-
+# turn prices and volumes into pandas dataframe
 Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns = Crypto_Asset)
 Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns = Crypto_Asset)
-first_logic_matrix = pd.DataFrame(logic_matrix_one, columns = Crypto_Asset)
-# with time header
+# then add the 'Time' column
 time_header = ['Time']
 time_header.extend(Crypto_Asset) 
 Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns = time_header)
 Crypto_Asset_Prices['Time'] = reference_date_vector
 Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns = time_header)
 Crypto_Asset_Volume['Time'] = reference_date_vector
-# add sto_column column; the column does not consider th last value because it refers to a 
-# period that has not been yet calculated
-first_logic_matrix['Time'] = rebalance_stop_date[0:len(rebalance_stop_date)-1]
 
+# compute the price returns over the defined period
+price_ret = Crypto_Asset_Prices.pct_change()
+
+# turn the first logic matrix into a dataframe and add the 'Time' column
+# containg the stop_date of each quarter as in "rebalance_stop_date" array
+# the 'Time' column does not take into account the last value because it refers to a 
+# period that has not been yet calculated (and will be this way until today == new quarter start_date)
+first_logic_matrix = pd.DataFrame(logic_matrix_one, columns = Crypto_Asset)
+first_logic_matrix['Time'] = rebalance_stop_date[0:len(rebalance_stop_date) - 1]
+
+
+# computing the Exponential Moving Weighted Average of the selected period
+emwa_df = calc.emwa_crypto_volume(Crypto_Asset_Volume, Crypto_Asset, reference_date_vector, time_column = 'N')
+
+# computing the second logic matrix
+second_logic_matrix = calc.second_logic_matrix(Crypto_Asset_Volume, first_logic_matrix, Crypto_Asset, reference_date_vector, time_column = 'Y')
+
+# computing the emwa checked with both the first and second logic matrices
+double_checked_EMWA = calc.emwa_second_logic_check(first_logic_matrix, second_logic_matrix, emwa_df, reference_date_vector, Crypto_Asset, time_column = 'Y')
+
+# computing the Weights that each CryptoAsset should have starting from each new quarter
+# every weigfhts is computed in the period that goes from present quarter start_date to 
+# present quarter board meeting date eve
+weights = calc.quarter_weights(double_checked_EMWA, board_date_eve, Crypto_Asset)
+
+######## some printing ##########
+print('Crypto_Asset_Prices')
 print(Crypto_Asset_Prices)
 print('Crypto_Asset_Volume')
 print(Crypto_Asset_Volume)
-price_ret = Crypto_Asset_Prices.pct_change()
+print('Price Returns')
 print(price_ret)
-print(first_logic_matrix)
-
-reshaped_first = calc.first_logic_matrix_reshape(first_logic_matrix,reference_date_vector, Crypto_Asset, time_column = 'Y')
-print(reshaped_first)
-p = np.array(reshaped_first)
-emwa_df = calc.emwa_crypto_volume(Crypto_Asset_Volume, Crypto_Asset, reference_date_vector, time_column = 'N')
-z = np.array(emwa_df)
-print(z[:,0])
-print('EMWA DF')
+print('EMWA DataFrame')
 print(emwa_df)
-#print(Crypto_Asset_Volume.loc[Crypto_Asset_Volume.Time.between(1564444800, 1564617600, inclusive = True)])
-emwa_first_check = calc.emwa_first_logic_check(first_logic_matrix, emwa_df, reference_date_vector, Crypto_Asset)
-print(emwa_first_check)
-y = np.array(emwa_first_check)
-print(y[:,0])
-print(p[:,1])
-print(p[:,2])
-emwa_period_perc = calc.emwa_period_fraction(Crypto_Asset_Volume, first_logic_matrix, Crypto_Asset, reference_date_vector, time_column = 'Y')
-print(emwa_period_perc)
-second_logic_matrix = calc.second_logic_matrix(Crypto_Asset_Volume, first_logic_matrix, Crypto_Asset, reference_date_vector, time_column = 'Y')
-print(second_logic_matrix)
-second_logic_res = calc.second_logic_matrix_reshape(second_logic_matrix, reference_date_vector, Crypto_Asset)
-print(second_logic_res)
-logic_check = calc.emwa_second_logic_check(first_logic_matrix, second_logic_matrix, emwa_df,  reference_date_vector, Crypto_Asset, time_column = 'Y')
-print(logic_check)
-de = np.array(logic_check)
-print(de[:,0])
-weights = calc.quarter_weights(logic_check, board_date_eve, Crypto_Asset)
+print('WEIGHTS')
 print(weights)
+#################################
+
+
+
+
+
+
