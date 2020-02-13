@@ -22,21 +22,25 @@ start_date = '01-01-2019'
 today = datetime.now().strftime('%Y-%m-%d')
 today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
 
-reference_date_vector = np.array(data_setup.date_array_gen(start_date, timeST='Y'))
+# reference_date_vector = np.array(data_setup.date_array_gen(start_date, timeST='Y'))
+reference_date_vector = data_setup.timestamp_gen('01-01-2019')
 print(len(reference_date_vector))
+print(reference_date_vector)
 
 ##
 # define the array containing the rebalance start date
 rebalance_start_date = calc.start_q('01-01-2016')
 rebalance_stop_date = calc.stop_q(rebalance_start_date)
+print(len(rebalance_start_date))
+print(rebalance_start_date)
 print(len(rebalance_stop_date))
 print(rebalance_stop_date)
 quarterly_date = calc.quarterly_period()
-for start, stop in quarterly_date:
-    print(stop)
 
 board_date = calc.board_meeting_day()
+print(len(board_date))
 board_date_eve = calc.day_before_board()
+print(len(board_date_eve))
 ##
 
 # potrei dire che si attiva il calcolo del rebalance solo quando (today in rebalance start date o end date
@@ -176,13 +180,13 @@ for CryptoA in Crypto_Asset:
     #         new_first_logic_matrix = crypto_reb_perc
     #     else:
     #         new_first_logic_matrix = np.column_stack((new_first_logic_matrix, crypto_reb_perc))
-    logic1 = calc.first_logic_matrix(Exchange_Vol_DF, Exchanges)
-    print('logic1')
-    print(logic1)
+    first_logic_array = calc.first_logic_matrix(Exchange_Vol_DF, Exchanges)
+    print('first_logic_array')
+    print(first_logic_array)
     if logic_matrix_one.size == 0:
-        logic_matrix_one = logic1
+        logic_matrix_one = first_logic_array
     else:
-        logic_matrix_one = np.column_stack((logic_matrix_one, logic1))
+        logic_matrix_one = np.column_stack((logic_matrix_one, first_logic_array))
         
 
 
@@ -224,8 +228,36 @@ if today_TS in rebalance_start_date:
 Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns = Crypto_Asset)
 Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns = Crypto_Asset)
 first_logic_matrix = pd.DataFrame(logic_matrix_one, columns = Crypto_Asset)
-#first_logic_matrix['Time'] = rebalance_stop_date
+# with time header
+time_header = ['Time']
+time_header.extend(Crypto_Asset) 
+Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns = time_header)
+Crypto_Asset_Prices['Time'] = reference_date_vector
+Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns = time_header)
+Crypto_Asset_Volume['Time'] = reference_date_vector
+# add sto_column column; the column does not consider th last value because it refers to a 
+# period that has not been yet calculated
+first_logic_matrix['Time'] = rebalance_stop_date[0:len(rebalance_stop_date)-1]
+
 print(Crypto_Asset_Prices)
+print('Crypto_Asset_Volume')
+print(Crypto_Asset_Volume)
 price_ret = Crypto_Asset_Prices.pct_change()
 print(price_ret)
 print(first_logic_matrix)
+
+reshaped_first = calc.first_logic_matrix_reshape(first_logic_matrix,reference_date_vector, Crypto_Asset, time_column = 'Y')
+print(reshaped_first)
+p = np.array(reshaped_first)
+emwa_df = calc.emwa_crypto_volume(Crypto_Asset_Volume, Crypto_Asset, reference_date_vector, time_column = 'N')
+z = np.array(emwa_df)
+print(z[:,0])
+print(emwa_df)
+#print(Crypto_Asset_Volume.loc[Crypto_Asset_Volume.Time.between(1564444800, 1564617600, inclusive = True)])
+emwa_first_check = calc.emwa_first_logic_check(first_logic_matrix, emwa_df, reference_date_vector, Crypto_Asset)
+print(emwa_first_check)
+y = np.array(emwa_first_check)
+print(y[:,0])
+print(p[:,1])
+print(p[:,2])
+

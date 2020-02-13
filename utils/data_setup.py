@@ -9,6 +9,30 @@ import time
 import utils.data_download as data_download
 
 
+def timestamp_gen(start_date, end_date = None,  EoD = 'Y'):
+
+    if end_date == None:
+        end_date = datetime.now().strftime('%m-%d-%Y')
+
+    end_date = datetime.strptime(end_date,'%m-%d-%Y')
+    end = int(time.mktime(end_date.timetuple()))
+    end = end + 3600
+    start = datetime.strptime(start_date,'%m-%d-%Y')
+    start = int(time.mktime(start.timetuple()))
+    start = start + 3600
+
+    array = np.array([start])
+    date = start
+    print(end)
+   
+    while date < end:
+        date = date + 86400
+        array = np.append(array, date)
+    
+    array = array[:len(array) - 1]
+    
+    return array
+
 
 # function that generate an array of date starting from start_date to end_date
 # if not specified end_date = today() 
@@ -376,7 +400,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
     except UnboundLocalError:
 
         fixed_matrix = np.array([])
-        
+
     return fixed_matrix
 
 

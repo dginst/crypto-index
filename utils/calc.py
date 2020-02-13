@@ -71,6 +71,21 @@ def perdelta(start, end, delta = relativedelta(months = 3)):
 
 
 
+def start_q_fix(start_q_array):
+
+    fixed_array = np.array([])
+
+    for date in start_q_array:
+    
+        if datetime.utcfromtimestamp(date).hour == 23:
+
+            date = date + 3600
+        
+        fixed_array = np.append(fixed_array, date)
+
+    return fixed_array
+
+
 # function generates an array cointaing the first date of each quarter,
 # function starts counting from the start_date (01-01-2016 as default) to the stop_date (today as default)
 # function returns the list of date in timestamp format (second simce epoch) if no otherwise specified
@@ -96,6 +111,8 @@ def start_q(start_date = '01-01-2016', stop_date = None, delta = relativedelta(m
             result = result.strftime('%m-%d-%Y')
         
         start_day_arr = np.append(start_day_arr, result)
+
+    start_day_arr = start_q_fix(start_day_arr)
 
     return start_day_arr
 
@@ -312,21 +329,32 @@ def first_logic_matrix(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016', end_
 # this function allows the logic matrix to have the same dimension as the other matrix/dataframe
 # and thus allowing calculation
 
-def first_logic_matrix_reshape(first_logic_matrix, reference_date_array, Crypto_list, start_date = '01-01-2016', end_date = None):
+def first_logic_matrix_reshape(first_logic_matrix, reference_date_array, Crypto_list, start_date = '01-01-2016', end_date = None, time_column = 'N'):
 
     # calling the function that yields the start and stop date couple
     rebalance_start = quarterly_period(start_date, end_date)
 
     # define the reshaped logic matrix as a dataframe with 'Time' in first column and the reference date array as rows
-    reshaped_matrix = pd.DataFrame(reference_date_array, columns = 'Time')
+    reshaped_matrix = pd.DataFrame(reference_date_array, columns = ['Time'])
+
+    # assigning 0 to new DataFrame columns, one for each crypto
+    for crypto in Crypto_list:
+        reshaped_matrix[crypto] = np.zeros(len(reference_date_array))
 
     # for every start and stop date couple fill the reshaped matrix with the logic value finded in the input logic matrix
     for start, stop in rebalance_start:
 
-        copied_element = np.array(first_logic_matrix.loc[first_logic_matrix.Time == stop])
+        copied_element = np.array(first_logic_matrix.loc[first_logic_matrix.Time == stop][Crypto_list])
         reshaped_matrix.loc[reshaped_matrix.Time.between(start, stop, inclusive = True), Crypto_list] = copied_element
+        print('piece of reshape')
+        print(reshaped_matrix.loc[reshaped_matrix.Time.between(start, stop, inclusive = True)])
 
-    return reshaped_matrix.drop(columns = 'Time')
+    if time_column == 'N':
+
+        reshaped_matrix.drop(columns = 'Time')
+
+
+    return reshaped_matrix
 
 ###################################################################################################################
 
@@ -367,11 +395,12 @@ def emwa_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array, 
 
     for date in reference_date_array:
         stop = date
-        start = date - 86400 * 89
+        start = date - (86400 * 89)
         try:
 
-            period_volume = Crypto_Volume_Matrix[Crypto_list][Crypto_Volume_Matrix['Time'].between(start, stop, inclusive = True)]
-            period_average = (period_volume * smoothing_array).sum()
+            period_volume = Crypto_Volume_Matrix.loc[Crypto_Volume_Matrix.Time.between(start, stop, inclusive = True), Crypto_list]
+            period_average = (period_volume * smoothing_array[:, None]).sum()
+
             if emwa_matrix.size == 0:
                 
                 emwa_matrix = np.array(period_average)
@@ -382,6 +411,7 @@ def emwa_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array, 
         except:
 
             zero_array = np.zeros(len(Crypto_list))
+
             if emwa_matrix.size == 0:
                 
                 emwa_matrix = zero_array
@@ -389,16 +419,16 @@ def emwa_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array, 
             else:
 
                 emwa_matrix = np.row_stack((emwa_matrix, zero_array))
+
     
     emwa_matrix = np.column_stack((reference_date_array, emwa_matrix))
-
-    if time_column != 'N':
-        header = ['Time']
-        header.extend(Crypto_list)
-    else:
-        header = Crypto_list
-
+    header = ['Time']
+    header.extend(Crypto_list)
     emwa_DF = pd.DataFrame(emwa_matrix, columns = header)
+
+    if time_column == 'N':
+
+        emwa_DF = emwa_DF.drop(columns = 'Time')    
 
     return emwa_DF
 
@@ -413,12 +443,20 @@ def emwa_first_logic_check(first_logic_matrix, emwa_dataframe, reference_date_ar
 
     # reshaping the logic matrix in order to make it of the same dimensions of the emwa dataframe
     reshaped_logic_m = first_logic_matrix_reshape(first_logic_matrix, reference_date_array, Crypto_list)
+    reshaped_logic_m = reshaped_logic_m.drop(columns = 'Time')
+
+    print(reshaped_logic_m)
     
     # multiplying the logic matrix and the emwa dataframe
     emwa_checked = emwa_dataframe * reshaped_logic_m
 
-    if time_column != 'N':
+    # if time_column == 'N':
 
+    #     emwa_checked = emwa_checked.drop(columns = 'Time')
+    
+    # else:
+    if time_column == 'Y':
+        
         emwa_checked['Time'] = reference_date_array
 
     return emwa_checked
