@@ -52,8 +52,8 @@ board_date_eve = calc.day_before_board()
 print(reference_date_vector)
 
 key= ['USD', 'GBP', 'CAD', 'JPY']
-rates = data_setup.ECB_setup(key, '2020-01-01', today, timeST='Y')
-#print(rates)
+rates = mongo.ECB_setup(key, '2020-01-01', today, timeST='Y')
+print(rates)
 
 
 
@@ -83,13 +83,13 @@ for CryptoA in Crypto_Asset:
             crypto = cp[:3]
             pair = cp[3:]
             # create the matrix for the single currency_pair connecting to CryptoWatch website
-            mongo.CW_dato_reader(exchange, cp, start_date)
+            matrix = mongo.CW_dato_reader(exchange, cp, start_date)
             # query data from mongo. Syntax : { "field" : "value", "field": "value" }, Syntax with logic operators(LO) : { "field" : {"$LO" : "value"} }
             # for daily calculation  it is necessary to put the third condition : {"Time" : x}
             db = "index"
             collection = "rawdata"
             query_dict = {"Exchange" : exchange, "Pair": cp }
-            matrix = mongo.query_raw_mongo(db, collection, query_dict)
+            matrix = mongo.query_mongo(db, collection, query_dict)
 
             
 
