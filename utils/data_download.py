@@ -146,7 +146,7 @@ def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq =
             Exchange_Rate_List = Exchange_Rate_List.append(Main_Data_Frame, sort=True)
             Exchange_Rate_List['USD based rate'][i] = float(Main_Data_Frame['OBS_VALUE']) / cambio_USD_EUR
 
-    return Exchange_Rate_List
+    return Main_Data_Frame
 
 
 # def itBit_extractor():
