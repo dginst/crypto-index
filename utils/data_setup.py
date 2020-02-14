@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import datetime
 from datetime import *
 import time
-import utils.data_download as data_download
+import utils.data_download
 
 
 def timestamp_gen(start_date, end_date = None,  EoD = 'Y'):
@@ -285,7 +285,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
     for elements in exchange_list:
         
         # create a data frame connecting to CryptoWatch API
-        matrix = data_download.CW_data_reader(elements, ccy_pair, start_date, end_date)
+        matrix = utils.data_download.CW_data_reader(elements, ccy_pair, start_date, end_date)
         print(matrix)
         # checking if data frame is empty: if not then the ccy_pair exists in the exchange
         # then add to the count variable 
@@ -478,7 +478,7 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
     for i, single_date in enumerate(date):
         
         # retrieving data from ECB website
-        single_date_ex_matrix = data_download.ECB_rates_extractor(key_curr_vector, date[i])
+        single_date_ex_matrix = utils.data_download.ECB_rates_extractor(key_curr_vector, date[i])
         
         # check if the API actually returns values 
         if Check_null(single_date_ex_matrix) == False:
@@ -507,13 +507,13 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
             exception_date = datetime.strptime(date[i], '%Y-%m-%d') - timedelta(days = 1)
             date_str = exception_date.strftime('%Y-%m-%d')            
-            exception_matrix = data_download.ECB_rates_extractor(key_curr_vector, date_str)
+            exception_matrix = utils.data_download.ECB_rates_extractor(key_curr_vector, date_str)
 
             while Check_null(exception_matrix) != False:
 
                 exception_date = exception_date - timedelta(days = 1)
                 date_str = exception_date.strftime('%Y-%m-%d') 
-                exception_matrix = data_download.ECB_rates_extractor(key_curr_vector, date_str)
+                exception_matrix = utils.data_download.ECB_rates_extractor(key_curr_vector, date_str)
 
             date_arr = np.full(len(key_curr_vector),single_date)
             curr_arr = exception_matrix['CURRENCY'] + '/USD'
@@ -584,7 +584,7 @@ def ECB_holiday (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
     for i, single_date in enumerate(date):
         
         # retrieving data from ECB website
-        single_date_ex_matrix = data_download.ECB_rates_extractor(key_curr_vector, date[i])
+        single_date_ex_matrix = utils.data_download.ECB_rates_extractor(key_curr_vector, date[i])
         
         # check if the API actually returns values 
         if Check_null(single_date_ex_matrix) == False:
@@ -613,13 +613,13 @@ def ECB_holiday (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
             exception_date = datetime.strptime(date[i], '%Y-%m-%d') - timedelta(days = 1)
             date_str = exception_date.strftime('%Y-%m-%d')            
-            exception_matrix = data_download.ECB_rates_extractor(key_curr_vector, date_str)
+            exception_matrix = utils.data_download.ECB_rates_extractor(key_curr_vector, date_str)
 
             while Check_null(exception_matrix) != False:
 
                 exception_date = exception_date - timedelta(days = 1)
                 date_str = exception_date.strftime('%Y-%m-%d') 
-                exception_matrix = data_download.ECB_rates_extractor(key_curr_vector, date_str)
+                exception_matrix = utils.data_download.ECB_rates_extractor(key_curr_vector, date_str)
 
             date_arr = np.full(len(key_curr_vector),single_date)
             curr_arr = exception_matrix['CURRENCY'] + '/USD'

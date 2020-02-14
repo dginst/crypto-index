@@ -6,7 +6,7 @@ import os
 import pandas as pd
 import io
 import numpy as np
-import utils.data_setup as data_setup
+import utils.data_setup
 
 # function that creates json files downloading the info from Cryptowatch website
 # specifically, given a list of exchange (exchange_array) and a list of currency pair (currencypair_array),	
@@ -48,14 +48,14 @@ def CW_data_reader(exchange, currencypair, start_date = '01-01-2016', end_date =
     Pair = currencypair[3:].upper()
     
     # check date format
-    start_date = data_setup.date_reformat(start_date)
+    start_date = utils.data_setup.date_reformat(start_date)
     start_date = datetime.strptime(start_date, '%m-%d-%Y')
 
     # set end_date = today if empty
     if end_date == None:
         end_date = datetime.now().strftime('%m-%d-%Y')
     else:
-        end_date = data_setup.date_reformat(end_date, '-')
+        end_date = utils.data_setup.date_reformat(end_date, '-')
     end_date = datetime.strptime(end_date, '%m-%d-%Y')
 
     # transform date into timestamps
@@ -96,12 +96,12 @@ def CW_data_reader(exchange, currencypair, start_date = '01-01-2016', end_date =
 def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq = 'D', 
                         curr_den = 'EUR', type_rates = 'SP00', series_var = 'A'):
     
-    Start_Period = data_setup.date_reformat(Start_Period, '-', 'YYYY-MM-DD')
+    Start_Period = utils.data_setup.date_reformat(Start_Period, '-', 'YYYY-MM-DD')
     # set end_period = start_period if empty
     if End_Period == None:
         End_Period = Start_Period
     else:
-        End_Period = data_setup.date_reformat(End_Period, '-', 'YYYY-MM-DD')
+        End_Period = utils.data_setup.date_reformat(End_Period, '-', 'YYYY-MM-DD')
 
     # API settings
     entrypoint = 'https://sdw-wsrest.ecb.europa.eu/service/' 
