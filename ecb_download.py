@@ -25,7 +25,8 @@ db.ecb_raw.create_index([ ("id", -1) ])
 #creating the empty collection rawdata within the database index
 collection_ECB_raw = db.ecb_raw
 
-
+# this download all the ecb raw data
+###########################################################################
 Start_Period = '2016-01-01'
 End_Period = '2017-01-01'
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
@@ -36,7 +37,7 @@ date = data_setup.date_array_gen(Start_Period, End_Period, timeST = 'N')
 Exchange_Rate_List = pd.DataFrame()
    
 for i, single_date in enumerate(date):
-    time.sleep(0.5)
+    time.sleep(0.05)
     # retrieving data from ECB website
     single_date_ex_matrix = mongo.ECB_rates_extractor(key_curr_vector, date[i])
 
