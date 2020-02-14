@@ -160,7 +160,7 @@ def query_mongo(database, collection, query_dict):
     
 
     matrix= pd.DataFrame.from_records(doc)
-    matrix = matrix.drop(columns = ['_id','Exchange', 'Pair','Open', 'High', 'Low'])
+    
 
     
     return matrix
