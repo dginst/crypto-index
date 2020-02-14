@@ -14,9 +14,9 @@ import time
 
 # we choose just a couple of crypto and fiat
 # other fiat and crypto needs more test due to historical series incompletness
-crypto = ['btc', 'eth']
+#crypto = ['btc', 'eth', 'ltc']
 pair_array = ['gbp', 'usd'] 
-Crypto_Asset = ['BTC', 'ETH']
+Crypto_Asset = ['BTC', 'ETH', 'LTC']
 
 # we use all the xchanges except for Kraken that needs some more test in order to be introduced without error
 Exchanges = [ 'coinbase-pro', 'bitflyer', 'poloniex', 'bitstamp', 'gemini', 'bittrex'] #'kraken'
@@ -90,7 +90,7 @@ for CryptoA in Crypto_Asset:
                 # checking if the matrix has missing data and if ever fixing it
                 if matrix.shape[0] != reference_date_vector.size:
 
-                    matrix = data_setup.fix_missing(matrix, exchange, crypto, pair, start_date)
+                    matrix = data_setup.fix_missing(matrix, exchange, CryptoA, pair, start_date)
 
                 ######## TEMPORARILY TURNED OFF ########################################
                 ## changing the "fiat" values into USD (Close Price and Volume)
