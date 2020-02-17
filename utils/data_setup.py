@@ -9,6 +9,13 @@ import time
 import utils.data_download
 
 
+
+# function that generate an array of date in timstamp format starting from start_date to end_date
+# given in mm-dd-yyyy forma; if not specified end_date = today() 
+# function only returns value of timestamp in second since epoch where every day is in the exact 12:00 am UTC
+# function considers End of Day price series so, if not otherwise specified,
+# the returned array of date will be from start to today - 1 (EoD = 'Y')
+
 def timestamp_gen(start_date, end_date = None,  EoD = 'Y'):
 
     if end_date == None:
@@ -205,45 +212,6 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
     volume_matrix = np.column_stack((missing_item, volumes))
 
     return variation_matrix, volume_matrix
-
-# function that fills a vector with specified elelments in specified positions
-# function takes as input:
-# where_to_insert = list where insert the item included in what_to_insert
-# what_to_insert = list of items to be inserted
-# index_list = the index position that the items should have in where_to_insert
-# the function returns where_to_insert updated with the missing items 
-
-# def insert_items(what_to_insert, where_to_insert, index_list):
-
-#     index_list = np.array(index_list)
-#     what_to_insert = np.array(what_to_insert)
-#     where_to_insert = np.array(where_to_insert)
-
-#     for i,index in enumerate(index_list):
-#         where_to_insert = np.insert(where_to_insert,
-#         index,what_to_insert[i])
-
-#     return where_to_insert
-
-
-
-# function returns an array of elements in position i-1, as founded in where_to_insert, according
-# to the position contained in index_list
-# function takes as input:
-# index_list = a list/array of indexes (position) related to elements of interest
-# where_to_insert = a vector where search the previous elements according to the index given
-
-# def find_previous(index_list, where_to_insert): 
-
-#     # turn vectors into numpy array
-#     index_list = np.array(index_list)
-#     where_to_insert = np.array(where_to_insert)
-#     previous_list = []
-
-#     for index in index_list:
-#         previous_list.append(where_to_insert[index - 1])
-
-#     return np.array(previous_list)
 
 
 
