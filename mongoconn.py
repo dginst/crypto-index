@@ -152,18 +152,16 @@ def CW_dato_reader(exchange, currencypair, start_date = '01-01-2016', end_date =
 
 def query_mongo(database, collection, query_dict):
 
+    Exchange_Rate_List = pd.DataFrame()
     db = connection[database]
     coll = db[collection]
     
     myquery = query_dict
     doc = coll.find(myquery)
     
-
-    matrix= pd.DataFrame.from_records(doc)
+    single_date_ex_matrix = pd.DataFrame.from_records(doc)
     
-
-    
-    return matrix
+    return single_date_ex_matrix
 
 
 ####################################################################################################################################################################################################

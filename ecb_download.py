@@ -33,7 +33,8 @@ key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
    
 date = data_setup.date_array_gen(Start_Period, End_Period, timeST = 'N')
-        
+print(date[0])
+
 Exchange_Rate_List = pd.DataFrame()
    
 for i, single_date in enumerate(date):

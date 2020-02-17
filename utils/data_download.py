@@ -133,8 +133,6 @@ def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq =
         if currency == 'USD':
             cambio_USD_EUR = float(Main_Data_Frame['OBS_VALUE'])
 
-        # 'TIME_PERIOD' was of type 'object' (as seen in Data_Frame.info). Convert it to datetime first
-        Main_Data_Frame['TIME_PERIOD'] = pd.to_datetime(Main_Data_Frame['TIME_PERIOD'])
         
         # Set 'TIME_PERIOD' to be the index
         Main_Data_Frame = Main_Data_Frame.set_index('TIME_PERIOD')
