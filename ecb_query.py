@@ -14,6 +14,8 @@ import requests
 from requests import get
 import mongoconn as mongo
 
+#manca solo trasformare la data in timestamp
+
 ###### function that manipulate ecb data querying them from mongo
 
 #connecting to mongo in local
@@ -83,7 +85,8 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
         # last useful day        
         else:
 
-            exception_date = date[i] - timedelta(days = 1)          
+            exception_date = date[i] - timedelta(days = 1)
+            query = {'TIME_PERIOD': exception_date }
             exception_matrix = mongo.query_mongo(database, collection, query)
 
             try:
@@ -96,6 +99,7 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
             while data_setup.Check_null(exception_matrix) != False:
 
                 exception_date = exception_date - timedelta(days = 1)
+                query = {'TIME_PERIOD': exception_date } 
                 exception_matrix = mongo.query_mongo(database, collection, query)
 
                 try:
@@ -129,11 +133,15 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
     return pd.DataFrame(Exchange_Matrix, columns = header)
 
-Start_Period = '2016-01-04'
-End_Period = '2016-01-07'
+Start_Period = '2018-01-04'
+End_Period = '2019-01-01'
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
 mongo_clean = ECB_setup(key_curr_vector, Start_Period, End_Period)
+print(type(mongo_clean['Date'].loc[0]))
+print(type(mongo_clean['Date'].loc[0]))
+print('RUMBLA')
+print(mongo_clean)
 data = mongo_clean.to_dict(orient='records')  
 collection_ECB_clean.insert_many(data)
 
