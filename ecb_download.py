@@ -28,7 +28,7 @@ collection_ECB_raw = db.ecb_raw
 # this download all the ecb raw data
  ###########################################################################
 Start_Period = '2016-01-01'
-End_Period = '2019-02-13'
+End_Period = '2020-02-17'
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
    
