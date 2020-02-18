@@ -28,7 +28,12 @@ collection_ECB_raw = db.ecb_raw
 # this download all the ecb raw data
  ###########################################################################
 Start_Period = '2015-05-01'
-End_Period = '2016-02-17'
+End_Period = '2016-02-17
+
+#this if you want to download daily
+#Start_Period = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
+#End_Period = datetime.today().strftime('%Y-%m-%d')
+
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
    
