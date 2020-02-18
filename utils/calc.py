@@ -632,6 +632,7 @@ def quarter_weights(emwa_double_logic_checked, date, Crypto_list):
         row = np.array(emwa_double_logic_checked.loc[emwa_double_logic_checked.Time == day, Crypto_list])
         total_row = row.sum()
         weighted_row = row / total_row
+
         if row.size == len(Crypto_list):
 
             quarter_weights.loc[quarter_weights.Time == day, Crypto_list] = weighted_row
@@ -645,7 +646,7 @@ def quarter_weights(emwa_double_logic_checked, date, Crypto_list):
 ####################################### SYNTHETIC MARKET CAP ####################################################
  #function that return the syntethic weight for the index at the end of the day of the first day of each quarter 
 
-def quarterly_synt_matrix(Crypto_Price_Matrix, emwa_double_logic_checked, reference_date_array, date_list, Crypto_list, synt_matrix_old = None, synt_ptf_value = 100):
+def quarterly_synt_matrix(Crypto_Price_Matrix, weights, reference_date_array, board_date_eve, Crypto_list, synt_ptf_value = 100):
 
     # computing the percentage returns of cryptoasset prices (first row will be a NaN)
     # result is a pandas DF with columns = Crypto_list
@@ -653,31 +654,61 @@ def quarterly_synt_matrix(Crypto_Price_Matrix, emwa_double_logic_checked, refere
     # adding the 'Time' column to price_return DF
     price_return['Time'] = reference_date_array
 
-    weights = quarter_weights(emwa_double_logic_checked, date, Crypto_list)
-
+    rebalance_period = quarterly_period()
 
     q_synt = np.array([])
 
-    for date in weights['Time']:
+    i = 1
+    j=0
+    for start, stop in rebalance_period:
 
-        calc1 = (weights[Crypto_list][weights['Time'] == date]) * 100
+        start_weights = (weights[Crypto_list][weights['Time'] == board_date_eve[i]]) * synt_ptf_value
+        #print(start_weights)
 
-        calc2 = price_return[Crypto_list][price_return['Time'] == date]
+        value_one = start_weights
 
+        list_of_date = price_return.loc[price_return.Time.between(start, stop, inclusive = True), 'Time']
+        print(list_of_date)
+        for date in list_of_date:
+            j=j+1
+            increase_value = np.array(price_return[Crypto_list][price_return['Time'] == date])
 
-        calc_fin = (calc1 + calc1*calc2)#*calc3
-        q_synt = np.append(q_synt, calc_fin)
+            increased_value = np.array((value_one) * (1 + increase_value))
+
+            value_one = increased_value
+            
+            if q_synt.size == 0:
+
+                q_synt = increased_value
+            
+            else:
+
+                q_synt = np.row_stack((q_synt, increased_value))
+           
+
+        i = i+1
+
+    print(j)
+    print(q_synt)
+    q_synt_time = np.column_stack((reference_date_array, q_synt))
+
+    header = ['Time']
+    header = header.extend(Crypto_list)
+    q_synt_df = pd.DataFrame(q_synt_time, columns = haeder)
+
+    return q_synt_df
+
 
     q_synt_w = np.array([])
 
-    for i in range(q_synt.shape[0]):
-        tot = q_synt[i:1:q_synt.shape[1]].sum()
-        weights = q_synt[i:1:q_synt.shape[1]] / tot
-        q_synt_w = np.append(q_synt_w, weights)
+    # for i in range(q_synt.shape[0]):
+    #     tot = q_synt[i:1:q_synt.shape[1]].sum()
+    #     weights = q_synt[i:1:q_synt.shape[1]] / tot
+    #     q_synt_w = np.append(q_synt_w, weights)
     
-    q_synt_w = np.column_stack(q_weights[:,0], q_synt_w)
+    # q_synt_w = np.column_stack(q_weights[:,0], q_synt_w)
 
-    return q_synt_w
+    # return q_synt_w
 
 
 # function takes as input:
