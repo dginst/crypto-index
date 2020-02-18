@@ -227,6 +227,41 @@ def quarterly_period(start_date = '01-01-2016', stop_date = None, timeST = 'Y'):
 
 
 
+# function that returns/yields a couple of values representing the start date and end date of each quarter
+# the difference in respect of the above function is that this one returns also the current quarter and,
+# if the last stop date is in the future, return today as last date
+# it is useful for the application of the values (ex. weights)
+
+def next_quarterly_period(start_date = '01-01-2016', stop_date = None, timeST = 'Y'):
+
+    try:
+        start_date = datetime.strptime(start_date,'%m-%d-%Y')
+    
+    except:
+        pass
+
+    if stop_date == None:
+
+        stop_date = datetime.now().strftime('%m-%d-%Y')
+        stop_date = datetime.strptime(stop_date,'%m-%d-%Y')
+
+    # creating the arrays containing the start and stop date of each quarter
+    start_quarter = start_q(start_date, stop_date, timeST)
+    stop_quarter = stop_q(start_quarter)
+
+    today = datetime.now().strftime('%Y-%m-%d')
+    today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
+    last_stop = int(stop_quarter[len(stop_quarter) - 1])
+
+    if last_stop > today_TS:
+
+        stop_quarter[len(stop_quarter)-1] = today_TS
+
+    for i in range(1, start_quarter.size):
+    
+        yield (start_quarter[i], stop_quarter[i])
+
+
 ######################################## FIRST LOGIC MATRIX #########################################################
 
 # function that takes as input
@@ -645,6 +680,7 @@ def quarter_weights(emwa_double_logic_checked, date, Crypto_list):
 
 ####################################### SYNTHETIC MARKET CAP ####################################################
  #function that return the syntethic weight for the index at the end of the day of the first day of each quarter 
+ 
 
 def quarterly_synt_matrix(Crypto_Price_Matrix, weights, reference_date_array, board_date_eve, Crypto_list, synt_ptf_value = 100):
 
@@ -654,25 +690,22 @@ def quarterly_synt_matrix(Crypto_Price_Matrix, weights, reference_date_array, bo
     # adding the 'Time' column to price_return DF
     price_return['Time'] = reference_date_array
 
-    rebalance_period = quarterly_period()
+    rebalance_period = next_quarterly_period()
 
     q_synt = np.array([])
 
     i = 1
-    j=0
     for start, stop in rebalance_period:
 
         start_weights = (weights[Crypto_list][weights['Time'] == board_date_eve[i]]) * synt_ptf_value
-        #print(start_weights)
 
         value_one = start_weights
 
         list_of_date = price_return.loc[price_return.Time.between(start, stop, inclusive = True), 'Time']
-        print(list_of_date)
-        for date in list_of_date:
-            j=j+1
-            increase_value = np.array(price_return[Crypto_list][price_return['Time'] == date])
 
+        for date in list_of_date:
+
+            increase_value = np.array(price_return[Crypto_list][price_return['Time'] == date])
             increased_value = np.array((value_one) * (1 + increase_value))
 
             value_one = increased_value
@@ -688,27 +721,14 @@ def quarterly_synt_matrix(Crypto_Price_Matrix, weights, reference_date_array, bo
 
         i = i+1
 
-    print(j)
-    print(q_synt)
     q_synt_time = np.column_stack((reference_date_array, q_synt))
 
     header = ['Time']
-    header = header.extend(Crypto_list)
-    q_synt_df = pd.DataFrame(q_synt_time, columns = haeder)
+    header.extend(Crypto_list)
+    q_synt_df = pd.DataFrame(q_synt_time, columns = header)
 
     return q_synt_df
 
-
-    q_synt_w = np.array([])
-
-    # for i in range(q_synt.shape[0]):
-    #     tot = q_synt[i:1:q_synt.shape[1]].sum()
-    #     weights = q_synt[i:1:q_synt.shape[1]] / tot
-    #     q_synt_w = np.append(q_synt_w, weights)
-    
-    # q_synt_w = np.column_stack(q_weights[:,0], q_synt_w)
-
-    # return q_synt_w
 
 
 # function takes as input:
