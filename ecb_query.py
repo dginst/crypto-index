@@ -6,7 +6,6 @@ import numpy as np
 import json
 import os.path
 from pathlib import Path
-from datetime import datetime
 from datetime import *
 import time
 import pandas as pd
@@ -27,6 +26,7 @@ db.ecb_raw.create_index([ ("id", -1) ])
 #creating the empty collection rawdata within the database index
 collection_ECB_clean = db.ecb_clean
 
+#for historical ecb
 
 def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
@@ -133,16 +133,26 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
     return pd.DataFrame(Exchange_Matrix, columns = header)
 
-Start_Period = '2018-01-04'
-End_Period = '2019-01-01'
+Start_Period = '2020-02-17'
+End_Period = '2020-02-18'
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
 mongo_clean = ECB_setup(key_curr_vector, Start_Period, End_Period)
 print(type(mongo_clean['Date'].loc[0]))
 print(type(mongo_clean['Date'].loc[0]))
-print('RUMBLA')
 print(mongo_clean)
 data = mongo_clean.to_dict(orient='records')  
 collection_ECB_clean.insert_many(data)
 
+#for daily ecb
 
+Start_Period = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
+End_Period = datetime.today().strftime('%Y-%m-%d')
+key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
+
+mongo_clean = ECB_setup(key_curr_vector, Start_Period, End_Period)
+print(type(mongo_clean['Date'].loc[0]))
+print(type(mongo_clean['Date'].loc[0]))
+print(mongo_clean)
+data = mongo_clean.to_dict(orient='records')  
+collection_ECB_clean.insert_many(data)
