@@ -48,7 +48,6 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
        
         # retrieving data from ECB website
         single_date_ex_matrix = ecb_query = mongo.query_mongo(database, collection, query)
-        print(single_date_ex_matrix)
 
         try:
             cambio_USD_EUR = float(single_date_ex_matrix['OBS_VALUE'][0])
@@ -133,11 +132,13 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
     return pd.DataFrame(Exchange_Matrix, columns = header)
 
-Start_Period = '2020-02-17'
-End_Period = '2020-02-18'
+Start_Period = '2020-02-16'
+End_Period = '2020-02-17'
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
 mongo_clean = ECB_setup(key_curr_vector, Start_Period, End_Period)
+mongo_clean['Date'] = pd.to_datetime(mongo_clean['Date'])
+mongo_clean['Date'] = (mongo_clean['Date'] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s') 
 print(type(mongo_clean['Date'].loc[0]))
 print(type(mongo_clean['Date'].loc[0]))
 print(mongo_clean)
@@ -151,6 +152,8 @@ End_Period = datetime.today().strftime('%Y-%m-%d')
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
 mongo_clean = ECB_setup(key_curr_vector, Start_Period, End_Period)
+mongo_clean['Date'] = pd.to_datetime(mongo_clean['Date'])
+mongo_clean['Date'] = (mongo_clean['Date'] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s') 
 print(type(mongo_clean['Date'].loc[0]))
 print(type(mongo_clean['Date'].loc[0]))
 print(mongo_clean)

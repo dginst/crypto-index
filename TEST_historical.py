@@ -238,7 +238,7 @@ Crypto_Asset_Volume['Time'] = reference_date_vector
 # add sto_column column; the column does not consider th last value because it refers to a 
 # period that has not been yet calculated
 first_logic_matrix['Time'] = rebalance_stop_date[0:len(rebalance_stop_date)-1]
-
+print ( 'HOLAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
 print(Crypto_Asset_Prices)
 print('Crypto_Asset_Volume')
 print(Crypto_Asset_Volume)
