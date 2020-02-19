@@ -4,6 +4,18 @@ from datetime import *
 import pandas as pd
 import numpy as np
 from time import sleep
+import mongoconn as mongo
+from pymongo import MongoClient
+
+
+connection = MongoClient('localhost', 27017)
+#creating the database called index
+db = connection.index
+db.rawdata.create_index([ ("id", -1) ])
+#creating the empty collection rawdata within the database index
+collection_geminitraw = db.geminitraw
+collection_bittrextraw = db.bittrextraw
+collection_bitflyertraw = db.bitflyertraw
 
 
 # function takes as input Start Date, End Date (both string in mm-dd-yyyy format) and delta (numeric)
@@ -187,6 +199,39 @@ def kraken_API(Start_Date, End_Date, Crypto, Fiat, interval  = '1440'):
 
 # https://bittrex.github.io/api/v3 api actually not working for historical data
 
+def bittrex_ticker (Crypto, Fiat, db , collection):
+
+    header = ['pair', 'bid', 'bidAmt', 'ask', 'askAmt', 'lastPrice', 'lastAmt', 'volume24h', \
+            'volumeToday', 'high24h', 'low24h', 'highToday','lowToday','openToday', 'vwapToday',\
+            'vwap24h', 'serverTimeUTC']
+
+    for asset in Crypto:
+        asset = asset.lower()
+
+        for fiat in Fiat:
+
+            fiat = fiat.lower()
+            entrypoint = 'https://api.bittrex.com/api/v1.1/public/getmarketsummary?market='
+            key = fiat + '-' + asset 
+            request_url = entrypoint + key
+
+            response = requests.get(request_url)
+
+            response = response.json() 
+
+           
+            
+            try:
+                response = response["result"][0]
+                collection.insert_one(response)
+            except:
+                print('none_bittrex')
+            
+         
+
+    return 
+
+
 
 
 
@@ -247,7 +292,7 @@ def Poloniex_API(Start_Date, End_Date, Crypto, Fiat, period = '86400'):
 
 # https://www.itbit.com/api api actually not working for historical data 
 
-def itbit_ticker (Crypto, Fiat):
+def itbit_ticker (crypto, fiat, db, collection):
 
     header = ['pair', 'bid', 'bidAmt', 'ask', 'askAmt', 'lastPrice', 'lastAmt', 'volume24h', \
             'volumeToday', 'high24h', 'low24h', 'highToday','lowToday','openToday', 'vwapToday',\
@@ -266,11 +311,10 @@ def itbit_ticker (Crypto, Fiat):
             response = requests.get(request_url)
 
             response = response.json()   
+            print(response)
+         
 
-    itbit_df = pd.DataFrame(response, columns=header)        
-    itbit_df = itbit_df.drop(columns = ['open', 'high', 'low', 'vwap', 'volume usd'])      
-
-    return itbit_df    
+    return  
 
 #####################################################################################################
 ################################    BITFLYER    #####################################################
@@ -280,15 +324,15 @@ def itbit_ticker (Crypto, Fiat):
 
 
 
-def bitflyer_ticker (Crypto, Fiat):
+def bitflyer_ticker(crypto, fiat, db, collection):
 
     header = [  "product_code", "timestamp", "tick_id", "best_bid", "best_ask", "best_bid_size",
                 "best_ask_size", "total_bid_depth", "total_ask_depth", "ltp", "volume", "volume_by_product"]
 
-    for asset in Crypto:
+    for asset in crypto:
 
         asset = asset.upper()
-        for fiat in Fiat:
+        for fiat in fiat:
 
             fiat = fiat.upper()
             entrypoint = 'https://api.bitflyer.com/v1/'
@@ -296,13 +340,18 @@ def bitflyer_ticker (Crypto, Fiat):
             request_url = entrypoint + key
 
             response = requests.get(request_url)
+            response = response.json() 
 
-            response = response.json()   
+            print(response)
 
-    bitflyer_df = pd.DataFrame(response, columns=header)        
-    bitflyer_df = bitflyer_df.drop(columns = ['open', 'high', 'low', 'vwap', 'volume usd'])      
+            try:
 
-    return bitflyer_df
+                collection.insert_one(response)
+            except:
+                print('none_bitflyer')
+            
+
+    return 
 
 
 #####################################################################################################
@@ -347,6 +396,38 @@ def Gemini_API(Start_Date, End_Date, Crypto, Fiat, time_frame = '1day'):
 
     return Gemini_df    
 
+    #####################################################################################################
+    ################################ GEMINI - TICKER ####################################################
+    #####################################################################################################
+
+def gemini_ticker(Crypto, Fiat, db, collection):
+
+    for asset in Crypto:
+
+        asset = asset.lower()
+        for fiat in Fiat:
+
+            fiat = fiat.lower()
+            entrypoint = 'https://api.gemini.com/v1/pubticker/'
+            key = asset + fiat
+            request_url = entrypoint + key
+
+            response = requests.get(request_url)
+            response = response.json()
+
+            try:
+                collection.insert_one(response)
+            except:
+                print('none_gemini')
+            
+            
+
+
+    # bitstamp_df = pd.DataFrame(response, columns=header)        
+    # bitstamp_df = bitstamp_df.drop(columns = ['open', 'high', 'low', 'vwap', 'volume usd'])      
+
+    return 
+
 
 
     #####################################################################################################
@@ -356,7 +437,7 @@ def Gemini_API(Start_Date, End_Date, Crypto, Fiat, time_frame = '1day'):
     # https://www.bitstamp.net/api/ api actually not working for historical data 
 
 
-def bitstamp_ticker (Crypto, Fiat):
+def bitstamp_ticker(Crypto, db, collection, Fiat):
 
     header = ["high", "last", "timestamp", "bid", "vwap", "volume", "low", "ask", "open"]
 
@@ -374,7 +455,9 @@ def bitstamp_ticker (Crypto, Fiat):
 
             response = response.json()   
 
-    bitstamp_df = pd.DataFrame(response, columns=header)        
-    bitstamp_df = bitstamp_df.drop(columns = ['open', 'high', 'low', 'vwap', 'volume usd'])      
+            try:
+                collection.insert_one(response)
+            except:
+                print('none_bitstamp')
 
-    return bitstamp_df
+    return 

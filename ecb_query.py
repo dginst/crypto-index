@@ -132,7 +132,7 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
     return pd.DataFrame(Exchange_Matrix, columns = header)
 
-Start_Period = '2020-02-16'
+Start_Period = '2015-12-18'
 End_Period = '2020-02-17'
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
