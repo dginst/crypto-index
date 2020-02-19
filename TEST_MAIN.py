@@ -81,7 +81,7 @@ for CryptoA in Crypto_Asset:
         
         for cp in currencypair_array:
 
-            # create the matrix for the single currency_pair connecting to CryptoWatch website
+            # create the    matrix for the single currency_pair connecting to CryptoWatch website
             matrix = data_download.CW_data_reader(exchange, cp, start_date)
 
             # checking if the matrix is not empty
@@ -229,6 +229,12 @@ double_checked_EMWA = calc.emwa_second_logic_check(first_logic_matrix, second_lo
 # present quarter board meeting date eve
 weights = calc.quarter_weights(double_checked_EMWA, board_date_eve, Crypto_Asset)
 
+
+syntethic = calc.quarterly_synt_matrix(Crypto_Asset_Prices, weights, reference_date_vector, board_date_eve, Crypto_Asset)
+
+
+
+
 ######## some printing ##########
 print('Crypto_Asset_Prices')
 print(Crypto_Asset_Prices)
@@ -240,6 +246,8 @@ print('EMWA DataFrame')
 print(emwa_df)
 print('WEIGHTS')
 print(weights)
+print('Syntethic matrix')
+print(syntethic)
 #################################
 
 
