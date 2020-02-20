@@ -298,10 +298,10 @@ def itbit_ticker (crypto, fiat, db, collection):
             'volumeToday', 'high24h', 'low24h', 'highToday','lowToday','openToday', 'vwapToday',\
             'vwap24h', 'serverTimeUTC']
 
-    for asset in Crypto:
+    for asset in crypto:
         asset = asset.upper()
 
-        for fiat in Fiat:
+        for fiat in fiat:
 
             fiat = fiat.upper()
             entrypoint = 'https://api.itbit.com/v1/markets/'
@@ -312,7 +312,13 @@ def itbit_ticker (crypto, fiat, db, collection):
 
             response = response.json()   
             print(response)
-         
+
+            try:
+                collection.insert_one(response)
+            except:
+                print('none_itbit')
+            
+
 
     return  
 

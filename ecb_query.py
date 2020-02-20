@@ -54,7 +54,7 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
             single_date_ex_matrix = single_date_ex_matrix.set_index('TIME_PERIOD')
             single_date_ex_matrix['USD based rate'] = (single_date_ex_matrix['OBS_VALUE']) / cambio_USD_EUR
         except:
-            print('ciao2')
+            print('no_value')
         
         if data_setup.Check_null(single_date_ex_matrix) == False:
 
@@ -93,7 +93,7 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
                 exception_matrix = exception_matrix.set_index('TIME_PERIOD')
                 exception_matrix['USD based rate'] = (exception_matrix['OBS_VALUE']) / cambio_USD_EUR
             except:
-                print('ciao3')
+                print('no_value_day_before')
 
             while data_setup.Check_null(exception_matrix) != False:
 
@@ -107,7 +107,7 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
                     exception_matrix['USD based rate'] = (exception_matrix['OBS_VALUE']) / cambio_USD_EUR
                 
                 except:
-                    print('ciao4')
+                    print('no_value_day_after')
 
             date_arr = np.full(len(key_curr_vector),single_date)
             curr_arr = exception_matrix['CURRENCY'] + '/USD'
