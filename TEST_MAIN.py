@@ -16,7 +16,7 @@ import time
 # other fiat and crypto needs more test due to historical series incompletness
 #crypto = ['btc', 'eth', 'ltc']
 pair_array = ['gbp', 'usd'] 
-Crypto_Asset = ['BTC', 'ETH', 'LTC']
+Crypto_Asset = ['BTC', 'ETH', 'LTC', 'XRP']
 
 # we use all the xchanges except for Kraken that needs some more test in order to be introduced without error
 Exchanges = [ 'coinbase-pro', 'bitflyer', 'poloniex', 'bitstamp', 'gemini', 'bittrex'] #'kraken'
@@ -62,6 +62,7 @@ logic_matrix_one = np.matrix([])
 
 for CryptoA in Crypto_Asset:
 
+    print(CryptoA)
     # initialize useful matrices 
     currencypair_array = []
     Exchange_Price = np.matrix([])
@@ -73,22 +74,27 @@ for CryptoA in Crypto_Asset:
         currencypair_array.append(CryptoA.lower() + pair)
 
     for exchange in Exchanges:
-        
+        print(exchange)
         # initialize the matrices that will contain the data related to all currencypair for the single exchange
         Ccy_Pair_PriceVolume = np.matrix([])
         Ccy_Pair_Volume = np.matrix([])
         Ccy_Pair_Price = np.matrix([])
         
         for cp in currencypair_array:
-
+            
+            print(cp)
             # create the    matrix for the single currency_pair connecting to CryptoWatch website
             matrix = data_download.CW_data_reader(exchange, cp, start_date)
 
             # checking if the matrix is not empty
             if data_setup.Check_null(matrix) == False:
+            
+                matrix = data_setup.homogenize_series(matrix, reference_date_vector)
 
                 # checking if the matrix has missing data and if ever fixing it
                 if matrix.shape[0] != reference_date_vector.size:
+
+                    
 
                     matrix = data_setup.fix_missing(matrix, exchange, CryptoA, pair, start_date)
 
@@ -232,7 +238,9 @@ weights = calc.quarter_weights(double_checked_EMWA, board_date_eve, Crypto_Asset
 
 syntethic = calc.quarterly_synt_matrix(Crypto_Asset_Prices, weights, reference_date_vector, board_date_eve, Crypto_Asset)
 
+syntethic_rel = calc.relative_syntethic_matrix(syntethic, Crypto_Asset)
 
+#pd.set_option('display.max_rows', None)
 
 
 ######## some printing ##########
@@ -248,9 +256,11 @@ print('WEIGHTS')
 print(weights)
 print('Syntethic matrix')
 print(syntethic)
+print(syntethic_rel)
 #################################
 
 
+#initial_divisor = calc.initial_divisor(Crypto_Asset_Prices, weights, Crypto_Asset, '01-01-2019')
 
 
 

@@ -40,6 +40,23 @@ def timestamp_gen(start_date, end_date = None,  EoD = 'Y'):
     return array
 
 
+# 
+
+def timestamp_vector(start, stop, lag = 86400):
+
+    array = np.array([start])
+
+    single_date = start + lag
+    while single_date != stop:
+
+        array = np.append(array, single_date)
+        single_date = single_date + lag
+
+    return array
+
+
+
+
 # function that generate an array of date starting from start_date to end_date
 # if not specified end_date = today() 
 # default format is in second since the epoch (timeST = 'Y'), type timeST='N' for date in format YY-mm-dd
@@ -167,6 +184,49 @@ def find_index(list_to_find, where_to_find):
     indexed_item = indexed_item[indexed_item[:,0].argsort()]
 
     return indexed_item
+
+
+# function that aims to homogenize the crypto-fiat series
+
+def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 30):
+
+    reference_date_array_TS = np.array(reference_date_array_TS)
+    header = list(series_to_check.columns)
+    print(header)
+    print(len(header))
+    test_matrix = series_to_check.loc[series_to_check.Time.between(reference_date_array_TS[0], reference_date_array_TS[days_to_check], inclusive = True), header]
+    print(test_matrix)
+
+    if test_matrix.empty == True:
+
+        first_date = np.array(series_to_check['Time'].iloc[0])
+        last_missing_date = (int(first_date) - 86400)
+        first_missing_date = reference_date_array_TS[0]
+
+        missing_date_array = timestamp_vector(first_missing_date, first_date)
+        print(missing_date_array)
+        print(len(missing_date_array))
+        new_series = pd.DataFrame(missing_date_array, columns = ['Time'])
+
+        header.remove('Time')
+        for element in header:
+
+            new_series[element] = np.zeros(len(missing_date_array))
+
+        # zeros_sub_matrix = np.zeros ((len(missing_date_array), len(header) - 1))
+
+        # header.remove('Time')
+        # new_series[header] = zeros_sub_matrix
+
+        complete_series = new_series.append(series_to_check)
+        
+    else:
+
+        complete_series = series_to_check
+    
+    complete_series = complete_series.reset_index(drop = True)
+    print(complete_series)
+    return complete_series
 
 
 
