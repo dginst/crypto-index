@@ -719,7 +719,7 @@ def quarterly_synt_matrix(Crypto_Price_Matrix, weights, reference_date_array, bo
                 q_synt = np.row_stack((q_synt, increased_value))
            
 
-        i = i+1
+        i = i  + 1
 
     q_synt_time = np.column_stack((reference_date_array, q_synt))
 
@@ -731,42 +731,17 @@ def quarterly_synt_matrix(Crypto_Price_Matrix, weights, reference_date_array, bo
 
 
 
-# function takes as input:
-# Curr_Pice_matrix: the Price matrix that has different cryptoasset as column and date as row
-# historic weight_index: matrix that contains the weights for every Crytpo Asset indicated in Curr_Price_matrix
-# comitee_date: vector that contains the past theorical date of comitee reunion
-# as implemented, comitee_date has to be in timestamp format (consider to upgrade)
-# function iterate for every date in comitee_date vector constructing a portfolio with default 100 value
-# rebalanced every comitee_date date; it returns a matrix that simulate the value of the portfolio over history
-#####################################################################################################
-#### consider that doen not makes sense, imo, to have the portfolio reduced (aumented) in value #####
-#### after every commitee: fixing every time the value at 100 do not allow to show #################
-####  the hisorical value constraction of the strategy #########################
-###############################################################################################
-def synt_matrix_historic(Crypto_Price_Matrix,historic_weight_index, comitee_date):
+# funcion that returns the syntethic matrix computed as percentage, specifically it takes the syntethic matrix as input and return 
+# a DF with the same number of rows and columns but instead of values starting from 100 in rebalance day, it returns 
+# the daily relative weights of each cryptoasset
 
-    historical_synt_matrix=np.array([])
+def relative_syntethic_matrix (syntethic_matrix, Crypto_list):
 
-    for i,date in enumerate(comitee_date):
-        start_period, = np.where(Crypto_Price_Matrix[:,0]==date)
-        periodic_synt_mat = np.array([])
+    
+    syntethic_matrix['row_sum'] = syntethic_matrix[Crypto_list].sum(axis=1)
+    syntethic_matrix_new = syntethic_matrix.loc[:, Crypto_list].div(syntethic_matrix['row_sum'], axis=0)
 
-        while start_period != comitee_date[i+1]:
-            if periodic_synt_mat.size == 0:
-                weight_index = historic_weight_index[start_period]
-                periodic_synt_mat = synt_matrix_daily(Crypto_Price_Matrix, weight_index)
-                start_period = start_period+1
-            else:
-                weight_index = historic_weight_index[start_period]
-                periodic_synt_mat = synt_matrix_daily(Crypto_Price_Matrix, weight_index, periodic_synt_mat)
-                start_period = start_period+1
-
-        if historical_synt_matrix.size == 0:
-            historical_synt_matrix = periodic_synt_mat
-        else:
-            historical_synt_matrix = np.row_stack((historical_synt_matrix, periodic_synt_mat))
-
-    return historical_synt_matrix
+    return syntethic_matrix_new
 
 #############################################################################################################
 
@@ -778,20 +753,19 @@ def synt_matrix_historic(Crypto_Price_Matrix,historic_weight_index, comitee_date
 # Crypto_Price_Matrix = final price Crypto_Volume_Matrix of each currency 
 # sm = synthetic market cap derived weight
 
-def calc_initial_divisor(Crypto_Price_Matrix, logic_matrix, sm, initial_date = '01-01-2016'):
+def initial_divisor(Crypto_Price_Matrix, Weights, Crypto_list, initial_date = '01-01-2016', base = 1000):
 
     # convert the date into timestamp 
     initial_date = datetime.strptime(initial_date, '%m-%d-%Y')
-    initial_timestamp = str(int(time.mktime(initial_date.timetuple())))
-
-    # find the toimestamp related index in the data matrix
-    index = np.where(Crypto_Price_Matrix == initial_timestamp)
-    index_tuple = list(zip(index[0], index[1])) 
+    initial_timestamp = str(int(initial_date.timestamp()) + 3600)
 
     # computing the divisor 
-    Initial_Divisor =  (Crypto_Price_Matrix[index_tuple[0]] * sm[index_tuple[0]] * logic_matrix[index_tuple[0]]).sum() / 1000
+    price = Crypto_Price_Matrix.loc[Crypto_Price_Matrix.Time == initial_timestamp, Crypto_list]
+    #logic_value = second_logic_matrix.loc[second_logic_matrix.Time == initial_timestamp, Crypto_list]
+    row = price * Weights
+    initial_divisor = np.array(row.sum()) / base
 
-    return Initial_Divisor
+    return initial_divisor
 
 
 
@@ -801,20 +775,52 @@ def calc_initial_divisor(Crypto_Price_Matrix, logic_matrix, sm, initial_date = '
  # final_volume Crypto_Volume_Matrix of each currency
  # initial date set by default in 01/01/16
 
-def divisor_adjustment(Crypto_Price_Matrix, Crypto_Volume_Matrix, logic_matrix, sm, initial_date = '01-01-2016'):
+def divisor_adjustment(Crypto_Price_Matrix, Weights, second_logic_matrix, Crypto_list, initial_date = '01-01-2016'):
 
     # use the function to compute the initial divisor
-    divisor_array = np.array(calc_initial_divisor(Crypto_Price_Matrix, logic_matrix, sm, initial_date))
+    old_divisor = initial_divisor(Crypto_Price_Matrix, Weights, Crypto_list, initial_date)
+    divisor_array = np.array(old_divisor)
+                                                                                                                                                                                                                                                                                                                                                            
+    # compute the rebalance array
+    rebalance_period = quarterly_period()
+
+    start_quarter = start_q()
 
     # for loop that iterates through all the date (length of logic matrix)
     # returning a divisor for each day
-    for i in range(len(logic_matrix)-1):
-        if logic_matrix[i+1].sum() == logic_matrix[i].sum():
-            divisor_array=np.append(divisor_array, divisor_array[i])
-        else:
-            new_divisor = divisor_array[i]*(Crypto_Price_Matrix[i+1] * Crypto_Volume_Matrix[i+1] * logic_matrix[i+1]).sum() / (Crypto_Price_Matrix[i+1] * Crypto_Volume_Matrix[i] * logic_matrix[i]).sum()
-            divisor_array = np.append(divisor_array, new_divisor)
 
+    
+    i = 0
+    for date in start_q[1:]:
+        
+        current_logic_row = second_logic_matrix.loc[second_logic_matrix.Time == date, Crypto_list]
+        previous_logic_row = second_logic_matrix.loc[second_logic_matrix.Time == start_q[i], Crypto_list]
+        if current_logic_row == previous_logic_row:
+
+            new_divisor = old_divisor
+            divisor_array = np.append(divisor_array, new_divisor)
+        
+        else:
+            today_price = Crypto_Price_Matrix.loc[Crypto_Price_Matrix.Time == date, Crypto_list]
+            yesterday_price = Crypto_Price_Matrix.loc[Crypto_Price_Matrix.Time == (int(date) - 86400), Crypto_list]
+            current_weights = Weights.loc[Weights.Time.between(start_q[i], date), Crypto_list]
+            if i < 2:
+
+                previous_weights = Weights.loc[Weights.Time.between(start_q[0], start_q[i]), Crypto_list]
+            else:
+
+                previous_weights = Weights.loc[Weights.Time.between(start_q[i - 1], start_q[i]), Crypto_list]
+
+            numer = np.array(current_logic_row * yesterday_price * current_weights)
+            denom = np.array(previous_logic_row * yesterday_price * previous_weights)
+
+            new_divisor = numer.sum() / denom.sum()
+
+            divisor_array = np.append(divisor_array, new_divisor)
+        
+        old_divisor = new_divisor
+        i = i + 1
+        
     return divisor_array
  
  
