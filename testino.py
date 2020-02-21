@@ -13,49 +13,27 @@ import API_request as api
 
 connection = MongoClient('localhost', 27017)
 #creating the database called index
+
 db = connection.index
 db.rawdata.create_index([ ("id", -1) ])
-#creating the empty collection rawdata within the database index
-collection_bitstamptraw = db.bitstamptraw
-collection_geminiraw = db.geminiraw
-collection_bittrexraw = db.bittrexraw
-collection_bitflyertraw = db.bitflyertraw
+coll = db.ecb_raw
 
-crypto = ['xbt', 'eth', 'ltc']
-fiat = ['usd', 'eur']            
+cursor = db.coll.aggregate([{"$group": {"_id": "TIME_PERIOD", "unique_ids" : {"$addToSet": "$_id"}, "count": {"$sum": 1}}},{"$match": {"count": { "$gte": 2 }}}])
 
-def itbit_ticker (crypto, fiat, db, collection):
+response = []
+for doc in cursor:
+    del doc["unique_ids"][0]
+    for id in doc["unique_ids"]:
+        response.append(id)
 
-    header = ['pair', 'bid', 'bidAmt', 'ask', 'askAmt', 'lastPrice', 'lastAmt', 'volume24h', \
-            'volumeToday', 'high24h', 'low24h', 'highToday','lowToday','openToday', 'vwapToday',\
-            'vwap24h', 'serverTimeUTC']
+coll.delete_many({"_id": {"$in": response}})
 
-    for asset in crypto:
-        asset = asset.upper()
-
-        for fiat in fiat:
-
-            fiat = fiat.upper()
-            entrypoint = 'https://api.itbit.com/v1/markets/'
-            key = asset + fiat + '/ticker'
-            request_url = entrypoint + key
-
-            response = requests.get(request_url)
-
-            response = response.json()   
-            print(response)
-
-            try:
-                collection.insert_one(response)
-            except:
-                print('none_itbit')
-            
+# collection_bitstamptraw = db.bitstamptraw
+# collection_geminiraw = db.geminiraw
+# collection_bittrexraw = db.bittrexraw
+# collection_bitflyertraw = db.bitflyertraw
 
 
-    return  
-
-
-data = itbit_ticker(crypto, fiat, db, collection_bitflyertraw)
 
 
 
