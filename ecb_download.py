@@ -75,3 +75,48 @@ query = {}
 rates = mongo.query_mongo(database,collection, query)
 
 print(rates.head())
+
+# def ecb_to_mongo(Start_Period, End_Period, key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']):
+    
+
+
+# #this if you want to download daily
+# #Start_Period = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
+# #End_Period = datetime.today().strftime('%Y-%m-%d')
+
+
+
+   
+#     date = data_setup.date_array_gen(Start_Period, End_Period, timeST = 'N')
+
+
+#     Exchange_Rate_List = pd.DataFrame()
+   
+#     for i, single_date in enumerate(date):
+#         time.sleep(0.05)
+#         # retrieving data from ECB website
+#         single_date_ex_matrix = mongo.ECB_rates_extractor(key_curr_vector, date[i])
+
+#         if Exchange_Rate_List.size == 0:
+#             Exchange_Rate_List = single_date_ex_matrix
+#         else:
+#             Exchange_Rate_List = Exchange_Rate_List.append(single_date_ex_matrix, sort=True)
+
+#  ########################## import the raw ecb data to mongo
+
+
+#     data = Exchange_Rate_List.to_dict(orient='records')  
+#     collection_ECB_raw.insert_many(data)
+
+#  ######################## query 
+
+# end = time.time()
+
+# print("This script took: {} minutes".format(int((end-start)/60)))
+
+# ######################################### part to put on main to query all the raw data to clean them
+# database = 'index'
+# collection = 'ecb_raw'
+# query = {}
+
+# rates = mongo.query_mongo(database,collection, query)

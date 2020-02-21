@@ -192,10 +192,7 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 
 
     reference_date_array_TS = np.array(reference_date_array_TS)
     header = list(series_to_check.columns)
-    print(header)
-    print(len(header))
     test_matrix = series_to_check.loc[series_to_check.Time.between(reference_date_array_TS[0], reference_date_array_TS[days_to_check], inclusive = True), header]
-    print(test_matrix)
 
     if test_matrix.empty == True:
 
@@ -204,8 +201,7 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 
         first_missing_date = reference_date_array_TS[0]
 
         missing_date_array = timestamp_vector(first_missing_date, first_date)
-        print(missing_date_array)
-        print(len(missing_date_array))
+
         new_series = pd.DataFrame(missing_date_array, columns = ['Time'])
 
         header.remove('Time')
@@ -213,10 +209,6 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 
 
             new_series[element] = np.zeros(len(missing_date_array))
 
-        # zeros_sub_matrix = np.zeros ((len(missing_date_array), len(header) - 1))
-
-        # header.remove('Time')
-        # new_series[header] = zeros_sub_matrix
 
         complete_series = new_series.append(series_to_check)
         
@@ -225,7 +217,7 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 
         complete_series = series_to_check
     
     complete_series = complete_series.reset_index(drop = True)
-    print(complete_series)
+    #print(complete_series)
     return complete_series
 
 
@@ -240,8 +232,11 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 
 
 def substitute_finder(broken_array, reference_array, where_to_lookup, position):
 
+    print('FIXING...')
     # find the elements of ref array not included in broken array (the one to check)
     missing_item = Diff(reference_array, broken_array)
+    print(reference_array)
+    print(broken_array)
     print(missing_item)
     print(len(missing_item))
     variations = [] 
@@ -283,6 +278,7 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
 
 def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_date = None):
 
+    print('START FIX')
     # define DataFrame header
     header = ['Time', 'Close Price', 'Crypto Volume', 'Pair Volume']
 
@@ -291,13 +287,13 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
         end_date = datetime.now().strftime('%m-%d-%Y')
 
     # creating the reference date array from start date to end date
-    reference_array = date_array_gen(start_date, end_date)
+    reference_array = timestamp_gen(start_date, end_date)
     # select just the date on broken_matrix
     broken_array = broken_matrix['Time']
     ccy_pair = cryptocurrency + pair
 
     # set the list af all exchanges and then pop out the one in subject
-    exchange_list = ['bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini'] #,'kraken']#aggungere itbit
+    exchange_list = ['bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini','kraken']#aggungere itbit
     exchange_list.remove(exchange)
     print(exchange_list)
 

@@ -15,11 +15,11 @@ import time
 # we choose just a couple of crypto and fiat
 # other fiat and crypto needs more test due to historical series incompletness
 #crypto = ['btc', 'eth', 'ltc']
-pair_array = ['gbp', 'usd'] 
+pair_array = ['eur', 'usd', 'gbp','jpy']#, 'gbp', 'usd', 'cad', 'jpy']#, 'eur', 'cad', 'jpy'] 
 Crypto_Asset = ['BTC', 'ETH', 'LTC', 'XRP']
 
 # we use all the xchanges except for Kraken that needs some more test in order to be introduced without error
-Exchanges = [ 'coinbase-pro', 'bitflyer', 'poloniex', 'bitstamp', 'gemini', 'bittrex'] #'kraken'
+Exchanges = [ 'coinbase-pro', 'bitflyer', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken'] #'kraken'
 #############################################################################################################
 
 ##################################### DATE SETTINGS ###################################################
@@ -85,6 +85,7 @@ for CryptoA in Crypto_Asset:
             print(cp)
             # create the    matrix for the single currency_pair connecting to CryptoWatch website
             matrix = data_download.CW_data_reader(exchange, cp, start_date)
+            print(matrix)
 
             # checking if the matrix is not empty
             if data_setup.Check_null(matrix) == False:
