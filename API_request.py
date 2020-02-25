@@ -17,6 +17,9 @@ collection_geminitraw = db.geminitraw
 collection_bittrextraw = db.bittrextraw
 collection_bitflyertraw = db.bitflyertraw
 collection_coinbasetraw = db.coinbasetraw
+collection_bitstamptraw = db.bitstamptraw
+collection_itbittraw = db.bitstamptraw
+collection_poloniextraw = db.poloniextraw
 
 
 # function takes as input Start Date, End Date (both string in mm-dd-yyyy format) and delta (numeric)
@@ -232,7 +235,53 @@ def kraken_API(Start_Date, End_Date, Crypto, Fiat, interval  = '1440'):
     Kraken_df = pd.DataFrame(df, columns=header)        
     Kraken_df = Kraken_df.drop(columns = ['open', 'high', 'low', 'vwap', 'count'])      
 
-    return Kraken_df    
+    return Kraken_df 
+
+
+
+##################################### kraken ticker
+
+def kraken_ticker (Crypto, Fiat, collection):
+
+
+    for asset in Crypto:
+        
+
+        for fiat in Fiat:
+            
+            asset = asset.lower()
+            fiat = fiat.lower()
+            entrypoint = 'https://api.kraken.com/0/public/Ticker?pair='
+            key = asset+fiat
+            request_url = entrypoint + key
+
+            response = requests.get(request_url)
+
+            response = response.json()
+
+            try:
+                asset = asset.upper()
+                fiat = fiat.upper()
+                pair = 'X' + asset + 'Z' + fiat
+                r = response['result'][pair]
+                print(r)
+                
+                collection.insert_one(response)
+            except:
+                print('none_kraken')
+
+            pair = asset + fiat
+            time = datetime.utcnow()
+            price = r['c'][0]
+            crypto_volume = r['v'][1]
+
+            rawdata = {'pair' : pair, 'time':time, 'price':price, 'crypto_volume': crypto_volume}
+
+            collection.insert_one(rawdata)
+            
+    return 
+
+
 
 
 
@@ -243,11 +292,8 @@ def kraken_API(Start_Date, End_Date, Crypto, Fiat, interval  = '1440'):
 
 # https://bittrex.github.io/api/v3 api actually not working for historical data
 
-def bittrex_ticker (Crypto, Fiat, db , collection):
+def bittrex_ticker (Crypto, Fiat, collection):
 
-    header = ['pair', 'bid', 'bidAmt', 'ask', 'askAmt', 'lastPrice', 'lastAmt', 'volume24h', \
-            'volumeToday', 'high24h', 'low24h', 'highToday','lowToday','openToday', 'vwapToday',\
-            'vwap24h', 'serverTimeUTC']
 
     for asset in Crypto:
         asset = asset.lower()
@@ -326,7 +372,53 @@ def Poloniex_API(Start_Date, End_Date, Crypto, Fiat, period = '86400'):
     Poloniex_df = pd.DataFrame(df, columns=header)        
     Poloniex_df = Poloniex_df.drop(columns = ['open', 'high', 'low', 'vwap', 'volume usd'])      
 
-    return Poloniex_df    
+    return Poloniex_df 
+
+
+###################################################### poloniex_ticker
+
+def poloniex_ticker (Crypto, stablecurr, collection):
+    
+    for asset in Crypto:
+        
+        for stbc in stablecurr:
+
+            asset = asset.upper()
+            stbc = stbc.upper()
+            pair = stbc+'_'+asset
+            entrypoint = 'https://poloniex.com/public?command=returnTicker'
+            request_url = entrypoint
+            response = requests.get(request_url)
+            response = response.json()
+            response_short = response[pair]
+
+                
+            r = response_short
+            pair = asset+stbc
+            time = datetime.utcnow()
+            ID = r['id']
+            price = r['last']
+            lowestAsk = r['lowestAsk'] 
+            highestBid = r['highestBid']
+            percentChange = r['percentChange']
+            base_volume = r['baseVolume']
+            crypto_volume = r['quoteVolume']
+            isFrozen =  r['isFrozen']
+            high24hr = r['high24hr']
+            low24hr = r['low24hr']
+
+            rawdata = {'pair' : pair, 'time': time, 'price': price, 'lowestAsk': lowestAsk,
+                        'highestBid': highestBid, 'percentChange' : percentChange,
+                        'base_volume': base_volume, 'crypto_volume' : crypto_volume,'isFrozen' : isFrozen,
+                        'high24hr' : high24hr, 'low24hr' : low24hr }
+
+            
+            try:
+                collection.insert_one(rawdata)
+            except:
+                print('none_poloniex')
+                    
+    return response  
 
 
 
@@ -336,7 +428,7 @@ def Poloniex_API(Start_Date, End_Date, Crypto, Fiat, period = '86400'):
 
 # https://www.itbit.com/api api actually not working for historical data 
 
-def itbit_ticker (crypto, fiat, db, collection):
+def itbit_ticker (Crypto, Fiat, collection):
 
     header = ['pair', 'bid', 'bidAmt', 'ask', 'askAmt', 'lastPrice', 'lastAmt', 'volume24h', \
             'volumeToday', 'high24h', 'low24h', 'highToday','lowToday','openToday', 'vwapToday',\
@@ -374,15 +466,15 @@ def itbit_ticker (crypto, fiat, db, collection):
 
 
 
-def bitflyer_ticker(crypto, fiat, db, collection):
+def bitflyer_ticker(Crypto, Fiat, collection):
 
     header = [  "product_code", "timestamp", "tick_id", "best_bid", "best_ask", "best_bid_size",
                 "best_ask_size", "total_bid_depth", "total_ask_depth", "ltp", "volume", "volume_by_product"]
 
-    for asset in crypto:
+    for asset in Crypto:
 
         asset = asset.upper()
-        for fiat in fiat:
+        for fiat in Fiat:
 
             fiat = fiat.upper()
             entrypoint = 'https://api.bitflyer.com/v1/'
@@ -450,7 +542,7 @@ def Gemini_API(Start_Date, End_Date, Crypto, Fiat, time_frame = '1day'):
     ################################ GEMINI - TICKER ####################################################
     #####################################################################################################
 
-def gemini_ticker(Crypto, Fiat, db, collection):
+def gemini_ticker(Crypto, Fiat, collection):
 
     for asset in Crypto:
 
@@ -487,7 +579,7 @@ def gemini_ticker(Crypto, Fiat, db, collection):
     # https://www.bitstamp.net/api/ api actually not working for historical data 
 
 
-def bitstamp_ticker(Crypto, db, collection, Fiat):
+def bitstamp_ticker(Crypto, Fiat, collection):
 
     header = ["high", "last", "timestamp", "bid", "vwap", "volume", "low", "ask", "open"]
 
