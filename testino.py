@@ -17,28 +17,36 @@ connection = MongoClient('localhost', 27017)
 db = connection.index
 db.rawdata.create_index([ ("id", -1) ])
 coll = db.ecb_raw
-
-cursor = db.coll.aggregate([{"$group": {"_id": "TIME_PERIOD", "unique_ids" : {"$addToSet": "$_id"}, "count": {"$sum": 1}}},{"$match": {"count": { "$gte": 2 }}}])
-
-response = []
-for doc in cursor:
-    del doc["unique_ids"][0]
-    for id in doc["unique_ids"]:
-        response.append(id)
-
-coll.delete_many({"_id": {"$in": response}})
-
 # collection_bitstamptraw = db.bitstamptraw
 # collection_geminiraw = db.geminiraw
 # collection_bittrexraw = db.bittrexraw
-# collection_bitflyertraw = db.bitflyertraw
+collection_coinbasetraw = db.coinbasetraw
 
 
+def poloniex_ticker ():
+    
+    entrypoint = 'https://poloniex.com/public?command=returnTicker'
+    #key = asset + fiat + '/ticker'
+    request_url = entrypoint
 
+    response = requests.get(request_url)
 
-
-
-
+    response = response.json()
 
     
+    try:
+        collection.insert_one(dict2)
+    except:
+        print('none_poloniex')
+            
+    return response
+
+response = poloniex_ticker()
+
+pairs = ['USDT_BTC', 'USDC_BTC', 'USDT_ETH']
+
+dict2 = {x:response[x] for x in pairs}
+
+print(dict2)
+
 

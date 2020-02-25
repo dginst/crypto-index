@@ -16,6 +16,7 @@ db.rawdata.create_index([ ("id", -1) ])
 collection_geminitraw = db.geminitraw
 collection_bittrextraw = db.bittrextraw
 collection_bitflyertraw = db.bitflyertraw
+collection_coinbasetraw = db.coinbasetraw
 
 
 # function takes as input Start Date, End Date (both string in mm-dd-yyyy format) and delta (numeric)
@@ -142,7 +143,50 @@ def Coinbase_API(Crypto, Fiat, Start_Date, End_Date = None, granularity = '86400
 
     return Coinbase_df    
 
+#########################################################################################
+#########################################################################################
 
+def coinbase_ticker( Crypto, Fiat, collection):
+
+    
+    for asset in Crypto:
+
+        for fiat in Fiat:
+
+            asset = asset.upper()
+            fiat = fiat.upper()
+            
+            entrypoint = 'https://api.pro.coinbase.com/products'
+
+            key = '/' + asset + '-'+ fiat +'/ticker'
+            request_url = entrypoint + key
+
+            response = requests.get(request_url)
+        
+            response = response.json()
+            
+            for i in range(len(response)):
+                
+                r = response
+                pair = asset+fiat
+                time = r['time']
+                price = r['price']
+                volume = r['volume'] 
+                size = r['size']
+                bid = r['bid']
+                ask = r['ask']
+                traded_id = r['trade_id']
+
+                rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume':volume, 'size':size, 'bid': bid, 'ask':ask, 'traded_id': traded_id}
+
+                try:
+                    collection.insert_one(rawdata)
+                except:
+                    print('none_coinbase')
+            
+     
+
+    return 
 
 #####################################################################################################
 ################################      KRAKEN    #####################################################
