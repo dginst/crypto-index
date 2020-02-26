@@ -7,6 +7,7 @@ from datetime import datetime
 from datetime import *
 import time
 import utils.data_download
+import mongoconn as mongo
 
 
 
@@ -489,68 +490,84 @@ def date_reformat(date_to_check, separator = '-', order = 'MM-DD-YYYY'):
 # key_curr_vector that passes the list of currencies of interest
 # start_Period and End_Period
 
-def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
+def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
     # defining the array of date to be used
     date = date_array_gen(Start_Period, End_Period, timeST = 'N')
+    date = [datetime.strptime(x, '%Y-%m-%d') for x in date]
+    print(date)
     # defining the headers of the returning data frame
     header = ['Date', 'Currency', 'Rate']
 
     # for each date in "date" array the funcion retrieves data from ECB website
     # and append the result in the returning matrix
     Exchange_Matrix = np.array([])
-    for i, single_date in enumerate(date):
-        
-        # retrieving data from ECB website
-        single_date_ex_matrix = utils.data_download.ECB_rates_extractor(key_curr_vector, date[i])
-        
-        # check if the API actually returns values 
-        if Check_null(single_date_ex_matrix) == False:
 
+    for i, single_date in enumerate(date):
+
+        database= 'index'
+        collection = 'ecb_raw'
+        query = {'TIME_PERIOD': date[i] } 
+       
+        # retrieving data from MongoDB 'index' and 'ecb_raw' collection
+        single_date_ex_matrix = mongo.query_mongo(database, collection, query)
+
+        # check if rates exist in the specified date
+        if Check_null(single_date_ex_matrix) == False:
+            
+            # find the USD/EUR rates useful for conversions
+            print(single_date_ex_matrix.loc[single_date_ex_matrix.CURRENCY == 'USD', 'OBS_VALUE'])
+            cambio_USD_EUR = float(np.array(single_date_ex_matrix.loc[single_date_ex_matrix.CURRENCY == 'USD', 'OBS_VALUE']))
+            
+            # add a column to DF with the USD based rates
+            single_date_ex_matrix['USD based rate'] = (single_date_ex_matrix['OBS_VALUE']) / cambio_USD_EUR
+
+            # creat date array
             date_arr = np.full(len(key_curr_vector),single_date)
+          
             # creating the array with 'XXX/USD' format
             curr_arr = single_date_ex_matrix['CURRENCY'] + '/USD'
             curr_arr = np.where(curr_arr == 'USD/USD', 'EUR/USD', curr_arr)
+          
             # creating the array with rate values USD based
-            # since ECB displays rate EUR based some changes needs to be done
             rate_arr = single_date_ex_matrix['USD based rate']
             rate_arr = np.where(rate_arr == 1.000000, 1/single_date_ex_matrix['OBS_VALUE'][0], rate_arr)
-
+    
             # stacking the array together
             array = np.column_stack((date_arr, curr_arr, rate_arr))
-
+            print(array)
             # filling the return matrix
             if Exchange_Matrix.size == 0:
+
                 Exchange_Matrix = array
+
             else:
+
                 Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
 
-        # if the first API call returns an empty matrix, function will takes values of the
+        # if the query returns an empty matrix, function will takes values of the
         # last useful day        
         else:
 
-            exception_date = datetime.strptime(date[i], '%Y-%m-%d') - timedelta(days = 1)
-            date_str = exception_date.strftime('%Y-%m-%d')            
-            exception_matrix = utils.data_download.ECB_rates_extractor(key_curr_vector, date_str)
-
-            while Check_null(exception_matrix) != False:
-
-                exception_date = exception_date - timedelta(days = 1)
-                date_str = exception_date.strftime('%Y-%m-%d') 
-                exception_matrix = utils.data_download.ECB_rates_extractor(key_curr_vector, date_str)
-
             date_arr = np.full(len(key_curr_vector),single_date)
-            curr_arr = exception_matrix['CURRENCY'] + '/USD'
-            curr_arr = np.where(curr_arr == 'USD/USD', 'EUR/USD', curr_arr)
-            rate_arr = exception_matrix['USD based rate']
-            rate_arr = np.where(rate_arr == 1.000000, 1/exception_matrix['OBS_VALUE'][0], rate_arr)
+
+            # take the curr_arr values of the previous day
+            curr_arr = curr_arr
+
+            # take the rate_arr values of the pevious day
+            rate_arr = rate_arr
+
+            # stack the array together
             array = np.column_stack((date_arr, curr_arr, rate_arr))
 
             if Exchange_Matrix.size == 0:
+                
                 Exchange_Matrix = array
+
             else:
+
                 Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
-    
+
     if timeST != 'N':
 
         for j, element in enumerate(Exchange_Matrix[:,0]):
@@ -667,3 +684,8 @@ def ECB_holiday (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
 
     return pd.DataFrame(Exchange_Matrix, columns = header)
+
+
+#############
+
+
