@@ -18,8 +18,9 @@ collection_bittrextraw = db.bittrextraw
 collection_bitflyertraw = db.bitflyertraw
 collection_coinbasetraw = db.coinbasetraw
 collection_bitstamptraw = db.bitstamptraw
-collection_itbittraw = db.bitstamptraw
+collection_itbittraw = db.itbittraw
 collection_poloniextraw = db.poloniextraw
+collection_krakentraw = db.krakentraw
 
 
 # function takes as input Start Date, End Date (both string in mm-dd-yyyy format) and delta (numeric)
@@ -168,24 +169,27 @@ def coinbase_ticker( Crypto, Fiat, collection):
         
             response = response.json()
             
-            for i in range(len(response)):
-                
-                r = response
-                pair = asset+fiat
-                time = r['time']
-                price = r['price']
-                volume = r['volume'] 
-                size = r['size']
-                bid = r['bid']
-                ask = r['ask']
-                traded_id = r['trade_id']
+            try:
 
-                rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume':volume, 'size':size, 'bid': bid, 'ask':ask, 'traded_id': traded_id}
+                for i in range(len(response)):
+                    
+                    r = response
+                    pair = asset+fiat
+                    time = r['time']
+                    price = r['price']
+                    volume = r['volume'] 
+                    size = r['size']
+                    bid = r['bid']
+                    ask = r['ask']
+                    traded_id = r['trade_id']
 
-                try:
+                    rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume':volume, 'size':size, 'bid': bid, 'ask':ask, 'traded_id': traded_id}
+
+                    
                     collection.insert_one(rawdata)
-                except:
-                    print('none_coinbase')
+
+            except:
+                print('none_coinbase')
             
      
 
@@ -239,7 +243,7 @@ def kraken_API(Start_Date, End_Date, Crypto, Fiat, interval  = '1440'):
 
 
 
-##################################### kraken ticker
+########################################## kraken ticker
 
 def kraken_ticker (Crypto, Fiat, collection):
 
@@ -264,21 +268,21 @@ def kraken_ticker (Crypto, Fiat, collection):
                 fiat = fiat.upper()
                 pair = 'X' + asset + 'Z' + fiat
                 r = response['result'][pair]
-                print(r)
                 
-                collection.insert_one(response)
+                
+            
+
+                air = asset + fiat
+                time = datetime.utcnow()
+                price = r['c'][0]
+                crypto_volume = r['v'][1]
+                rawdata = {'pair' : pair, 'time':time, 'price':price, 'crypto_volume': crypto_volume}
+
+                collection.insert_one(rawdata)
+
             except:
                 print('none_kraken')
-
-            pair = asset + fiat
-            time = datetime.utcnow()
-            price = r['c'][0]
-            crypto_volume = r['v'][1]
-
-            rawdata = {'pair' : pair, 'time':time, 'price':price, 'crypto_volume': crypto_volume}
-
-            collection.insert_one(rawdata)
-            
+                
     return 
 
 
@@ -392,33 +396,35 @@ def poloniex_ticker (Crypto, stablecurr, collection):
             response = response.json()
             response_short = response[pair]
 
-                
-            r = response_short
-            pair = asset+stbc
-            time = datetime.utcnow()
-            ID = r['id']
-            price = r['last']
-            lowestAsk = r['lowestAsk'] 
-            highestBid = r['highestBid']
-            percentChange = r['percentChange']
-            base_volume = r['baseVolume']
-            crypto_volume = r['quoteVolume']
-            isFrozen =  r['isFrozen']
-            high24hr = r['high24hr']
-            low24hr = r['low24hr']
-
-            rawdata = {'pair' : pair, 'time': time, 'price': price, 'lowestAsk': lowestAsk,
-                        'highestBid': highestBid, 'percentChange' : percentChange,
-                        'base_volume': base_volume, 'crypto_volume' : crypto_volume,'isFrozen' : isFrozen,
-                        'high24hr' : high24hr, 'low24hr' : low24hr }
-
-            
             try:
+
+                r = response_short
+                pair = asset+stbc
+                time = datetime.utcnow()
+                ID = r['id']
+                price = r['last']
+                lowestAsk = r['lowestAsk'] 
+                highestBid = r['highestBid']
+                percentChange = r['percentChange']
+                base_volume = r['baseVolume']
+                crypto_volume = r['quoteVolume']
+                isFrozen =  r['isFrozen']
+                high24hr = r['high24hr']
+                low24hr = r['low24hr']
+
+                rawdata = {'pair' : pair, 'time': time, 'price': price, 'lowestAsk': lowestAsk,
+                            'highestBid': highestBid, 'percentChange' : percentChange,
+                            'base_volume': base_volume, 'crypto_volume' : crypto_volume,'isFrozen' : isFrozen,
+                            'high24hr' : high24hr, 'low24hr' : low24hr }
+
+                
+                
                 collection.insert_one(rawdata)
+
             except:
                 print('none_poloniex')
                     
-    return response  
+    return 
 
 
 
@@ -430,15 +436,12 @@ def poloniex_ticker (Crypto, stablecurr, collection):
 
 def itbit_ticker (Crypto, Fiat, collection):
 
-    header = ['pair', 'bid', 'bidAmt', 'ask', 'askAmt', 'lastPrice', 'lastAmt', 'volume24h', \
-            'volumeToday', 'high24h', 'low24h', 'highToday','lowToday','openToday', 'vwapToday',\
-            'vwap24h', 'serverTimeUTC']
+    for asset in Crypto:
+        
 
-    for asset in crypto:
-        asset = asset.upper()
-
-        for fiat in fiat:
-
+        for fiat in Fiat:
+            
+            asset = asset.upper()
             fiat = fiat.upper()
             entrypoint = 'https://api.itbit.com/v1/markets/'
             key = asset + fiat + '/ticker'
@@ -447,7 +450,7 @@ def itbit_ticker (Crypto, Fiat, collection):
             response = requests.get(request_url)
 
             response = response.json()   
-            print(response)
+            
 
             try:
                 collection.insert_one(response)
@@ -484,7 +487,6 @@ def bitflyer_ticker(Crypto, Fiat, collection):
             response = requests.get(request_url)
             response = response.json() 
 
-            print(response)
 
             try:
 
@@ -561,6 +563,8 @@ def gemini_ticker(Crypto, Fiat, collection):
                 collection.insert_one(response)
             except:
                 print('none_gemini')
+    
+    return
             
             
 
@@ -568,7 +572,6 @@ def gemini_ticker(Crypto, Fiat, collection):
     # bitstamp_df = pd.DataFrame(response, columns=header)        
     # bitstamp_df = bitstamp_df.drop(columns = ['open', 'high', 'low', 'vwap', 'volume usd'])      
 
-    return 
 
 
 
@@ -595,10 +598,27 @@ def bitstamp_ticker(Crypto, Fiat, collection):
 
             response = requests.get(request_url)
 
-            response = response.json()   
+            response = response.json()
 
             try:
-                collection.insert_one(response)
+                
+                r = response
+                pair = asset+fiat
+                time = r['timestamp']
+                price = r['last']
+                volume = r['volume']
+                high = r['high'] 
+                low = r['low']
+                bid = r['bid']
+                ask = r['ask']
+                vwap = r['vwap']
+                Open = r['open']
+                
+
+                rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume':volume, 'high':high, 'low' : low, 'bid': bid, 'ask':ask, 'vwap': vwap, 'open' : Open}
+
+                
+                collection.insert_one(rawdata)        
             except:
                 print('none_bitstamp')
 

@@ -132,8 +132,8 @@ def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
     return pd.DataFrame(Exchange_Matrix, columns = header)
 
-Start_Period = '2015-12-18'
-End_Period = '2020-02-17'
+Start_Period = '2016-01-04'
+End_Period = '2016-01-20'
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
 mongo_clean = ECB_setup(key_curr_vector, Start_Period, End_Period)
@@ -147,15 +147,15 @@ collection_ECB_clean.insert_many(data)
 
 #for daily ecb
 
-Start_Period = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
-End_Period = datetime.today().strftime('%Y-%m-%d')
-key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
+# Start_Period = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
+# End_Period = datetime.today().strftime('%Y-%m-%d')
+# key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
-mongo_clean = ECB_setup(key_curr_vector, Start_Period, End_Period)
-mongo_clean['Date'] = pd.to_datetime(mongo_clean['Date'])
-mongo_clean['Date'] = (mongo_clean['Date'] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s') 
-print(type(mongo_clean['Date'].loc[0]))
-print(type(mongo_clean['Date'].loc[0]))
-print(mongo_clean)
-data = mongo_clean.to_dict(orient='records')  
-collection_ECB_clean.insert_many(data)
+# mongo_clean = ECB_setup(key_curr_vector, Start_Period, End_Period)
+# mongo_clean['Date'] = pd.to_datetime(mongo_clean['Date'])
+# mongo_clean['Date'] = (mongo_clean['Date'] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s') 
+# print(type(mongo_clean['Date'].loc[0]))
+# print(type(mongo_clean['Date'].loc[0]))
+# print(mongo_clean)
+# data = mongo_clean.to_dict(orient='records')  
+# collection_ECB_clean.insert_many(data)
