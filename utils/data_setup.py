@@ -6,8 +6,9 @@ from pathlib import Path
 from datetime import datetime
 from datetime import *
 import time
-import utils.data_download
+import utils.data_download as data_download
 import mongoconn as mongo
+from pymongo import MongoClient
 
 
 
@@ -42,6 +43,20 @@ def timestamp_gen(start_date, end_date = None,  EoD = 'Y'):
 
 
 # 
+def timestamp_convert(date_array):
+
+    new_array = np.array = ([])
+
+    for date in date_array:
+
+        new_date = datetime.fromtimestamp(date)
+        new_date = new_date.strftime('%Y-%m-%d')
+        new_array = np.append(new_array, new_date)
+
+    return new_array
+
+
+
 
 def timestamp_vector(start, stop, lag = 86400):
 
@@ -236,10 +251,10 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
     print('FIXING...')
     # find the elements of ref array not included in broken array (the one to check)
     missing_item = Diff(reference_array, broken_array)
-    print(reference_array)
-    print(broken_array)
-    print(missing_item)
-    print(len(missing_item))
+    # print(reference_array)
+    # print(broken_array)
+    # print(missing_item)
+    # print(len(missing_item))
     variations = [] 
     volumes = []
     for element in missing_item:
@@ -248,11 +263,11 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
         # meaning the searched item is not found, then append zero
         try:
             today_alt = where_to_lookup[where_to_lookup['Time'] == element][position]
-            print(today_alt)
+            # print(today_alt)
             today_value = float(where_to_lookup[where_to_lookup['Time'] == element][position])
             yesterday_value = float(where_to_lookup[where_to_lookup['Time'] == element - 86400][position])
             variation = (today_value - yesterday_value) / yesterday_value
-            volume = float(where_to_lookup[where_to_lookup['Time'] == element]['Crypto Volume'])
+            volume = float(where_to_lookup[where_to_lookup['Time'] == element]['Pair Volume']) ##consider crytpo vol
             variation = variation * volume
             variations.append(variation)
             volumes.append(volume)
@@ -310,8 +325,8 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
     for elements in exchange_list:
         
         # create a data frame connecting to CryptoWatch API
-        matrix = utils.data_download.CW_data_reader(elements, ccy_pair, start_date, end_date)
-        print(matrix)
+        matrix = data_download.CW_data_reader(elements, ccy_pair, start_date, end_date)
+        # print(matrix)
         # checking if data frame is empty: if not then the ccy_pair exists in the exchange
         # then add to the count variable 
         if Check_null(matrix) == False:
@@ -323,7 +338,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
             variations_cry_vol, volumes = substitute_finder(broken_array, reference_array, matrix, 'Crypto Volume')
             variations_pair_vol, volumes = substitute_finder(broken_array, reference_array, matrix, 'Pair Volume')
             variation_time = variations_price[:,0]
-            print(variations_price)
+            # print(variations_price)
             if fixing_price.size == 0:
 
                 fixing_price = variations_price[:,1]
@@ -339,9 +354,9 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
                 fixing_volume = np.column_stack((fixing_volume, volumes[:,1]))
     
     # find the volume weighted variation for all the variables
-    print(count_exchange)
-    print(fixing_price.size)
-    print(fixing_price)
+    # print(count_exchange)
+    # print(fixing_price.size)
+    # print(fixing_price)
     weighted_var_price = []
     weighted_cry_vol = []
     weighted_pair_vol = []
@@ -362,6 +377,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
         # checking if single date is missing in all the exchanges
         # if yes assign zero variation (the previous day value will be taken)
         if count_none == count_exchange:
+
             weighted_var_price.append(0)
             weighted_cry_vol.append(0)
             weighted_pair_vol.append(0)
@@ -369,6 +385,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
         # condition that assure: 1) not all values are 0, 2) there is more than 1 exchange (= more than 1 columns)
         # 3) if true, there is just an element to fix, so fixing variation is a 1d array
         elif count_none != count_exchange and count_exchange > 1 and fixing_price.size == count_exchange:
+
             price = fixing_price[i,:].sum() / fixing_volume[i,:].sum()
             cry_vol = fixing_cry_vol[i,:].sum() / fixing_volume[i,:].sum()
             pair_vol = fixing_pair_vol[i,:].sum() / fixing_volume[i,:].sum()
@@ -377,6 +394,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
             weighted_pair_vol.append(pair_vol)
 
         elif count_none != count_exchange and count_exchange == 1:
+
             price = fixing_price[i].sum() / fixing_volume[i].sum()
             cry_vol = fixing_cry_vol[i].sum() / fixing_volume[i].sum()
             pair_vol = fixing_pair_vol[i].sum() / fixing_volume[i].sum()
@@ -385,6 +403,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
             weighted_pair_vol.append(pair_vol)   
         # 
         elif count_none != count_exchange and count_exchange > 1 and fixing_price.size > count_exchange:
+
             price = fixing_price[i,:].sum() / fixing_volume[i,:].sum()
             cry_vol = fixing_cry_vol[i,:].sum() / fixing_volume[i,:].sum()
             pair_vol = fixing_pair_vol[i,:].sum() / fixing_volume[i,:].sum()
@@ -420,6 +439,15 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
     # pairvol_to_insert = (weighted_pair_vol + 1) * previous_pair_vol 
 
         fixed_matrix = broken_matrix
+        int_date = np.array([])
+    
+        for date in fixed_matrix['Time']:
+
+            new_date = int(date)
+            new_date = str(new_date)
+            int_date = np.append(int_date, new_date)
+        
+        fixed_matrix['Time'] = int_date
 
     except UnboundLocalError:
 
@@ -495,7 +523,8 @@ def date_reformat(date_to_check, separator = '-', order = 'MM-DD-YYYY'):
 def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
     # defining the array of date to be used
-    date = date_array_gen(Start_Period, End_Period, timeST = 'N')
+    date_TS = timestamp_gen(Start_Period, End_Period, EoD = 'N')
+    date = timestamp_convert(date_TS)
     date = [datetime.strptime(x, '%Y-%m-%d') for x in date]
 
     # defining the headers of the returning data frame
@@ -504,6 +533,7 @@ def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
     # for each date in "date" array the funcion retrieves data from ECB website
     # and append the result in the returning matrix
     Exchange_Matrix = np.array([])
+    print('ciao')
 
     for i, single_date in enumerate(date):
 
@@ -575,7 +605,7 @@ def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
             to_date = datetime.strptime(element, '%Y-%m-%d')
             time_stamp = datetime.timestamp(to_date) + 3600
-            Exchange_Matrix[j,0] = int(time_stamp)
+            Exchange_Matrix[j ,0] = int(time_stamp)
 
 
     return pd.DataFrame(Exchange_Matrix, columns = header)
@@ -682,7 +712,7 @@ def ECB_daily_setup (key_curr_vector, timeST = 'N'):
 
             to_date = datetime.strptime(element, '%Y-%m-%d')
             time_stamp = datetime.timestamp(to_date) + 3600
-            Exchange_Matrix[j,0] = int(time_stamp)
+            Exchange_Matrix[j, 0] = int(time_stamp)
 
 
     return pd.DataFrame(Exchange_Matrix, columns = header)
@@ -698,7 +728,7 @@ def ECB_daily_setup (key_curr_vector, timeST = 'N'):
 # Ex_Rate_matrix = data frame of ECB exchange rates
 # currency = string that specify the currency of CW_matrix (EUR, CAD, GBP,...)
 
-def CW_data_setup (CW_matrix, Ex_Rate_matrix, currency):
+def CW_data_setup (CW_matrix, currency):
 
     currency = currency.upper()
 
@@ -706,14 +736,43 @@ def CW_data_setup (CW_matrix, Ex_Rate_matrix, currency):
             
         ex_curr = currency + '/USD'
 
-        for i in range ((CW_matrix.shape[0])):
+    
+        #connecting to mongo in local
+        connection = MongoClient('localhost', 27017)
+        db = connection.index
+
+        # defining the MongoDB path where to look for the rates
+       
+        for i in range (len(CW_matrix['Time'])):
             
-            date = CW_matrix['Time'][i]
-            rate = Ex_Rate_matrix[(Ex_Rate_matrix['Date'] == date) & (Ex_Rate_matrix['Currency'] == ex_curr)]
-            CW_matrix['Close Price'][i] = int(CW_matrix['Close Price'][i] / rate['Rate'])
-            CW_matrix['Pair Volume'][i] = int(CW_matrix['Pair Volume'][i] / rate['Rate'])
+            date = str(CW_matrix['Time'][i])
+
+           # defining the MongoDB path where to look for the rates 
+            database= 'index'
+            collection = 'ecb_clean'
+            query = {'Date': date, 'Currency' : ex_curr} 
+        
+            # retrieving data from MongoDB 'index' and 'ecb_raw' collection
+            single_date_rate = mongo.query_mongo(database, collection, query)
+            print(single_date_rate)
+            if single_date_rate.shape[0] == 1:
+
+                rate = single_date_rate['Rate']
+
+            else:
+
+                single_date_rate = single_date_rate.iloc[0]
+
+            
+            print(single_date_rate.shape[0])
+            print(single_date_rate.iloc[0])
+            rate = single_date_rate['Rate']
+
+            CW_matrix['Close Price'][i] = float(CW_matrix['Close Price'][i] / rate)
+            CW_matrix['Pair Volume'][i] = float(CW_matrix['Pair Volume'][i] / rate)
     
     else:
+
         CW_matrix = CW_matrix
 
     return CW_matrix

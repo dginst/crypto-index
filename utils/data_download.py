@@ -6,7 +6,7 @@ import os
 import pandas as pd
 import io
 import numpy as np
-import utils.data_setup
+import utils.data_setup as data_setup
 
 # function that creates json files downloading the info from Cryptowatch website
 # specifically, given a list of exchange (exchange_array) and a list of currency pair (currencypair_array),	
@@ -48,14 +48,14 @@ def CW_data_reader(exchange, currencypair, start_date = '01-01-2016', end_date =
     Pair = currencypair[3:].upper()
     
     # check date format
-    start_date = utils.data_setup.date_reformat(start_date)
+    start_date = data_setup.date_reformat(start_date)
     start_date = datetime.strptime(start_date, '%m-%d-%Y')
 
     # set end_date = today if empty
     if end_date == None:
         end_date = datetime.now().strftime('%m-%d-%Y')
     else:
-        end_date = utils.data_setup.date_reformat(end_date, '-')
+        end_date = data_setup.date_reformat(end_date, '-')
     end_date = datetime.strptime(end_date, '%m-%d-%Y')
 
     # transform date into timestamps
@@ -85,9 +85,9 @@ def CW_data_reader(exchange, currencypair, start_date = '01-01-2016', end_date =
 
 
 
-# function that downloads the exchange rates from the ECB web page and returns a matrix (pd.DataFrame) that indicates:
-# on the first column the date, on the second tha exchange rate vakue eutro based, on the third the currency, on the fourth the
-# currency of denomination (always 'EUR') and on the fifth the exchange rate USD based (the one of interest)
+# function that downloads the exchange rates from the ECB web page and returns a matrix (pd.DataFrame) that 
+# indicates: on the first column the date, on the second tha exchange rate vakue eutro based, 
+# on the third the currency, on the fourth the currency of denomination (always 'EUR')
 # key_curr_vector expects a list of currency in International Currency Formatting (ex. USD, GBP, JPY, CAD,...)
 # the functions diplays the information better for a single day data retrival, however can works with multiple date
 # regarding the other default variables consult the ECB api web page
@@ -96,12 +96,14 @@ def CW_data_reader(exchange, currencypair, start_date = '01-01-2016', end_date =
 def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq = 'D', 
                         curr_den = 'EUR', type_rates = 'SP00', series_var = 'A'):
     
-    Start_Period = utils.data_setup.date_reformat(Start_Period, '-', 'YYYY-MM-DD')
-    # set end_period = start_period if empty
+    # reforming the data into the correct format
+    Start_Period = data_setup.date_reformat(Start_Period, '-', 'YYYY-MM-DD')
+
+    # set end_period = start_period if empty, so that is possible to perform daily download
     if End_Period == None:
         End_Period = Start_Period
     else:
-        End_Period = utils.data_setup.date_reformat(End_Period, '-', 'YYYY-MM-DD')
+        End_Period = data_setup.date_reformat(End_Period, '-', 'YYYY-MM-DD')
 
     # API settings
     entrypoint = 'https://sdw-wsrest.ecb.europa.eu/service/' 
@@ -113,6 +115,7 @@ def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq =
     }
 
     Exchange_Rate_List = pd.DataFrame()
+    # turning off a pandas warning about slicing of DF
     pd.options.mode.chained_assignment = None
 
     for i, currency in enumerate(key_curr_vector):
@@ -120,7 +123,7 @@ def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq =
         request_url = entrypoint + resource + '/' + flow_ref + '/' + key
         
         # API call
-        response = requests.get(request_url, params = param, headers = {'Accept': 'text/csv'})
+        response = get(request_url, params = param, headers = {'Accept': 'text/csv'})
         
         # if data is empty, it is an holiday, therefore exit
         try:
@@ -129,22 +132,16 @@ def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq =
             break
         
         Main_Data_Frame = Data_Frame.filter(['TIME_PERIOD', 'OBS_VALUE', 'CURRENCY', 'CURRENCY_DENOM'], axis=1)
+    
+        Main_Data_Frame['TIME_PERIOD'] = pd.to_datetime(Main_Data_Frame['TIME_PERIOD'])
 
-        if currency == 'USD':
-            cambio_USD_EUR = float(Main_Data_Frame['OBS_VALUE'])
-
-        
-        # Set 'TIME_PERIOD' to be the index
-        Main_Data_Frame = Main_Data_Frame.set_index('TIME_PERIOD')
-        
         if Exchange_Rate_List.size == 0:
+
             Exchange_Rate_List = Main_Data_Frame
-            Exchange_Rate_List['USD based rate'] = float(Main_Data_Frame['OBS_VALUE']) / cambio_USD_EUR
+
         else:
+
             Exchange_Rate_List = Exchange_Rate_List.append(Main_Data_Frame, sort=True)
-            Exchange_Rate_List['USD based rate'][i] = float(Main_Data_Frame['OBS_VALUE']) / cambio_USD_EUR
 
-    return Main_Data_Frame
-
-
-# def itBit_extractor():
+      
+    return Exchange_Rate_List

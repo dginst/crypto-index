@@ -9,17 +9,19 @@ import utils.calc as calc
 import pandas as pd
 from datetime import *
 import time
+from pymongo import MongoClient
+import mongoconn as mongo
 
 ############################################# INITIAL SETTINGS #############################################
 
 # we choose just a couple of crypto and fiat
 # other fiat and crypto needs more test due to historical series incompletness
 #crypto = ['btc', 'eth', 'ltc']
-pair_array = ['eur', 'usd', 'gbp','jpy']#, 'gbp', 'usd', 'cad', 'jpy']#, 'eur', 'cad', 'jpy'] 
-Crypto_Asset = ['BTC', 'ETH', 'LTC', 'XRP']
+pair_array = ['gbp','jpy', 'eur', 'usd']#, 'gbp', 'usd', 'cad', 'jpy']#, 'eur', 'cad', 'jpy'] 
+Crypto_Asset = ['ETH', 'BTC'] #BCH, LTC
 
 # we use all the xchanges except for Kraken that needs some more test in order to be introduced without error
-Exchanges = [ 'coinbase-pro', 'bitflyer', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken'] #'kraken'
+Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken'] #'kraken', 'bitflyer'
 #############################################################################################################
 
 ##################################### DATE SETTINGS ###################################################
@@ -82,6 +84,8 @@ for CryptoA in Crypto_Asset:
         
         for cp in currencypair_array:
             
+            crypto = cp[:3]
+            fiat_curr = cp[3:]
             print(cp)
             # create the    matrix for the single currency_pair connecting to CryptoWatch website
             matrix = data_download.CW_data_reader(exchange, cp, start_date)
@@ -101,17 +105,19 @@ for CryptoA in Crypto_Asset:
 
                 ######## TEMPORARILY TURNED OFF ########################################
                 ## changing the "fiat" values into USD (Close Price and Volume)
-                #matrix= data_setup.CW_data_setup(matrix, rates, pair)
+                matrix = data_setup.CW_data_setup(matrix, fiat_curr)
+                print('USD converted matrix')
+                print(matrix)
                 ####################################################################
                 cp_matrix = matrix.to_numpy()
 
                 # retrieves the wanted data from the matrix
-                priceXvolume = cp_matrix[:,1] * cp_matrix[:,2]
-                volume = cp_matrix[:,2]
+                priceXvolume = cp_matrix[:,1] * cp_matrix[:,3]
+                volume = cp_matrix[:,3]
                 price = cp_matrix[:,1]
-                priceXvolume = cp_matrix[:,1] * cp_matrix[:,2]
-                volume = cp_matrix[:,2]
-                price = cp_matrix[:,1]
+                # priceXvolume = cp_matrix[:,1] * cp_matrix[:,3]
+                # volume = cp_matrix[:,3]
+                # price = cp_matrix[:,1]
 
                 # every "cp" the for loop adds a column in the matrices referred to the single "exchange"
                 if Ccy_Pair_PriceVolume.size == 0:
@@ -203,6 +209,10 @@ for CryptoA in Crypto_Asset:
 # turn prices and volumes into pandas dataframe
 Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns = Crypto_Asset)
 Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns = Crypto_Asset)
+
+# compute the price returns over the defined period
+price_ret = Crypto_Asset_Prices.pct_change()
+
 # then add the 'Time' column
 time_header = ['Time']
 time_header.extend(Crypto_Asset) 
@@ -210,9 +220,9 @@ Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns = time_header)
 Crypto_Asset_Prices['Time'] = reference_date_vector
 Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns = time_header)
 Crypto_Asset_Volume['Time'] = reference_date_vector
+price_ret['Time'] = reference_date_vector
 
-# compute the price returns over the defined period
-price_ret = Crypto_Asset_Prices.pct_change()
+
 
 # turn the first logic matrix into a dataframe and add the 'Time' column
 # containg the stop_date of each quarter as in "rebalance_stop_date" array

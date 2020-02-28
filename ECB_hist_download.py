@@ -14,8 +14,8 @@ import requests
 from requests import get
 import mongoconn as mongo
 
-Start_Period = '2016-02-15'
-End_Period = '2016-04-17'
+Start_Period = '2018-12-31'
+End_Period = '2020-02-28'
 
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
@@ -34,7 +34,7 @@ collection_ECB_raw = db.ecb_raw
 ######################################## ECB rates raw data download ###################################
 
 # create an array of date containing the list of date to download
-date = data_setup.date_array_gen(Start_Period, End_Period, timeST = 'N')
+date = data_setup.date_array_gen(Start_Period, End_Period, timeST = 'N', EoD = 'N')
 
 
 Exchange_Rate_List = pd.DataFrame()
@@ -42,7 +42,7 @@ Exchange_Rate_List = pd.DataFrame()
 for i, single_date in enumerate(date):
 
     # retrieving data from ECB website
-    single_date_ex_matrix = mongo.ECB_rates_extractor(key_curr_vector, date[i])
+    single_date_ex_matrix = data_download.ECB_rates_extractor(key_curr_vector, date[i])
     # put a sllep time in order to do not overuse API connection
     time.sleep(0.05)
 
@@ -55,6 +55,6 @@ for i, single_date in enumerate(date):
 
 ########################## upload the raw data to MongoDB ############################
 
-data = Exchange_Rate_List.to_dict(orient='records')  
+data = Exchange_Rate_List.to_dict(orient = 'records')  
 
 collection_ECB_raw.insert_many(data)

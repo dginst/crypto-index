@@ -14,8 +14,8 @@ import requests
 from requests import get
 import mongoconn as mongo
 
-Start_Period = '2016-02-15'
-End_Period = '2016-04-17'
+Start_Period = '12-31-2018'
+End_Period = '02-28-2020'
 
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
@@ -33,8 +33,14 @@ mongo_clean = data_setup.ECB_setup(key_curr_vector, Start_Period, End_Period)
 
 # correct the date in order to obtain a timestamp date UTC 12:00
 mongo_clean['Date'] = pd.to_datetime(mongo_clean['Date'])
-mongo_clean['Date'] = (mongo_clean['Date'] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s') 
+mongo_clean['Date'] = (mongo_clean['Date'] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
+new_date = np.array([])
+for element in mongo_clean['Date']:
 
+    element = str(element)
+    new_date = np.append(new_date, element)
+
+mongo_clean['Date'] = new_date
 # upload the cleaned data in MongoDB
 data = mongo_clean.to_dict(orient='records')  
 collection_ECB_clean.insert_many(data)

@@ -158,10 +158,19 @@ def query_mongo(database, collection, query_dict):
     
     myquery = query_dict
     doc = coll.find(myquery)
-    
-    single_date_ex_matrix = pd.DataFrame.from_records(doc)
-    
-    return single_date_ex_matrix
+    doc_list = list(doc)
+    df = []
+    for i, element in enumerate(doc_list):
+
+        element.pop('_id', None)  
+        if i == 0:
+            df = pd.DataFrame(element, index=[i])
+        
+        else:
+
+            df = df.append(element, ignore_index = True)
+      
+    return df
 
 
 ####################################################################################################################################################################################################
@@ -231,86 +240,6 @@ def ECB_rates_extractor_with_mongo(key_curr_vector, Start_Period, End_Period = N
 
 
 
-def ECB_setup (key_curr_vector, Start_Period, End_Period, timeST = 'N'):
-
-    # defining the array of date to be used
-    date = data_setup.date_array_gen(Start_Period, End_Period, timeST = 'N')
-    # defining the headers of the returning data frame
-    header = ['Date', 'Currency', 'Rate']
-
-    # for each date in "date" array the funcion retrieves data from ECB website
-    # and append the result in the returning matrix
-    Exchange_Matrix = np.array([])
-    for i, single_date in enumerate(date):
-        
-        # retrieving data from ECB website
-        single_date_ex_matrix = ECB_rates_extractor_with_mongo(key_curr_vector, date[i])
-        
-        # check if the API actually returns values 
-        if data_setup.Check_null(single_date_ex_matrix) == False:
-
-            date_arr = np.full(len(key_curr_vector),single_date)
-            # creating the array with 'XXX/USD' format
-            curr_arr = single_date_ex_matrix['CURRENCY'] + '/USD'
-            curr_arr = np.where(curr_arr == 'USD/USD', 'EUR/USD', curr_arr)
-            # creating the array with rate values USD based
-            # since ECB displays rate EUR based some changes needs to be done
-            rate_arr = single_date_ex_matrix['USD based rate']
-            rate_arr = np.where(rate_arr == 1.000000, 1/single_date_ex_matrix['OBS_VALUE'][0], rate_arr)
-
-            # stacking the array together
-            array = np.column_stack((date_arr, curr_arr, rate_arr))
-
-            # filling the return matrix
-            if Exchange_Matrix.size == 0:
-                Exchange_Matrix = array
-            else:
-                Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
-
-        # if the first API call returns an empty matrix, function will takes values of the
-        # last useful day        
-        else:
-
-            exception_date = datetime.strptime(date[i], '%Y-%m-%d') - timedelta(days = 1)
-            print('pirandello')
-            print (exception_date)
-            date_str = exception_date.strftime('%Y-%m-%d')            
-            exception_matrix = ECB_rates_extractor_with_mongo(key_curr_vector, date_str)
-            print('la maschera')
-            print(exception_matrix)
-            while data_setup.Check_null(exception_matrix) != False:
-
-                exception_date = exception_date - timedelta(days = 1)
-                date_str = exception_date.strftime('%Y-%m-%d') 
-                exception_matrix = ECB_rates_extractor_with_mongo(key_curr_vector, date_str)
-
-            date_arr = np.full(len(key_curr_vector),single_date)
-            curr_arr = exception_matrix['CURRENCY'] + '/USD'
-            curr_arr = np.where(curr_arr == 'USD/USD', 'EUR/USD', curr_arr)
-            rate_arr = exception_matrix['USD based rate']
-            rate_arr = np.where(rate_arr == 1.000000, 1/exception_matrix['OBS_VALUE'][0], rate_arr)
-            array = np.column_stack((date_arr, curr_arr, rate_arr))
-
-            if Exchange_Matrix.size == 0:
-                Exchange_Matrix = array
-            else:
-                Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
-    
-    if timeST != 'N':
-
-        for j, element in enumerate(Exchange_Matrix[:,0]):
-
-            to_date = datetime.strptime(element, '%Y-%m-%d')
-            time_stamp = datetime.timestamp(to_date) + 3600
-            Exchange_Matrix[j,0] = int(time_stamp)
-            
-            fin_matrix = pd.DataFrame(Exchange_Matrix, columns = header)
-
-            data = fin_matrix.to_dict(orient='records')  
-            collection_ECB_clean.insert_many(data)
-
-
-    return fin_matrix
 
 
 #####################################################################################################
@@ -331,79 +260,3 @@ def CW_mongoclean(dataframe, collection ):
     collection_clean.insert_many(data)
 
     return
-
-
-#####################################################################################################
-########################  FUNCTIONS TO QUERY RAW DATA IN MONGO  #####################################
-#####################################################################################################
-
-#this function query the ecbraw data stored in mongo.
-# in this case the function query all the data that in index.ecb_raw, respect
-# time period = 2016-01-04 and the currency selected from key_curr_vector
-
-#def query_ecb_mongo(key_curr_vector):
-#
- #   for curr in key_curr_vector:
-
-#        db = connection["index"]
- #       coll = db["ecb_raw"]
-
-#        myquery = { "TIME_PERIOD": "2016-01-04", "CURRENCY": curr }
-
-##        doc = coll.find(myquery)
-        
-#        dataframe = pd.DataFrame(mydoc)
-
- #   return dataframe
-
-#####################################################################################################
-########################  FUNCTIONS TO QUERY MANIPULATED DATA IN MONGO  #############################
-#####################################################################################################
-
-def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq = 'D', 
-                        curr_den = 'EUR', type_rates = 'SP00', series_var = 'A'):
-    
-    Start_Period = data_setup.date_reformat(Start_Period, '-', 'YYYY-MM-DD')
-    # set end_period = start_period if empty
-    if End_Period == None:
-        End_Period = Start_Period
-    else:
-        End_Period = data_setup.date_reformat(End_Period, '-', 'YYYY-MM-DD')
-
-    # API settings
-    entrypoint = 'https://sdw-wsrest.ecb.europa.eu/service/' 
-    resource = 'data'           
-    flow_ref = 'EXR'
-    param = {
-        'startPeriod': Start_Period, 
-        'endPeriod': End_Period    
-    }
-
-    Exchange_Rate_List = pd.DataFrame()
-    pd.options.mode.chained_assignment = None
-
-    for i, currency in enumerate(key_curr_vector):
-        key = freq + '.' + currency + '.' + curr_den + '.' + type_rates + '.' + series_var
-        request_url = entrypoint + resource + '/' + flow_ref + '/' + key
-        
-        # API call
-        response = get(request_url, params = param, headers = {'Accept': 'text/csv'})
-        
-        # if data is empty, it is an holiday, therefore exit
-        try:
-            Data_Frame = pd.read_csv(io.StringIO(response.text))
-        except:
-            break
-        
-        Main_Data_Frame = Data_Frame.filter(['TIME_PERIOD', 'OBS_VALUE', 'CURRENCY', 'CURRENCY_DENOM'], axis=1)
-    
-        Main_Data_Frame['TIME_PERIOD'] = pd.to_datetime(Main_Data_Frame['TIME_PERIOD'])
-
-        if Exchange_Rate_List.size == 0:
-            Exchange_Rate_List = Main_Data_Frame
-        else:
-            Exchange_Rate_List = Exchange_Rate_List.append(Main_Data_Frame, sort=True)
-
-
-        
-    return Exchange_Rate_List
