@@ -36,7 +36,7 @@ today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
-reference_date_vector = data_setup.timestamp_gen('01-01-2019')
+reference_date_vector = data_setup.timestamp_gen(start_date)
 
 # define all the useful arrays containing the rebalance start date, stop date, board meeting date 
 # we use the complete set of date (from 01-01-2016) to today, the code will take care of that

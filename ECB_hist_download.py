@@ -15,7 +15,7 @@ from requests import get
 import mongoconn as mongo
 
 Start_Period = '2018-12-31'
-End_Period = '2020-02-28'
+End_Period = '2020-03-02'
 
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
