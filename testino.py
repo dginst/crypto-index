@@ -20,45 +20,62 @@ coll = db.ecb_raw
 # collection_bitstamptraw = db.bitstamptraw
 # collection_geminiraw = db.geminiraw
 # collection_bittrexraw = db.bittrexraw
-collection_geminitraw = db.geminitraw
+collection_bittrextraw = db.bittrextraw
 
 
-def gemini_ticker(Crypto, Fiat, collection):
+def bittrex_ticker (Crypto, Fiat, collection):
+
 
     for asset in Crypto:
-
         asset = asset.lower()
+
         for fiat in Fiat:
 
             fiat = fiat.lower()
-            entrypoint = 'https://api.gemini.com/v1/pubticker/'
-            key = asset + fiat
+            entrypoint = 'https://api.bittrex.com/api/v1.1/public/getmarketsummary?market='
+            key = fiat + '-' + asset 
             request_url = entrypoint + key
 
             response = requests.get(request_url)
-            response = response.json()
 
-            try:
-                asset = asset.upper()
-                r = response
-                pair = asset + fiat
-                time = r['volume']['timestamp']
-                price = r['last']
-                asset = asset.upper()
-                volume = r['volume'][asset]
-                bid = r['bid']
-                ask = r['ask']
-               
-                rawdata = {'pair' : pair, 'time': time, 'price': price, 'volume': volume, 'bid': bid,
-                            'ask' : ask}
+            response = response.json() 
+
+           
             
+            try:
+                r = response["result"][0]
+                pair = asset+fiat
+                time = r['TimeStamp']
+                price = r['Last']
+                volume = r['Volume']
+                basevolume = r['BaseVolume'] 
+                high = r['High']
+                low = r['Low']
+                bid = r['Bid']
+                ask = r['Ask']
+                openbuyorders = r['OpenBuyOrders']
+                opensellorders = r['OpenSellOrders']
+                prevday = r['PrevDay']
+
+                rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume': volume, 
+                            'basevolume': basevolume,  'high' : high, 'low': low, 
+                            'bid': bid, 'ask': ask, 'openbuyorders' : openbuyorders,
+                            'opensellorders' : opensellorders, 'prevday' : prevday }
+
+
                 collection.insert_one(rawdata)
+
             except :
-                print('none_gemini')
-    
-    return
+                
+                print('none_bittrex')
+            
+         
+
+    return 
+
 
 crypto = ['btc', 'eth']
+
 fiat = ['usd', 'eur']
 
-ciao = gemini_ticker(crypto, fiat, collection_geminitraw)
+ciao = bittrex_ticker(crypto, fiat, collection_bittrextraw )

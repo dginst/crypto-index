@@ -183,7 +183,8 @@ def coinbase_ticker( Crypto, Fiat, collection):
                     ask = r['ask']
                     traded_id = r['trade_id']
 
-                    rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume':volume, 'size':size, 'bid': bid, 'ask':ask, 'traded_id': traded_id}
+                    rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume':volume, 
+                                'size':size, 'bid': bid, 'ask':ask, 'traded_id': traded_id}
 
                     
                     collection.insert_one(rawdata)
@@ -269,14 +270,13 @@ def kraken_ticker (Crypto, Fiat, collection):
                 pair = 'X' + asset + 'Z' + fiat
                 r = response['result'][pair]
                 
-                
-            
-
-                air = asset + fiat
+                pair = asset + fiat
                 time = datetime.utcnow()
                 price = r['c'][0]
                 crypto_volume = r['v'][1]
-                rawdata = {'pair' : pair, 'time':time, 'price':price, 'crypto_volume': crypto_volume}
+
+                rawdata = {'pair' : pair, 'time':time, 'price':price, 
+                            'crypto_volume': crypto_volume}
 
                 collection.insert_one(rawdata)
 
@@ -316,8 +316,28 @@ def bittrex_ticker (Crypto, Fiat, collection):
            
             
             try:
-                response = response["result"][0]
-                collection.insert_one(response)
+                r = response["result"][0]
+                pair = asset+fiat
+                time = r['TimeStamp']
+                price = r['Last']
+                volume = r['Volume']
+                basevolume = r['BaseVolume'] 
+                high = r['High']
+                low = r['Low']
+                bid = r['Bid']
+                ask = r['Ask']
+                openbuyorders = r['OpenBuyOrders']
+                opensellorders = r['OpenSellOrders']
+                prevday = r['PrevDay']
+
+                rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume': volume, 
+                            'basevolume': basevolume,  'high' : high, 'low': low, 
+                            'bid': bid, 'ask': ask, 'openbuyorders' : openbuyorders,
+                            'opensellorders' : opensellorders, 'prevday' : prevday }
+
+
+                collection.insert_one(rawdata))
+
             except:
                 print('none_bittrex')
             
@@ -450,15 +470,37 @@ def itbit_ticker (Crypto, Fiat, collection):
             response = requests.get(request_url)
 
             response = response.json()   
-            
 
             try:
-                collection.insert_one(response)
-            except:
+
+                r = response
+                pair = asset+fiat
+                time = r['serverTimeUTC']
+                price = r['lastPrice']
+                volume = r['volume24h']
+                volumeToday = r['volumeToday'] 
+                high24h = r['high24h']
+                low24h = r['low24h']
+                highToday = r['highToday']
+                lowToday = r['lowToday']
+                openToday = r['openToday']
+                vwapToday = r['vwapToday']
+                vwap24h = r['vwap24h']
+                
+
+                rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume': volume, 
+                            'volumeToday': volumeToday,  'high24h' : high24h, 'low24h': low24h, 
+                            'highToday': highToday, 'lowToday': lowToday, 'openToday' : openToday,
+                            'vwapToday' : vwapToday, 'vwap24h' : vwap24h }
+
+
+                
+
+                collection.insert_one(rawdata)
+            except :
+                
                 print('none_itbit')
             
-
-
     return  
 
 #####################################################################################################
@@ -650,7 +692,8 @@ def bitstamp_ticker(Crypto, Fiat, collection):
                              'low' : low, 'bid': bid, 'ask':ask, 'vwap': vwap, 'open' : Open}
 
                 
-                collection.insert_one(rawdata)        
+                collection.insert_one(rawdata)  
+                      
             except:
                 print('none_bitstamp')
 
