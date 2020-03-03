@@ -476,9 +476,9 @@ def bitflyer_ticker(Crypto, Fiat, collection):
 
     for asset in Crypto:
 
-        asset = asset.upper()
+        
         for fiat in Fiat:
-
+            asset = asset.upper()
             fiat = fiat.upper()
             entrypoint = 'https://api.bitflyer.com/v1/'
             key = 'getticker?product_code=' + asset + '_' + fiat
@@ -487,12 +487,30 @@ def bitflyer_ticker(Crypto, Fiat, collection):
             response = requests.get(request_url)
             response = response.json() 
 
-
             try:
+                
+                r = response
+                pair = asset+fiat
+                time = r['timestamp']
+                price = r['ltp']
+                volume = r['volume']
+                volume_by_product = r['volume_by_product'] 
+                best_bid = r['best_bid']
+                best_ask = r['best_ask']
+                best_bid_size = r['best_bid_size']
+                best_ask_size = r['best_ask_size']
+                total_bid_depth = r['total_bid_depth']
 
-                collection.insert_one(response)
+                
+
+                rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume_by_product': volume_by_product, 
+                            'best_bid': best_bid,  'best_ask' : best_ask, 'best_bid_size': best_bid_size, 
+                            'best_ask_size': best_ask_size, 'total_bid_depth': total_bid_depth}
+
+                
+                collection.insert_one(rawdata)        
             except:
-                print('none_bitflyer')
+                print('none bitflyer')
             
 
     return 
@@ -560,8 +578,21 @@ def gemini_ticker(Crypto, Fiat, collection):
             response = response.json()
 
             try:
-                collection.insert_one(response)
-            except:
+                asset = asset.upper()
+                r = response
+                pair = asset + fiat
+                time = r['volume']['timestamp']
+                price = r['last']
+                asset = asset.upper()
+                volume = r['volume'][asset]
+                bid = r['bid']
+                ask = r['ask']
+               
+                rawdata = {'pair' : pair, 'time': time, 'price': price, 'volume': volume, 'bid': bid,
+                            'ask' : ask}
+            
+                collection.insert_one(rawdata)
+            except :
                 print('none_gemini')
     
     return
@@ -615,7 +646,8 @@ def bitstamp_ticker(Crypto, Fiat, collection):
                 Open = r['open']
                 
 
-                rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume':volume, 'high':high, 'low' : low, 'bid': bid, 'ask':ask, 'vwap': vwap, 'open' : Open}
+                rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume':volume, 'high':high,
+                             'low' : low, 'bid': bid, 'ask':ask, 'vwap': vwap, 'open' : Open}
 
                 
                 collection.insert_one(rawdata)        
