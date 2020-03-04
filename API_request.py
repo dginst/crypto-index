@@ -161,12 +161,9 @@ def coinbase_ticker( Crypto, Fiat, collection):
             fiat = fiat.upper()
             
             entrypoint = 'https://api.pro.coinbase.com/products'
-
             key = '/' + asset + '-'+ fiat +'/ticker'
             request_url = entrypoint + key
-
             response = requests.get(request_url)
-        
             response = response.json()
             
             try:
@@ -453,6 +450,8 @@ def poloniex_ticker (Crypto, stablecurr, collection):
 #####################################################################################################
 
 # https://www.itbit.com/api api actually not working for historical data 
+
+#instead of BTC here the call is with XBT
 
 def itbit_ticker (Crypto, Fiat, collection):
 
