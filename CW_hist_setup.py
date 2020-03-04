@@ -25,8 +25,10 @@ today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
 reference_date_vector = data_setup.timestamp_gen(start_date)
 
 
-pair_array = ['gbp', 'usd','eur', 'cad']#, 'gbp', 'usd', 'cad', 'jpy']#, 'eur', 'cad', 'jpy'] 
+pair_array = ['jpy']#['gbp', 'usd','eur', 'cad']#, 'gbp', 'usd', 'cad', 'jpy']#, 'eur', 'cad', 'jpy'] 
+
 Crypto_Asset = ['ETH', 'BTC', 'BCH', 'LTC', 'XRP'] #BCH, LTC
+# crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
 
 # we use all the xchanges except for Kraken that needs some more test in order to be introduced without error
 Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer'] 
@@ -182,10 +184,12 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
     # create a matrix with columns: timestamp date, weighted variatons of prices, weightes variations of volume both crypto and pair
     try:
         variation_matrix = np.column_stack((variation_time, weighted_var_price, weighted_cry_vol, weighted_pair_vol))
+        variation_matrix = np.nan_to_num(variation_matrix)
         print('variation matrix')
         print(variation_matrix)
         # sostituire variation matrix nan con 0
         for i, row in enumerate(variation_matrix[:,0]):
+            
 
             previous_values = broken_matrix[broken_matrix['Time'] == row - 86400].iloc[:,1:4]
             print('previuos value')
@@ -194,6 +198,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
             new_values = previous_values * (1 + variation_matrix[i, 1:])
 
             new_values = pd.DataFrame(np.column_stack((row, new_values)), columns = header)
+
             broken_matrix = broken_matrix.append(new_values)
             broken_matrix = broken_matrix.sort_values(by = ['Time'])
             broken_matrix = broken_matrix.reset_index(drop = True)
@@ -232,10 +237,7 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
 
     # find the elements of ref array not included in broken array (the one to check)
     missing_item = data_setup.Diff(reference_array, broken_array)
-    # print(reference_array)
-    # print(broken_array)
-
-    print(missing_item)
+    missing_item.sort()
     variations = [] 
     volumes = []
     for element in missing_item:
@@ -290,6 +292,7 @@ for Crypto in Crypto_Asset:
             collection = "rawdata"
             query_dict = {"Exchange" : exchange, "Pair": cp }
             matrix = mongo.query_mongo(db, collection, query_dict)
+            print('downloaded matrix')
             print(matrix)
             matrix = matrix.drop(columns = ['Exchange', 'Pair', 'Low', 'High','Open'])
             print(matrix.shape[0])
@@ -305,7 +308,8 @@ for Crypto in Crypto_Asset:
                 if matrix.shape[0] != reference_date_vector.size:
                     
                     matrix = fix_missing(matrix, exchange, Crypto, pair, start_date)
-                    
+                    print('fixed matrix')
+                    print(matrix)
                     # add exchange and currency_pair column
                     matrix['Exchange'] = exchange
                     matrix['Pair'] = cp

@@ -25,8 +25,10 @@ today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
 reference_date_vector = data_setup.timestamp_gen(start_date)
 
 
-pair_array = ['gbp', 'usd','eur', 'cad', 'jpy']#, 'gbp', 'usd', 'cad', 'jpy']#, 'eur', 'cad', 'jpy'] 
-Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP'] #BCH, LTC
+pair_array = ['gbp', 'usd', 'eur', 'cad', 'jpy']#, 'gbp', 'usd', 'cad', 'jpy']#, 'eur', 'cad', 'jpy'] 
+Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC'] 
+# crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
+Crypto_Asset = [] 
 
 # we use all the xchanges except for Kraken that needs some more test in order to be introduced without error
 Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer'] #'kraken', 'bitflyer'
@@ -78,14 +80,29 @@ def CW_raw_to_mongo(exchange, currencypair, mongo_collection, start_date = '01-0
     # API call
     response = requests.get(request_url)
     response = response.json()
-    print(response)
-    #print(len(response))
-    
+
+
     try: 
+
+        if len(response['result']['86400']) == 0:
+
+            Exchange = exchange
+            Pair = currencypair
+            Time = 0
+            Open  = 0
+            High = 0
+            Low = 0
+            Close_Price = 0
+            Crypto_Volume = 0
+            Pair_Volume = 0
+
+            rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time':Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
+
+            mongo_collection.insert_one(rawdata)
+
         for i in range(len(response['result']['86400'])):
             
             r = response['result']['86400']
-            #print(r)
             Exchange = exchange
             Pair = currencypair
             Time = r[i][0]

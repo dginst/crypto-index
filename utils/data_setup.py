@@ -532,14 +532,16 @@ def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
     # for each date in "date" array the funcion retrieves data from ECB website
     # and append the result in the returning matrix
-    Exchange_Matrix = np.array([])
-    print('ciao')
+    
+    # Exchange_Matrix = np.array([])
+ 
 
     for i, single_date in enumerate(date):
 
         database= 'index'
         collection = 'ecb_raw'
         query = {'TIME_PERIOD': date[i] } 
+
        
         # retrieving data from MongoDB 'index' and 'ecb_raw' collection
         single_date_ex_matrix = mongo.query_mongo(database, collection, query)
