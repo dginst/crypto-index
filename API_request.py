@@ -333,7 +333,7 @@ def bittrex_ticker (Crypto, Fiat, collection):
                             'opensellorders' : opensellorders, 'prevday' : prevday }
 
 
-                collection.insert_one(rawdata))
+                collection.insert_one(rawdata)
 
             except:
                 print('none_bittrex')

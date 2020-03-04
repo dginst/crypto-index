@@ -158,11 +158,16 @@ def query_mongo(database, collection, query_dict):
     
     myquery = query_dict
     doc = coll.find(myquery)
-    doc_list = list(doc)
+    doc_listed = list(doc)
+    
     df = []
-    for i, element in enumerate(doc_list):
+    
+    for i, element in enumerate(doc_listed):
 
         element.pop('_id', None)  
+        # print(element)
+        # print(type(element))
+        # print(pd.DataFrame(element, index=[0]))
         if i == 0:
             df = pd.DataFrame(element, index=[i])
         
