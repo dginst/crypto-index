@@ -25,11 +25,11 @@ today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
 reference_date_vector = data_setup.timestamp_gen(start_date)
 
 
-pair_array = ['jpy']#['gbp', 'usd','eur', 'cad']#, 'gbp', 'usd', 'cad', 'jpy']#, 'eur', 'cad', 'jpy'] 
-
-Crypto_Asset = ['ETH', 'BTC', 'BCH', 'LTC', 'XRP'] #BCH, LTC
+#pair_array = ['jpy']#['gbp', 'usd','eur', 'cad']#, 'gbp', 'usd', 'cad', 'jpy']#, 'eur', 'cad', 'jpy'] 
+pair_array = ['gbp', 'usd','eur', 'cad']
+#Crypto_Asset = ['ETH', 'BTC', 'BCH', 'LTC', 'XRP'] #BCH, LTC
 # crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
-
+Crypto_Asset = ['XLM', 'ADA', 'XMR', 'EOS', 'BSV', 'ETC', 'ZEC']
 # we use all the xchanges except for Kraken that needs some more test in order to be introduced without error
 Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer'] 
 
@@ -78,7 +78,6 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
     # set the list af all exchanges and then pop out the one in subject
     exchange_list = ['bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini','kraken']#aggungere itbit
     exchange_list.remove(exchange)
-    print(exchange_list)
 
     # iteratively find the missing value in all the exchanges
     fixing_price = np.array([])
@@ -90,7 +89,6 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
     count_exchange = 0
 
     for element in exchange_list:
-        print(element)
         
         query_dict = {"Exchange" : element, "Pair": cp }
         matrix = mongo.query_mongo(db, collection, query_dict)
@@ -124,6 +122,7 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
                 fixing_pair_vol = np.column_stack((fixing_pair_vol, variations_pair_vol[:,1]))
                 fixing_volume = np.column_stack((fixing_volume, volumes[:,1]))
     
+    ###mettere qui il check se fixing privce è nullo e decidere i da farsi#####
     # find the volume weighted variation for all the variables
     weighted_var_price = []
     weighted_cry_vol = []
@@ -216,8 +215,23 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
         fixed_matrix['Time'] = int_date
 
     except UnboundLocalError:
+        
+        zeros_matrix = np.zeros((len(reference_array), len(header) - 1))
+        fixed_matrix = np.column_stack((reference_array, zeros_matrix))
+        fixed_matrix = pd.DataFrame(fixed_matrix, columns = header)
+        header.remove('Time')
+        for day in broken_matrix['Time']:
 
-        fixed_matrix = np.array([])
+            values_to_insert = broken_matrix.loc[broken_matrix.Time == day][header]
+            fixed_matrix.loc[fixed_matrix.Time == day, header] = values_to_insert
+
+        for date in fixed_matrix['Time']:
+
+            new_date = int(date)
+            new_date = str(new_date)
+            int_date = np.append(int_date, new_date)
+        
+        fixed_matrix['Time'] = int_date 
 
     return fixed_matrix
 
