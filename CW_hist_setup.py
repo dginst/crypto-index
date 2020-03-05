@@ -25,13 +25,14 @@ today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
 reference_date_vector = data_setup.timestamp_gen(start_date)
 
 
-#pair_array = ['jpy']#['gbp', 'usd','eur', 'cad']#, 'gbp', 'usd', 'cad', 'jpy']#, 'eur', 'cad', 'jpy'] 
-pair_array = ['gbp', 'usd','eur', 'cad']
-#Crypto_Asset = ['ETH', 'BTC', 'BCH', 'LTC', 'XRP'] #BCH, LTC
+pair_array = ['gbp', 'usd', 'eur', 'cad', 'jpy']
+# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur'] 
+Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC'] 
 # crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
-Crypto_Asset = ['XLM', 'ADA', 'XMR', 'EOS', 'BSV', 'ETC', 'ZEC']
-# we use all the xchanges except for Kraken that needs some more test in order to be introduced without error
-Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer'] 
+
+Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
+# exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
+
 
 
 ####################################### setup mongo connection ###################################
@@ -93,7 +94,6 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
         query_dict = {"Exchange" : element, "Pair": cp }
         matrix = mongo.query_mongo(db, collection, query_dict)
         matrix = matrix.drop(columns = ['Exchange', 'Pair', 'Low', 'High','Open'])
-        print(matrix)
 
         # checking if data frame is empty: if not then the ccy_pair exists in the exchange
         # then add to the count variable 
@@ -184,15 +184,12 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
     try:
         variation_matrix = np.column_stack((variation_time, weighted_var_price, weighted_cry_vol, weighted_pair_vol))
         variation_matrix = np.nan_to_num(variation_matrix)
-        print('variation matrix')
-        print(variation_matrix)
+
         # sostituire variation matrix nan con 0
         for i, row in enumerate(variation_matrix[:,0]):
             
 
             previous_values = broken_matrix[broken_matrix['Time'] == row - 86400].iloc[:,1:4]
-            print('previuos value')
-            print(previous_values)
 
             new_values = previous_values * (1 + variation_matrix[i, 1:])
 
@@ -222,8 +219,10 @@ def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_d
         header.remove('Time')
         for day in broken_matrix['Time']:
 
-            values_to_insert = broken_matrix.loc[broken_matrix.Time == day][header]
+            values_to_insert = np.array(broken_matrix.loc[broken_matrix.Time == day][header])
             fixed_matrix.loc[fixed_matrix.Time == day, header] = values_to_insert
+
+        int_date = np.array([])
 
         for date in fixed_matrix['Time']:
 
@@ -322,12 +321,12 @@ for Crypto in Crypto_Asset:
                 if matrix.shape[0] != reference_date_vector.size:
                     
                     matrix = fix_missing(matrix, exchange, Crypto, pair, start_date)
-                    print('fixed matrix')
-                    print(matrix)
-                    # add exchange and currency_pair column
-                    matrix['Exchange'] = exchange
-                    matrix['Pair'] = cp
 
+            # add exchange and currency_pair column
+            matrix['Exchange'] = exchange
+            matrix['Pair'] = cp
+            print('fixed matrix')
+            print(matrix)
             data = matrix.to_dict(orient='records')  
             collection_clean.insert_many(data)
 
