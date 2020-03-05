@@ -7,6 +7,8 @@ from time import sleep
 import mongoconn as mongo
 from pymongo import MongoClient
 
+# this file cointains all the API calls for each pricing source. Every script call the api,
+# downloads the data and stores them in mongoDB.
 
 connection = MongoClient('localhost', 27017)
 #creating the database called index
@@ -171,7 +173,7 @@ def coinbase_ticker( Crypto, Fiat, collection):
                 for i in range(len(response)):
                     
                     r = response
-                    pair = asset+fiat
+                    pair = asset + fiat
                     time = r['time']
                     price = r['price']
                     volume = r['volume'] 
@@ -297,10 +299,10 @@ def bittrex_ticker (Crypto, Fiat, collection):
 
 
     for asset in Crypto:
-        asset = asset.lower()
-
+        
         for fiat in Fiat:
 
+            asset = asset.lower()
             fiat = fiat.lower()
             entrypoint = 'https://api.bittrex.com/api/v1.1/public/getmarketsummary?market='
             key = fiat + '-' + asset 
@@ -314,7 +316,7 @@ def bittrex_ticker (Crypto, Fiat, collection):
             
             try:
                 r = response["result"][0]
-                pair = asset+fiat
+                pair = asset.upper() + fiat.upper()
                 time = r['TimeStamp']
                 price = r['Last']
                 volume = r['Volume']
@@ -416,7 +418,7 @@ def poloniex_ticker (Crypto, stablecurr, collection):
             try:
 
                 r = response_short
-                pair = asset+stbc
+                pair = asset + stbc
                 time = datetime.utcnow()
                 ID = r['id']
                 price = r['last']
@@ -464,43 +466,86 @@ def itbit_ticker (Crypto, Fiat, collection):
             fiat = fiat.upper()
             entrypoint = 'https://api.itbit.com/v1/markets/'
             key = asset + fiat + '/ticker'
-            request_url = entrypoint + key
 
-            response = requests.get(request_url)
+            if asset == 'BTC':
+                asset = 'XBT'
+                request_url = entrypoint + key
+                response = requests.get(request_url)
+                response = response.json()
 
-            response = response.json()   
+            else:
 
-            try:
+                request_url = entrypoint + key
+                response = requests.get(request_url)
+                response = response.json()   
 
-                r = response
-                pair = asset+fiat
-                time = r['serverTimeUTC']
-                price = r['lastPrice']
-                volume = r['volume24h']
-                volumeToday = r['volumeToday'] 
-                high24h = r['high24h']
-                low24h = r['low24h']
-                highToday = r['highToday']
-                lowToday = r['lowToday']
-                openToday = r['openToday']
-                vwapToday = r['vwapToday']
-                vwap24h = r['vwap24h']
-                
-
-                rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume': volume, 
-                            'volumeToday': volumeToday,  'high24h' : high24h, 'low24h': low24h, 
-                            'highToday': highToday, 'lowToday': lowToday, 'openToday' : openToday,
-                            'vwapToday' : vwapToday, 'vwap24h' : vwap24h }
-
-
-                
-
-                collection.insert_one(rawdata)
-            except :
-                
-                print('none_itbit')
             
+                
+                if asset == 'XBT':
+
+                    try:
+                        r = response 
+                        asset = 'BTC'
+                        pair = asset + fiat
+                        time = r['serverTimeUTC']
+                        price = r['lastPrice']
+                        volume = r['volume24h']
+                        volumeToday = r['volumeToday'] 
+                        high24h = r['high24h']
+                        low24h = r['low24h']
+                        highToday = r['highToday']
+                        lowToday = r['lowToday']
+                        openToday = r['openToday']
+                        vwapToday = r['vwapToday']
+                        vwap24h = r['vwap24h']
+                    
+
+                        rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume': volume, 
+                                    'volumeToday': volumeToday,  'high24h' : high24h, 'low24h': low24h, 
+                                    'highToday': highToday, 'lowToday': lowToday, 'openToday' : openToday,
+                                    'vwapToday' : vwapToday, 'vwap24h' : vwap24h }
+
+
+                        
+
+                        collection.insert_one(rawdata)
+
+                    except:
+
+                        print('none_itbit')
+    
+                else:
+                    try:
+                        r = response 
+                        pair = asset + fiat
+                        time = r['serverTimeUTC']
+                        price = r['lastPrice']
+                        volume = r['volume24h']
+                        volumeToday = r['volumeToday'] 
+                        high24h = r['high24h']
+                        low24h = r['low24h']
+                        highToday = r['highToday']
+                        lowToday = r['lowToday']
+                        openToday = r['openToday']
+                        vwapToday = r['vwapToday']
+                        vwap24h = r['vwap24h']
+                        
+
+                        rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume': volume, 
+                                    'volumeToday': volumeToday,  'high24h' : high24h, 'low24h': low24h, 
+                                    'highToday': highToday, 'lowToday': lowToday, 'openToday' : openToday,
+                                    'vwapToday' : vwapToday, 'vwap24h' : vwap24h }
+
+
+
+                        collection.insert_one(rawdata)
+
+                    except :
+                        
+                        print('none_itbit')
+                
     return  
+
 
 #####################################################################################################
 ################################    BITFLYER    #####################################################
@@ -531,7 +576,7 @@ def bitflyer_ticker(Crypto, Fiat, collection):
             try:
                 
                 r = response
-                pair = asset+fiat
+                pair = asset + fiat
                 time = r['timestamp']
                 price = r['ltp']
                 volume = r['volume']
@@ -607,9 +652,10 @@ def gemini_ticker(Crypto, Fiat, collection):
 
     for asset in Crypto:
 
-        asset = asset.lower()
+        
         for fiat in Fiat:
 
+            asset = asset.lower()
             fiat = fiat.lower()
             entrypoint = 'https://api.gemini.com/v1/pubticker/'
             key = asset + fiat
@@ -620,6 +666,7 @@ def gemini_ticker(Crypto, Fiat, collection):
 
             try:
                 asset = asset.upper()
+                fiat = fiat.upper()
                 r = response
                 pair = asset + fiat
                 time = r['volume']['timestamp']
@@ -660,9 +707,9 @@ def bitstamp_ticker(Crypto, Fiat, collection):
 
     for asset in Crypto:
 
-        asset = asset.lower()
         for fiat in Fiat:
 
+            asset = asset.lower()
             fiat = fiat.lower()
             entrypoint = 'https://www.bitstamp.net/api/v2/ticker/'
             key = asset + fiat
@@ -675,7 +722,7 @@ def bitstamp_ticker(Crypto, Fiat, collection):
             try:
                 
                 r = response
-                pair = asset+fiat
+                pair = asset.upper() + fiat.upper()
                 time = r['timestamp']
                 price = r['last']
                 volume = r['volume']
