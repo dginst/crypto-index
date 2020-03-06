@@ -11,6 +11,7 @@ import mongoconn as mongo
 from pymongo import MongoClient
 
 
+################################# TIME AND TIME ARRAYS FUNCTIONS ########################################
 
 # function that generate an array of date in timstamp format starting from start_date to end_date
 # given in mm-dd-yyyy forma; if not specified end_date = today() 
@@ -42,7 +43,9 @@ def timestamp_gen(start_date, end_date = None,  EoD = 'Y'):
     return array
 
 
-# 
+# function that converts the date array found using the above function into a strandard date array
+# with the date format YYYY-MM-DD
+
 def timestamp_convert(date_array):
 
     new_array = np.array = ([])
@@ -57,6 +60,8 @@ def timestamp_convert(date_array):
 
 
 
+# function that creates a date array in timestamp format adding the choosen lag (1 day on default)
+# the input start and stop has to be timestamp date in INTEGER format
 
 def timestamp_vector(start, stop, lag = 86400):
 
@@ -69,7 +74,6 @@ def timestamp_vector(start, stop, lag = 86400):
         single_date = single_date + lag
 
     return array
-
 
 
 
@@ -97,7 +101,6 @@ def date_array_gen(start_date, end_date = None, timeST = 'Y', EoD = 'Y'):
 
 
 
-
 # given a start date and a period (number of days) the function returns an array containing
 # the "period" date going back from the start date (default) or starting from the start date 
 # (direction='forward') the output can be both in timestamp since epoch (default) or in date 
@@ -121,7 +124,8 @@ def period_array(start_date, period, direction = 'backward', timeST='Y'):
 
 
 
-# TODO: add description 
+# function that returns a list containing date in timestamp format
+
 def date_list(date_index, timeST = 'Y', lag_adj = 3600):
     
     DateList = []
@@ -140,10 +144,35 @@ def date_list(date_index, timeST = 'Y', lag_adj = 3600):
     else:
         return DateList
 
-####################### DATA FIXING FUNCTIONS ###################################
 
 
-# return a list containing the elements of list_1 (bigger one) non included in list_2 (smaller one)
+# function that reforms the inserted date according to the choosen separator
+# function takes as input date with "/" seprator and without separator for 
+# both the YY ans YYYY format; works on default with MM-DD_YYYY format and 
+# if different has to be specified ('YYYY-DD-MM' or 'YYYY-MM-DD')
+
+def date_reformat(date_to_check, separator = '-', order = 'MM-DD-YYYY'):
+    if ("/" in date_to_check and len(date_to_check) == 10):
+        return_date = date_to_check.replace("/", separator)  
+    elif ("/" in date_to_check and len(date_to_check) == 8):
+        return_date = date_to_check.replace("/", separator)
+    elif ("/" not in date_to_check and (len(date_to_check) == 8 or len(date_to_check) == 6)):
+        if (order == 'YYYY-DD-MM' or order == 'YYYY-MM-DD'):
+            return_date = date_to_check[:4] + separator + date_to_check[4:6] + separator + date_to_check[6:]
+        else:
+            return_date = date_to_check[:2] + separator + date_to_check[2:4] + separator + date_to_check[4:]
+    else:
+        return_date = date_to_check
+
+    return return_date
+
+
+#####################################################################################################
+
+################################### DATA FIXING FUNCTIONS ########################################
+
+
+# function that returns a list containing the elements of list_1 (bigger one) not included in list_2 (smaller one)
 
 def Diff(list_1, list_2): 
     
@@ -151,58 +180,28 @@ def Diff(list_1, list_2):
 
 
 
-# return a sorted array of the size of reference_array.
-# if there are more elements in ref array, broken_array is filled with the missing elements
-# broken_array HAS TO BE smaller than reference array
-# default sorting is in ascending way, if descending is needed specify versus='desc'
+# function that checks if a item(array, matrix, string,...) is null
 
-def fill_time_array(broken_array, ref_array, versus = 'asc'):
+def Check_null(item): 
+
+    try:
+
+        return len(item) == 0 
+
+    except TypeError: 
+        
+        pass 
     
-    difference = Diff(ref_array, broken_array)
-    
-    for element in difference:
-        broken_array.add(element)
-    broken_array = list(broken_array)
-    
-    if versus == 'desc':
-        broken_array.sort(reverse = True)
-    
-    else:
-        broken_array.sort()
-    
-    return broken_array
+    return False 
 
 
 
-# function that given a list of items, find the items and relative indexes in another list/vector
-# if one or more items in list_to_find are not included in where_to_find the function return None as position
-# the return matrix have items as first column and index as second column
-
-def find_index(list_to_find, where_to_find):
-
-    list_to_find = np.array(list_to_find)
-    where_to_find = np.array(where_to_find)
-    index = []
-    item = []
-    for element in list_to_find:
-
-        if element in where_to_find:
-            i, = np.where(where_to_find == element)
-            index.append(i)
-            item.append(element)
-        else:
-            index.append(None)
-            item.append(element)
-
-    index = np.array(index)
-    item = np.array(item)
-    indexed_item = np.column_stack((item, index))
-    indexed_item = indexed_item[indexed_item[:,0].argsort()]
-
-    return indexed_item
-
-
-# function that aims to homogenize the crypto-fiat series
+# function that aims to homogenize the crypto-fiat series downloaded from CryptoWatch
+# substituting the first n missing values of the series with 0 values
+# doing that the Dataframe related on all the crypto-fiat series would be of the 
+# same dimension and, at the same time, does not affects the computation because also the volume
+# is set to 0.
+# the function uses on default 30 days in order to asses if a series lacking of the first n days
 
 def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 30):
 
@@ -233,8 +232,200 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 
         complete_series = series_to_check
     
     complete_series = complete_series.reset_index(drop = True)
-    #print(complete_series)
+
     return complete_series
+
+
+
+# function takes as input a Dataframe with missing values referred to specific exchange, cryptocurrency
+# and fiat pair and fix it; the dataframe passed as broken_matrix is a CryptoWatch series
+# and is Fixed for the columns 'Time', 'Close Price', 'Crypto Volume', 'Pair Volume'
+# the function, in order to fix, looks for the same crypto-fiat pair on all the exchanges and returns 
+# a volume weighted average of the found values
+# the values of the other exchanges are searched in MongoDB database "index" and in the "rawdata" collection
+
+def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_date = None):
+
+    # define DataFrame header
+    header = ['Time', 'Close Price', 'Crypto Volume', 'Pair Volume']
+
+    # set the index name and collection name to retrieve data from MongoDB
+    db = "index"
+    collection = "rawdata"
+
+    # set end_date = today if empty
+    if end_date == None:
+        end_date = datetime.now().strftime('%m-%d-%Y')
+
+    # creating the reference date array from start date to end date
+    reference_array = data_setup.timestamp_gen(start_date, end_date)
+    # select just the date on broken_matrix
+    broken_array = broken_matrix['Time']
+    ccy_pair = cryptocurrency + pair
+
+    # set the list af all exchanges and then pop out the one in subject
+    exchange_list = ['bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini','kraken']#aggungere itbit
+    exchange_list.remove(exchange)
+
+    # iteratively find the missing value in all the exchanges
+    fixing_price = np.array([])
+    fixing_cry_vol = np.array([])
+    fixing_pair_vol = np.array([])
+    fixing_volume = np.array([])
+
+    # variable that count how many exchanges actually have values for the selected crypto+pair 
+    count_exchange = 0
+
+    for element in exchange_list:
+        
+        # defining the dictionary to use in querying MongoDB
+        query_dict = {"Exchange" : element, "Pair": cp }
+        # query MongoDB and rerieve a DataFrame called "matrix"
+        matrix = mongo.query_mongo(db, collection, query_dict)
+        matrix = matrix.drop(columns = ['Exchange', 'Pair', 'Low', 'High','Open'])
+
+        # checking if data frame is empty: if not then the ccy_pair exists in the exchange
+        # then add to the count variable 
+        if matrix.shape[0] > 1:
+
+            count_exchange = count_exchange + 1
+    
+            # if the matrix is not null, find variation and volume of the selected exchange
+            # and assign them to the related matrix
+            variations_price, volumes = substitute_finder(broken_array, reference_array, matrix, 'Close Price')
+            variations_cry_vol, volumes = substitute_finder(broken_array, reference_array, matrix, 'Crypto Volume')
+            variations_pair_vol, volumes = substitute_finder(broken_array, reference_array, matrix, 'Pair Volume')
+            variation_time = variations_price[:,0]
+
+            # assigning the retrived variation in each exchanges for the selected crypto-fiat pair
+            if fixing_price.size == 0:
+
+                fixing_price = variations_price[:, 1]
+                fixing_cry_vol = variations_cry_vol[:, 1]
+                fixing_pair_vol = variations_pair_vol[:, 1]
+                fixing_volume = volumes[:, 1]
+
+            else:
+
+                fixing_price = np.column_stack((fixing_price, variations_price[:, 1]))
+                fixing_cry_vol = np.column_stack((fixing_cry_vol, variations_cry_vol[:, 1]))
+                fixing_pair_vol = np.column_stack((fixing_pair_vol, variations_pair_vol[:, 1]))
+                fixing_volume = np.column_stack((fixing_volume, volumes[:, 1]))
+    
+    # find the volume weighted variation for all the variables
+    weighted_var_price = []
+    weighted_cry_vol = []
+    weighted_pair_vol = []
+
+    for i in range(len(fixing_price)): 
+
+        count_none = 0 
+
+        for j in range(count_exchange):
+
+            try:
+
+                if fixing_price[i, j] == 0:
+
+                    count_none = count_none + 1
+
+            except IndexError:
+
+                pass
+
+        # checking if single date is missing in ALL the exchanges
+        # if yes assign zero variation (the previous day value will be taken)
+        if count_none == count_exchange:
+
+            weighted_var_price.append(0)
+            weighted_cry_vol.append(0)
+            weighted_pair_vol.append(0)
+
+        # condition that assure: 1) not all values are 0, 2) there is more than 1 exchange (= more than 1 columns)
+        # 3) if true, there is just an element to fix, so fixing variation is a 1d array
+        elif count_none != count_exchange and count_exchange > 1 and fixing_price.size == count_exchange:
+
+            price = fixing_price[i, :].sum() / fixing_volume[i, :].sum()
+            cry_vol = fixing_cry_vol[i, :].sum() / fixing_volume[i, :].sum()
+            pair_vol = fixing_pair_vol[i, :].sum() / fixing_volume[i, :].sum()
+            weighted_var_price.append(price)
+            weighted_cry_vol.append(cry_vol)
+            weighted_pair_vol.append(pair_vol)
+
+        elif count_none != count_exchange and count_exchange == 1:
+
+            price = fixing_price[i].sum() / fixing_volume[i].sum()
+            cry_vol = fixing_cry_vol[i].sum() / fixing_volume[i].sum()
+            pair_vol = fixing_pair_vol[i].sum() / fixing_volume[i].sum()
+            weighted_var_price.append(price)
+            weighted_cry_vol.append(cry_vol)
+            weighted_pair_vol.append(pair_vol)   
+        
+        elif count_none != count_exchange and count_exchange > 1 and fixing_price.size > count_exchange:
+
+            price = fixing_price[i,:].sum() / fixing_volume[i,:].sum()
+            cry_vol = fixing_cry_vol[i,:].sum() / fixing_volume[i,:].sum()
+            pair_vol = fixing_pair_vol[i,:].sum() / fixing_volume[i,:].sum()
+            weighted_var_price.append(price)
+            weighted_cry_vol.append(cry_vol)
+            weighted_pair_vol.append(pair_vol)
+
+    # create a matrix with columns: timestamp date, weighted variatons of prices, weightes variations of volume both crypto and pair
+    try:
+        variation_matrix = np.column_stack((variation_time, weighted_var_price, weighted_cry_vol, weighted_pair_vol))
+        variation_matrix = np.nan_to_num(variation_matrix)
+
+        for i, row in enumerate(variation_matrix[:,0]):            
+
+            # find previuos value and multiply the variation in order to obtain the new values to insert
+            previous_values = broken_matrix[broken_matrix['Time'] == row - 86400].iloc[:,1:4]
+            new_values = previous_values * (1 + variation_matrix[i, 1:])
+            new_values = pd.DataFrame(np.column_stack((row, new_values)), columns = header)
+
+            # insert the new values into the broken_matrix
+            broken_matrix = broken_matrix.append(new_values)
+            broken_matrix = broken_matrix.sort_values(by = ['Time'])
+            broken_matrix = broken_matrix.reset_index(drop = True)
+
+        fixed_matrix = broken_matrix
+        int_date = np.array([])
+
+        # convert the date into string (timestamp format)
+        for date in fixed_matrix['Time']:
+
+            new_date = int(date)
+            new_date = str(new_date)
+            int_date = np.append(int_date, new_date)
+        
+        fixed_matrix['Time'] = int_date
+
+    # this exception allows to manage the case in which the broken_matrix is the only existing matrix 
+    # containing the soecific crypto - fiat pair; in other words just 1 exchange trades on that cp
+    # so, we put the missing values to 0 and complete the dataframe with the standard dimension
+    except UnboundLocalError:
+        
+        zeros_matrix = np.zeros((len(reference_array), len(header) - 1))
+        fixed_matrix = np.column_stack((reference_array, zeros_matrix))
+        fixed_matrix = pd.DataFrame(fixed_matrix, columns = header)
+        header.remove('Time')
+
+        for day in broken_matrix['Time']:
+
+            values_to_insert = np.array(broken_matrix.loc[broken_matrix.Time == day][header])
+            fixed_matrix.loc[fixed_matrix.Time == day, header] = values_to_insert
+
+        int_date = np.array([])
+
+        # convert the date into string (timestamp format)
+        for date in fixed_matrix['Time']:
+
+            new_date = int(date)
+            new_date = str(new_date)
+            int_date = np.append(int_date, new_date)
+        
+        fixed_matrix['Time'] = int_date 
+
+    return fixed_matrix
 
 
 
@@ -248,22 +439,17 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 
 
 def substitute_finder(broken_array, reference_array, where_to_lookup, position):
 
-    print('FIXING...')
     # find the elements of ref array not included in broken array (the one to check)
-    missing_item = Diff(reference_array, broken_array)
-    # print(reference_array)
-    # print(broken_array)
-    # print(missing_item)
-    # print(len(missing_item))
+    missing_item = data_setup.Diff(reference_array, broken_array)
+    missing_item.sort()
     variations = [] 
     volumes = []
     for element in missing_item:
-        
         # for each missing element try to find it in where to look up, if KeyError occurred 
         # meaning the searched item is not found, then append zero
         try:
+
             today_alt = where_to_lookup[where_to_lookup['Time'] == element][position]
-            # print(today_alt)
             today_value = float(where_to_lookup[where_to_lookup['Time'] == element][position])
             yesterday_value = float(where_to_lookup[where_to_lookup['Time'] == element - 86400][position])
             variation = (today_value - yesterday_value) / yesterday_value
@@ -277,6 +463,11 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
             variations.append(0) 
             volumes.append(0)
 
+        except TypeError:
+
+            variations.append(0) 
+            volumes.append(0)
+
     volumes = np.array(volumes)
     variations = np.array(variations)
     variation_matrix = np.column_stack((missing_item, variations))
@@ -285,231 +476,9 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
     return variation_matrix, volume_matrix
 
 
+###############################################################################################
 
-# function takes as input a matrix with missing values referred to specific exchange, crypto and pair
-# reference_array is the array of date of the period of interest, info_position can be: 
-#(4=close price, 5= volume in crypto, 6=volume in pair)
-# based on the info_pos choice the function returns a fixed vector that contain also the values obtained as volume weighted average
-# (of close price, volume crypto or volume in pair) of the daily variations of every exchange in the crypto+pair 
-
-def fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_date = None):
-
-    print('START FIX')
-    # define DataFrame header
-    header = ['Time', 'Close Price', 'Crypto Volume', 'Pair Volume']
-
-    # set end_date = today if empty
-    if end_date == None:
-        end_date = datetime.now().strftime('%m-%d-%Y')
-
-    # creating the reference date array from start date to end date
-    reference_array = timestamp_gen(start_date, end_date)
-    # select just the date on broken_matrix
-    broken_array = broken_matrix['Time']
-    ccy_pair = cryptocurrency + pair
-
-    # set the list af all exchanges and then pop out the one in subject
-    exchange_list = ['bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini','kraken']#aggungere itbit
-    exchange_list.remove(exchange)
-    print(exchange_list)
-
-    # iteratively find the missing value in all the exchanges
-    fixing_price = np.array([])
-    fixing_cry_vol = np.array([])
-    fixing_pair_vol = np.array([])
-    fixing_volume = np.array([])
-
-    # variable that count how many exchanges actually have values for the selected crypto+pair 
-    count_exchange = 0
-
-    for elements in exchange_list:
-        
-        # create a data frame connecting to CryptoWatch API
-        matrix = data_download.CW_data_reader(elements, ccy_pair, start_date, end_date)
-        # print(matrix)
-        # checking if data frame is empty: if not then the ccy_pair exists in the exchange
-        # then add to the count variable 
-        if Check_null(matrix) == False:
-            count_exchange = count_exchange + 1
-            print(elements)
-            # if the matrix is not null, find variation and volume of the selected exchange
-            # and assign them to the related matrix
-            variations_price, volumes = substitute_finder(broken_array, reference_array, matrix, 'Close Price')
-            variations_cry_vol, volumes = substitute_finder(broken_array, reference_array, matrix, 'Crypto Volume')
-            variations_pair_vol, volumes = substitute_finder(broken_array, reference_array, matrix, 'Pair Volume')
-            variation_time = variations_price[:,0]
-            # print(variations_price)
-            if fixing_price.size == 0:
-
-                fixing_price = variations_price[:,1]
-                fixing_cry_vol = variations_cry_vol[:,1]
-                fixing_pair_vol = variations_pair_vol[:,1]
-                fixing_volume = volumes[:,1]
-
-            else:
-
-                fixing_price = np.column_stack((fixing_price, variations_price[:,1]))
-                fixing_cry_vol = np.column_stack((fixing_cry_vol, variations_cry_vol[:,1]))
-                fixing_pair_vol = np.column_stack((fixing_pair_vol, variations_pair_vol[:,1]))
-                fixing_volume = np.column_stack((fixing_volume, volumes[:,1]))
-    
-    # find the volume weighted variation for all the variables
-    # print(count_exchange)
-    # print(fixing_price.size)
-    # print(fixing_price)
-    weighted_var_price = []
-    weighted_cry_vol = []
-    weighted_pair_vol = []
-    for i in range(len(fixing_price)): 
-        count_none = 0 
-
-
-        for j in range(count_exchange):
-            try:
-
-                if fixing_price[i,j] == 0:
-                    count_none = count_none + 1
-
-            except IndexError:
-                pass
-
-
-        # checking if single date is missing in all the exchanges
-        # if yes assign zero variation (the previous day value will be taken)
-        if count_none == count_exchange:
-
-            weighted_var_price.append(0)
-            weighted_cry_vol.append(0)
-            weighted_pair_vol.append(0)
-
-        # condition that assure: 1) not all values are 0, 2) there is more than 1 exchange (= more than 1 columns)
-        # 3) if true, there is just an element to fix, so fixing variation is a 1d array
-        elif count_none != count_exchange and count_exchange > 1 and fixing_price.size == count_exchange:
-
-            price = fixing_price[i,:].sum() / fixing_volume[i,:].sum()
-            cry_vol = fixing_cry_vol[i,:].sum() / fixing_volume[i,:].sum()
-            pair_vol = fixing_pair_vol[i,:].sum() / fixing_volume[i,:].sum()
-            weighted_var_price.append(price)
-            weighted_cry_vol.append(cry_vol)
-            weighted_pair_vol.append(pair_vol)
-
-        elif count_none != count_exchange and count_exchange == 1:
-
-            price = fixing_price[i].sum() / fixing_volume[i].sum()
-            cry_vol = fixing_cry_vol[i].sum() / fixing_volume[i].sum()
-            pair_vol = fixing_pair_vol[i].sum() / fixing_volume[i].sum()
-            weighted_var_price.append(price)
-            weighted_cry_vol.append(cry_vol)
-            weighted_pair_vol.append(pair_vol)   
-        # 
-        elif count_none != count_exchange and count_exchange > 1 and fixing_price.size > count_exchange:
-
-            price = fixing_price[i,:].sum() / fixing_volume[i,:].sum()
-            cry_vol = fixing_cry_vol[i,:].sum() / fixing_volume[i,:].sum()
-            pair_vol = fixing_pair_vol[i,:].sum() / fixing_volume[i,:].sum()
-            weighted_var_price.append(price)
-            weighted_cry_vol.append(cry_vol)
-            weighted_pair_vol.append(pair_vol)
-
-
-    # create a matrix with columns: timestamp date, weighted variatons of prices, weightes variations of volume both crypto and pair
-    try:
-        variation_matrix = np.column_stack((variation_time, weighted_var_price, weighted_cry_vol, weighted_pair_vol))
-
-        for i, row in enumerate(variation_matrix[:,0]):
-
-            previous_values = broken_matrix[broken_matrix['Time'] == row - 86400].iloc[:,1:4]
-
-            new_values = previous_values * (1 + variation_matrix[i, 1:])
-
-            new_values = pd.DataFrame(np.column_stack((row, new_values)), columns = header)
-            broken_matrix = broken_matrix.append(new_values)
-            broken_matrix = broken_matrix.sort_values(by = ['Time'])
-            broken_matrix = broken_matrix.reset_index(drop = True)
-
-
-    # # finds all the previous prices, crypto volume and pair volume
-    # previous_price = find_previous(index_list[:,1], broken_matrix['Close Price'])
-    # previous_cry_vol = find_previous(index_list[:,1], broken_matrix['Crypto Volume'])
-    # previous_pair_vol = find_previous(index_list[:,1], broken_matrix['Pair Volume']) ###########
-
-    # # compute the values to insert
-    # price_to_insert = (weighted_var_price + 1) * previous_price
-    # cryvol_to_insert = (weighted_cry_vol + 1) * previous_cry_vol
-    # pairvol_to_insert = (weighted_pair_vol + 1) * previous_pair_vol 
-
-        fixed_matrix = broken_matrix
-        int_date = np.array([])
-    
-        for date in fixed_matrix['Time']:
-
-            new_date = int(date)
-            new_date = str(new_date)
-            int_date = np.append(int_date, new_date)
-        
-        fixed_matrix['Time'] = int_date
-
-    except UnboundLocalError:
-
-        fixed_matrix = np.array([])
-
-    return fixed_matrix
-
-
-
-#function takes a .json file from Cryptowatch API and transforms it into a matrix
-# the matrix has the headers : ['Time' ,'Open',	'High',	'Low',	'Close',""+Crypto+" Volume" , ""+Pair+" Volume"]
-#if the downloaded file does not have results the function returns an empty array
-#note that the "time" column contains value in timestamp format
-#86400 is the daily frequency in seconds
-
-def json_to_matrix(file_path, Crypto='',Pair=''):
-    raw_json=pd.read_json(file_path)
-    if Crypto == '':
-        Crypto="Crypto"
-    if Pair=='':
-        Pair="Pair"
-    header=['Time' ,'Open',	'High',	'Low',	'Close Price',""+Crypto+" Volume" , ""+Pair+" Volume"]
-    if "result" in raw_json.keys(): #testing if the file has the 'result' list of value
-        matrix= pd.DataFrame(raw_json['result']['86400'], columns=header)
-        # for i, element in enumerate(matrix['time']):
-        #     matrix['time'][i]=datetime.strptime(str(datetime.fromtimestamp(matrix['time'][i]))[:10], '%Y-%m-%d').strftime('%d/%m/%y')
-    else:
-        matrix=np.array([])
-    
-    return matrix
-
-# function that checks if a item(array, matrix, string,...) is null
-
-def Check_null(item): 
-    try:
-        return len(item) == 0 
-    except TypeError: 
-        pass 
-    return False 
-
-# function that reforms the inserted date according to the choosen separator
-# function takes as input date with "/" seprator and without separator for 
-# both the YY ans YYYY format; works on default with MM-DD_YYYY format and 
-# if different has to be specified ('YYYY-DD-MM' or 'YYYY-MM-DD')
-
-def date_reformat(date_to_check, separator = '-', order = 'MM-DD-YYYY'):
-    if ("/" in date_to_check and len(date_to_check) == 10):
-        return_date = date_to_check.replace("/", separator)  
-    elif ("/" in date_to_check and len(date_to_check) == 8):
-        return_date = date_to_check.replace("/", separator)
-    elif ("/" not in date_to_check and (len(date_to_check) == 8 or len(date_to_check) == 6)):
-        if (order == 'YYYY-DD-MM' or order == 'YYYY-MM-DD'):
-            return_date = date_to_check[:4] + separator + date_to_check[4:6] + separator + date_to_check[6:]
-        else:
-            return_date = date_to_check[:2] + separator + date_to_check[2:4] + separator + date_to_check[4:]
-    else:
-        return_date = date_to_check
-
-    return return_date
-
-
-###################### DAILY AND HISTORICAL ECB RATES SETUP FUNCTIONS #############
+############################ DAILY AND HISTORICAL ECB RATES SETUP FUNCTIONS ###################
 
 # function returns a matrix of exchange rates USD based that contains
 # Date, Exchange indicator (ex. USD/GBP) and rate of a defined period
@@ -779,8 +748,81 @@ def CW_data_setup (CW_matrix, currency):
     return CW_matrix
         
 
-##############################
+########################################################################################################
+
+##################################### OLD UNUSED FUNCTIONS ############################################
+
+
+#function takes a .json file from Cryptowatch API and transforms it into a matrix
+# the matrix has the headers : ['Time' ,'Open',	'High',	'Low',	'Close',""+Crypto+" Volume" , ""+Pair+" Volume"]
+#if the downloaded file does not have results the function returns an empty array
+#note that the "time" column contains value in timestamp format
+#86400 is the daily frequency in seconds
+
+def json_to_matrix(file_path, Crypto='',Pair=''):
+    raw_json=pd.read_json(file_path)
+    if Crypto == '':
+        Crypto="Crypto"
+    if Pair=='':
+        Pair="Pair"
+    header=['Time' ,'Open',	'High',	'Low',	'Close Price',""+Crypto+" Volume" , ""+Pair+" Volume"]
+    if "result" in raw_json.keys(): #testing if the file has the 'result' list of value
+        matrix= pd.DataFrame(raw_json['result']['86400'], columns=header)
+        # for i, element in enumerate(matrix['time']):
+        #     matrix['time'][i]=datetime.strptime(str(datetime.fromtimestamp(matrix['time'][i]))[:10], '%Y-%m-%d').strftime('%d/%m/%y')
+    else:
+        matrix=np.array([])
+    
+    return matrix
 
 
 
+# return a sorted array of the size of reference_array.
+# if there are more elements in ref array, broken_array is filled with the missing elements
+# broken_array HAS TO BE smaller than reference array
+# default sorting is in ascending way, if descending is needed specify versus='desc'
 
+def fill_time_array(broken_array, ref_array, versus = 'asc'):
+    
+    difference = Diff(ref_array, broken_array)
+    
+    for element in difference:
+        broken_array.add(element)
+    broken_array = list(broken_array)
+    
+    if versus == 'desc':
+        broken_array.sort(reverse = True)
+    
+    else:
+        broken_array.sort()
+    
+    return broken_array
+
+
+
+# function that given a list of items, find the items and relative indexes in another list/vector
+# if one or more items in list_to_find are not included in where_to_find the function return None as position
+# the return matrix have items as first column and index as second column
+
+def find_index(list_to_find, where_to_find):
+
+    list_to_find = np.array(list_to_find)
+    where_to_find = np.array(where_to_find)
+    index = []
+    item = []
+    for element in list_to_find:
+
+        if element in where_to_find:
+            i, = np.where(where_to_find == element)
+            index.append(i)
+            item.append(element)
+        else:
+            index.append(None)
+            item.append(element)
+
+    index = np.array(index)
+    item = np.array(item)
+    indexed_item = np.column_stack((item, index))
+    indexed_item = indexed_item[indexed_item[:,0].argsort()]
+
+    return indexed_item
