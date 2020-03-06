@@ -15,32 +15,35 @@ from requests import get
 import mongoconn as mongo
 
 Start_Period = '12-31-2018'
-End_Period = '03-02-2020'
+today = datetime.now().strftime('%m-%d-%Y')
+End_Period = today
 
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
 #connecting to mongo in local
 connection = MongoClient('localhost', 27017)
-
 db = connection.index
-db.ecb_clean.create_index([ ("id", -1) ])
+
+# drop the pre-existing collection (if there is one)
+db.ecb_clean.drop()
 
 #creating the empty collection rawdata within the database index
+db.ecb_clean.create_index([ ("id", -1) ])
 collection_ECB_clean = db.ecb_clean
 
 # makes the raw data clean through the ECB_setup function
 mongo_clean = data_setup.ECB_setup(key_curr_vector, Start_Period, End_Period)
 
-# correct the date in order to obtain a timestamp date UTC 12:00
-mongo_clean['Date'] = pd.to_datetime(mongo_clean['Date'])
-mongo_clean['Date'] = (mongo_clean['Date'] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
-new_date = np.array([])
-for element in mongo_clean['Date']:
+######### part that transform the timestamped date into string ###########
+# new_date = np.array([])
+# for element in mongo_clean['Date']:
 
-    element = str(element)
-    new_date = np.append(new_date, element)
+#     element = str(element)
+#     new_date = np.append(new_date, element)
 
-mongo_clean['Date'] = new_date
+# mongo_clean['Date'] = new_date
+########################################################################
+
 # upload the cleaned data in MongoDB
 data = mongo_clean.to_dict(orient='records')  
 collection_ECB_clean.insert_many(data)

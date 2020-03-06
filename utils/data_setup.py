@@ -523,24 +523,23 @@ def date_reformat(date_to_check, separator = '-', order = 'MM-DD-YYYY'):
 def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
     # defining the array of date to be used
-    date_TS = timestamp_gen(Start_Period, End_Period, EoD = 'N')
-    date = timestamp_convert(date_TS)
-    date = [datetime.strptime(x, '%Y-%m-%d') for x in date]
+    date = timestamp_gen(Start_Period, End_Period, EoD = 'N')
+    # date = timestamp_convert(date_TS)
+    # date = [datetime.strptime(x, '%Y-%m-%d') for x in date]
 
     # defining the headers of the returning data frame
     header = ['Date', 'Currency', 'Rate']
 
     # for each date in "date" array the funcion retrieves data from ECB website
     # and append the result in the returning matrix
-    
-    # Exchange_Matrix = np.array([])
+        Exchange_Matrix = np.array([])
  
 
     for i, single_date in enumerate(date):
 
         database= 'index'
         collection = 'ecb_raw'
-        query = {'TIME_PERIOD': date[i] } 
+        query = {'TIME_PERIOD': str(date[i]) } 
 
        
         # retrieving data from MongoDB 'index' and 'ecb_raw' collection

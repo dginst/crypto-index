@@ -15,7 +15,8 @@ from requests import get
 import mongoconn as mongo
 
 Start_Period = '2018-12-31'
-End_Period = '2020-03-02'
+today = datetime.now().strftime('%Y-%m-%d')
+End_Period = today
 
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
@@ -27,8 +28,11 @@ key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 connection = MongoClient('localhost', 27017)
 #creating the database called index
 db = connection.index
-db.ecb_raw.create_index([ ("id", -1) ])
+
+# drop the pre-existing collection (if there is one)
+db.ecb_raw.drop()
 #creating the empty collection rawdata within the database index
+db.ecb_raw.create_index([ ("id", -1) ])
 collection_ECB_raw = db.ecb_raw
 
 ######################################## ECB rates raw data download ###################################
@@ -50,6 +54,7 @@ for i, single_date in enumerate(date):
     if Exchange_Rate_List.size == 0:
 
         Exchange_Rate_List = single_date_ex_matrix
+
     else:
         Exchange_Rate_List = Exchange_Rate_List.append(single_date_ex_matrix, sort=True)
 

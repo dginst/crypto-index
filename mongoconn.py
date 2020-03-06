@@ -152,22 +152,19 @@ def CW_dato_reader(exchange, currencypair, start_date = '01-01-2016', end_date =
 
 def query_mongo(database, collection, query_dict):
 
-    Exchange_Rate_List = pd.DataFrame()
+    # defining the variable that allows to work with MongoDB
     db = connection[database]
     coll = db[collection]
-    
-    myquery = query_dict
-    doc = coll.find(myquery)
-    doc_listed = list(doc)
-    
+
+    # find in the selected collection the wanted element/s
+    doc = coll.find(query_dict)
+
     df = []
-    
-    for i, element in enumerate(doc_listed):
+        
+    for i, element in enumerate(doc):
 
         element.pop('_id', None)  
-        # print(element)
-        # print(type(element))
-        # print(pd.DataFrame(element, index=[0]))
+
         if i == 0:
             df = pd.DataFrame(element, index=[i])
         

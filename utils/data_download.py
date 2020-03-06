@@ -132,9 +132,13 @@ def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq =
             break
         
         Main_Data_Frame = Data_Frame.filter(['TIME_PERIOD', 'OBS_VALUE', 'CURRENCY', 'CURRENCY_DENOM'], axis=1)
-    
-        Main_Data_Frame['TIME_PERIOD'] = pd.to_datetime(Main_Data_Frame['TIME_PERIOD'])
 
+        date_to_string = Main_Data_Frame['TIME_PERIOD'].to_string(index=False).strip()
+        # transform date into unix timestamp and add 3600 sec in order to uniform the date at 12:00 am
+        date_timestamp = int(time.mktime(datetime.strptime(date_to_string, "%Y-%m-%d").timetuple())) + 3600
+        date_timestamp = str(date_timestamp)
+        Main_Data_Frame['TIME_PERIOD'] = date_timestamp
+     
         if Exchange_Rate_List.size == 0:
 
             Exchange_Rate_List = Main_Data_Frame
@@ -143,5 +147,4 @@ def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq =
 
             Exchange_Rate_List = Exchange_Rate_List.append(Main_Data_Frame, sort=True)
 
-      
     return Exchange_Rate_List
