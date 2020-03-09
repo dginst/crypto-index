@@ -258,10 +258,10 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
         end_date = datetime.now().strftime('%m-%d-%Y')
 
     # creating the reference date array from start date to end date
-    reference_array = data_setup.timestamp_gen(start_date, end_date)
+    reference_array = timestamp_gen(start_date, end_date)
     # select just the date on broken_matrix
     broken_array = broken_matrix['Time']
-    ccy_pair = cryptocurrency + pair
+    ccy_pair = cryptocurrency.lower() + pair.lower()
 
     # set the list af all exchanges and then pop out the one in subject
     exchange_list = ['bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini','kraken']#aggungere itbit
@@ -279,7 +279,7 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
     for element in exchange_list:
         
         # defining the dictionary to use in querying MongoDB
-        query_dict = {"Exchange" : element, "Pair": cp }
+        query_dict = {"Exchange" : element, "Pair": ccy_pair }
         # query MongoDB and rerieve a DataFrame called "matrix"
         matrix = mongo.query_mongo(db, collection, query_dict)
         matrix = matrix.drop(columns = ['Exchange', 'Pair', 'Low', 'High','Open'])
@@ -440,7 +440,7 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
 def substitute_finder(broken_array, reference_array, where_to_lookup, position):
 
     # find the elements of ref array not included in broken array (the one to check)
-    missing_item = data_setup.Diff(reference_array, broken_array)
+    missing_item = Diff(reference_array, broken_array)
     missing_item.sort()
     variations = [] 
     volumes = []
@@ -501,7 +501,7 @@ def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
     # for each date in "date" array the funcion retrieves data from ECB website
     # and append the result in the returning matrix
-        Exchange_Matrix = np.array([])
+    Exchange_Matrix = np.array([])
  
 
     for i, single_date in enumerate(date):

@@ -35,13 +35,15 @@ collection_ECB_clean = db.ecb_clean
 mongo_clean = data_setup.ECB_setup(key_curr_vector, Start_Period, End_Period)
 
 ######### part that transform the timestamped date into string ###########
-# new_date = np.array([])
-# for element in mongo_clean['Date']:
+new_date = np.array([])
 
-#     element = str(element)
-#     new_date = np.append(new_date, element)
+for element in mongo_clean['Date']:
 
-# mongo_clean['Date'] = new_date
+    element = str(element)
+    print(element)
+    new_date = np.append(new_date, element)
+
+mongo_clean['Date'] = new_date
 ########################################################################
 
 # upload the cleaned data in MongoDB

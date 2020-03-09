@@ -84,6 +84,16 @@ for Crypto in Crypto_Asset:
                     
                     matrix = data_setup.CW_series_fix_missing(matrix, exchange, Crypto, pair, start_date)
 
+            ######### part that transform the timestamped date into string ###########
+            new_date = np.array([])
+            for element in matrix['Time']:
+
+                element = str(element)
+                new_date = np.append(new_date, element)
+
+            matrix['Time'] = new_date
+            ########################################################################
+
             # add exchange and currency_pair column
             matrix['Exchange'] = exchange
             matrix['Pair'] = cp
