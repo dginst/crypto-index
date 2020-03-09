@@ -22,101 +22,13 @@ coll = db.ecb_raw
 # collection_bittrexraw = db.bittrexraw
 collection_bittrextraw = db.bittrextraw
 
+def today_ts():
 
-def itbit_ticker (Crypto, Fiat, collection):
+    today = datetime.now().strftime('%Y-%m-%d')
+    today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
 
-    for asset in Crypto:
-        
+    return today_TS
 
-        for fiat in Fiat:
-            
-            asset = asset.upper()
-            fiat = fiat.upper()
-            entrypoint = 'https://api.itbit.com/v1/markets/'
-            key = asset + fiat + '/ticker'
+ciao =  midnight_ts()
 
-            if asset == 'BTC':
-                asset = 'XBT'
-                request_url = entrypoint + key
-                response = requests.get(request_url)
-                response = response.json()
-
-            else:
-
-                request_url = entrypoint + key
-                response = requests.get(request_url)
-                response = response.json()   
-
-            
-                r = response    
-                if asset == 'XBT':
-
-                    try:
-
-                        asset = 'BTC'
-                        pair = asset + fiat
-                        time = r['serverTimeUTC']
-                        price = r['lastPrice']
-                        volume = r['volume24h']
-                        volumeToday = r['volumeToday'] 
-                        high24h = r['high24h']
-                        low24h = r['low24h']
-                        highToday = r['highToday']
-                        lowToday = r['lowToday']
-                        openToday = r['openToday']
-                        vwapToday = r['vwapToday']
-                        vwap24h = r['vwap24h']
-                    
-
-                        rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume': volume, 
-                                    'volumeToday': volumeToday,  'high24h' : high24h, 'low24h': low24h, 
-                                    'highToday': highToday, 'lowToday': lowToday, 'openToday' : openToday,
-                                    'vwapToday' : vwapToday, 'vwap24h' : vwap24h }
-
-
-                        
-
-                        collection.insert_one(rawdata)
-
-                    except:
-
-                        print('none_itbit')
-    
-                else:
-                    try:
-
-                        pair = asset + fiat
-                        time = r['serverTimeUTC']
-                        price = r['lastPrice']
-                        volume = r['volume24h']
-                        volumeToday = r['volumeToday'] 
-                        high24h = r['high24h']
-                        low24h = r['low24h']
-                        highToday = r['highToday']
-                        lowToday = r['lowToday']
-                        openToday = r['openToday']
-                        vwapToday = r['vwapToday']
-                        vwap24h = r['vwap24h']
-                        
-
-                        rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume': volume, 
-                                    'volumeToday': volumeToday,  'high24h' : high24h, 'low24h': low24h, 
-                                    'highToday': highToday, 'lowToday': lowToday, 'openToday' : openToday,
-                                    'vwapToday' : vwapToday, 'vwap24h' : vwap24h }
-
-
-
-                        collection.insert_one(rawdata)
-
-                    except :
-                        
-                        print('none_itbit')
-                
-    return  
-
-
-crypto = ['btc', 'eth']
-
-fiat = ['usd', 'eur']
-
-ciao = itbit_ticker(crypto, fiat, collection_bittrextraw )
+print(ciao)

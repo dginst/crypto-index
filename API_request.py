@@ -89,6 +89,15 @@ def date_gen_timestamp(Start_Date, End_Date, delta):
 
         yield (str(start.isoformat()), str(stop.isoformat()))
 
+#create the daily timestamp at midnigh UTC
+
+def today_ts():
+
+    today = datetime.now().strftime('%Y-%m-%d')
+    today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
+
+    return today_TS
+
 
 #####################################################################################################
 ################################ COINBASE - PRO #####################################################
@@ -174,7 +183,7 @@ def coinbase_ticker( Crypto, Fiat, collection):
                     
                     r = response
                     pair = asset + fiat
-                    time = r['time']
+                    time = today_ts()
                     price = r['price']
                     volume = r['volume'] 
                     size = r['size']
@@ -270,7 +279,7 @@ def kraken_ticker (Crypto, Fiat, collection):
                 r = response['result'][pair]
                 
                 pair = asset + fiat
-                time = datetime.utcnow()
+                time = today_ts()
                 price = r['c'][0]
                 crypto_volume = r['v'][1]
 
@@ -317,7 +326,7 @@ def bittrex_ticker (Crypto, Fiat, collection):
             try:
                 r = response["result"][0]
                 pair = asset.upper() + fiat.upper()
-                time = r['TimeStamp']
+                time = today_ts()
                 price = r['Last']
                 volume = r['Volume']
                 basevolume = r['BaseVolume'] 
@@ -419,7 +428,7 @@ def poloniex_ticker (Crypto, stablecurr, collection):
 
                 r = response_short
                 pair = asset + stbc
-                time = datetime.utcnow()
+                time = today_ts()
                 ID = r['id']
                 price = r['last']
                 lowestAsk = r['lowestAsk'] 
@@ -487,7 +496,7 @@ def itbit_ticker (Crypto, Fiat, collection):
                         r = response 
                         asset = 'BTC'
                         pair = asset + fiat
-                        time = r['serverTimeUTC']
+                        time = today_ts()
                         price = r['lastPrice']
                         volume = r['volume24h']
                         volumeToday = r['volumeToday'] 
@@ -518,7 +527,7 @@ def itbit_ticker (Crypto, Fiat, collection):
                     try:
                         r = response 
                         pair = asset + fiat
-                        time = r['serverTimeUTC']
+                        time = today_ts()
                         price = r['lastPrice']
                         volume = r['volume24h']
                         volumeToday = r['volumeToday'] 
@@ -577,7 +586,7 @@ def bitflyer_ticker(Crypto, Fiat, collection):
                 
                 r = response
                 pair = asset + fiat
-                time = r['timestamp']
+                time = today_ts()
                 price = r['ltp']
                 volume = r['volume']
                 volume_by_product = r['volume_by_product'] 
@@ -669,7 +678,7 @@ def gemini_ticker(Crypto, Fiat, collection):
                 fiat = fiat.upper()
                 r = response
                 pair = asset + fiat
-                time = r['volume']['timestamp']
+                time = today_ts()
                 price = r['last']
                 asset = asset.upper()
                 volume = r['volume'][asset]
@@ -723,7 +732,7 @@ def bitstamp_ticker(Crypto, Fiat, collection):
                 
                 r = response
                 pair = asset.upper() + fiat.upper()
-                time = r['timestamp']
+                time = today_ts()
                 price = r['last']
                 volume = r['volume']
                 high = r['high'] 
