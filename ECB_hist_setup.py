@@ -40,7 +40,6 @@ new_date = np.array([])
 for element in mongo_clean['Date']:
 
     element = str(element)
-    print(element)
     new_date = np.append(new_date, element)
 
 mongo_clean['Date'] = new_date

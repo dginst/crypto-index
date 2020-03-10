@@ -14,7 +14,7 @@ import requests
 from requests import get
 import mongoconn as mongo
 
-start_date = '01-01-2020'
+start_date = '01-01-2019'
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
@@ -78,33 +78,33 @@ for date in reference_date_vector:
 
             currencypair_array.append(Crypto.lower() + fiat.lower())
         
-            for cp in currencypair_array:
+        for cp in currencypair_array:
 
-                # defining the dictionary for the MongoDB query
-                query_dict_data = {"Pair": cp, "Time": str(date)}
-                
-                # retriving the needed information on MongoDB
-                matrix_data = mongo.query_mongo(db, collection_data, query_dict_data)
-              
-                try:
+            # defining the dictionary for the MongoDB query
+            query_dict_data = {"Pair": cp, "Time": str(date)}
+            
+            # retriving the needed information on MongoDB
+            matrix_data = mongo.query_mongo(db, collection_data, query_dict_data)
+            
+            try:
 
-                    if fiat != 'usd':
+                if fiat != 'usd':
 
-                        # converting the values
-                        matrix_data['Close Price'] = matrix_data['Close Price'] / conv_rate
-                        matrix_data['Pair Volume'] = matrix_data['Pair Volume'] / conv_rate
+                    # converting the values
+                    matrix_data['Close Price'] = matrix_data['Close Price'] / conv_rate
+                    matrix_data['Pair Volume'] = matrix_data['Pair Volume'] / conv_rate
 
-                    else:
+                else:
 
-                        matrix_data = matrix_data
-                
-                    # put the manipulated data on MongoDB
-                    conv_data = matrix_data.to_dict(orient='records')  
-                    collection_converted.insert_many(conv_data)
-                
-                except TypeError:
+                    matrix_data = matrix_data
+            
+                # put the manipulated data on MongoDB
+                conv_data = matrix_data.to_dict(orient='records')  
+                collection_converted.insert_many(conv_data)
+            
+            except TypeError:
 
-                    pass
+                pass
 
 
 

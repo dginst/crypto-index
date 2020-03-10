@@ -14,15 +14,26 @@ import mongoconn as mongo
 
 ############################################# INITIAL SETTINGS #############################################
 
-# we choose just a couple of crypto and fiat
-# other fiat and crypto needs more test due to historical series incompletness
-#crypto = ['btc', 'eth', 'ltc']
-pair_array = ['gbp','jpy', 'eur', 'usd']#, 'gbp', 'usd', 'cad', 'jpy']#, 'eur', 'cad', 'jpy'] 
-Crypto_Asset = ['ETH', 'BTC'] #BCH, LTC
-
-# we use all the xchanges except for Kraken that needs some more test in order to be introduced without error
-Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken'] #'kraken', 'bitflyer'
+pair_array = ['gbp', 'usd', 'cad', 'jpy', 'eur']
+# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur'] 
+Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC'] 
+# crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
+Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
+# exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 #############################################################################################################
+
+####################################### setup mongo connection ###################################
+
+#connecting to mongo in local
+connection = MongoClient('localhost', 27017)
+# define database name and collection name
+db = "index"
+collection = "converted_data"
+# drop the pre-existing collection (if there is one)
+
+
+#creating the empty collection cleandata within the database index
+
 
 ##################################### DATE SETTINGS ###################################################
 
@@ -87,37 +98,20 @@ for CryptoA in Crypto_Asset:
             crypto = cp[:3]
             fiat_curr = cp[3:]
             print(cp)
-            # create the    matrix for the single currency_pair connecting to CryptoWatch website
-            matrix = data_download.CW_data_reader(exchange, cp, start_date)
-            print(matrix)
-
-            # checking if the matrix is not empty
-            if data_setup.Check_null(matrix) == False:
-            
-                matrix = data_setup.homogenize_series(matrix, reference_date_vector)
-
-                # checking if the matrix has missing data and if ever fixing it
-                if matrix.shape[0] != reference_date_vector.size:
-
-                    
-
-                    matrix = data_setup.fix_missing(matrix, exchange, CryptoA, pair, start_date)
-
-                ######## TEMPORARILY TURNED OFF ########################################
-                ## changing the "fiat" values into USD (Close Price and Volume)
-                matrix = data_setup.CW_data_setup(matrix, fiat_curr)
-                print('USD converted matrix')
-                print(matrix)
-                ####################################################################
+  
+            # defining the dictionary for the MongoDB query
+            query_dict = {"Exchange" : exchange, "Pair": cp}
+            # retriving the needed information on MongoDB
+            matrix = mongo.query_mongo(db, collection, query_dict)
+     
+            try:
+                
                 cp_matrix = matrix.to_numpy()
 
                 # retrieves the wanted data from the matrix
                 priceXvolume = cp_matrix[:,1] * cp_matrix[:,3]
                 volume = cp_matrix[:,3]
                 price = cp_matrix[:,1]
-                # priceXvolume = cp_matrix[:,1] * cp_matrix[:,3]
-                # volume = cp_matrix[:,3]
-                # price = cp_matrix[:,1]
 
                 # every "cp" the for loop adds a column in the matrices referred to the single "exchange"
                 if Ccy_Pair_PriceVolume.size == 0:
@@ -126,23 +120,37 @@ for CryptoA in Crypto_Asset:
                 else:
                     Ccy_Pair_PriceVolume = np.column_stack((Ccy_Pair_PriceVolume, priceXvolume))
                     Ccy_Pair_Volume = np.column_stack((Ccy_Pair_Volume, volume))
+                    
+            except AttributeError:
 
+                pass
 
+        print(Ccy_Pair_Volume)
+        print(Ccy_Pair_Volume.size)
+        print(reference_date_vector.size)
+        print(Ccy_Pair_PriceVolume)
         # computing the volume weighted average price of the single exchange
         if Ccy_Pair_Volume.size != 0 and Ccy_Pair_Volume.size > reference_date_vector.size:
             
-            Ccy_Pair_Price = Ccy_Pair_PriceVolume.sum(axis = 1) / Ccy_Pair_Volume.sum(axis = 1)  
+            PxV = Ccy_Pair_PriceVolume.sum(axis = 1)
+            V = Ccy_Pair_Volume.sum(axis = 1)
+            Ccy_Pair_Price = np.divide(PxV, V, out = np.zeros_like(V), where = V != 0.0 )
+            
             # computing the total volume of the exchange
             Ccy_Pair_Volume = Ccy_Pair_Volume.sum(axis = 1) 
             # computing price X volume of the exchange
             Ccy_Pair_PxV = Ccy_Pair_Price * Ccy_Pair_Volume
         
+        # case when just one crypto-fiat has the values in that exchange
         elif Ccy_Pair_Volume.size != 0 and Ccy_Pair_Volume.size == reference_date_vector.size:
 
-            Ccy_Pair_Price = Ccy_Pair_PriceVolume / Ccy_Pair_Volume
+            np.seterr(all=None, divide='warn')
+            Ccy_Pair_Price = np.divide(Ccy_Pair_PriceVolume, Ccy_Pair_Volume, out=np.zeros_like(Ccy_Pair_Volume), where = Ccy_Pair_Volume != 0.0)
+            Ccy_Pair_Price = np.nan_to_num(Ccy_Pair_Price)
             Ccy_Pair_PxV = Ccy_Pair_Price * Ccy_Pair_Volume
 
         else:
+
             Ccy_Pair_Price = np.array([])
             Ccy_Pair_Volume =  np.array([])
             Ccy_Pair_PxV = np.array([])
@@ -151,19 +159,29 @@ for CryptoA in Crypto_Asset:
         # Exchange_Price contains the crypto ("cp") prices in all the different Exchanges
         # Exchange_Volume contains the crypto ("cp") volume in all the different Exchanges
         if Exchange_Price.size == 0:
+
             if Ccy_Pair_Volume.size != 0:
+
                 Exchange_Price = Ccy_Pair_Price
                 Exchange_Volume = Ccy_Pair_Volume
                 Ex_PriceVol = Ccy_Pair_PxV
+
             else:
+
                 Exchange_Price = np.zeros(reference_date_vector.size)
                 Exchange_Volume = np.zeros(reference_date_vector.size)
+                Ex_PriceVol = np.zeros(reference_date_vector.size)
+
         else:
+
             if Ccy_Pair_Volume.size != 0:
+
                 Exchange_Price = np.column_stack((Exchange_Price, Ccy_Pair_Price))
                 Exchange_Volume = np.column_stack((Exchange_Volume, Ccy_Pair_Volume))
                 Ex_PriceVol = np.column_stack((Ex_PriceVol, Ccy_Pair_PxV))
+
             else:
+
                 Exchange_Price = np.column_stack((Exchange_Price, np.zeros(reference_date_vector.size)))
                 Exchange_Volume = np.column_stack((Exchange_Volume, np.zeros(reference_date_vector.size)))
                 Ex_PriceVol = np.column_stack((Ex_PriceVol, np.zeros(reference_date_vector.size)))
