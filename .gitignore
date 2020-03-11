@@ -1,0 +1,8 @@
+testfile.py
+minitest.py
+testino.py
+anotherTest.py
+*.json
+*.pyc
+utils.__pycache__
+__pycache__
