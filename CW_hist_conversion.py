@@ -1,5 +1,12 @@
-import utils.data_setup as data_setup
-import utils.data_download as data_download
+######################################################################################################
+# The file retrieves data from MongoDB collection "cleandata" and, for each Crypto-Fiat historical 
+# series, converts the data into USD values using the ECB manipulated rates stored on MongoDB in 
+# the collection "ecb_clean"
+# Once everything is converted into USD the historical series is saved into MongoDB in the collection
+# "converted_data"
+#######################################################################################################
+
+# standard import
 from pymongo import MongoClient
 import time
 import numpy as np
@@ -12,7 +19,12 @@ import time
 import pandas as pd
 import requests
 from requests import get
+# local import
 import mongoconn as mongo
+import utils.data_setup as data_setup
+import utils.data_download as data_download
+
+####################################### initial settings ############################################
 
 start_date = '01-01-2019'
 
@@ -32,7 +44,7 @@ Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', '
 Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 # exchange complete = ['coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
-####################################### setup mongo connection ###################################
+####################################### setup MongoDB connection ###################################
 
 #connecting to mongo in local
 connection = MongoClient('localhost', 27017)

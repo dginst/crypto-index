@@ -1,5 +1,10 @@
-import utils.data_setup as data_setup
-import utils.data_download as data_download
+######################################################################################################
+# The file download from the European Central Bank Websites the exchange rates for the currencies 'USD',
+# 'GBP', 'CAD' and 'JPY'. Then store the retrieved data on MongoDB in the database "index"
+# and collection "ecb_raw". is possible to change the period of downlaod modifying the "Start_Period"
+#######################################################################################################
+
+# standard import
 from pymongo import MongoClient
 import time
 import numpy as np
@@ -12,15 +17,19 @@ import time
 import pandas as pd
 import requests
 from requests import get
+# local import
 import mongoconn as mongo
+import utils.data_setup as data_setup
+import utils.data_download as data_download
+
+####################################### initial settings ############################################
 
 Start_Period = '2018-12-31'
-today = datetime.now().strftime('%Y-%m-%d')
-End_Period = today
+
+# set today as End_period
+End_Period = datetime.now().strftime('%Y-%m-%d')
 
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
-
-
 
 ####################################### setup mongo connection ###################################
 

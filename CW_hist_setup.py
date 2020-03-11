@@ -1,5 +1,17 @@
-import utils.data_setup as data_setup
-import utils.data_download as data_download
+######################################################################################################
+# The file completes the historical series of Cryptocurrencies market data stored on MongoDB
+# The main rules for the manipulation of raw data are the followings:
+# - if a certain Crypto-Fiat pair does not start at the beginning of the period but later, the file 
+#   will put a series of zeros from the start period until the actual beginning of the series
+# - if a certain data is missing in a certain date the file will compute a value to insert using
+#   all the values displayed, for the same Crypto-Fiat pair, in the other exchanges.
+# - if, trying to fix a series as described above, the code find out that just one exchange has the
+#   values for the wanted Crypto-Fiat pair, the file will put a 0-values array for all the missing date
+# Once the data is manipulated and the series has been homogeineized, the file will save the the
+# historical series on MongoDB in the collection "cleandata"
+#######################################################################################################
+
+# standard import
 from pymongo import MongoClient
 import time
 import numpy as np
@@ -12,7 +24,12 @@ import time
 import pandas as pd
 import requests
 from requests import get
+# local import
 import mongoconn as mongo
+import utils.data_setup as data_setup
+import utils.data_download as data_download
+
+####################################### initial settings ############################################
 
 start_date = '01-01-2019'
 
@@ -31,7 +48,7 @@ Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', '
 Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 # exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
-####################################### setup mongo connection ###################################
+####################################### setup MongoDB connection ###################################
 
 #connecting to mongo in local
 connection = MongoClient('localhost', 27017)

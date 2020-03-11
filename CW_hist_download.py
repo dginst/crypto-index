@@ -1,5 +1,15 @@
-import utils.data_setup as data_setup
-import utils.data_download as data_download
+######################################################################################################
+# The file download from the CryotoWatch websites the market data of this set of Cryptocurrencies:
+# 'ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV'and 'ETC'
+# from this set of exchanges:
+# 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken' and 'bitflyer'
+# and for each fiat currenncies in this set:
+# 'gbp', 'usd', 'eur', 'cad' and 'jpy'
+# Once downloaded the file saves the raw data on MongoDB in the database "index" and collection "rawdata"
+# It is possible to change the period of downlaod modifying the "start_date"
+#######################################################################################################
+
+# standard import
 from pymongo import MongoClient
 import time
 import numpy as np
@@ -12,7 +22,12 @@ import time
 import pandas as pd
 import requests
 from requests import get
+# local import
 import mongoconn as mongo
+import utils.data_setup as data_setup
+import utils.data_download as data_download
+
+####################################### initial settings ############################################
 
 start_date = '01-01-2019'
 
@@ -24,7 +39,6 @@ today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
 reference_date_vector = data_setup.timestamp_gen(start_date)
 
-
 pair_array = ['gbp', 'usd', 'eur', 'cad', 'jpy']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur'] 
 Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC'] 
@@ -32,7 +46,7 @@ Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', '
 Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 # exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
-####################################### setup mongo connection ###################################
+####################################### setup MongoDB connection ###################################
 
 #connecting to mongo in local
 connection = MongoClient('localhost', 27017)
@@ -46,7 +60,7 @@ db.rawdata.drop()
 db.rawdata.create_index([ ("id", -1) ])
 collection_raw = db.rawdata
 
-####################################### main downloading part #################################
+####################################### downloading and storing part #################################
 
 for Crypto in Crypto_Asset:
 
