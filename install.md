@@ -6,11 +6,11 @@
 
 Following these steps will allow you tu run the code on your machine and obtain the DGI Crypto-Index Time series.
 
-### Run ECB_hist_download.py
+### 1) Run ECB_hist_download.py
 
 The file download from the European Central Bank Websites the exchange rates for the currencies 'USD','GBP', 'CAD' and 'JPY'. Then store the retrieved data on MongoDB in the database "index" and collection "ecb_raw". is possible to change the period of downlaod modifying the "Start_Period"
 
-###  Run ECB_hist_setup.py
+####  Run ECB_hist_setup.py
 
 The file aims to complete the historical series of European Central Bank Websites exchange rates.
 It retrieves the rates from MongoDB in the database "index" and collection "ecb_raw" then add values for all the holidays and weekends simply copiyng the value of the last day with value. 
