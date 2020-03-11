@@ -795,6 +795,7 @@ def divisor_adjustment(Crypto_Price_Matrix, Weights, second_logic_matrix, Crypto
         
         current_logic_row = second_logic_matrix.loc[second_logic_matrix.Time == date, Crypto_list]
         previous_logic_row = second_logic_matrix.loc[second_logic_matrix.Time == start_q[i], Crypto_list]
+
         if current_logic_row == previous_logic_row:
 
             new_divisor = old_divisor
@@ -804,6 +805,7 @@ def divisor_adjustment(Crypto_Price_Matrix, Weights, second_logic_matrix, Crypto
             today_price = Crypto_Price_Matrix.loc[Crypto_Price_Matrix.Time == date, Crypto_list]
             yesterday_price = Crypto_Price_Matrix.loc[Crypto_Price_Matrix.Time == (int(date) - 86400), Crypto_list]
             current_weights = Weights.loc[Weights.Time.between(start_q[i], date), Crypto_list]
+
             if i < 2:
 
                 previous_weights = Weights.loc[Weights.Time.between(start_q[0], start_q[i]), Crypto_list]
@@ -832,14 +834,15 @@ def divisor_adjustment(Crypto_Price_Matrix, Weights, second_logic_matrix, Crypto
 # sm = synthetic market cap derived weight
 # initial date default value set at 01/01/2016
 
-def index_level_calc(Crypto_Price_Matrix, Crypto_Volume_Matrix, logic_matrix, sm, initial_date='01-01-2016'):
+def index_level_calc(Crypto_Price_Matrix, Crypto_Volume_Matrix, relative_syntethic_matrix, emwa_second_logic_check, initial_date='01-01-2016'):
 
     # find the divisor related to each day starting from initil date
     divisor_array = divisor_adjustment(Crypto_Price_Matrix, Crypto_Volume_Matrix, logic_matrix, sm, initial_date)
+    daily_weights = relative_syntethic_matrix()
     index_level = np.array([])
 
     for i in range(len(logic_matrix)):
-        new_index_item = (Crypto_Price_Matrix[i] * sm[i] * logic_matrix[i]).sum() / divisor_array[i]
+        new_index_item = (Crypto_Price_Matrix[i] * daily_weights[i] * emwa_second_logic_check[i]).sum() / divisor_array[i]
         index_level = np.append(index_level, new_index_item)
 
     return index_level
