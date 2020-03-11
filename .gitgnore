@@ -1,4 +1,7 @@
-C:\Projects\dginst\crypto-index\utils\testfile2.py
-C:\Projects\dginst\crypto-index\utils\testfile.py
-C:\Projects\dginst\crypto-index\minitest.py
-C:\Projects\dginst\crypto-index\anotherTest.py
+\testfile2.py
+\testfile.py
+\minitest.py
+\anotherTest.py
+minitest.py
+*.json
+*.pyc
