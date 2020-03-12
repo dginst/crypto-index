@@ -21,9 +21,10 @@ import pandas as pd
 import requests
 from requests import get
 # local import
-import mongoconn as mongo
+# import mongoconn as mongo
 import utils.data_setup as data_setup
 import utils.data_download as data_download
+import utils.mongo_setup as mongo
 
 ####################################### initial settings ############################################
 

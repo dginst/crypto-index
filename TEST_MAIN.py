@@ -1,16 +1,20 @@
+# standard import
 import numpy as np
 import os.path
 from pathlib import Path
 import json
 from datetime import datetime
-import utils.data_setup as data_setup
-import utils.data_download as data_download
 import utils.calc as calc
 import pandas as pd
 from datetime import *
 import time
 from pymongo import MongoClient
-import mongoconn as mongo
+
+# local import
+#import mongoconn as mongo
+import utils.mongo_setup as mongo
+import utils.data_setup as data_setup
+import utils.data_download as data_download
 
 ############################################# INITIAL SETTINGS #############################################
 

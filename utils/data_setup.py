@@ -1,3 +1,4 @@
+# standard import
 import pandas as pd
 import numpy as np
 import json
@@ -6,9 +7,12 @@ from pathlib import Path
 from datetime import datetime
 from datetime import *
 import time
-import utils.data_download as data_download
-import mongoconn as mongo
 from pymongo import MongoClient
+# local import
+#import mongoconn as mongo
+import data_download
+import mongo_setup as mongo
+
 
 
 ################################# TIME AND TIME ARRAYS FUNCTIONS ########################################

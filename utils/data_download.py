@@ -1,3 +1,4 @@
+# standard import
 from datetime import *
 from requests import get
 import time
@@ -6,7 +7,10 @@ import os
 import pandas as pd
 import io
 import numpy as np
-import utils.data_setup as data_setup
+
+# local import
+import data_setup 
+import mongo_setup as mongo
 
 
 ################################## ECB rates download function ###########################################

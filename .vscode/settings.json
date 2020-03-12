@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "C:\\Users\\mpich\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe",
+    "python.pythonPath": "C:\\Users\\fcodega\\AppData\\Local\\Programs\\Python\\Python38-32\\python.exe",
     "python.linting.pylintEnabled": false,
     "python.linting.banditEnabled": true,
     "python.linting.enabled": true
