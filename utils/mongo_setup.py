@@ -8,6 +8,10 @@ import pandas as pd
 import io
 import numpy as np
 
+#connecting to mongo in local
+connection = MongoClient('localhost', 27017)
+#creating the database called index
+db = connection.index
 
 # function that takes as arguments:
 # database = database name [index_raw, index_cleaned, index_cleaned]
