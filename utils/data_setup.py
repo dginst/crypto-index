@@ -10,8 +10,9 @@ import time
 from pymongo import MongoClient
 # local import
 #import mongoconn as mongo
-import data_download
-import mongo_setup as mongo
+#import data_download
+# import mongo_setup as mongo
+from . import mongo_setup as mongo
 
 
 

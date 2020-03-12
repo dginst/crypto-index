@@ -9,8 +9,8 @@ import io
 import numpy as np
 
 # local import
-import data_setup 
-import mongo_setup as mongo
+from . import data_setup 
+from . import mongo_setup as mongo
 
 
 ################################## ECB rates download function ###########################################

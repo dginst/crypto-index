@@ -3,9 +3,9 @@
 # 'GBP', 'CAD' and 'JPY'. Then store the retrieved data on MongoDB in the database "index"
 # and collection "ecb_raw". is possible to change the period of downlaod modifying the "Start_Period"
 #######################################################################################################
-
 # standard import
 from pymongo import MongoClient
+import sys
 import time
 import numpy as np
 import json
