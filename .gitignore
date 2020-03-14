@@ -1,8 +1,23 @@
+# temp test file
 testfile.py
 minitest.py
 testino.py
 anotherTest.py
+
+# downloaded files
 *.json
+
+# pycache
 *.pyc
-utils/__pycache__
-__pycache__
+__pycache__/
+
+# virtualenv
+.venv
+venv/
+ENV/
+
+# vscode
+.vscode/
+
+# macOS
+.DS_Store
