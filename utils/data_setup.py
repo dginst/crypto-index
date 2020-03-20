@@ -1,17 +1,17 @@
-# standard import
-import pandas as pd
-import numpy as np
+# standard library import
 import json
 import os.path
 from pathlib import Path
 from datetime import datetime
 from datetime import *
 import time
+
+# third party import
 from pymongo import MongoClient
+import pandas as pd
+import numpy as np
+
 # local import
-#import mongoconn as mongo
-#import data_download
-# import mongo_setup as mongo
 from . import mongo_setup as mongo
 
 
@@ -35,7 +35,6 @@ def timestamp_gen(start_date, end_date = None,  EoD = 'Y'):
     start = datetime.strptime(start_date,'%m-%d-%Y')
     start = int(time.mktime(start.timetuple()))
     start = start + 3600
-
     array = np.array([start])
     date = start
    
@@ -63,10 +62,43 @@ def timestamp_convert(date_array):
 
     return new_array
 
+# function takes as input an array and return the same array in string format
 
+def timestamp_to_str(date_array):
+
+    new_array = list()
+    for date in date_array:
+
+        new_date = str(date)
+
+        if new_array == []:
+
+            new_array = new_array.append(new_date)
+        
+        else:
+
+            new_array = new_array.append(new_date)
+
+    return new_array
+
+
+# the function takes an array of timestamp as input and return an array od human readable date in
+# dd-mm-yyyy format
+
+def timestamp_to_human(ts_array):
+
+    standard_date = np.array([])
+    for date in ts_array:
+
+        standard = datetime.fromtimestamp(int(date))
+        standard = standard.strftime('%d-%m-%Y')
+        standard_date = np.append(standard_date, standard)
+
+    return standard_date
 
 # function that creates a date array in timestamp format adding the choosen lag (1 day on default)
 # the input start and stop has to be timestamp date in INTEGER format
+
 
 def timestamp_vector(start, stop, lag = 86400):
 
@@ -208,17 +240,21 @@ def Check_null(item):
 # is set to 0.
 # the function uses on default 30 days in order to asses if a series lacking of the first n days
 
-def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 30):
+def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 5):
 
     reference_date_array_TS = np.array(reference_date_array_TS)
     header = list(series_to_check.columns)
     test_matrix = series_to_check.loc[series_to_check.Time.between(reference_date_array_TS[0], reference_date_array_TS[days_to_check], inclusive = True), header]
+    print('test_matrix')
+    print(test_matrix)
 
     if test_matrix.empty == True:
 
         first_date = np.array(series_to_check['Time'].iloc[0])
+        print(first_date)
         last_missing_date = (int(first_date) - 86400)
         first_missing_date = reference_date_array_TS[0]
+        print(first_missing_date)
 
         missing_date_array = timestamp_vector(first_missing_date, first_date)
 
@@ -251,6 +287,7 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 
 
 def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_date = None):
 
+    print(broken_matrix)
     # define DataFrame header
     header = ['Time', 'Close Price', 'Crypto Volume', 'Pair Volume']
 
@@ -379,12 +416,17 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
     try:
         variation_matrix = np.column_stack((variation_time, weighted_var_price, weighted_cry_vol, weighted_pair_vol))
         variation_matrix = np.nan_to_num(variation_matrix)
+        print(variation_matrix)
+        for i, row in enumerate(variation_matrix[:,0]):    
 
-        for i, row in enumerate(variation_matrix[:,0]):            
-
+            print(row)
             # find previuos value and multiply the variation in order to obtain the new values to insert
             previous_values = broken_matrix[broken_matrix['Time'] == row - 86400].iloc[:,1:4]
+            if previous_values.empty == True:
+                previous_values = np.zeros((1,3))
+            print(previous_values)
             new_values = previous_values * (1 + variation_matrix[i, 1:])
+            print(new_values)
             new_values = pd.DataFrame(np.column_stack((row, new_values)), columns = header)
 
             # insert the new values into the broken_matrix
@@ -457,7 +499,11 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
             today_alt = where_to_lookup[where_to_lookup['Time'] == element][position]
             today_value = float(where_to_lookup[where_to_lookup['Time'] == element][position])
             yesterday_value = float(where_to_lookup[where_to_lookup['Time'] == element - 86400][position])
-            variation = (today_value - yesterday_value) / yesterday_value
+            numerator = today_value - yesterday_value
+            # print(today_value)
+            # print(yesterday_value)
+            variation = np.divide(numerator, yesterday_value, out = np.zeros_like(numerator), where = numerator != 0.0 )
+            #variation = (today_value - yesterday_value) / yesterday_value
             volume = float(where_to_lookup[where_to_lookup['Time'] == element]['Pair Volume']) ##consider crytpo vol
             variation = variation * volume
             variations.append(variation)
@@ -729,7 +775,7 @@ def CW_data_setup (CW_matrix, currency):
         
             # retrieving data from MongoDB 'index' and 'ecb_raw' collection
             single_date_rate = mongo.query_mongo(database, collection, query)
-            print(single_date_rate)
+           
             if single_date_rate.shape[0] == 1:
 
                 rate = single_date_rate['Rate']
@@ -738,9 +784,7 @@ def CW_data_setup (CW_matrix, currency):
 
                 single_date_rate = single_date_rate.iloc[0]
 
-            
-            print(single_date_rate.shape[0])
-            print(single_date_rate.iloc[0])
+        
             rate = single_date_rate['Rate']
 
             CW_matrix['Close Price'][i] = float(CW_matrix['Close Price'][i] / rate)

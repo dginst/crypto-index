@@ -1,11 +1,14 @@
-# standard import
+# standard library import
 from datetime import *
 from requests import get
 import time
 import requests
 import os
-import pandas as pd
 import io
+
+
+# third party import
+import pandas as pd
 import numpy as np
 
 # local import
@@ -140,7 +143,7 @@ def CW_raw_to_mongo(exchange, currencypair, mongo_collection, start_date = '01-0
             Crypto_Volume = 0
             Pair_Volume = 0
 
-            rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time':Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
+            rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time': Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
 
             mongo_collection.insert_one(rawdata)
 
@@ -157,7 +160,7 @@ def CW_raw_to_mongo(exchange, currencypair, mongo_collection, start_date = '01-0
             Crypto_Volume = r[i][5]
             Pair_Volume = r[i][6]
 
-            rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time':Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
+            rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time': Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
 
             mongo_collection.insert_one(rawdata)
 
@@ -175,7 +178,7 @@ def CW_raw_to_mongo(exchange, currencypair, mongo_collection, start_date = '01-0
         Pair_Volume = 0
 
 
-        rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time':Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
+        rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time': Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
 
         mongo_collection.insert_one(rawdata)
 
