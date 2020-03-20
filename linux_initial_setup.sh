@@ -1,5 +1,6 @@
 #Initial Setup
 sudo apt-get update
+sudo apt-get install python3
 sudo apt install python3-pip
 
 #Package Download
@@ -15,7 +16,8 @@ sudo apt-get install -y mongodb-org
 
 #Start MongoDB and check status
 sudo systemctl start mongod
-sudo systemctl status mongod
+#$ sudo systemctl status mongod  # you can run this command to check tha mongodb status, then ctrl + c to exit
+
 
 #Clone the repo 
 
