@@ -4,28 +4,30 @@
 # and collection "ecb_raw". is possible to change the period of downlaod modifying the "Start_Period"
 #######################################################################################################
 # standard import
-from pymongo import MongoClient
 import sys
 import time
-import numpy as np
 import json
 import os.path
 from pathlib import Path
 from datetime import datetime
 from datetime import *
 import time
-import pandas as pd
 import requests
 from requests import get
+
+# third party import
+from pymongo import MongoClient
+import pandas as pd
+import numpy as np
+
 # local import
-#import mongoconn as mongo
 import utils.data_setup as data_setup
 import utils.data_download as data_download
 import utils.mongo_setup as mongo
 
 ####################################### initial settings ############################################
 
-Start_Period = '2018-12-31'
+Start_Period = '2015-12-31'
 
 # set today as End_period
 End_Period = datetime.now().strftime('%Y-%m-%d')
@@ -51,6 +53,7 @@ collection_ECB_raw = db.ecb_raw
 date = data_setup.date_array_gen(Start_Period, End_Period, timeST = 'N', EoD = 'N')
 
 
+
 Exchange_Rate_List = pd.DataFrame()
    
 for i, single_date in enumerate(date):
@@ -66,6 +69,7 @@ for i, single_date in enumerate(date):
         Exchange_Rate_List = single_date_ex_matrix
 
     else:
+
         Exchange_Rate_List = Exchange_Rate_List.append(single_date_ex_matrix, sort=True)
 
 ########################## upload the raw data to MongoDB ############################
