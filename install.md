@@ -2,6 +2,7 @@
   <img src="https://dgi.io/img/logo/dgi-logo.svg?raw=true" alt="DGI Logo"/>
 </p>
 
+
 # Install Guideline
 
 Following these steps will allow you tu run the code on your machine and obtain the DGI Crypto-Index Time series.
