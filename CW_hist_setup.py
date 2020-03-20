@@ -11,28 +11,31 @@
 # historical series on MongoDB in the collection "cleandata"
 #######################################################################################################
 
-# standard import
-from pymongo import MongoClient
+# standard library import
 import time
-import numpy as np
 import json
 import os.path
 from pathlib import Path
 from datetime import datetime
 from datetime import *
 import time
-import pandas as pd
 import requests
 from requests import get
+
+# third party import
+import pandas as pd
+import numpy as np
+from pymongo import MongoClient
+
 # local import
-# import mongoconn as mongo
 import utils.data_setup as data_setup
 import utils.data_download as data_download
 import utils.mongo_setup as mongo
 
 ####################################### initial settings ############################################
 
-start_date = '01-01-2019'
+start_date = '01-01-2018'
+#end_date = '03-01-2020'
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
@@ -41,6 +44,7 @@ today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
 reference_date_vector = data_setup.timestamp_gen(start_date)
+#reference_date_vector = data_setup.timestamp_to_str(reference_date_vector)
 
 pair_array = ['gbp', 'usd', 'eur', 'cad', 'jpy']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur'] 
@@ -71,6 +75,7 @@ collection = "rawdata"
 
 for Crypto in Crypto_Asset:
 
+    print(Crypto)
     currencypair_array = []
 
     for i in pair_array:
@@ -79,8 +84,10 @@ for Crypto in Crypto_Asset:
 
     for exchange in Exchanges:
         
+        print(exchange)
         for cp in currencypair_array:
 
+            print(cp)
             crypto = cp[:3]
             pair = cp[3:]
 
@@ -88,6 +95,7 @@ for Crypto in Crypto_Asset:
             query_dict = {"Exchange" : exchange, "Pair": cp}
             # retriving the needed information on MongoDB
             matrix = mongo.query_mongo(db, collection, query_dict)
+            print(matrix)
             matrix = matrix.drop(columns = ['Exchange', 'Pair', 'Low', 'High','Open'])
 
             # checking if the matrix is not empty
@@ -96,6 +104,7 @@ for Crypto in Crypto_Asset:
                 # check if the historical series start at the same date as the stert date
                 # if not fill the dataframe with zero values
                 matrix = data_setup.homogenize_series(matrix, reference_date_vector)
+                print(matrix)
 
                 # checking if the matrix has missing data and if ever fixing it
                 if matrix.shape[0] != reference_date_vector.size:

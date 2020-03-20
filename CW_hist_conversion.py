@@ -6,28 +6,30 @@
 # "converted_data"
 #######################################################################################################
 
-# standard import
-from pymongo import MongoClient
+# standard library import
 import time
-import numpy as np
 import json
 import os.path
 from pathlib import Path
 from datetime import datetime
 from datetime import *
 import time
-import pandas as pd
 import requests
 from requests import get
+
+# third party import
+from pymongo import MongoClient
+import pandas as pd
+import numpy as np
+
 # local import
-# import mongoconn as mongo
 import utils.data_setup as data_setup
 import utils.data_download as data_download
 import utils.mongo_setup as mongo
 
 ####################################### initial settings ############################################
 
-start_date = '01-01-2019'
+start_date = '01-01-2018'
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
@@ -110,8 +112,18 @@ for date in reference_date_vector:
                 else:
 
                     matrix_data = matrix_data
-            
-                # put the manipulated data on MongoDB
+
+                # adding a human-readable date format
+                standard_date = np.array([])
+
+                for element in matrix_data['Time']:
+
+                    standard = datetime.fromtimestamp(int(element))
+                    standard = standard.strftime('%d-%m-%Y')
+                    standard_date = np.append(standard_date, standard)
+
+                matrix_data['Standard Date'] = standard_date
+                # put the converted data on MongoDB
                 conv_data = matrix_data.to_dict(orient='records')  
                 collection_converted.insert_many(conv_data)
             

@@ -9,32 +9,40 @@
 # It is possible to change the period of downlaod modifying the "start_date"
 #######################################################################################################
 
-# standard import
-from pymongo import MongoClient
+# standard library import
 import time
-import numpy as np
 import json
 import os.path
 from pathlib import Path
 from datetime import datetime
 from datetime import *
 import time
-import pandas as pd
 import requests
 from requests import get
+
+# third party import
+import pandas as pd
+import numpy as np
+from pymongo import MongoClient
+
 # local import
-# import mongoconn as mongo
 import utils.data_setup as data_setup
 import utils.data_download as data_download
 import utils.mongo_setup as mongo
 
 ####################################### initial settings ############################################
 
-start_date = '01-01-2019'
+start_date = '01-01-2018'
+
+# set end_date as today, otherwise comment and choose an end_date
+end_date = datetime.now().strftime('%m-%d-%Y')
+# end_date = 
+
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
 today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
+
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
@@ -77,7 +85,7 @@ for Crypto in Crypto_Asset:
             crypto = cp[:3]
             pair = cp[3:]
             # create the matrix for the single currency_pair connecting to CryptoWatch website
-            matrix = data_download.CW_raw_to_mongo(exchange, cp, collection_raw, start_date)
+            data_download.CW_raw_to_mongo(exchange, cp, collection_raw, start_date, end_date)
 
 
 
