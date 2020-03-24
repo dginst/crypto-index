@@ -1,17 +1,18 @@
-# standard import
-import numpy as np
+# standard library import
 import os.path
 from pathlib import Path
 import json
 from datetime import datetime
 import utils.calc as calc
-import pandas as pd
 from datetime import *
 import time
+
+# third party import
 from pymongo import MongoClient
+import numpy as np
+import pandas as pd
 
 # local import
-#import mongoconn as mongo
 import utils.mongo_setup as mongo
 import utils.data_setup as data_setup
 import utils.data_download as data_download
@@ -30,20 +31,60 @@ Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'krak
 
 #connecting to mongo in local
 connection = MongoClient('localhost', 27017)
+db = connection.index
+
 # define database name and collection name
-db = "index"
-collection = "converted_data"
+db_name = "index"
+collection_converted_data = "converted_data"
+
 # drop the pre-existing collection (if there is one)
+db.index_weights.drop()
+db.index_level.drop()
+db.crypto_price.drop()
+db.crypto_volume.drop()
+db.crypto_price_return.drop()
+db.EMWA_index.drop()
+db.logic_matrix_one.drop()
+db.logic_matrix_two.drop()
+db.EMWA_logic_checked.drop()
 
+## creating some the empty collections within the database index
 
-#creating the empty collection cleandata within the database index
+# collection for index weights
+db.index_weights.create_index([ ("id", -1) ])
+collection_weights = db.index_weights
+# collection for index level
+db.index_level.create_index([ ("id", -1) ])
+collection_index_level = db.index_level
+# collection for crypto prices
+db.crypto_price.create_index([ ("id", -1) ])
+collection_price = db.crypto_price
+# collection for crytpo volume
+db.crypto_volume.create_index([ ("id", -1) ])
+collection_volume = db.crypto_volume
+# collection for price returns
+db.crypto_price_return.create_index([ ("id", -1) ])
+collection_price_ret = db.crypto_price_return
+# collection for EMWA
+db.EMWA_index.create_index([ ("id", -1) ])
+collection_EMWA = db.EMWA_index
+# collection for first logic matrix
+db.logic_matrix_one.create_index([ ("id", -1) ])
+collection_logic_one = db.logic_matrix_one
+# collection for second logic matrix
+db.logic_matrix_two.create_index([ ("id", -1) ])
+collection_logic_two = db.logic_matrix_two
+# collection for EMWA double checked with both logic matrix
+db.EMWA_logic_checked.create_index([ ("id", -1) ])
+collection_EMWA_check = db.EMWA_logic_checked
+
 
 
 ##################################### DATE SETTINGS ###################################################
 
 # we choose a start date that ensures the presence of multiple quarter period and avoids some problem 
 # related to older date that has to be tested more deeply
-start_date = '01-01-2019'
+start_date = '01-01-2016'
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
@@ -60,15 +101,14 @@ rebalance_stop_date = calc.stop_q(rebalance_start_date)
 board_date = calc.board_meeting_day()
 board_date_eve = calc.day_before_board()
 
+print(rebalance_start_date)
+print(rebalance_stop_date)
 # call the function that creates a object containing the couple of quarterly start-stop date
 quarterly_date = calc.quarterly_period()
 
 #############################################################################################################
 
 ##################################### MAIN PART ###################################################
-# due to the required amount of time  (A LOT) for the rates download from ECB and relative conversion off all
-# the values (both volumes and prices) into USD, we choose to turn off the functions that allow the conversion.
-# this choice affects teh result, but it is just temporary because we are working on the moving towards Mongo DB.
 
 
 # initialize the matrices that will contain the prices and volumes of all the cryptoasset
@@ -106,15 +146,15 @@ for CryptoA in Crypto_Asset:
             # defining the dictionary for the MongoDB query
             query_dict = {"Exchange" : exchange, "Pair": cp}
             # retriving the needed information on MongoDB
-            matrix = mongo.query_mongo(db, collection, query_dict)
+            matrix = mongo.query_mongo(db_name, collection_converted_data, query_dict)
      
             try:
                 
                 cp_matrix = matrix.to_numpy()
 
                 # retrieves the wanted data from the matrix
-                priceXvolume = cp_matrix[:,1] * cp_matrix[:,3]
-                volume = cp_matrix[:,3]
+                priceXvolume = cp_matrix[:,1] * cp_matrix[:,3] # 2 for crypto vol, 3 for pair volume
+                volume = cp_matrix[:,3] # 2 for crypto vol, 3 for pair volume
                 price = cp_matrix[:,1]
 
                 # every "cp" the for loop adds a column in the matrices referred to the single "exchange"
@@ -129,10 +169,10 @@ for CryptoA in Crypto_Asset:
 
                 pass
 
-        print(Ccy_Pair_Volume)
-        print(Ccy_Pair_Volume.size)
-        print(reference_date_vector.size)
-        print(Ccy_Pair_PriceVolume)
+        # print(Ccy_Pair_Volume)
+        # print(Ccy_Pair_Volume.size)
+        # print(reference_date_vector.size)
+        # print(Ccy_Pair_PriceVolume)
         # computing the volume weighted average price of the single exchange
         if Ccy_Pair_Volume.size != 0 and Ccy_Pair_Volume.size > reference_date_vector.size:
             
@@ -148,7 +188,7 @@ for CryptoA in Crypto_Asset:
         # case when just one crypto-fiat has the values in that exchange
         elif Ccy_Pair_Volume.size != 0 and Ccy_Pair_Volume.size == reference_date_vector.size:
 
-            np.seterr(all=None, divide='warn')
+            np.seterr(all = None, divide = 'warn')
             Ccy_Pair_Price = np.divide(Ccy_Pair_PriceVolume, Ccy_Pair_Volume, out=np.zeros_like(Ccy_Pair_Volume), where = Ccy_Pair_Volume != 0.0)
             Ccy_Pair_Price = np.nan_to_num(Ccy_Pair_Price)
             Ccy_Pair_PxV = Ccy_Pair_Price * Ccy_Pair_Volume
@@ -211,7 +251,9 @@ for CryptoA in Crypto_Asset:
 
     try:
         # computing the volume weighted average price of the single Crypto_Asset ("CryptoA") into a single vector
-        Exchange_Price = Ex_PriceVol.sum(axis = 1) / Exchange_Volume.sum(axis = 1) 
+        Ex_price_num = Ex_PriceVol.sum(axis = 1)
+        Ex_price_den = Exchange_Volume.sum(axis = 1) 
+        Exchange_Price = np.divide(Ex_price_num, Ex_price_den, out = np.zeros_like(Ex_price_num), where = Ex_price_num!= 0.0)
         # computing the total volume  average price of the single Crypto_Asset ("CryptoA") into a single vector
         Exchange_Volume = Exchange_Volume.sum(axis = 1)
     except np.AxisError:
@@ -253,6 +295,8 @@ price_ret['Time'] = reference_date_vector
 first_logic_matrix = pd.DataFrame(logic_matrix_one, columns = Crypto_Asset)
 first_logic_matrix['Time'] = rebalance_stop_date[0:len(rebalance_stop_date) - 1]
 
+print(first_logic_matrix)
+print( data_setup.timestamp_to_human(first_logic_matrix['Time']))
 
 # computing the Exponential Moving Weighted Average of the selected period
 emwa_df = calc.emwa_crypto_volume(Crypto_Asset_Volume, Crypto_Asset, reference_date_vector, time_column = 'N')
@@ -268,12 +312,68 @@ double_checked_EMWA = calc.emwa_second_logic_check(first_logic_matrix, second_lo
 # present quarter board meeting date eve
 weights = calc.quarter_weights(double_checked_EMWA, board_date_eve, Crypto_Asset)
 
+#syntethic = calc.quarterly_synt_matrix(Crypto_Asset_Prices, weights, reference_date_vector, board_date_eve, Crypto_Asset)
 
-syntethic = calc.quarterly_synt_matrix(Crypto_Asset_Prices, weights, reference_date_vector, board_date_eve, Crypto_Asset)
-
-syntethic_rel = calc.relative_syntethic_matrix(syntethic, Crypto_Asset)
+#syntethic_rel = calc.relative_syntethic_matrix(syntethic, Crypto_Asset)
 
 #pd.set_option('display.max_rows', None)
+
+####################################### MONGO DB UPLOADS ############################################
+# creating the array with human readable Date
+human_date = data_setup.timestamp_to_human(Crypto_Asset_Prices['Time'])
+human_date_reb = data_setup.timestamp_to_human(weights['Time'])
+print(human_date_reb)
+
+# put the "weights" dataframe on MongoDB
+weights['Date'] = human_date_reb
+weights = weights[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC', 'Time']]
+up_weights = weights.drop(columns = ['Time'])
+up_weights = up_weights.to_dict(orient = 'records')  
+collection_weights.insert_many(up_weights)
+
+# put the "price_ret" dataframe on MongoDB
+price_ret['Date'] = human_date
+price_ret_up = price_ret.drop(columns = 'Time')
+price_ret_up = price_ret_up[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+price_ret_up = price_ret_up.to_dict(orient = 'records')  
+collection_price_ret.insert_many(price_ret_up)
+
+# put the "Crypto_Asset_Prices" dataframe on MongoDB
+Crypto_Asset_Prices['Date'] = human_date
+price_up = Crypto_Asset_Prices.drop(columns = 'Time')
+price_up = price_up[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+price_up = price_up.to_dict(orient = 'records')  
+collection_price.insert_many(price_up)
+
+# put the "Crypto_Asset_Volumes" dataframe on MongoDB
+Crypto_Asset_Volume['Date'] = human_date
+volume_up = Crypto_Asset_Volume.drop(columns = 'Time')
+volume_up = volume_up[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+volume_up = volume_up.to_dict(orient = 'records') 
+collection_volume.insert_many(volume_up)
+
+# put the EWMA dataframe on MongoDB
+emwa_df['Date'] = human_date
+emwa_df_up = emwa_df[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+emwa_df_up = emwa_df_up.to_dict(orient = 'records') 
+collection_EMWA.insert_many(emwa_df_up)
+
+# put the double checked EMWA on MongoDB
+double_checked_EMWA['Date'] = human_date
+double_EMWA_up = double_checked_EMWA.drop(columns = 'Time')
+double_EMWA_up = double_checked_EMWA[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+double_EMWA_up = double_EMWA_up.to_dict(orient = 'records')
+collection_EMWA_check.insert_many(double_EMWA_up)
+
+# # put the first logic matrix on MongoDB
+# first_logic_matrix['Date'] = human_date_reb
+# first_up = first_logic_matrix.drop(columns = 'Time')
+# first_up = first_up.to_dict(orient = 'records') 
+# collection_logic_one.insert_many(first_up)
+
+# put the second logic matrix on MongoDB
+
+
 
 
 ######## some printing ##########
@@ -288,8 +388,8 @@ print(emwa_df)
 print('WEIGHTS')
 print(weights)
 print('Syntethic matrix')
-print(syntethic)
-print(syntethic_rel)
+# print(syntethic)
+# print(syntethic_rel)
 #################################
 
 

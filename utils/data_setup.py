@@ -416,17 +416,16 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
     try:
         variation_matrix = np.column_stack((variation_time, weighted_var_price, weighted_cry_vol, weighted_pair_vol))
         variation_matrix = np.nan_to_num(variation_matrix)
-        print(variation_matrix)
+
         for i, row in enumerate(variation_matrix[:,0]):    
 
-            print(row)
+        
             # find previuos value and multiply the variation in order to obtain the new values to insert
             previous_values = broken_matrix[broken_matrix['Time'] == row - 86400].iloc[:,1:4]
             if previous_values.empty == True:
                 previous_values = np.zeros((1,3))
-            print(previous_values)
+        
             new_values = previous_values * (1 + variation_matrix[i, 1:])
-            print(new_values)
             new_values = pd.DataFrame(np.column_stack((row, new_values)), columns = header)
 
             # insert the new values into the broken_matrix
@@ -500,10 +499,7 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
             today_value = float(where_to_lookup[where_to_lookup['Time'] == element][position])
             yesterday_value = float(where_to_lookup[where_to_lookup['Time'] == element - 86400][position])
             numerator = today_value - yesterday_value
-            # print(today_value)
-            # print(yesterday_value)
             variation = np.divide(numerator, yesterday_value, out = np.zeros_like(numerator), where = numerator != 0.0 )
-            #variation = (today_value - yesterday_value) / yesterday_value
             volume = float(where_to_lookup[where_to_lookup['Time'] == element]['Pair Volume']) ##consider crytpo vol
             variation = variation * volume
             variations.append(variation)

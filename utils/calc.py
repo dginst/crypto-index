@@ -351,7 +351,7 @@ def first_logic_matrix(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016', end_
 
         else: 
             if np.any(np.isnan(row)):
-                first_logic_matrix = np.append(first_logic_matrix, np.nan) ## consider 0
+                first_logic_matrix = np.append(first_logic_matrix, 0) ## consider 0
             else:
                 first_logic_matrix = np.append(first_logic_matrix, 1)    
 
@@ -666,6 +666,8 @@ def quarter_weights(emwa_double_logic_checked, date, Crypto_list):
 
         row = np.array(emwa_double_logic_checked.loc[emwa_double_logic_checked.Time == day, Crypto_list])
         total_row = row.sum()
+        print(row)
+        print(total_row)
         weighted_row = row / total_row
 
         if row.size == len(Crypto_list):

@@ -32,7 +32,7 @@ import utils.mongo_setup as mongo
 
 ####################################### initial settings ############################################
 
-start_date = '01-01-2018'
+start_date = '01-01-2016'
 
 # set end_date as today, otherwise comment and choose an end_date
 end_date = datetime.now().strftime('%m-%d-%Y')

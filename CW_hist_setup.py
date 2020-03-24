@@ -34,7 +34,7 @@ import utils.mongo_setup as mongo
 
 ####################################### initial settings ############################################
 
-start_date = '01-01-2018'
+start_date = '01-01-2016'
 #end_date = '03-01-2020'
 
 # define today date as timestamp
@@ -62,16 +62,54 @@ db = connection.index
 
 # drop the pre-existing collection (if there is one)
 db.cleandata.drop()
+db.volume_checked_data.drop()
 
-#creating the empty collection cleandata within the database index
+#creating the empty collection "cleandata" within the database index
 db.cleandata.create_index([ ("id", -1) ])
 collection_clean = db.cleandata
 
+#creating the empty collection "volume_checked_data" within the database index
+db.volume_checked_data.create_index([ ("id", -1) ])
+collection_volume = db.volume_checked_data
+
+# defining the database name and the collection name where to look for data
+db = "index"
+collection_raw = "rawdata"
+collection_volume_check = "volume_checked_data"
+
+############################### fixing the "Pair Volume" information ##############################
+
+for Crypto in Crypto_Asset:
+
+    currencypair_array = []
+
+    for i in pair_array:
+
+        currencypair_array.append(Crypto.lower() + i)
+
+    for exchange in Exchanges:
+        
+        for cp in currencypair_array:
+
+            # defining the dictionary for the MongoDB query
+            query_dict = {"Exchange" : exchange, "Pair": cp}
+            # retriving the needed information on MongoDB
+            matrix = mongo.query_mongo(db, collection_raw, query_dict)
+            matrix = matrix.drop(columns = ['Low', 'High', 'Open'])
+            # checking if the matrix is not empty
+            if matrix.shape[0] > 1:
+
+                matrix['Pair Volume'] = matrix['Close Price'] * matrix ['Crypto Volume']
+
+            # put the manipulated data on MongoDB
+            data = matrix.to_dict(orient='records')  
+            collection_volume.insert_many(data)
+
+
+
 ############################## fixing historical series main part ##################################
 
-# defining the database name and the collection name
-db = "index"
-collection = "rawdata"
+
 
 for Crypto in Crypto_Asset:
 
@@ -94,17 +132,14 @@ for Crypto in Crypto_Asset:
             # defining the dictionary for the MongoDB query
             query_dict = {"Exchange" : exchange, "Pair": cp}
             # retriving the needed information on MongoDB
-            matrix = mongo.query_mongo(db, collection, query_dict)
-            print(matrix)
-            matrix = matrix.drop(columns = ['Exchange', 'Pair', 'Low', 'High','Open'])
-
+            matrix = mongo.query_mongo(db, collection_volume_check, query_dict)
+            matrix = matrix.drop(columns = ['Exchange', 'Pair'])
             # checking if the matrix is not empty
             if matrix.shape[0] > 1:
 
                 # check if the historical series start at the same date as the stert date
                 # if not fill the dataframe with zero values
                 matrix = data_setup.homogenize_series(matrix, reference_date_vector)
-                print(matrix)
 
                 # checking if the matrix has missing data and if ever fixing it
                 if matrix.shape[0] != reference_date_vector.size:

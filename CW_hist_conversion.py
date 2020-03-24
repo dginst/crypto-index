@@ -29,7 +29,7 @@ import utils.mongo_setup as mongo
 
 ####################################### initial settings ############################################
 
-start_date = '01-01-2018'
+start_date = '01-01-2016'
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
