@@ -51,7 +51,7 @@ def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq =
     # turning off a pandas warning about slicing of DF
     pd.options.mode.chained_assignment = None
 
-    for i, currency in enumerate(key_curr_vector):
+    for currency in key_curr_vector:
         key = freq + '.' + currency + '.' + curr_den + '.' + type_rates + '.' + series_var
         request_url = entrypoint + resource + '/' + flow_ref + '/' + key
         
@@ -60,12 +60,14 @@ def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq =
         
         # if data is empty, it is an holiday, therefore exit
         try:
+
             Data_Frame = pd.read_csv(io.StringIO(response.text))
+
         except:
+
             break
         
         Main_Data_Frame = Data_Frame.filter(['TIME_PERIOD', 'OBS_VALUE', 'CURRENCY', 'CURRENCY_DENOM'], axis=1)
-
         # transform date from datetime to string
         date_to_string = Main_Data_Frame['TIME_PERIOD'].to_string(index = False).strip()
         # transform date into unix timestamp and add 3600 sec in order to uniform the date at 12:00 am
