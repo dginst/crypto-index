@@ -1,11 +1,16 @@
-import numpy as np
-import pandas as pd
+# standard library import
 import datetime
 from datetime import *
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
+# third party import
+import numpy as np
+import pandas as pd
 
+
+
+############################################# DATE SETTINGS FUNCTIONS ##################################
 
 # function that check if a date is a business day
 # returns "True" is the date is a BD, "False" otherwise
@@ -232,7 +237,7 @@ def quarterly_period(start_date = '01-01-2016', stop_date = None, timeST = 'Y'):
 # if the last stop date is in the future, return today as last date
 # it is useful for the application of the values (ex. weights)
 
-def next_quarterly_period(start_date = '01-01-2016', stop_date = None, timeST = 'Y'):
+def next_quarterly_period(start_date = '01-01-2016', stop_date = None, timeST = 'Y', initial_val = 1):
 
     try:
         start_date = datetime.strptime(start_date,'%m-%d-%Y')
@@ -257,9 +262,36 @@ def next_quarterly_period(start_date = '01-01-2016', stop_date = None, timeST = 
 
         stop_quarter[len(stop_quarter)-1] = today_TS
 
-    for i in range(1, start_quarter.size):
+    for i in range(initial_val, start_quarter.size): 
     
         yield (start_quarter[i], stop_quarter[i])
+
+
+# function that creates the list of rebalance date adding also he first future rebalance date
+
+def next_start(start_date = '01-01-2016', stop_date = None, timeST = 'Y'):
+
+    try:
+        start_date = datetime.strptime(start_date,'%m-%d-%Y')
+    
+    except:
+        pass
+
+    if stop_date == None:
+
+        stop_date = datetime.now().strftime('%m-%d-%Y')
+        stop_date = datetime.strptime(stop_date,'%m-%d-%Y')
+
+    # creating the arrays containing the start and stop date of each quarter
+    start_quarter = start_q_fix(start_q(start_date, stop_date, timeST))
+    stop_quarter = stop_q(start_quarter)
+
+    next_start_date = int(stop_quarter[len(stop_quarter) - 1]) + 86400
+
+    start_quarter = np.append(start_quarter, next_start_date)
+
+    return start_quarter
+
 
 
 ######################################## FIRST LOGIC MATRIX #########################################################
@@ -284,7 +316,7 @@ def perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016
     board_eve = day_before_board()
 
     # calling the function that yields the start and stop date couple
-    rebalance_start = quarterly_period(start_date, end_date)
+    rebalance_start = next_quarterly_period(start_date, end_date, initial_val=0) ######## added next!!!!!!
 
     # for every start and stop date couple compute the relative logic matrix 
     i = 1
@@ -341,7 +373,6 @@ def first_logic_matrix(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016', end_
 
         row =  exchange_vol_percentage.loc[exchange_vol_percentage.Time == stop_date, Exchanges]
         row = np.array(row)
-        #row = np.array(exchange_vol_percentage[Exchanges][exchange_vol_percentage['Time'][stop_date]])
 
         # check if any of the value in array row is > than 0.80. If yes add a 0 value in the first_logic_matrix
         # if not add value 1 in the first_logic_matrix
@@ -370,8 +401,11 @@ def first_logic_matrix(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016', end_
 
 def first_logic_matrix_reshape(first_logic_matrix, reference_date_array, Crypto_list, start_date = '01-01-2016', end_date = None, time_column = 'N'):
 
+    rebalance_start = start_q_fix(start_q())
+    rebalance_stop = stop_q(rebalance_start)
+
     # calling the function that yields the start and stop date couple
-    rebalance_start = quarterly_period(start_date, end_date)
+    rebalance_start = next_quarterly_period(start_date, end_date, initial_val = 0) 
 
     # define the reshaped logic matrix as a dataframe with 'Time' in first column and the reference date array as rows
     reshaped_matrix = pd.DataFrame(reference_date_array, columns = ['Time'])
@@ -381,10 +415,12 @@ def first_logic_matrix_reshape(first_logic_matrix, reference_date_array, Crypto_
         reshaped_matrix[crypto] = np.zeros(len(reference_date_array))
 
     # for every start and stop date couple fill the reshaped matrix with the logic value finded in the input logic matrix
-    for start, stop in rebalance_start:
+    i = 0
+    for start, stop in next_quarterly_period(start_date, end_date, initial_val=0):
 
-        copied_element = np.array(first_logic_matrix.loc[first_logic_matrix.Time == stop][Crypto_list])
+        copied_element = np.array(first_logic_matrix.loc[first_logic_matrix.Time == rebalance_stop[i]][Crypto_list])
         reshaped_matrix.loc[reshaped_matrix.Time.between(start, stop, inclusive = True), Crypto_list] = copied_element
+        i = i + 1
 
     if time_column == 'N':
 
@@ -511,7 +547,7 @@ def emwa_period_fraction(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, 
 
     # defining the arrays of board eve date and start and stop of each quarter
     board_eve_array = day_before_board()
-    rebalance_interval = quarterly_period()
+    rebalance_interval = next_quarterly_period(initial_val=0) ###### changed in next_...
 
     # find the EMWA of the volume
     emwa_crypto_vol = emwa_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array, start_date, end_date, time_column = 'N')
@@ -522,7 +558,7 @@ def emwa_period_fraction(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, 
     stop_vector = np.array([])
 
     i = 1
-    for start, stop in rebalance_interval:
+    for start, stop in next_quarterly_period(initial_val=0):
 
         # taking the interval from start of quarter to the eve of the board day
         interval_emwa = emwa_logic[Crypto_list][emwa_logic['Time'].between(start, board_eve_array[i], inclusive = True)]
@@ -593,8 +629,11 @@ def second_logic_matrix(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, r
 
 def second_logic_matrix_reshape(second_logic_matrix, reference_date_array, Crypto_list, start_date = '01-01-2016', end_date = None, time_column = 'N'):
 
+    rebalance_start = start_q_fix(start_q())
+    rebalance_stop = stop_q(rebalance_start)
+
     # calling the function that yields the start and stop date couple
-    rebalance_start = quarterly_period(start_date, end_date)
+    rebalance_start = next_quarterly_period(start_date, end_date, initial_val=0)
 
     # define the reshaped logic matrix as a dataframe with 'Time' in first column and the reference date array as rows
     reshaped_matrix = pd.DataFrame(reference_date_array, columns = ['Time'])
@@ -604,10 +643,12 @@ def second_logic_matrix_reshape(second_logic_matrix, reference_date_array, Crypt
         reshaped_matrix[crypto] = np.zeros(len(reference_date_array))
     
     # for every start and stop date couple fill the reshaped matrix with the logic value finded in the input logic matrix
+    i = 0
     for start, stop in rebalance_start:
 
         copied_element = np.array(second_logic_matrix.loc[second_logic_matrix.Time == stop][Crypto_list])
         reshaped_matrix.loc[reshaped_matrix.Time.between(start, stop, inclusive = True), Crypto_list] = copied_element
+        i = i+1
 
     if time_column == 'N':
 
@@ -649,7 +690,7 @@ def emwa_second_logic_check(first_logic_matrix, second_logic_matrix, emwa_datafr
 # takes as imput:
 # emwa_double_logic_checked : emwa matrix (crypto as columns, ref_array_date as rows) already checked 
 # by the first and second logic matrix
-# date : array containing single or muptiple date where the weights want to be computed
+# date : array containing single or muptiple date where the weights want to be computed (board_date_eve)
 # Crytpo_list : vector with all the Cryptoassets
 # Note that the function should be used to find weights only on every boards eve date
 
@@ -666,8 +707,6 @@ def quarter_weights(emwa_double_logic_checked, date, Crypto_list):
 
         row = np.array(emwa_double_logic_checked.loc[emwa_double_logic_checked.Time == day, Crypto_list])
         total_row = row.sum()
-        print(row)
-        print(total_row)
         weighted_row = row / total_row
 
         if row.size == len(Crypto_list):
@@ -692,7 +731,7 @@ def quarterly_synt_matrix(Crypto_Price_Matrix, weights, reference_date_array, bo
     # adding the 'Time' column to price_return DF
     price_return['Time'] = reference_date_array
 
-    rebalance_period = next_quarterly_period()
+    rebalance_period = next_quarterly_period(initial_val = 0)
 
     q_synt = np.array([])
 
@@ -700,10 +739,12 @@ def quarterly_synt_matrix(Crypto_Price_Matrix, weights, reference_date_array, bo
     for start, stop in rebalance_period:
 
         start_weights = (weights[Crypto_list][weights['Time'] == board_date_eve[i]]) * synt_ptf_value
+        # print(start_weights)
 
         value_one = start_weights
 
         list_of_date = price_return.loc[price_return.Time.between(start, stop, inclusive = True), 'Time']
+
 
         for date in list_of_date:
 
@@ -720,7 +761,6 @@ def quarterly_synt_matrix(Crypto_Price_Matrix, weights, reference_date_array, bo
 
                 q_synt = np.row_stack((q_synt, increased_value))
            
-
         i = i  + 1
 
     q_synt_time = np.column_stack((reference_date_array, q_synt))
@@ -737,7 +777,7 @@ def quarterly_synt_matrix(Crypto_Price_Matrix, weights, reference_date_array, bo
 # a DF with the same number of rows and columns but instead of values starting from 100 in rebalance day, it returns 
 # the daily relative weights of each cryptoasset
 
-def relative_syntethic_matrix (syntethic_matrix, Crypto_list):
+def relative_syntethic_matrix(syntethic_matrix, Crypto_list):
 
     
     syntethic_matrix['row_sum'] = syntethic_matrix[Crypto_list].sum(axis=1)
@@ -747,7 +787,7 @@ def relative_syntethic_matrix (syntethic_matrix, Crypto_list):
 
 #############################################################################################################
 
-#################################### INITIAL DIVISOR COMPUTATION ############################################
+#################################### DIVISOR COMPUTATION ############################################
 # Return the Initial Divisor for the index. It identifies the position of the initial date in the Crypto_Volume_Matrix. 
 # At the moment the initial date is 2016/01/01 or 1451606400 as timestamp
 # where:
@@ -755,67 +795,64 @@ def relative_syntethic_matrix (syntethic_matrix, Crypto_list):
 # Crypto_Price_Matrix = final price Crypto_Volume_Matrix of each currency 
 # sm = synthetic market cap derived weight
 
-def initial_divisor(Crypto_Price_Matrix, Weights, Crypto_list, initial_date = '01-01-2016', base = 1000):
+def initial_divisor(Crypto_Price_Matrix, Weights, Crypto_list, reference_date_array, starting_point = 2, base = 1000):
 
-    # convert the date into timestamp 
-    initial_date = datetime.strptime(initial_date, '%m-%d-%Y')
-    initial_timestamp = str(int(initial_date.timestamp()) + 3600)
+    # define the initial date
+    rebalance_date = start_q_fix(start_q())
+    initial_date = rebalance_date[starting_point]
 
     # computing the divisor 
-    price = Crypto_Price_Matrix.loc[Crypto_Price_Matrix.Time == initial_timestamp, Crypto_list]
-    #logic_value = second_logic_matrix.loc[second_logic_matrix.Time == initial_timestamp, Crypto_list]
-    row = price * Weights
-    initial_divisor = np.array(row.sum()) / base
+    price_row = np.array(Crypto_Price_Matrix.loc[Crypto_Price_Matrix.Time == initial_date, Crypto_list])
+    weights_row = np.array(Weights.loc[Weights.Time == initial_date, Crypto_list])
+    row = price_row * weights_row
+    row_sum = row.sum()
+    initial_divisor = np.array(row_sum) / base
 
     return initial_divisor
 
 
 
- # function that returns an array with the divisor for each day, the inputs are:
- # logic_matrix = second requirement Crypto_Volume_Matrix, composed by 0 if negativa, 1 if positive
- # final_price Crypto_Volume_Matrix of each currency
- # final_volume Crypto_Volume_Matrix of each currency
- # initial date set by default in 01/01/16
+# function that returns an array with the divisor for each day, the inputs are:
+# logic_matrix = second requirement Crypto_Volume_Matrix, composed by 0 if negativa, 1 if positive
+# final_price Crypto_Volume_Matrix of each currency
+# final_volume Crypto_Volume_Matrix of each currency
+# initial date set by default in 01/01/16
 
-def divisor_adjustment(Crypto_Price_Matrix, Weights, second_logic_matrix, Crypto_list, initial_date = '01-01-2016'):
+def divisor_adjustment(Crypto_Price_Matrix, Weights, second_logic_matrix, Crypto_list, reference_date_array):
 
     # use the function to compute the initial divisor
-    old_divisor = initial_divisor(Crypto_Price_Matrix, Weights, Crypto_list, initial_date)
+    old_divisor = initial_divisor(Crypto_Price_Matrix, Weights, Crypto_list, reference_date_array)
     divisor_array = np.array(old_divisor)
-                                                                                                                                                                                                                                                                                                                                                            
-    # compute the rebalance array
-    rebalance_period = quarterly_period()
 
     start_quarter = start_q()
+    start_quarter = start_q_fix(start_quarter)
+    next_start_quarter = next_start()
 
+    second_logic_matrix['Time'] = start_quarter
+ 
     # for loop that iterates through all the date (length of logic matrix)
     # returning a divisor for each day
-
     
-    i = 0
-    for date in start_q[1:]:
+    i = 2
+    for date in next_start_quarter[3:]:
         
-        current_logic_row = second_logic_matrix.loc[second_logic_matrix.Time == date, Crypto_list]
-        previous_logic_row = second_logic_matrix.loc[second_logic_matrix.Time == start_q[i], Crypto_list]
-
-        if current_logic_row == previous_logic_row:
+        current_logic_row = np.array(second_logic_matrix.loc[second_logic_matrix.Time == date, Crypto_list])
+        previous_logic_row = np.array(second_logic_matrix.loc[second_logic_matrix.Time == next_start_quarter[i], Crypto_list])
+        logic_compare = current_logic_row == previous_logic_row
+        # check if the logic rows are the same
+        if logic_compare.all() == True:
 
             new_divisor = old_divisor
             divisor_array = np.append(divisor_array, new_divisor)
         
         else:
-            today_price = Crypto_Price_Matrix.loc[Crypto_Price_Matrix.Time == date, Crypto_list]
-            yesterday_price = Crypto_Price_Matrix.loc[Crypto_Price_Matrix.Time == (int(date) - 86400), Crypto_list]
-            current_weights = Weights.loc[Weights.Time.between(start_q[i], date), Crypto_list]
 
-            if i < 2:
-
-                previous_weights = Weights.loc[Weights.Time.between(start_q[0], start_q[i]), Crypto_list]
-            else:
-
-                previous_weights = Weights.loc[Weights.Time.between(start_q[i - 1], start_q[i]), Crypto_list]
-
-            numer = np.array(current_logic_row * yesterday_price * current_weights)
+            today_price = np.array(Crypto_Price_Matrix.loc[Crypto_Price_Matrix.Time == date, Crypto_list])
+            yesterday_price = np.array(Crypto_Price_Matrix.loc[Crypto_Price_Matrix.Time == (int(date) - 86400), Crypto_list])
+            current_weights = np.array(Weights.loc[Weights.Time == date, Crypto_list])
+            previous_weights = np.array(Weights.loc[Weights.Time == next_start_quarter[i], Crypto_list])
+           
+            numer = np.array(current_logic_row * today_price * current_weights)
             denom = np.array(previous_logic_row * yesterday_price * previous_weights)
 
             new_divisor = numer.sum() / denom.sum()
@@ -824,10 +861,58 @@ def divisor_adjustment(Crypto_Price_Matrix, Weights, second_logic_matrix, Crypto
         
         old_divisor = new_divisor
         i = i + 1
+
+    divisor_array = np.column_stack((next_start_quarter[2:], divisor_array))
+
+    header = ['Time', 'Divisor Value']
+    divisor_df = pd.DataFrame(divisor_array, columns = header)
         
-    return divisor_array
- 
- 
+    return divisor_df
+
+
+
+#############################################################################################################
+
+####################################### INDEX VALUE COMPUTATION #############################################
+
+# add description
+
+def divisor_reshape(divisor_adjustment_array, reference_date_array, start_date = '01-01-2016', end_date = None, time_column = 'Y'):
+    
+
+    # calling the function that yields the start and stop date couple
+    rebalance_start = next_quarterly_period(start_date, end_date, initial_val = 0)
+
+    # define the reshaped logic matrix as a dataframe with 'Time' in first column and the reference date array as rows
+    reshaped_matrix = pd.DataFrame(reference_date_array, columns = ['Time'])
+
+    # assigning 0 to new DataFrame columns 'Divisor Value'
+    reshaped_matrix['Divisor Value'] = np.zeros(len(reference_date_array))
+    column_name = 'Divisor Value'
+    
+    # for every start and stop date couple fill the reshaped matrix with the divisor value
+
+    for start, stop in rebalance_start:
+
+        copied_element = np.array(divisor_adjustment_array.loc[divisor_adjustment_array.Time == start]['Divisor Value'])
+        # print(copied_element)
+        # print(len(copied_element))
+        if len(copied_element) == 0:
+
+            pass
+
+        else:
+       
+            reshaped_matrix.loc[reshaped_matrix.Time.between(start, stop, inclusive = True), column_name] = copied_element
+
+    if time_column == 'N':
+
+        reshaped_matrix = reshaped_matrix.drop(columns = 'Time')
+
+    return reshaped_matrix
+
+
+
 
 # function that returns an array of the daily level of the Index, where:
 # logic_matrix = second requirement Crypto_Volume_Matrix, composed by 0 if negativa, 1 if positive
@@ -836,18 +921,47 @@ def divisor_adjustment(Crypto_Price_Matrix, Weights, second_logic_matrix, Crypto
 # sm = synthetic market cap derived weight
 # initial date default value set at 01/01/2016
 
-def index_level_calc(Crypto_Price_Matrix, Crypto_Volume_Matrix, relative_syntethic_matrix, emwa_second_logic_check, initial_date='01-01-2016'):
+def index_level_calc(Crypto_Price_Matrix, relative_syntethic_matrix, divisor_adjustment_array, reference_date_array, initial_date='01-01-2016'):
 
-    # find the divisor related to each day starting from initil date
-    divisor_array = divisor_adjustment(Crypto_Price_Matrix, Crypto_Volume_Matrix, logic_matrix, sm, initial_date)
-    daily_weights = relative_syntethic_matrix()
-    index_level = np.array([])
+    # find the divisor related to each day starting from initial date
+    reshaped_divisor = divisor_reshape(divisor_adjustment_array, reference_date_array, initial_date)
 
-    for i in range(len(logic_matrix)):
-        new_index_item = (Crypto_Price_Matrix[i] * daily_weights[i] * emwa_second_logic_check[i]).sum() / divisor_array[i]
-        index_level = np.append(index_level, new_index_item)
+    # drop the "Time" column for each dataframe
+    Crypto_Price_Matrix = Crypto_Price_Matrix.drop(columns = 'Time')
+    try:
+        
+        relative_syntethic_matrix = relative_syntethic_matrix.drop(columns = 'Time')
+    
+    except KeyError:
 
-    return index_level
+        pass
+
+    reshaped_divisor = reshaped_divisor.drop(columns = 'Time')
+
+    # filling the NaN of the synth matrix with zero
+    relative_syntethic_matrix = relative_syntethic_matrix.fillna(0)
+
+    # multiplyng the price matrix and the synth matrix
+    numerator = np.array(Crypto_Price_Matrix) * np.array(relative_syntethic_matrix)
+    # performing the sum for each row
+    numerator_sum = numerator.sum(axis = 1)
+    num = pd.DataFrame(numerator_sum)
+   
+    # changing 0 into nan in order to avoid ZerodivisionError
+    den = pd.DataFrame(reshaped_divisor)
+    den = den.where(den != 0.000000, np.nan)
+
+    # index value computation
+    index_value = np.array(num)/np.array(den)
+    
+    # stacking together reference_date array and the insex values
+    index_value = np.column_stack((reference_date_array, np.array(index_value)))
+
+    # put the data into a dataframe
+    header = ['Time', 'Index Value']
+    index_df = pd.DataFrame(index_value, columns = header)
+
+    return index_df
 
 
 ##################################################################################################

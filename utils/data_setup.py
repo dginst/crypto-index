@@ -87,14 +87,10 @@ def timestamp_to_str(date_array):
 
 def timestamp_to_human(ts_array):
 
-    standard_date = np.array([])
-    for date in ts_array:
+    human_date = [datetime.fromtimestamp(int(date)) for date in ts_array]
+    human_date = [date.strftime('%d-%m-%Y') for date in human_date]
 
-        standard = datetime.fromtimestamp(int(date))
-        standard = standard.strftime('%d-%m-%Y')
-        standard_date = np.append(standard_date, standard)
-
-    return standard_date
+    return human_date
 
 # function that creates a date array in timestamp format adding the choosen lag (1 day on default)
 # the input start and stop has to be timestamp date in INTEGER format
