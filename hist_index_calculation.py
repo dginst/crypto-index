@@ -21,7 +21,7 @@ import utils.data_download as data_download
 
 pair_array = ['gbp', 'usd', 'cad', 'jpy', 'eur']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur'] 
-Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC'] 
+Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
 # crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
 Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 # exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
@@ -38,17 +38,17 @@ db_name = "index"
 collection_converted_data = "converted_data"
 
 # drop the pre-existing collection (if there is one)
-db.index_weights.drop()
-db.index_level.drop()
 db.crypto_price.drop()
 db.crypto_volume.drop()
 db.crypto_price_return.drop()
-db.EMWA_index.drop()
-db.logic_matrix_one.drop()
-db.logic_matrix_two.drop()
-db.EMWA_logic_checked.drop()
+db.index_weights.drop()
+db.index_level.drop()
+db.index_EMWA.drop()
+db.index_logic_matrix_one.drop()
+db.index_logic_matrix_two.drop()
+db.index_EMWA_logic_checked.drop()
 
-## creating some the empty collections within the database index
+# creating some the empty collections within the database index
 
 # collection for index weights
 db.index_weights.create_index([ ("id", -1) ])
@@ -66,43 +66,47 @@ collection_volume = db.crypto_volume
 db.crypto_price_return.create_index([ ("id", -1) ])
 collection_price_ret = db.crypto_price_return
 # collection for EMWA
-db.EMWA_index.create_index([ ("id", -1) ])
-collection_EMWA = db.EMWA_index
+db.index_EMWA.create_index([ ("id", -1) ])
+collection_EMWA = db.index_EMWA
 # collection for first logic matrix
-db.logic_matrix_one.create_index([ ("id", -1) ])
-collection_logic_one = db.logic_matrix_one
+db.index_logic_matrix_one.create_index([ ("id", -1) ])
+collection_logic_one = db.index_logic_matrix_one
 # collection for second logic matrix
-db.logic_matrix_two.create_index([ ("id", -1) ])
-collection_logic_two = db.logic_matrix_two
+db.index_logic_matrix_two.create_index([ ("id", -1) ])
+collection_logic_two = db.index_logic_matrix_two
 # collection for EMWA double checked with both logic matrix
-db.EMWA_logic_checked.create_index([ ("id", -1) ])
-collection_EMWA_check = db.EMWA_logic_checked
+db.index_EMWA_logic_checked.create_index([ ("id", -1) ])
+collection_EMWA_check = db.index_EMWA_logic_checked
 
 
 
 ##################################### DATE SETTINGS ###################################################
 
-# we choose a start date that ensures the presence of multiple quarter period and avoids some problem 
-# related to older date that has to be tested more deeply
+# define the start date as MM-DD-YYYY
 start_date = '01-01-2016'
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
 today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
 
+# define end date as as MM-DD-YYYY
+end_date = datetime.now().strftime('%m-%d-%Y')
+# or
+# end_date = 
+
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
-reference_date_vector = data_setup.timestamp_gen(start_date)
+reference_date_vector = data_setup.timestamp_gen(start_date, end_date)
 
 # define all the useful arrays containing the rebalance start date, stop date, board meeting date 
-# we use the complete set of date (from 01-01-2016) to today, the code will take care of that
 rebalance_start_date = calc.start_q('01-01-2016')
+rebalance_start_date = calc.start_q_fix(rebalance_start_date) ####
 rebalance_stop_date = calc.stop_q(rebalance_start_date)
 board_date = calc.board_meeting_day()
 board_date_eve = calc.day_before_board()
+next_rebalance_date = calc.next_start()
 
-print(rebalance_start_date)
-print(rebalance_stop_date)
+
 # call the function that creates a object containing the couple of quarterly start-stop date
 quarterly_date = calc.quarterly_period()
 
@@ -169,10 +173,6 @@ for CryptoA in Crypto_Asset:
 
                 pass
 
-        # print(Ccy_Pair_Volume)
-        # print(Ccy_Pair_Volume.size)
-        # print(reference_date_vector.size)
-        # print(Ccy_Pair_PriceVolume)
         # computing the volume weighted average price of the single exchange
         if Ccy_Pair_Volume.size != 0 and Ccy_Pair_Volume.size > reference_date_vector.size:
             
@@ -189,7 +189,7 @@ for CryptoA in Crypto_Asset:
         elif Ccy_Pair_Volume.size != 0 and Ccy_Pair_Volume.size == reference_date_vector.size:
 
             np.seterr(all = None, divide = 'warn')
-            Ccy_Pair_Price = np.divide(Ccy_Pair_PriceVolume, Ccy_Pair_Volume, out=np.zeros_like(Ccy_Pair_Volume), where = Ccy_Pair_Volume != 0.0)
+            Ccy_Pair_Price = np.divide(Ccy_Pair_PriceVolume, Ccy_Pair_Volume, out = np.zeros_like(Ccy_Pair_Volume), where = Ccy_Pair_Volume != 0.0)
             Ccy_Pair_Price = np.nan_to_num(Ccy_Pair_Price)
             Ccy_Pair_PxV = Ccy_Pair_Price * Ccy_Pair_Volume
 
@@ -286,17 +286,13 @@ Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns = time_header)
 Crypto_Asset_Volume['Time'] = reference_date_vector
 price_ret['Time'] = reference_date_vector
 
-
-
 # turn the first logic matrix into a dataframe and add the 'Time' column
 # containg the stop_date of each quarter as in "rebalance_stop_date" array
 # the 'Time' column does not take into account the last value because it refers to a 
 # period that has not been yet calculated (and will be this way until today == new quarter start_date)
 first_logic_matrix = pd.DataFrame(logic_matrix_one, columns = Crypto_Asset)
-first_logic_matrix['Time'] = rebalance_stop_date[0:len(rebalance_stop_date) - 1]
+first_logic_matrix['Time'] = rebalance_stop_date[0:len(rebalance_stop_date)]
 
-print(first_logic_matrix)
-print( data_setup.timestamp_to_human(first_logic_matrix['Time']))
 
 # computing the Exponential Moving Weighted Average of the selected period
 emwa_df = calc.emwa_crypto_volume(Crypto_Asset_Volume, Crypto_Asset, reference_date_vector, time_column = 'N')
@@ -310,25 +306,35 @@ double_checked_EMWA = calc.emwa_second_logic_check(first_logic_matrix, second_lo
 # computing the Weights that each CryptoAsset should have starting from each new quarter
 # every weigfhts is computed in the period that goes from present quarter start_date to 
 # present quarter board meeting date eve
-weights = calc.quarter_weights(double_checked_EMWA, board_date_eve, Crypto_Asset)
+weights_for_board = calc.quarter_weights(double_checked_EMWA, board_date_eve[1:], Crypto_Asset)
 
-#syntethic = calc.quarterly_synt_matrix(Crypto_Asset_Prices, weights, reference_date_vector, board_date_eve, Crypto_Asset)
+# compute the syntethic matrix and the rekative syntethic matrix
+syntethic = calc.quarterly_synt_matrix(Crypto_Asset_Prices, weights_for_board, reference_date_vector, board_date_eve, Crypto_Asset)
+syntethic_relative_matrix = calc.relative_syntethic_matrix(syntethic, Crypto_Asset)
 
-#syntethic_rel = calc.relative_syntethic_matrix(syntethic, Crypto_Asset)
+# changing the "Time" column of the second logic matrix using the rebalance date
+second_logic_matrix['Time'] = rebalance_start_date
 
+# changing the "time" column of the weights in order to disply the application start date of each row
+weights_for_period = weights_for_board 
+weights_for_period['Time'] = next_rebalance_date[1:]
+
+divisor_array = calc.divisor_adjustment(Crypto_Asset_Prices, weights_for_period, second_logic_matrix, Crypto_Asset, reference_date_vector)
+
+index_values = calc.index_level_calc(Crypto_Asset_Prices, syntethic_relative_matrix, divisor_array, reference_date_vector)
 #pd.set_option('display.max_rows', None)
 
 ####################################### MONGO DB UPLOADS ############################################
 # creating the array with human readable Date
-human_date = data_setup.timestamp_to_human(Crypto_Asset_Prices['Time'])
-human_date_reb = data_setup.timestamp_to_human(weights['Time'])
-print(human_date_reb)
+human_date = data_setup.timestamp_to_human(reference_date_vector)
+
 
 # put the "weights" dataframe on MongoDB
-weights['Date'] = human_date_reb
-weights = weights[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC', 'Time']]
-up_weights = weights.drop(columns = ['Time'])
-up_weights = up_weights.to_dict(orient = 'records')  
+weight_human_date = data_setup.timestamp_to_human(weights_for_board['Time'])
+weights_for_board['Date'] = weight_human_date
+weights_for_board = weights_for_board[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC', 'Time']]
+up_weights = weights_for_board.drop(columns = ['Time'])
+up_weights = up_weights.to_dict(orient = 'records')     
 collection_weights.insert_many(up_weights)
 
 # put the "price_ret" dataframe on MongoDB
@@ -361,9 +367,16 @@ collection_EMWA.insert_many(emwa_df_up)
 # put the double checked EMWA on MongoDB
 double_checked_EMWA['Date'] = human_date
 double_EMWA_up = double_checked_EMWA.drop(columns = 'Time')
-double_EMWA_up = double_checked_EMWA[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+double_EMWA_up = double_EMWA_up[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
 double_EMWA_up = double_EMWA_up.to_dict(orient = 'records')
 collection_EMWA_check.insert_many(double_EMWA_up)
+
+# put the index level on MongoDB
+index_values['Date'] = human_date
+index_val_up = index_values.drop(columns = 'Time')
+index_val_up = index_val_up[['Date', 'Index Value']]
+index_val_up = index_val_up.to_dict(orient = 'records')
+collection_index_level .insert_many(index_val_up)
 
 # # put the first logic matrix on MongoDB
 # first_logic_matrix['Date'] = human_date_reb
@@ -372,8 +385,6 @@ collection_EMWA_check.insert_many(double_EMWA_up)
 # collection_logic_one.insert_many(first_up)
 
 # put the second logic matrix on MongoDB
-
-
 
 
 ######## some printing ##########
@@ -385,15 +396,16 @@ print('Price Returns')
 print(price_ret)
 print('EMWA DataFrame')
 print(emwa_df)
-print('WEIGHTS')
-print(weights)
-print('Syntethic matrix')
-# print(syntethic)
-# print(syntethic_rel)
+print('WEIGHTS for board')
+print(weights_for_board)
+print('Syntethic relative matrix')
+print(syntethic_relative_matrix)
+print('index value')
+print(index_values)
 #################################
 
 
-#initial_divisor = calc.initial_divisor(Crypto_Asset_Prices, weights, Crypto_Asset, '01-01-2019')
+
 
 
 
