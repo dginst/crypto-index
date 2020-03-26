@@ -4,7 +4,7 @@ from datetime import *
 import pandas as pd
 import numpy as np
 from time import sleep
-import mongoconn as mongo
+
 from pymongo import MongoClient
 
 # this file cointains all the API calls for each pricing source. Every script call the api,
@@ -173,10 +173,11 @@ def coinbase_ticker( Crypto, Fiat, collection):
             
             entrypoint = 'https://api.pro.coinbase.com/products'
             key = '/' + asset + '-'+ fiat +'/ticker'
+            print(key)
             request_url = entrypoint + key
             response = requests.get(request_url)
             response = response.json()
-            
+            print(response)
             try:
 
                 for i in range(len(response)):
@@ -409,11 +410,11 @@ def Poloniex_API(Start_Date, End_Date, Crypto, Fiat, period = '86400'):
 
 ###################################################### poloniex_ticker
 
-def poloniex_ticker (Crypto, stablecurr, collection):
+def poloniex_ticker (Crypto, Fiat, collection):
     
     for asset in Crypto:
         
-        for stbc in stablecurr:
+        for stbc in Fiat:
 
             asset = asset.upper()
             stbc = stbc.upper()
@@ -422,10 +423,10 @@ def poloniex_ticker (Crypto, stablecurr, collection):
             request_url = entrypoint
             response = requests.get(request_url)
             response = response.json()
-            response_short = response[pair]
+            
 
             try:
-
+                response_short = response[pair]
                 r = response_short
                 pair = asset + stbc
                 time = today_ts()
@@ -726,10 +727,10 @@ def bitstamp_ticker(Crypto, Fiat, collection):
 
             response = requests.get(request_url)
 
-            response = response.json()
+            
 
             try:
-                
+                response = response.json()
                 r = response
                 pair = asset.upper() + fiat.upper()
                 time = today_ts()
