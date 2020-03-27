@@ -15,8 +15,8 @@ collection_itbittraw = db.itbittraw
 collection_poloniextraw = db.poloniextraw
 collection_krakentraw = db.krakentraw
 
-assets = [['BTC'], ['ETH'],['XRP']]
-fiat = [['EUR'], ['USD'], ['CAD'], ['USDT']]
+assets = [['BTC'], ['ETH'],['XRP'],['LTC'],['BCH'],['XLM'], ['ADA'], ['ZEC'], ['XMR'], ['EOS'], ['BSV'], ['ETC']]
+fiat = [['EUR'], ['USD'], ['CAD'], ['USDT'], ['GBP'], ['USDC'],['JPY']]
 
 for Crypto in assets:
     for Fiat in fiat:
