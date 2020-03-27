@@ -35,7 +35,7 @@ db = connection.index
 
 # define database name and collection name
 db_name = "index"
-collection_converted_data = "converted_data"
+collection_converted_data = "CW_final_data"
 
 # drop the pre-existing collection (if there is one)
 db.crypto_price.drop()
@@ -47,6 +47,8 @@ db.index_EMWA.drop()
 db.index_logic_matrix_one.drop()
 db.index_logic_matrix_two.drop()
 db.index_EMWA_logic_checked.drop()
+db.index_divisor.drop()
+db.index_divisor_reshaped.drop()
 
 # creating some the empty collections within the database index
 
@@ -77,6 +79,13 @@ collection_logic_two = db.index_logic_matrix_two
 # collection for EMWA double checked with both logic matrix
 db.index_EMWA_logic_checked.create_index([ ("id", -1) ])
 collection_EMWA_check = db.index_EMWA_logic_checked
+# collection for the divisor array
+db.index_divisor.create_index([ ("id", -1) ])
+collection_divisor = db.index_divisor
+# collection for the reshaped divisor array
+db.index_divisor_reshaped.create_index([ ("id", -1) ])
+collection_divisor_reshaped = db.index_divisor_reshaped
+
 
 
 
@@ -321,6 +330,8 @@ weights_for_period['Time'] = next_rebalance_date[1:]
 
 divisor_array = calc.divisor_adjustment(Crypto_Asset_Prices, weights_for_period, second_logic_matrix, Crypto_Asset, reference_date_vector)
 
+reshaped_divisor = calc.divisor_reshape(divisor_array, reference_date_vector)
+
 index_values = calc.index_level_calc(Crypto_Asset_Prices, syntethic_relative_matrix, divisor_array, reference_date_vector)
 #pd.set_option('display.max_rows', None)
 
@@ -376,16 +387,39 @@ index_values['Date'] = human_date
 index_val_up = index_values.drop(columns = 'Time')
 index_val_up = index_val_up[['Date', 'Index Value']]
 index_val_up = index_val_up.to_dict(orient = 'records')
-collection_index_level .insert_many(index_val_up)
+collection_index_level.insert_many(index_val_up)
 
-# # put the first logic matrix on MongoDB
-# first_logic_matrix['Date'] = human_date_reb
-# first_up = first_logic_matrix.drop(columns = 'Time')
-# first_up = first_up.to_dict(orient = 'records') 
-# collection_logic_one.insert_many(first_up)
+# put the divisor array on MongoDB
+divisor_date = data_setup.timestamp_to_human(divisor_array['Time'])
+divisor_array['Date'] = divisor_date
+divisor_up = divisor_array.drop(columns = 'Time')
+divisor_up = divisor_up[['Date', 'Divisor Value']]
+divisor_up = divisor_up.to_dict(orient = 'records')
+collection_divisor.insert_many(divisor_up)
+
+# put the reshaped divisor array on MongoDB
+reshaped_divisor_date = data_setup.timestamp_to_human(reshaped_divisor['Time'])
+reshaped_divisor['Date'] = reshaped_divisor_date
+reshaped_divisor_up = reshaped_divisor.drop(columns = 'Time')
+reshaped_divisor_up = reshaped_divisor_up[['Date', 'Divisor Value']]
+reshaped_divisor_up = reshaped_divisor_up.to_dict(orient = 'records')
+collection_divisor_reshaped.insert_many(reshaped_divisor_up)
+
+# put the first logic matrix on MongoDB
+first_date = data_setup.timestamp_to_human(first_logic_matrix['Time'])
+first_logic_matrix['Date'] = first_date
+first_up = first_logic_matrix.drop(columns = 'Time')
+first_up = first_up[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+first_up = first_up.to_dict(orient = 'records') 
+collection_logic_one.insert_many(first_up)
 
 # put the second logic matrix on MongoDB
-
+second_date = data_setup.timestamp_to_human(second_logic_matrix['Time'])
+second_logic_matrix['Date'] = second_date
+second_up = second_logic_matrix.drop(columns = 'Time')
+second_up = second_up[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+second_up = second_up.to_dict(orient = 'records') 
+collection_logic_two.insert_many(second_up)
 
 ######## some printing ##########
 print('Crypto_Asset_Prices')

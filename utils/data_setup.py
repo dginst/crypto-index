@@ -519,6 +519,42 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
     return variation_matrix, volume_matrix
 
 
+
+
+def fix_zero_value(matrix):
+
+    val_sum = 0
+
+    for date in matrix['Time']:
+
+        value_to_check = np.array(matrix.loc[matrix.Time == date,'Crypto Volume'])
+        price_check = np.array(matrix.loc[matrix.Time == date,'Close Price'])
+
+        if val_sum != 0 and int(value_to_check) == 0:
+
+            if int(price_check) == 0:
+                
+                previous_price = np.array(matrix.loc[matrix.Time == str(int(date) - 86400),'Close Price'])
+                print(previous_price)
+                matrix.loc[matrix.Time == date, 'Close Price'] = previous_price
+
+            previous_c_vol = np.array(matrix.loc[matrix.Time == str(int(date) - 86400), 'Crypto Volume'])
+            previous_p_vol =  np.array(matrix.loc[matrix.Time == str(int(date) - 86400), 'Pair Volume'])
+            matrix.loc[matrix.Time == date, 'Crypto Volume'] = previous_c_vol
+            matrix.loc[matrix.Time == date, 'Pair Volume'] = previous_p_vol
+
+            
+        val_sum = val_sum + value_to_check
+    
+    return matrix
+    
+
+
+
+
+
+
+
 ###############################################################################################
 
 ############################ DAILY AND HISTORICAL ECB RATES SETUP FUNCTIONS ###################
