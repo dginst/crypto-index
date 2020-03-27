@@ -186,6 +186,7 @@ def coinbase_ticker( Crypto, Fiat, collection):
                     pair = asset + fiat
                     time = today_ts()
                     date = datetime.now()
+                    ticker_time = r['time']
                     price = r['price']
                     volume = r['volume'] 
                     size = r['size']
@@ -193,7 +194,7 @@ def coinbase_ticker( Crypto, Fiat, collection):
                     ask = r['ask']
                     traded_id = r['trade_id']
 
-                    rawdata = {'pair' : pair, 'time': time, 'date' : date, 'price' : price, 'volume' : volume, 
+                    rawdata = {'pair' : pair, 'time': time, 'date' : date, 'ticker_time' : ticker_time, 'price' : price, 'volume' : volume, 
                                 'size': size, 'bid': bid, 'ask' : ask, 'traded_id' : traded_id}
 
                     
@@ -266,35 +267,72 @@ def kraken_ticker (Crypto, Fiat, collection):
             
             asset = asset.lower()
             fiat = fiat.lower()
-            entrypoint = 'https://api.kraken.com/0/public/Ticker?pair='
-            key = asset+fiat
-            request_url = entrypoint + key
 
-            response = requests.get(request_url)
+            if asset = 'btc':
 
-            response = response.json()
+                asset = 'xbt'
+                entrypoint = 'https://api.kraken.com/0/public/Ticker?pair='
+                key = asset+fiat
+                request_url = entrypoint + key
 
-            try:
-                asset = asset.upper()
-                fiat = fiat.upper()
-                pair = 'X' + asset + 'Z' + fiat
-                r = response['result'][pair]
+                response = requests.get(request_url)
+
+                response = response.json()
+
+                try:
+                    asset = asset.upper()
+                    fiat = fiat.upper()
+                    pair = 'X' + asset + 'Z' + fiat
+                    r = response['result'][pair]
+                    
+                    pair = asset + fiat
+                    time = today_ts()
+                    date = datetime.now()
+                    price = r['c'][0]
+                    crypto_volume = r['v'][1]
+
+                    rawdata = {'pair' : pair, 'time': time, 'date' : date, 'price' : price, 
+                                'crypto_volume' : crypto_volume}
+
+                    collection.insert_one(rawdata)
+
+                except:
+                    print('none_kraken')
+
+            else:
+
+                asset = asset
                 
-                pair = asset + fiat
-                time = today_ts()
-                date = datetime.now()
-                price = r['c'][0]
-                crypto_volume = r['v'][1]
+                entrypoint = 'https://api.kraken.com/0/public/Ticker?pair='
+                key = asset+fiat
+                request_url = entrypoint + key
 
-                rawdata = {'pair' : pair, 'time': time, 'date' : date, 'price' : price, 
-                            'crypto_volume' : crypto_volume}
+                response = requests.get(request_url)
 
-                collection.insert_one(rawdata)
+                response = response.json()
 
-            except:
-                print('none_kraken')
-                
-    return 
+                try:
+                    asset = asset.upper()
+                    fiat = fiat.upper()
+                    pair = 'X' + asset + 'Z' + fiat
+                    r = response['result'][pair]
+                    
+                    pair = asset + fiat
+                    time = today_ts()
+                    date = datetime.now()
+                    ticker_time = r[]
+                    price = r['c'][0]
+                    crypto_volume = r['v'][1]
+
+                    rawdata = {'pair' : pair, 'time': time, 'date' : date, 'price' : price, 
+                                'crypto_volume' : crypto_volume}
+
+                    collection.insert_one(rawdata)
+
+                except:
+                    print('none_kraken')
+                    
+        return 
 
 
 
@@ -331,6 +369,7 @@ def bittrex_ticker (Crypto, Fiat, collection):
                 pair = asset.upper() + fiat.upper()
                 time = today_ts()
                 date = datetime.now()
+                ticker_time = r['Timestamp']
                 price = r['Last']
                 volume = r['Volume']
                 basevolume = r['BaseVolume'] 
@@ -342,7 +381,7 @@ def bittrex_ticker (Crypto, Fiat, collection):
                 opensellorders = r['OpenSellOrders']
                 prevday = r['PrevDay']
 
-                rawdata = {'pair' : pair, 'time':time, 'date' : date, 'price':price, 'volume': volume, 
+                rawdata = {'pair' : pair, 'time':time, 'date' : date, 'ticker_time' : ticker_time, 'price':price, 'volume': volume, 
                             'basevolume': basevolume,  'high' : high, 'low': low, 
                             'bid': bid, 'ask': ask, 'openbuyorders' : openbuyorders,
                             'opensellorders' : opensellorders, 'prevday' : prevday }
@@ -595,6 +634,7 @@ def bitflyer_ticker(Crypto, Fiat, collection):
                 pair = asset + fiat
                 time = today_ts()
                 date = datetime.now()
+                ticker_time = r['timestamp']
                 price = r['ltp']
                 volume = r['volume']
                 volume_by_product = r['volume_by_product'] 
@@ -606,7 +646,7 @@ def bitflyer_ticker(Crypto, Fiat, collection):
 
                 
 
-                rawdata = {'pair' : pair, 'time':time, 'date' : date, 'price':price, 'volume_by_product': volume_by_product, 
+                rawdata = {'pair' : pair, 'time':time, 'date' : date, 'ticker_time' : ticker_time, 'price':price, 'volume_by_product': volume_by_product, 
                             'best_bid': best_bid,  'best_ask' : best_ask, 'best_bid_size': best_bid_size, 
                             'best_ask_size': best_ask_size, 'total_bid_depth': total_bid_depth}
 
@@ -688,13 +728,14 @@ def gemini_ticker(Crypto, Fiat, collection):
                 pair = asset + fiat
                 time = today_ts()
                 date = datetime.now()
+                ticker_time = r['volume']['timestamp']
                 price = r['last']
                 asset = asset.upper()
                 volume = r['volume'][asset]
                 bid = r['bid']
                 ask = r['ask']
                
-                rawdata = {'pair' : pair, 'time': time, 'date' : date, 'price': price, 'volume': volume, 'bid': bid,
+                rawdata = {'pair' : pair, 'time': time, 'date' : date, 'ticker_time' : ticker_time, 'price': price, 'volume': volume, 'bid': bid,
                             'ask' : ask}
             
                 collection.insert_one(rawdata)
@@ -743,6 +784,7 @@ def bitstamp_ticker(Crypto, Fiat, collection):
                 pair = asset.upper() + fiat.upper()
                 time = today_ts()
                 date = datetime.now()
+                ticker_time = r['timestamp']
                 price = r['last']
                 volume = r['volume']
                 high = r['high'] 
@@ -753,7 +795,7 @@ def bitstamp_ticker(Crypto, Fiat, collection):
                 Open = r['open']
                 
 
-                rawdata = {'pair' : pair, 'time':time, 'date' : date, 'price':price, 'volume':volume, 'high':high,
+                rawdata = {'pair' : pair, 'time':time, 'date' : date, 'ticker_time' : ticker_time, 'price':price, 'volume':volume, 'high':high,
                              'low' : low, 'bid': bid, 'ask':ask, 'vwap': vwap, 'open' : Open}
 
                 
