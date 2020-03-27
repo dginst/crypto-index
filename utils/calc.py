@@ -440,7 +440,8 @@ def first_logic_matrix_reshape(first_logic_matrix, reference_date_array, Crypto_
 def smoothing_factor(lambda_smooth = 0.94, moving_average_period = 90):
 
     # creates a vector of number between 0 and 89 
-    num_vector =  np.array([range(moving_average_period)])    
+    num_vector =  np.array([range(moving_average_period)]) 
+    num_vector = -np.sort(-num_vector)
 
     smooth_factor_array = np.array([])
     for index in num_vector:
@@ -855,7 +856,7 @@ def divisor_adjustment(Crypto_Price_Matrix, Weights, second_logic_matrix, Crypto
             numer = np.array(current_logic_row * today_price * current_weights)
             denom = np.array(previous_logic_row * yesterday_price * previous_weights)
 
-            new_divisor = numer.sum() / denom.sum()
+            new_divisor = (numer.sum() / denom.sum()) * old_divisor
 
             divisor_array = np.append(divisor_array, new_divisor)
         
