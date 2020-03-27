@@ -185,6 +185,7 @@ def coinbase_ticker( Crypto, Fiat, collection):
                     r = response
                     pair = asset + fiat
                     time = today_ts()
+                    date = datetime.now()
                     price = r['price']
                     volume = r['volume'] 
                     size = r['size']
@@ -192,8 +193,8 @@ def coinbase_ticker( Crypto, Fiat, collection):
                     ask = r['ask']
                     traded_id = r['trade_id']
 
-                    rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume':volume, 
-                                'size':size, 'bid': bid, 'ask':ask, 'traded_id': traded_id}
+                    rawdata = {'pair' : pair, 'time': time, 'date' : date, 'price' : price, 'volume' : volume, 
+                                'size': size, 'bid': bid, 'ask' : ask, 'traded_id' : traded_id}
 
                     
                     collection.insert_one(rawdata)
@@ -281,11 +282,12 @@ def kraken_ticker (Crypto, Fiat, collection):
                 
                 pair = asset + fiat
                 time = today_ts()
+                date = datetime.now()
                 price = r['c'][0]
                 crypto_volume = r['v'][1]
 
-                rawdata = {'pair' : pair, 'time':time, 'price':price, 
-                            'crypto_volume': crypto_volume}
+                rawdata = {'pair' : pair, 'time': time, 'date' : date, 'price' : price, 
+                            'crypto_volume' : crypto_volume}
 
                 collection.insert_one(rawdata)
 
@@ -328,6 +330,7 @@ def bittrex_ticker (Crypto, Fiat, collection):
                 r = response["result"][0]
                 pair = asset.upper() + fiat.upper()
                 time = today_ts()
+                date = datetime.now()
                 price = r['Last']
                 volume = r['Volume']
                 basevolume = r['BaseVolume'] 
@@ -339,7 +342,7 @@ def bittrex_ticker (Crypto, Fiat, collection):
                 opensellorders = r['OpenSellOrders']
                 prevday = r['PrevDay']
 
-                rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume': volume, 
+                rawdata = {'pair' : pair, 'time':time, 'date' : date, 'price':price, 'volume': volume, 
                             'basevolume': basevolume,  'high' : high, 'low': low, 
                             'bid': bid, 'ask': ask, 'openbuyorders' : openbuyorders,
                             'opensellorders' : opensellorders, 'prevday' : prevday }
@@ -430,6 +433,7 @@ def poloniex_ticker (Crypto, Fiat, collection):
                 r = response_short
                 pair = asset + stbc
                 time = today_ts()
+                date = datetime.now()
                 ID = r['id']
                 price = r['last']
                 lowestAsk = r['lowestAsk'] 
@@ -441,7 +445,7 @@ def poloniex_ticker (Crypto, Fiat, collection):
                 high24hr = r['high24hr']
                 low24hr = r['low24hr']
 
-                rawdata = {'pair' : pair, 'time': time, 'price': price, 'lowestAsk': lowestAsk,
+                rawdata = {'pair' : pair, 'time': time, 'date': date, 'price': price, 'lowestAsk': lowestAsk,
                             'highestBid': highestBid, 'percentChange' : percentChange,
                             'base_volume': base_volume, 'crypto_volume' : crypto_volume,'isFrozen' : isFrozen,
                             'high24hr' : high24hr, 'low24hr' : low24hr }
@@ -498,6 +502,7 @@ def itbit_ticker (Crypto, Fiat, collection):
                         asset = 'BTC'
                         pair = asset + fiat
                         time = today_ts()
+                        date = datetime.now()
                         price = r['lastPrice']
                         volume = r['volume24h']
                         volumeToday = r['volumeToday'] 
@@ -510,9 +515,9 @@ def itbit_ticker (Crypto, Fiat, collection):
                         vwap24h = r['vwap24h']
                     
 
-                        rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume': volume, 
-                                    'volumeToday': volumeToday,  'high24h' : high24h, 'low24h': low24h, 
-                                    'highToday': highToday, 'lowToday': lowToday, 'openToday' : openToday,
+                        rawdata = {'pair' : pair, 'time':time, 'date' : date, 'price' : price, 'volume' : volume, 
+                                    'volumeToday' : volumeToday,  'high24h' : high24h, 'low24h': low24h, 
+                                    'highToday' : highToday, 'lowToday' : lowToday, 'openToday' : openToday,
                                     'vwapToday' : vwapToday, 'vwap24h' : vwap24h }
 
 
@@ -529,6 +534,7 @@ def itbit_ticker (Crypto, Fiat, collection):
                         r = response 
                         pair = asset + fiat
                         time = today_ts()
+                        date = datetime.now()
                         price = r['lastPrice']
                         volume = r['volume24h']
                         volumeToday = r['volumeToday'] 
@@ -541,7 +547,7 @@ def itbit_ticker (Crypto, Fiat, collection):
                         vwap24h = r['vwap24h']
                         
 
-                        rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume': volume, 
+                        rawdata = {'pair' : pair, 'time' : time, 'date' : date, 'price' : price, 'volume' : volume, 
                                     'volumeToday': volumeToday,  'high24h' : high24h, 'low24h': low24h, 
                                     'highToday': highToday, 'lowToday': lowToday, 'openToday' : openToday,
                                     'vwapToday' : vwapToday, 'vwap24h' : vwap24h }
@@ -588,6 +594,7 @@ def bitflyer_ticker(Crypto, Fiat, collection):
                 r = response
                 pair = asset + fiat
                 time = today_ts()
+                date = datetime.now()
                 price = r['ltp']
                 volume = r['volume']
                 volume_by_product = r['volume_by_product'] 
@@ -599,7 +606,7 @@ def bitflyer_ticker(Crypto, Fiat, collection):
 
                 
 
-                rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume_by_product': volume_by_product, 
+                rawdata = {'pair' : pair, 'time':time, 'date' : date, 'price':price, 'volume_by_product': volume_by_product, 
                             'best_bid': best_bid,  'best_ask' : best_ask, 'best_bid_size': best_bid_size, 
                             'best_ask_size': best_ask_size, 'total_bid_depth': total_bid_depth}
 
@@ -680,13 +687,14 @@ def gemini_ticker(Crypto, Fiat, collection):
                 r = response
                 pair = asset + fiat
                 time = today_ts()
+                date = datetime.now()
                 price = r['last']
                 asset = asset.upper()
                 volume = r['volume'][asset]
                 bid = r['bid']
                 ask = r['ask']
                
-                rawdata = {'pair' : pair, 'time': time, 'price': price, 'volume': volume, 'bid': bid,
+                rawdata = {'pair' : pair, 'time': time, 'date' : date, 'price': price, 'volume': volume, 'bid': bid,
                             'ask' : ask}
             
                 collection.insert_one(rawdata)
@@ -734,6 +742,7 @@ def bitstamp_ticker(Crypto, Fiat, collection):
                 r = response
                 pair = asset.upper() + fiat.upper()
                 time = today_ts()
+                date = datetime.now()
                 price = r['last']
                 volume = r['volume']
                 high = r['high'] 
@@ -744,7 +753,7 @@ def bitstamp_ticker(Crypto, Fiat, collection):
                 Open = r['open']
                 
 
-                rawdata = {'pair' : pair, 'time':time, 'price':price, 'volume':volume, 'high':high,
+                rawdata = {'pair' : pair, 'time':time, 'date' : date, 'price':price, 'volume':volume, 'high':high,
                              'low' : low, 'bid': bid, 'ask':ask, 'vwap': vwap, 'open' : Open}
 
                 
