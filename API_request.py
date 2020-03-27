@@ -268,7 +268,7 @@ def kraken_ticker (Crypto, Fiat, collection):
             asset = asset.lower()
             fiat = fiat.lower()
 
-            if asset = 'btc':
+            if asset == 'btc':
 
                 asset = 'xbt'
                 entrypoint = 'https://api.kraken.com/0/public/Ticker?pair='
@@ -320,7 +320,6 @@ def kraken_ticker (Crypto, Fiat, collection):
                     pair = asset + fiat
                     time = today_ts()
                     date = datetime.now()
-                    ticker_time = r[]
                     price = r['c'][0]
                     crypto_volume = r['v'][1]
 
