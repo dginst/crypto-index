@@ -163,46 +163,41 @@ def Coinbase_API(Crypto, Fiat, Start_Date, End_Date = None, granularity = '86400
 
 def coinbase_ticker( Crypto, Fiat, collection):
 
+    asset = Crypto.upper()
+    fiat = Fiat.upper()
     
-    for asset in Crypto:
+    entrypoint = 'https://api.pro.coinbase.com/products'
+    key = '/' + asset + '-'+ fiat +'/ticker'
+    print(key)
+    request_url = entrypoint + key
+    response = requests.get(request_url)
+    response = response.json()
+    print(response)
+    try:
 
-        for fiat in Fiat:
-
-            asset = asset.upper()
-            fiat = fiat.upper()
+        for i in range(len(response)):
             
-            entrypoint = 'https://api.pro.coinbase.com/products'
-            key = '/' + asset + '-'+ fiat +'/ticker'
-            print(key)
-            request_url = entrypoint + key
-            response = requests.get(request_url)
-            response = response.json()
-            print(response)
-            try:
+            r = response
+            pair = asset + fiat
+            time = today_ts()
+            date = datetime.now()
+            ticker_time = r['time']
+            price = r['price']
+            volume = r['volume'] 
+            size = r['size']
+            bid = r['bid']
+            ask = r['ask']
+            traded_id = r['trade_id']
 
-                for i in range(len(response)):
-                    
-                    r = response
-                    pair = asset + fiat
-                    time = today_ts()
-                    date = datetime.now()
-                    ticker_time = r['time']
-                    price = r['price']
-                    volume = r['volume'] 
-                    size = r['size']
-                    bid = r['bid']
-                    ask = r['ask']
-                    traded_id = r['trade_id']
+            rawdata = {'pair' : pair, 'time': time, 'date' : date, 'ticker_time' : ticker_time, 'price' : price, 'volume' : volume, 
+                        'size': size, 'bid': bid, 'ask' : ask, 'traded_id' : traded_id}
 
-                    rawdata = {'pair' : pair, 'time': time, 'date' : date, 'ticker_time' : ticker_time, 'price' : price, 'volume' : volume, 
-                                'size': size, 'bid': bid, 'ask' : ask, 'traded_id' : traded_id}
-
-                    
-                    collection.insert_one(rawdata)
-
-            except:
-                print('none_coinbase')
             
+            collection.insert_one(rawdata)
+
+    except:
+        print('none_coinbase')
+    
      
 
     return 
@@ -258,79 +253,73 @@ def kraken_API(Start_Date, End_Date, Crypto, Fiat, interval  = '1440'):
 ########################################## kraken ticker
 
 def kraken_ticker (Crypto, Fiat, collection):
+    
+    asset = Crypto.lower()
+    fiat = Fiat.lower()
 
+    if asset == 'btc':
 
-    for asset in Crypto:
-        
+        asset = 'xbt'
+        entrypoint = 'https://api.kraken.com/0/public/Ticker?pair='
+        key = asset+fiat
+        request_url = entrypoint + key
 
-        for fiat in Fiat:
+        response = requests.get(request_url)
+
+        response = response.json()
+
+        try:
+            asset = asset.upper()
+            fiat = fiat.upper()
+            pair = 'X' + asset + 'Z' + fiat
+            r = response['result'][pair]
             
-            asset = asset.lower()
-            fiat = fiat.lower()
+            pair = asset + fiat
+            time = today_ts()
+            date = datetime.now()
+            price = r['c'][0]
+            crypto_volume = r['v'][1]
 
-            if asset == 'btc':
+            rawdata = {'pair' : pair, 'time': time, 'date' : date, 'price' : price, 
+                        'crypto_volume' : crypto_volume}
 
-                asset = 'xbt'
-                entrypoint = 'https://api.kraken.com/0/public/Ticker?pair='
-                key = asset+fiat
-                request_url = entrypoint + key
+            collection.insert_one(rawdata)
 
-                response = requests.get(request_url)
+        except:
+            print('none_kraken')
 
-                response = response.json()
+    else:
 
-                try:
-                    asset = asset.upper()
-                    fiat = fiat.upper()
-                    pair = 'X' + asset + 'Z' + fiat
-                    r = response['result'][pair]
-                    
-                    pair = asset + fiat
-                    time = today_ts()
-                    date = datetime.now()
-                    price = r['c'][0]
-                    crypto_volume = r['v'][1]
+        asset = asset
+        
+        entrypoint = 'https://api.kraken.com/0/public/Ticker?pair='
+        key = asset+fiat
+        request_url = entrypoint + key
 
-                    rawdata = {'pair' : pair, 'time': time, 'date' : date, 'price' : price, 
-                                'crypto_volume' : crypto_volume}
+        response = requests.get(request_url)
 
-                    collection.insert_one(rawdata)
+        response = response.json()
 
-                except:
-                    print('none_kraken')
+        try:
+            asset = asset.upper()
+            fiat = fiat.upper()
+            pair = 'X' + asset + 'Z' + fiat
+            r = response['result'][pair]
+            
+            pair = asset + fiat
+            time = today_ts()
+            date = datetime.now()
+            price = r['c'][0]
+            crypto_volume = r['v'][1]
 
-            else:
+            rawdata = {'pair' : pair, 'time': time, 'date' : date, 'price' : price, 
+                        'crypto_volume' : crypto_volume}
 
-                asset = asset
-                
-                entrypoint = 'https://api.kraken.com/0/public/Ticker?pair='
-                key = asset+fiat
-                request_url = entrypoint + key
+            collection.insert_one(rawdata)
 
-                response = requests.get(request_url)
-
-                response = response.json()
-
-                try:
-                    asset = asset.upper()
-                    fiat = fiat.upper()
-                    pair = 'X' + asset + 'Z' + fiat
-                    r = response['result'][pair]
-                    
-                    pair = asset + fiat
-                    time = today_ts()
-                    date = datetime.now()
-                    price = r['c'][0]
-                    crypto_volume = r['v'][1]
-
-                    rawdata = {'pair' : pair, 'time': time, 'date' : date, 'price' : price, 
-                                'crypto_volume' : crypto_volume}
-
-                    collection.insert_one(rawdata)
-
-                except:
-                    print('none_kraken')
-                    
+        except:
+            print('none_kraken')
+            
         return 
 
 
@@ -346,52 +335,47 @@ def kraken_ticker (Crypto, Fiat, collection):
 
 def bittrex_ticker (Crypto, Fiat, collection):
 
+    asset = Crypto.lower()
+    fiat = Fiat.lower()
+    entrypoint = 'https://api.bittrex.com/api/v1.1/public/getmarketsummary?market='
+    key = fiat + '-' + asset 
+    request_url = entrypoint + key
 
-    for asset in Crypto:
-        
-        for fiat in Fiat:
+    response = requests.get(request_url)
 
-            asset = asset.lower()
-            fiat = fiat.lower()
-            entrypoint = 'https://api.bittrex.com/api/v1.1/public/getmarketsummary?market='
-            key = fiat + '-' + asset 
-            request_url = entrypoint + key
-
-            response = requests.get(request_url)
-
-            response = response.json() 
-
-           
-            
-            try:
-                r = response["result"][0]
-                pair = asset.upper() + fiat.upper()
-                time = today_ts()
-                date = datetime.now()
-                ticker_time = r['Timestamp']
-                price = r['Last']
-                volume = r['Volume']
-                basevolume = r['BaseVolume'] 
-                high = r['High']
-                low = r['Low']
-                bid = r['Bid']
-                ask = r['Ask']
-                openbuyorders = r['OpenBuyOrders']
-                opensellorders = r['OpenSellOrders']
-                prevday = r['PrevDay']
-
-                rawdata = {'pair' : pair, 'time':time, 'date' : date, 'ticker_time' : ticker_time, 'price':price, 'volume': volume, 
-                            'basevolume': basevolume,  'high' : high, 'low': low, 
-                            'bid': bid, 'ask': ask, 'openbuyorders' : openbuyorders,
-                            'opensellorders' : opensellorders, 'prevday' : prevday }
+    response = response.json() 
 
 
-                collection.insert_one(rawdata)
 
-            except:
-                print('none_bittrex')
-            
-         
+    try:
+        r = response["result"][0]
+        pair = asset.upper() + fiat.upper()
+        time = today_ts()
+        date = datetime.now()
+        ticker_time = r['Timestamp']
+        price = r['Last']
+        volume = r['Volume']
+        basevolume = r['BaseVolume'] 
+        high = r['High']
+        low = r['Low']
+        bid = r['Bid']
+        ask = r['Ask']
+        openbuyorders = r['OpenBuyOrders']
+        opensellorders = r['OpenSellOrders']
+        prevday = r['PrevDay']
+
+        rawdata = {'pair' : pair, 'time':time, 'date' : date, 'ticker_time' : ticker_time, 'price':price, 'volume': volume, 
+                    'basevolume': basevolume,  'high' : high, 'low': low, 
+                    'bid': bid, 'ask': ask, 'openbuyorders' : openbuyorders,
+                    'opensellorders' : opensellorders, 'prevday' : prevday }
+
+
+        collection.insert_one(rawdata)
+
+    except:
+        print('none_bittrex')
+
+
 
     return 
 
@@ -453,47 +437,43 @@ def Poloniex_API(Start_Date, End_Date, Crypto, Fiat, period = '86400'):
 
 def poloniex_ticker (Crypto, Fiat, collection):
     
-    for asset in Crypto:
+    asset = Crypto.upper()
+    stbc = Fiat.upper()
+    pair = stbc+'_'+asset
+    entrypoint = 'https://poloniex.com/public?command=returnTicker'
+    request_url = entrypoint
+    response = requests.get(request_url)
+    response = response.json()
+    
+
+    try:
+        response_short = response[pair]
+        r = response_short
+        pair = asset + stbc
+        time = today_ts()
+        date = datetime.now()
+        ID = r['id']
+        price = r['last']
+        lowestAsk = r['lowestAsk'] 
+        highestBid = r['highestBid']
+        percentChange = r['percentChange']
+        base_volume = r['baseVolume']
+        crypto_volume = r['quoteVolume']
+        isFrozen =  r['isFrozen']
+        high24hr = r['high24hr']
+        low24hr = r['low24hr']
+
+        rawdata = {'pair' : pair, 'time': time, 'date': date, 'price': price, 'lowestAsk': lowestAsk,
+                    'highestBid': highestBid, 'percentChange' : percentChange,
+                    'base_volume': base_volume, 'crypto_volume' : crypto_volume,'isFrozen' : isFrozen,
+                    'high24hr' : high24hr, 'low24hr' : low24hr }
+
         
-        for stbc in Fiat:
+        
+        collection.insert_one(rawdata)
 
-            asset = asset.upper()
-            stbc = stbc.upper()
-            pair = stbc+'_'+asset
-            entrypoint = 'https://poloniex.com/public?command=returnTicker'
-            request_url = entrypoint
-            response = requests.get(request_url)
-            response = response.json()
-            
-
-            try:
-                response_short = response[pair]
-                r = response_short
-                pair = asset + stbc
-                time = today_ts()
-                date = datetime.now()
-                ID = r['id']
-                price = r['last']
-                lowestAsk = r['lowestAsk'] 
-                highestBid = r['highestBid']
-                percentChange = r['percentChange']
-                base_volume = r['baseVolume']
-                crypto_volume = r['quoteVolume']
-                isFrozen =  r['isFrozen']
-                high24hr = r['high24hr']
-                low24hr = r['low24hr']
-
-                rawdata = {'pair' : pair, 'time': time, 'date': date, 'price': price, 'lowestAsk': lowestAsk,
-                            'highestBid': highestBid, 'percentChange' : percentChange,
-                            'base_volume': base_volume, 'crypto_volume' : crypto_volume,'isFrozen' : isFrozen,
-                            'high24hr' : high24hr, 'low24hr' : low24hr }
-
-                
-                
-                collection.insert_one(rawdata)
-
-            except:
-                print('none_poloniex')
+    except:
+        print('none_poloniex')
                     
     return 
 
@@ -508,96 +488,91 @@ def poloniex_ticker (Crypto, Fiat, collection):
 #instead of BTC here the call is with XBT
 
 def itbit_ticker (Crypto, Fiat, collection):
+            
+    asset = Crypto.upper()
+    fiat = Fiat.upper()
+    entrypoint = 'https://api.itbit.com/v1/markets/'
+    key = asset + fiat + '/ticker'
 
-    for asset in Crypto:
+    if asset == 'BTC':
+        asset = 'XBT'
+        request_url = entrypoint + key
+        response = requests.get(request_url)
+        response = response.json()
+
+    else:
+
+        request_url = entrypoint + key
+        response = requests.get(request_url)
+        response = response.json()   
+
+
+
+    if asset == 'XBT':
+
+        try:
+            r = response 
+            asset = 'BTC'
+            pair = asset + fiat
+            time = today_ts()
+            date = datetime.now()
+            price = r['lastPrice']
+            volume = r['volume24h']
+            volumeToday = r['volumeToday'] 
+            high24h = r['high24h']
+            low24h = r['low24h']
+            highToday = r['highToday']
+            lowToday = r['lowToday']
+            openToday = r['openToday']
+            vwapToday = r['vwapToday']
+            vwap24h = r['vwap24h']
         
 
-        for fiat in Fiat:
-            
-            asset = asset.upper()
-            fiat = fiat.upper()
-            entrypoint = 'https://api.itbit.com/v1/markets/'
-            key = asset + fiat + '/ticker'
+            rawdata = {'pair' : pair, 'time':time, 'date' : date, 'price' : price, 'volume' : volume, 
+                        'volumeToday' : volumeToday,  'high24h' : high24h, 'low24h': low24h, 
+                        'highToday' : highToday, 'lowToday' : lowToday, 'openToday' : openToday,
+                        'vwapToday' : vwapToday, 'vwap24h' : vwap24h }
 
-            if asset == 'BTC':
-                asset = 'XBT'
-                request_url = entrypoint + key
-                response = requests.get(request_url)
-                response = response.json()
-
-            else:
-
-                request_url = entrypoint + key
-                response = requests.get(request_url)
-                response = response.json()   
 
             
-                
-                if asset == 'XBT':
 
-                    try:
-                        r = response 
-                        asset = 'BTC'
-                        pair = asset + fiat
-                        time = today_ts()
-                        date = datetime.now()
-                        price = r['lastPrice']
-                        volume = r['volume24h']
-                        volumeToday = r['volumeToday'] 
-                        high24h = r['high24h']
-                        low24h = r['low24h']
-                        highToday = r['highToday']
-                        lowToday = r['lowToday']
-                        openToday = r['openToday']
-                        vwapToday = r['vwapToday']
-                        vwap24h = r['vwap24h']
-                    
+            collection.insert_one(rawdata)
 
-                        rawdata = {'pair' : pair, 'time':time, 'date' : date, 'price' : price, 'volume' : volume, 
-                                    'volumeToday' : volumeToday,  'high24h' : high24h, 'low24h': low24h, 
-                                    'highToday' : highToday, 'lowToday' : lowToday, 'openToday' : openToday,
-                                    'vwapToday' : vwapToday, 'vwap24h' : vwap24h }
+        except:
 
+            print('none_itbit')
 
-                        
+    else:
+        try:
+            r = response 
+            pair = asset + fiat
+            time = today_ts()
+            date = datetime.now()
+            price = r['lastPrice']
+            volume = r['volume24h']
+            volumeToday = r['volumeToday'] 
+            high24h = r['high24h']
+            low24h = r['low24h']
+            highToday = r['highToday']
+            lowToday = r['lowToday']
+            openToday = r['openToday']
+            vwapToday = r['vwapToday']
+            vwap24h = r['vwap24h']
+            
 
-                        collection.insert_one(rawdata)
-
-                    except:
-
-                        print('none_itbit')
-    
-                else:
-                    try:
-                        r = response 
-                        pair = asset + fiat
-                        time = today_ts()
-                        date = datetime.now()
-                        price = r['lastPrice']
-                        volume = r['volume24h']
-                        volumeToday = r['volumeToday'] 
-                        high24h = r['high24h']
-                        low24h = r['low24h']
-                        highToday = r['highToday']
-                        lowToday = r['lowToday']
-                        openToday = r['openToday']
-                        vwapToday = r['vwapToday']
-                        vwap24h = r['vwap24h']
-                        
-
-                        rawdata = {'pair' : pair, 'time' : time, 'date' : date, 'price' : price, 'volume' : volume, 
-                                    'volumeToday': volumeToday,  'high24h' : high24h, 'low24h': low24h, 
-                                    'highToday': highToday, 'lowToday': lowToday, 'openToday' : openToday,
-                                    'vwapToday' : vwapToday, 'vwap24h' : vwap24h }
+            rawdata = {'pair' : pair, 'time' : time, 'date' : date, 'price' : price, 'volume' : volume, 
+                        'volumeToday': volumeToday,  'high24h' : high24h, 'low24h': low24h, 
+                        'highToday': highToday, 'lowToday': lowToday, 'openToday' : openToday,
+                        'vwapToday' : vwapToday, 'vwap24h' : vwap24h }
 
 
 
-                        collection.insert_one(rawdata)
+            collection.insert_one(rawdata)
 
-                    except :
-                        
-                        print('none_itbit')
-                
+        except :
+            
+            print('none_itbit')
+
     return  
 
 
@@ -611,49 +586,42 @@ def itbit_ticker (Crypto, Fiat, collection):
 
 def bitflyer_ticker(Crypto, Fiat, collection):
 
-    header = [  "product_code", "timestamp", "tick_id", "best_bid", "best_ask", "best_bid_size",
-                "best_ask_size", "total_bid_depth", "total_ask_depth", "ltp", "volume", "volume_by_product"]
+    asset = Crypto.upper()
+    fiat = Fiat.upper()
+    entrypoint = 'https://api.bitflyer.com/v1/'
+    key = 'getticker?product_code=' + asset + '_' + fiat
+    request_url = entrypoint + key
 
-    for asset in Crypto:
+    response = requests.get(request_url)
+    response = response.json() 
+
+    try:
+        
+        r = response
+        pair = asset + fiat
+        time = today_ts()
+        date = datetime.now()
+        ticker_time = r['timestamp']
+        price = r['ltp']
+        volume = r['volume']
+        volume_by_product = r['volume_by_product'] 
+        best_bid = r['best_bid']
+        best_ask = r['best_ask']
+        best_bid_size = r['best_bid_size']
+        best_ask_size = r['best_ask_size']
+        total_bid_depth = r['total_bid_depth']
 
         
-        for fiat in Fiat:
-            asset = asset.upper()
-            fiat = fiat.upper()
-            entrypoint = 'https://api.bitflyer.com/v1/'
-            key = 'getticker?product_code=' + asset + '_' + fiat
-            request_url = entrypoint + key
 
-            response = requests.get(request_url)
-            response = response.json() 
+        rawdata = {'pair' : pair, 'time':time, 'date' : date, 'ticker_time' : ticker_time, 'price':price, 'volume_by_product': volume_by_product, 
+                    'best_bid': best_bid,  'best_ask' : best_ask, 'best_bid_size': best_bid_size, 
+                    'best_ask_size': best_ask_size, 'total_bid_depth': total_bid_depth}
 
-            try:
-                
-                r = response
-                pair = asset + fiat
-                time = today_ts()
-                date = datetime.now()
-                ticker_time = r['timestamp']
-                price = r['ltp']
-                volume = r['volume']
-                volume_by_product = r['volume_by_product'] 
-                best_bid = r['best_bid']
-                best_ask = r['best_ask']
-                best_bid_size = r['best_bid_size']
-                best_ask_size = r['best_ask_size']
-                total_bid_depth = r['total_bid_depth']
-
-                
-
-                rawdata = {'pair' : pair, 'time':time, 'date' : date, 'ticker_time' : ticker_time, 'price':price, 'volume_by_product': volume_by_product, 
-                            'best_bid': best_bid,  'best_ask' : best_ask, 'best_bid_size': best_bid_size, 
-                            'best_ask_size': best_ask_size, 'total_bid_depth': total_bid_depth}
-
-                
-                collection.insert_one(rawdata)        
-            except:
-                print('none bitflyer')
-            
+        
+        collection.insert_one(rawdata)        
+    except:
+        print('none bitflyer')
+    
 
     return 
 
@@ -706,40 +674,36 @@ def Gemini_API(Start_Date, End_Date, Crypto, Fiat, time_frame = '1day'):
 
 def gemini_ticker(Crypto, Fiat, collection):
 
-    for asset in Crypto:
 
+    asset = Crypto.lower()
+    fiat = Fiat.lower()
+    entrypoint = 'https://api.gemini.com/v1/pubticker/'
+    key = asset + fiat
+    request_url = entrypoint + key
+
+    response = requests.get(request_url)
+    response = response.json()
+
+    try:
+        asset = asset.upper()
+        fiat = fiat.upper()
+        r = response
+        pair = asset + fiat
+        time = today_ts()
+        date = datetime.now()
+        ticker_time = r['volume']['timestamp']
+        price = r['last']
+        asset = asset.upper()
+        volume = r['volume'][asset]
+        bid = r['bid']
+        ask = r['ask']
         
-        for fiat in Fiat:
-
-            asset = asset.lower()
-            fiat = fiat.lower()
-            entrypoint = 'https://api.gemini.com/v1/pubticker/'
-            key = asset + fiat
-            request_url = entrypoint + key
-
-            response = requests.get(request_url)
-            response = response.json()
-
-            try:
-                asset = asset.upper()
-                fiat = fiat.upper()
-                r = response
-                pair = asset + fiat
-                time = today_ts()
-                date = datetime.now()
-                ticker_time = r['volume']['timestamp']
-                price = r['last']
-                asset = asset.upper()
-                volume = r['volume'][asset]
-                bid = r['bid']
-                ask = r['ask']
-               
-                rawdata = {'pair' : pair, 'time': time, 'date' : date, 'ticker_time' : ticker_time, 'price': price, 'volume': volume, 'bid': bid,
-                            'ask' : ask}
-            
-                collection.insert_one(rawdata)
-            except :
-                print('none_gemini')
+        rawdata = {'pair' : pair, 'time': time, 'date' : date, 'ticker_time' : ticker_time, 'price': price, 'volume': volume, 'bid': bid,
+                    'ask' : ask}
+    
+        collection.insert_one(rawdata)
+    except :
+        print('none_gemini')
     
     return
             
@@ -761,46 +725,40 @@ def gemini_ticker(Crypto, Fiat, collection):
 
 def bitstamp_ticker(Crypto, Fiat, collection):
 
-    header = ["high", "last", "timestamp", "bid", "vwap", "volume", "low", "ask", "open"]
+    asset = Crypto.lower()
+    fiat = Fiat.lower()
+    entrypoint = 'https://www.bitstamp.net/api/v2/ticker/'
+    key = asset + fiat
+    request_url = entrypoint + key
 
-    for asset in Crypto:
+    response = requests.get(request_url)
 
-        for fiat in Fiat:
+    
 
-            asset = asset.lower()
-            fiat = fiat.lower()
-            entrypoint = 'https://www.bitstamp.net/api/v2/ticker/'
-            key = asset + fiat
-            request_url = entrypoint + key
+    try:
+        response = response.json()
+        r = response
+        pair = asset.upper() + fiat.upper()
+        time = today_ts()
+        date = datetime.now()
+        ticker_time = r['timestamp']
+        price = r['last']
+        volume = r['volume']
+        high = r['high'] 
+        low = r['low']
+        bid = r['bid']
+        ask = r['ask']
+        vwap = r['vwap']
+        Open = r['open']
+        
 
-            response = requests.get(request_url)
+        rawdata = {'pair' : pair, 'time':time, 'date' : date, 'ticker_time' : ticker_time, 'price':price, 'volume':volume, 'high':high,
+                        'low' : low, 'bid': bid, 'ask':ask, 'vwap': vwap, 'open' : Open}
 
-            
-
-            try:
-                response = response.json()
-                r = response
-                pair = asset.upper() + fiat.upper()
-                time = today_ts()
-                date = datetime.now()
-                ticker_time = r['timestamp']
-                price = r['last']
-                volume = r['volume']
-                high = r['high'] 
-                low = r['low']
-                bid = r['bid']
-                ask = r['ask']
-                vwap = r['vwap']
-                Open = r['open']
+        
+        collection.insert_one(rawdata)  
                 
-
-                rawdata = {'pair' : pair, 'time':time, 'date' : date, 'ticker_time' : ticker_time, 'price':price, 'volume':volume, 'high':high,
-                             'low' : low, 'bid': bid, 'ask':ask, 'vwap': vwap, 'open' : Open}
-
-                
-                collection.insert_one(rawdata)  
-                      
-            except:
-                print('none_bitstamp')
+    except:
+        print('none_bitstamp')
 
     return 
