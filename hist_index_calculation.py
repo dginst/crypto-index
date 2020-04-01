@@ -49,6 +49,7 @@ db.index_logic_matrix_two.drop()
 db.index_EMWA_logic_checked.drop()
 db.index_divisor.drop()
 db.index_divisor_reshaped.drop()
+db.index_synth_matrix.drop()
 
 # creating some the empty collections within the database index
 
@@ -85,6 +86,9 @@ collection_divisor = db.index_divisor
 # collection for the reshaped divisor array
 db.index_divisor_reshaped.create_index([ ("id", -1) ])
 collection_divisor_reshaped = db.index_divisor_reshaped
+# collection for the relative syntethic matrix
+db.index_synth_matrix.create_index([ ("id", -1) ])
+collection_relative_synth = db.index_synth_matrix
 
 
 
@@ -322,7 +326,7 @@ syntethic = calc.quarterly_synt_matrix(Crypto_Asset_Prices, weights_for_board, r
 syntethic_relative_matrix = calc.relative_syntethic_matrix(syntethic, Crypto_Asset)
 
 # changing the "Time" column of the second logic matrix using the rebalance date
-second_logic_matrix['Time'] = rebalance_start_date
+second_logic_matrix['Time'] = next_rebalance_date[1:]
 
 # changing the "time" column of the weights in order to disply the application start date of each row
 weights_for_period = weights_for_board 
@@ -333,6 +337,8 @@ divisor_array = calc.divisor_adjustment(Crypto_Asset_Prices, weights_for_period,
 reshaped_divisor = calc.divisor_reshape(divisor_array, reference_date_vector)
 
 index_values = calc.index_level_calc(Crypto_Asset_Prices, syntethic_relative_matrix, divisor_array, reference_date_vector)
+
+index_1000_base = calc.index_based(index_values)
 #pd.set_option('display.max_rows', None)
 
 ####################################### MONGO DB UPLOADS ############################################
@@ -383,8 +389,8 @@ double_EMWA_up = double_EMWA_up.to_dict(orient = 'records')
 collection_EMWA_check.insert_many(double_EMWA_up)
 
 # put the index level on MongoDB
-index_values['Date'] = human_date
-index_val_up = index_values.drop(columns = 'Time')
+index_1000_base['Date'] = human_date
+index_val_up = index_1000_base.drop(columns = 'Time')
 index_val_up = index_val_up[['Date', 'Index Value']]
 index_val_up = index_val_up.to_dict(orient = 'records')
 collection_index_level.insert_many(index_val_up)
@@ -420,6 +426,12 @@ second_up = second_logic_matrix.drop(columns = 'Time')
 second_up = second_up[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
 second_up = second_up.to_dict(orient = 'records') 
 collection_logic_two.insert_many(second_up)
+
+# put the relative synth matrix on MongoDB
+syntethic_relative_matrix['Date'] = human_date
+synth_up = syntethic_relative_matrix[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+synth_up = synth_up.to_dict(orient = 'records') 
+collection_relative_synth.insert_many(synth_up)
 
 ######## some printing ##########
 print('Crypto_Asset_Prices')

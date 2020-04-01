@@ -634,7 +634,7 @@ def second_logic_matrix_reshape(second_logic_matrix, reference_date_array, Crypt
     rebalance_stop = stop_q(rebalance_start)
 
     # calling the function that yields the start and stop date couple
-    rebalance_start = next_quarterly_period(start_date, end_date, initial_val=0)
+    rebalance_start = next_quarterly_period(start_date, end_date, initial_val = 0)
 
     # define the reshaped logic matrix as a dataframe with 'Time' in first column and the reference date array as rows
     reshaped_matrix = pd.DataFrame(reference_date_array, columns = ['Time'])
@@ -829,7 +829,7 @@ def divisor_adjustment(Crypto_Price_Matrix, Weights, second_logic_matrix, Crypto
     start_quarter = start_q_fix(start_quarter)
     next_start_quarter = next_start()
 
-    second_logic_matrix['Time'] = start_quarter
+    second_logic_matrix['Time'] = next_start_quarter[1:len(next_start_quarter)] ##############
  
     # for loop that iterates through all the date (length of logic matrix)
     # returning a divisor for each day
@@ -853,7 +853,7 @@ def divisor_adjustment(Crypto_Price_Matrix, Weights, second_logic_matrix, Crypto
             current_weights = np.array(Weights.loc[Weights.Time == date, Crypto_list])
             previous_weights = np.array(Weights.loc[Weights.Time == next_start_quarter[i], Crypto_list])
            
-            numer = np.array(current_logic_row * today_price * current_weights)
+            numer = np.array(current_logic_row * yesterday_price * current_weights)
             denom = np.array(previous_logic_row * yesterday_price * previous_weights)
 
             new_divisor = (numer.sum() / denom.sum()) * old_divisor
@@ -896,8 +896,7 @@ def divisor_reshape(divisor_adjustment_array, reference_date_array, start_date =
     for start, stop in rebalance_start:
 
         copied_element = np.array(divisor_adjustment_array.loc[divisor_adjustment_array.Time == start]['Divisor Value'])
-        # print(copied_element)
-        # print(len(copied_element))
+        
         if len(copied_element) == 0:
 
             pass
@@ -965,29 +964,38 @@ def index_level_calc(Crypto_Price_Matrix, relative_syntethic_matrix, divisor_adj
     return index_df
 
 
-##################################################################################################
 
-# function returns a matrix with the same number and order of column of the Curr Price Matrix containing
-# the value of the syntetic portfolio divided by single currency
-# function take as input:
-# Curr_Price_matrix: the Price matrix that has different cryptoasset as column and date as row
-# weight_index: vector that contains the weights for every Crytpo Asset indicated in Curr_Price_matrix
-# synt_matrix_old: the syntethic matrix of the previuos day, on default in None meaning that is the
-# first day after the index rebalancing
-# every c.a. 3 months the index is rebalanced, so the synt_matrix function has to be called anew
+# function that allows to compute the index level based on "base" initial value.
+# the initial value is on default fixed to 1000
 
-#def synt_matrix_daily(Crypto_Price_Matrix, weight_index, synt_matrix_old = None, synt_ptf_value = 100):
 
-    #returns computed considering that today is the last row and yesterday is the row before
-  #  daily_return = (Crypto_Price_Matrix[len(Crypto_Price_Matrix)-1,1:]-Crypto_Price_Matrix[len(Crypto_Price_Matrix)-2,1:])/Crypto_Price_Matrix[len(Crypto_Price_Matrix)-2,1:]
-  #  synt_matrix_date = np.array(Crypto_Price_Matrix[len(Crypto_Price_Matrix)-1,0])
+def index_based(index_df, base = 1000):
 
-  #  if synt_matrix_old == None:
-  #      synt_matrix= weight_index*synt_ptf_value
-  #      synt_matrix=np.column_stack((synt_matrix_date,synt_matrix))
-  #  else:
- #     synt_matrix_new_value = daily_return*synt_matrix_old[len(synt_matrix_old), 1:]
- #       synt_matrix_new_row = np.column_stack((synt_matrix_date, synt_matrix_new_value))
-   #     synt_matrix = np.row_stack((synt_matrix_old, synt_matrix_new_row))
+    # defining time column and values column
+    time_column = index_df['Time']
+    value_column = index_df['Index Value']
 
- #   return synt_matrix
+    value_column = value_column.fillna(0)
+    variation = value_column.pct_change()
+    variation = variation.replace(np.inf, np.nan)
+    variation = variation.fillna(0)
+    variation = np.array(variation)
+    variation = variation[1:len(variation)]
+
+    index_1000_based = np.array([base])
+    current_value = base
+
+    for element in variation:
+
+        next_value = current_value * (1 + element)
+        index_1000_based = np.append(index_1000_based, next_value)
+
+        current_value = next_value
+
+
+    index_1000_based = np.column_stack((time_column, index_1000_based))
+    header = ['Time', 'Index Value']
+    index_1000_based = pd.DataFrame(index_1000_based, columns = header)
+
+    return index_1000_based
+
