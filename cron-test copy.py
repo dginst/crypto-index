@@ -3,6 +3,7 @@ import time
 import requests
 import random
 import multiprocessing
+from datetime import datetime
 
 start = time.time()
 
@@ -151,6 +152,9 @@ def call2(flat_list1):
 
 print(call1(flat_list))
 
+response = call1(flat_list1)[1].json()
+print(datetime.now())
+print(response)
 
 
 end1 = time.time()

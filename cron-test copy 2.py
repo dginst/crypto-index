@@ -152,8 +152,11 @@ def call2(flat_list1):
 end = time.time()
 
 
-print(call2)
 
+
+response = call2(flat_list1)[-1].json()
+print(datetime.now())
+print(response)
   
 
 end1 = time.time()
