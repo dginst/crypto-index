@@ -149,9 +149,12 @@ def call2(flat_list1):
 
     return call
 
-print(call1(flat_list))
+end = time.time()
 
 
+print(call2)
+
+  
 
 end1 = time.time()
 print("This script took: {} minutes".format(float(coinbase-start)))
