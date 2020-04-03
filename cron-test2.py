@@ -1,6 +1,8 @@
-import API_request as api 
+import API_request_copy as api 
 from pymongo import MongoClient
+import time
 
+start = time.time()
 connection = MongoClient('localhost', 27017)
 #creating the database called index
 db = connection.index
@@ -15,17 +17,29 @@ collection_itbittraw = db.itbittraw1
 collection_poloniextraw = db.poloniextraw1
 collection_krakentraw = db.krakentraw1
 
-assets = [['BTC'], ['ETH'],['XRP'],['LTC'],['BCH'],['XLM'], ['ADA'], ['ZEC'], ['XMR'], ['EOS'], ['BSV'], ['ETC']]
-fiat = [['EUR'], ['USD'], ['CAD'], ['USDT'], ['GBP'], ['USDC'],['JPY']]
+assets = ['BTC', 'ETH',['XRP','LTC','BCH','XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
+fiat = ['EUR', 'USD', 'CAD', 'USDT', 'GBP', 'USDC','JPY']
+
+urls = []
 
 for Crypto in assets:
     for Fiat in fiat:
 
-        api.coinbase_ticker(Crypto, Fiat, collection_coinbasetraw)
-        api.kraken_ticker(Crypto, Fiat, collection_krakentraw)
-        api.poloniex_ticker(Crypto,Fiat, collection_poloniextraw)
-        api.itbit_ticker(Crypto, Fiat, collection_itbittraw)
-        api.gemini_ticker(Crypto,Fiat, collection_geminitraw)
-        api.bitstamp_ticker(Crypto, Fiat, collection_bitstamptraw)
-        api.bitflyer_ticker(Crypto, Fiat, collection_bitflyertraw)
-        api.bittrex_ticker(Crypto, Fiat, collection_bittrextraw)
+        urls.append(api.coinbase_ticker(Crypto, Fiat))
+        urls.append(api.kraken_ticker(Crypto, Fiat))
+        urls.append(api.poloniex_ticker(Crypto,Fiat))
+        urls.append(api.itbit_ticker(Crypto, Fiat))
+        urls.append(api.gemini_ticker(Crypto,Fiat))
+        urls.append(api.bitstamp_ticker(Crypto, Fiat))
+        urls.append(api.bitflyer_ticker(Crypto, Fiat))
+        urls.append(api.bittrex_ticker(Crypto, Fiat))
+
+start1 = time.time()
+
+rs = (grequests.get(u) for u in urls)
+
+print(grequests.map(rs))
+
+end = time.time()
+
+print(end-start1)

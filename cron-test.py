@@ -32,10 +32,10 @@ fiat1 = ['EUR', 'USD', 'GBP']
 fiat2 = ['EUR', 'USD']
 fiat3 = ['USDC']
 
-ciao = [api.coinbase_ticker(Crypto, Fiat, collection_coinbasetraw) for Crypto in assets  for Fiat in fiat]
-ciao = [api.coinbase_ticker(Crypto, Fiat, collection_coinbasetraw) for Crypto in assets1  for Fiat in fiat1]
-ciao = [api.coinbase_ticker(Crypto, Fiat, collection_coinbasetraw) for Crypto in assets2  for Fiat in fiat2]
-ciao = [api.coinbase_ticker(Crypto, Fiat, collection_coinbasetraw) for Crypto in assets3  for Fiat in fiat3]
+call = [api.coinbase_ticker(Crypto, Fiat, collection_coinbasetraw) for Crypto in assets  for Fiat in fiat]
+call = [api.coinbase_ticker(Crypto, Fiat, collection_coinbasetraw) for Crypto in assets1  for Fiat in fiat1]
+call = [api.coinbase_ticker(Crypto, Fiat, collection_coinbasetraw) for Crypto in assets2  for Fiat in fiat2]
+call = [api.coinbase_ticker(Crypto, Fiat, collection_coinbasetraw) for Crypto in assets3  for Fiat in fiat3]
 coinbase = time.time()
         
 
@@ -51,9 +51,9 @@ fiat = ['EUR', 'USD', 'CAD', 'GBP','JPY', 'USDC','USDT', 'CHF']
 fiat1 = ['USD', 'EUR']
 fiat2 = ['EUR', 'USD', 'CAD','JPY']
 
-ciao =[api.kraken_ticker(Crypto, Fiat, collection_krakentraw)  for Crypto in assets for Fiat in fiat]
-ciao =[api.kraken_ticker(Crypto, Fiat, collection_krakentraw)  for Crypto in assets1 for Fiat in fiat1]
-ciao =[api.kraken_ticker(Crypto, Fiat, collection_krakentraw)  for Crypto in assets2 for Fiat in fiat2]
+call =[api.kraken_ticker(Crypto, Fiat, collection_krakentraw)  for Crypto in assets for Fiat in fiat]
+call =[api.kraken_ticker(Crypto, Fiat, collection_krakentraw)  for Crypto in assets1 for Fiat in fiat1]
+call =[api.kraken_ticker(Crypto, Fiat, collection_krakentraw)  for Crypto in assets2 for Fiat in fiat2]
 kraken = time.time()       
 
 ######################## itbit
@@ -99,9 +99,9 @@ stbc = ['USD', 'EUR', 'USDT']
 stbc1 = ['USD', 'USDT']
 stbc2 = ['USDT']
 
-ciao =[api.bittrex_ticker(Crypto, Fiat, collection_bittrextraw)  for Crypto in assets for Fiat in stbc]
-ciao =[api.bittrex_ticker(Crypto, Fiat, collection_bittrextraw)  for Crypto in assets1 for Fiat in stbc1]
-ciao =[api.bittrex_ticker(Crypto, Fiat, collection_bittrextraw)  for Crypto in assets2 for Fiat in stbc2]
+call =[api.bittrex_ticker(Crypto, Fiat, collection_bittrextraw)  for Crypto in assets for Fiat in stbc]
+call =[api.bittrex_ticker(Crypto, Fiat, collection_bittrextraw)  for Crypto in assets1 for Fiat in stbc1]
+call =[api.bittrex_ticker(Crypto, Fiat, collection_bittrextraw)  for Crypto in assets2 for Fiat in stbc2]
         
 bittrex = time.time()
 ######################## poloniex
@@ -109,7 +109,7 @@ bittrex = time.time()
 assets = ['BTC', 'ETH','BCHABC', 'BCHSV', 'LTC','XRP','ZEC', 'EOS', 'ETC', 'STR', 'XMR']
 stbc = ['USDC', 'USDT']
 
-ciao =[api.poloniex_ticker(Crypto,Fiat, collection_poloniextraw)  for Crypto in assets for Fiat in stbc]
+call =[api.poloniex_ticker(Crypto,Fiat, collection_poloniextraw)  for Crypto in assets for Fiat in stbc]
 
 poloniex = time.time()
 ###################### bitflyer
@@ -119,8 +119,8 @@ assets2 = ['ETH']
 fiat1 = ['EUR', 'USD', 'JPY']
 fiat2 = ['JPY']
 
-ciao =[api.bitflyer_ticker(Crypto, Fiat, collection_bitflyertraw)  for Crypto in assets1 for Fiat in fiat1]
-ciao =[api.bitflyer_ticker(Crypto, Fiat, collection_bitflyertraw)  for Crypto in assets2 for Fiat in fiat2]        
+call =[api.bitflyer_ticker(Crypto, Fiat, collection_bitflyertraw)  for Crypto in assets1 for Fiat in fiat1]
+call =[api.bitflyer_ticker(Crypto, Fiat, collection_bitflyertraw)  for Crypto in assets2 for Fiat in fiat2]        
         
 bitflyer = time.time()
 end = time.time()
