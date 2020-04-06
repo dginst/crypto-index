@@ -540,7 +540,7 @@ def bitflyer_ticker(Crypto, Fiat, collection):
 
         
 
-        rawdata = {'pair' : pair, 'time':time, 'date' : date, 'ticker_time' : ticker_time, 'volume' = volume 'price':price, 'volume_by_product': volume_by_product, 
+        rawdata = {'pair' : pair, 'time':time, 'date' : date, 'ticker_time' : ticker_time, 'volume' : volume, 'price': price, 'volume_by_product': volume_by_product, 
                     'best_bid': best_bid,  'best_ask' : best_ask, 'best_bid_size': best_bid_size, 
                     'best_ask_size': best_ask_size, 'total_bid_depth': total_bid_depth}
 
