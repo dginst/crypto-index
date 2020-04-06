@@ -9,14 +9,9 @@ connection = MongoClient('localhost', 27017)
 db = connection.index
 db.rawdata.create_index([ ("id", -1)] )
 #creating the empty collection rawdata within the database index
-collection_geminitraw = db.geminitraw
-collection_bittrextraw = db.bittrextraw
-collection_bitflyertraw = db.bitflyertraw
+
 collection_coinbasetraw = db.coinbasetraw
-collection_bitstamptraw = db.bitstamptraw
-collection_itbittraw = db.itbittraw
-collection_poloniextraw = db.poloniextraw
-collection_krakentraw = db.krakentraw
+
 
 ########################## COINBASE
 
@@ -33,70 +28,73 @@ fiat2 = ['EUR', 'USD']
 fiat3 = ['USDC']
 
 call = [api.coinbase_ticker(Crypto, Fiat, collection_coinbasetraw) for Crypto in assets  for Fiat in fiat]
+time.sleep(1)
 call = [api.coinbase_ticker(Crypto, Fiat, collection_coinbasetraw) for Crypto in assets1  for Fiat in fiat1]
+time.sleep(1)
 call = [api.coinbase_ticker(Crypto, Fiat, collection_coinbasetraw) for Crypto in assets2  for Fiat in fiat2]
+time.sleep(1)
 call = [api.coinbase_ticker(Crypto, Fiat, collection_coinbasetraw) for Crypto in assets3  for Fiat in fiat3]
 coinbase = time.time()
         
   
 
-######################## itbit
+# ######################## itbit
 
-assets1 = ['BTC', 'ETH']
-fiat1 = ['EUR', 'USD']
+# assets1 = ['BTC', 'ETH']
+# fiat1 = ['EUR', 'USD']
 
-for Crypto in assets1:
-    for Fiat in  fiat1:
+# for Crypto in assets1:
+#     for Fiat in  fiat1:
 
-        api.itbit_ticker(Crypto, Fiat, collection_itbittraw)
+#         api.itbit_ticker(Crypto, Fiat, collection_itbittraw)
 
-itbit = time.time()
+# itbit = time.time()
 
-######################## bitstamp
+# ######################## bitstamp
 
-assets2 = ['BTC', 'ETH','XRP','LTC','BCH']
-fiat1 = ['EUR', 'USD']
+# assets2 = ['BTC', 'ETH','XRP','LTC','BCH']
+# fiat1 = ['EUR', 'USD']
 
-for Crypto in assets2:
-    for Fiat in fiat1:
+# for Crypto in assets2:
+#     for Fiat in fiat1:
 
-        api.bitstamp_ticker(Crypto, Fiat, collection_bitstamptraw)
+#         api.bitstamp_ticker(Crypto, Fiat, collection_bitstamptraw)
 
-bitstamp = time.time()
-######################## gemini
+# bitstamp = time.time()
+# ######################## gemini
 
-assets3 = ['BTC', 'ETH','LTC','BCH','ZEC']
-fiat2 = ['USD']
+# assets3 = ['BTC', 'ETH','LTC','BCH','ZEC']
+# fiat2 = ['USD']
 
-for Crypto in assets3:
-    for Fiat in fiat2:
+# for Crypto in assets3:
+#     for Fiat in fiat2:
 
-        api.gemini_ticker(Crypto,Fiat, collection_geminitraw)
+#         api.gemini_ticker(Crypto,Fiat, collection_geminitraw)
 
-gemini = time.time()
+# gemini = time.time()
 
-######################## poloniex
+# ######################## poloniex
 
-assets = ['BTC', 'ETH','BCHABC', 'BCHSV', 'LTC','XRP','ZEC', 'EOS', 'ETC', 'STR', 'XMR']
-stbc = ['USDC', 'USDT']
+# assets = ['BTC', 'ETH','BCHABC', 'BCHSV', 'LTC','XRP','ZEC', 'EOS', 'ETC', 'STR', 'XMR']
+# stbc = ['USDC', 'USDT']
 
-call =[api.poloniex_ticker(Crypto,Fiat, collection_poloniextraw)  for Crypto in assets for Fiat in stbc]
+# call =[api.poloniex_ticker(Crypto,Fiat, collection_poloniextraw)  for Crypto in assets for Fiat in stbc]
 
-poloniex = time.time()
-###################### bitflyer
+# poloniex = time.time()
+# ###################### bitflyer
 
-assets1 = ['BTC']
-assets2 = ['ETH']
-fiat1 = ['EUR', 'USD', 'JPY']
-fiat2 = ['JPY']
+# assets1 = ['BTC']
+# assets2 = ['ETH']
+# fiat1 = ['EUR', 'USD', 'JPY']
+# fiat2 = ['JPY']
 
-call =[api.bitflyer_ticker(Crypto, Fiat, collection_bitflyertraw)  for Crypto in assets1 for Fiat in fiat1]
-call =[api.bitflyer_ticker(Crypto, Fiat, collection_bitflyertraw)  for Crypto in assets2 for Fiat in fiat2]        
+# call =[api.bitflyer_ticker(Crypto, Fiat, collection_bitflyertraw)  for Crypto in assets1 for Fiat in fiat1]
+# call =[api.bitflyer_ticker(Crypto, Fiat, collection_bitflyertraw)  for Crypto in assets2 for Fiat in fiat2]        
         
-bitflyer = time.time()
-end = time.time()
+# bitflyer = time.time()
+# end = time.time()
 
-# print("This script took: {} minutes".format(float(coinbase-start)))
+print("This script took: {} minutes".format(float(coinbase-start)))
 # print("This script took: {} minutes".format(float(kraken-coinbase)))
 # print("This script took: {} minutes".format(float(itbit-kraken)))
 # print("This script took: {} minutes".format(float(bitstamp-itbit)))
