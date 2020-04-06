@@ -17,12 +17,12 @@ job = cron.new(command = bitflyer_path + bitstamp_path + bittrex_path + coinbase
 job.minute.on(15)
 job.hour.on(14)
 
-job1 = job
+job1 = cron.new(command = bitflyer_path + bitstamp_path + bittrex_path + coinbase_path + gemini_path + itbit_path + kraken_path + poloniex_path )
 
 job1.minute.on(15)
 job1.hour.on(15)
 
-job3 = job
+job3 = cron.new(command = bitflyer_path + bitstamp_path + bittrex_path + coinbase_path + gemini_path + itbit_path + kraken_path + poloniex_path )
 
 job3.minute.on(0)
 job3.hour.on(0)
