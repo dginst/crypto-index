@@ -93,8 +93,9 @@ def date_gen_timestamp(Start_Date, End_Date, delta):
 
 def today_ts():
 
-    today = datetime.now().strftime('%Y-%m-%d')
-    today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
+    today = datetime.now().strftime('%Y-%m-%d-%H')
+    today_TS = int(datetime.strptime(today,'%Y-%m-%d-%H').timestamp())
+
 
     return today_TS
 
