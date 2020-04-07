@@ -97,6 +97,13 @@ if date_to_add != []:
     
     relative_reference_vector = data_setup.timestamp_gen(start_date, end_date, EoD = 'N')
 
+    # creating a date array of support that allows to manage the one-day missing data
+    if start_date == end_date:
+
+        day_before = int(relative_reference_vector[0]) - 86400
+        support_date_array = np.array([day_before])
+        support_date_array = np.append(support_date_array, int(relative_reference_vector[0]))
+
     ############################### fixing the "Pair Volume" information ##############################
 
 
@@ -127,16 +134,41 @@ if date_to_add != []:
                 # retriving the needed information on MongoDB
                 matrix = mongo.query_mongo(database, collection_raw, query_dict)
                 # selecting the date of interest
-                matrix = matrix.loc[matrix['Time'].isin(relative_reference_vector)]
+                if start_date == end_date:
+
+                    matrix = matrix.loc[matrix['Time'].isin(support_date_array)]
+                
+                else:
+                    
+                    matrix = matrix.loc[matrix['Time'].isin(relative_reference_vector)]
     
                 matrix = matrix.drop(columns = ['Exchange', 'Pair'])
                 # checking if the matrix is not empty
                 if matrix.shape[0] > 1:
-
-                    # checking if the matrix has missing data and if ever fixing it
-                    if matrix.shape[0] != relative_reference_vector.size:
+                    
+                    
+                    if start_date == end_date:
                         
-                        matrix = data_setup.CW_series_fix_missing(matrix, exchange, Crypto, pair, start_date, end_date)
+                        t_value = matrix.loc[matrix['Time'].isin(relative_reference_vector)]
+                        t_1_value = matrix.loc[matrix['Time'] == (int(relative_reference_vector[0]) - 86400)]
+
+                        # the volume are so low that CW put 0 into the series
+                        # so the values of the day before are substituted for the crytpo price
+                        if t_value.empty == True:
+
+                            matrix = t_1_value
+                            matrix = matrix.drop(columns = ['Low', 'High','Open'])
+                            matrix['Time'] = relative_reference_vector[0]
+                            matrix['Close Price'] = t_1_value['Close Price']
+                            matrix['Crypto Volume'] = 0
+                            matrix['Pair Volume'] = 0
+                    
+                    else:
+
+                        # checking if the matrix has missing data and if ever fixing it
+                        if matrix.shape[0] != relative_reference_vector.size:
+                            
+                            matrix = data_setup.CW_series_fix_missing(matrix, exchange, Crypto, pair, start_date, end_date)
 
                 ######### part that transform the timestamped date into string ###########
                 new_date = np.array([])
