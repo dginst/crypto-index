@@ -20,14 +20,20 @@ db = connection.index
 # {"Exchange" : "kraken", "Pair" : "btcjpy", "Time" : { "$gte": 1580774400} }, this query call all the documents 
 # that contains kraken as exchange, the pair btcjpy and the time value is greater than 1580774400
 
-def query_mongo(database, collection, query_dict):
+def query_mongo(database, collection, query_dict = None):
 
     # defining the variable that allows to work with MongoDB
     db = connection[database]
     coll = db[collection]
 
     # find in the selected collection the wanted element/s
-    doc = coll.find(query_dict)
+    if query_dict == None:
+
+        doc = coll.find({})
+    
+    else:
+        
+        doc = coll.find(query_dict)
 
     df = []
         

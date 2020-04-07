@@ -19,7 +19,7 @@ import utils.data_download as data_download
 
 ############################################# INITIAL SETTINGS #############################################
 
-pair_array = ['gbp', 'usd', 'cad', 'jpy', 'eur']
+pair_array = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur'] 
 Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
 # crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']

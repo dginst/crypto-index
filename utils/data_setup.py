@@ -24,17 +24,28 @@ from . import mongo_setup as mongo
 # function considers End of Day price series so, if not otherwise specified,
 # the returned array of date will be from start to today - 1 (EoD = 'Y')
 
-def timestamp_gen(start_date, end_date = None,  EoD = 'Y'):
+def timestamp_gen(start_date, end_date = None, EoD = 'Y'):
+
+    start = datetime.strptime(start_date,'%m-%d-%Y')
+    start = int(time.mktime(start.timetuple()))
+
+    if start > 1585440000: ### TDB: make function more flexible, the ts is 29-03-2020 12:00 AM
+
+        add_on = 3600*2
+
+    else:
+
+        add_on = 3600
 
     if end_date == None:
+
         end_date = datetime.now().strftime('%m-%d-%Y')
 
     end_date = datetime.strptime(end_date,'%m-%d-%Y')
     end = int(time.mktime(end_date.timetuple()))
-    end = end + 3600
-    start = datetime.strptime(start_date,'%m-%d-%Y')
-    start = int(time.mktime(start.timetuple()))
-    start = start + 3600
+    end = end + add_on
+
+    start = start + add_on
     array = np.array([start])
     date = start
    
@@ -42,7 +53,13 @@ def timestamp_gen(start_date, end_date = None,  EoD = 'Y'):
         date = date + 86400
         array = np.append(array, date)
     
-    array = array[:len(array) - 1]
+    if EoD == 'Y':
+        
+        array = array[:len(array) - 1]
+    
+    else:
+
+        pass
 
     return array
 
@@ -85,10 +102,10 @@ def timestamp_to_str(date_array):
 # the function takes an array of timestamp as input and return an array od human readable date in
 # dd-mm-yyyy format
 
-def timestamp_to_human(ts_array):
+def timestamp_to_human(ts_array, date_format = '%Y-%m-%d'):
 
     human_date = [datetime.fromtimestamp(int(date)) for date in ts_array]
-    human_date = [date.strftime('%d-%m-%Y') for date in human_date]
+    human_date = [date.strftime(date_format) for date in human_date]
 
     return human_date
 
@@ -241,17 +258,12 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 
     reference_date_array_TS = np.array(reference_date_array_TS)
     header = list(series_to_check.columns)
     test_matrix = series_to_check.loc[series_to_check.Time.between(reference_date_array_TS[0], reference_date_array_TS[days_to_check], inclusive = True), header]
-    print('test_matrix')
-    print(test_matrix)
 
     if test_matrix.empty == True:
 
         first_date = np.array(series_to_check['Time'].iloc[0])
-        print(first_date)
         last_missing_date = (int(first_date) - 86400)
         first_missing_date = reference_date_array_TS[0]
-        print(first_missing_date)
-
         missing_date_array = timestamp_vector(first_missing_date, first_date)
 
         new_series = pd.DataFrame(missing_date_array, columns = ['Time'])
@@ -283,7 +295,7 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 
 
 def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_date = None):
 
-    print(broken_matrix)
+
     # define DataFrame header
     header = ['Time', 'Close Price', 'Crypto Volume', 'Pair Volume']
 
@@ -302,7 +314,7 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
     ccy_pair = cryptocurrency.lower() + pair.lower()
 
     # set the list af all exchanges and then pop out the one in subject
-    exchange_list = ['bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini','kraken']#aggungere itbit
+    exchange_list = ['bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini','kraken']
     exchange_list.remove(exchange)
 
     # iteratively find the missing value in all the exchanges
@@ -519,7 +531,7 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
     return variation_matrix, volume_matrix
 
 
-
+# add description
 
 def fix_zero_value(matrix):
 
@@ -535,14 +547,12 @@ def fix_zero_value(matrix):
             if int(price_check) == 0:
                 
                 previous_price = np.array(matrix.loc[matrix.Time == str(int(date) - 86400),'Close Price'])
-                print(previous_price)
                 matrix.loc[matrix.Time == date, 'Close Price'] = previous_price
 
             previous_c_vol = np.array(matrix.loc[matrix.Time == str(int(date) - 86400), 'Crypto Volume'])
             previous_p_vol =  np.array(matrix.loc[matrix.Time == str(int(date) - 86400), 'Pair Volume'])
             matrix.loc[matrix.Time == date, 'Crypto Volume'] = previous_c_vol
             matrix.loc[matrix.Time == date, 'Pair Volume'] = previous_p_vol
-
             
         val_sum = val_sum + value_to_check
     

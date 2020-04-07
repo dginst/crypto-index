@@ -19,10 +19,10 @@ import utils.data_download as data_download
 
 ############################################# INITIAL SETTINGS #############################################
 
-pair_array = ['gbp', 'usd', 'cad', 'jpy', 'eur']
-# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur'] 
-Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
-# crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
+pair_array = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
+# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc'] 
+Crypto_Asset = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
+# crypto complete [ 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
 Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 # exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 #############################################################################################################
@@ -100,7 +100,8 @@ start_date = '01-01-2016'
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
-today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
+today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600 + 3600 ###
+yesterday_TS = today_TS - 86400
 
 # define end date as as MM-DD-YYYY
 end_date = datetime.now().strftime('%m-%d-%Y')
@@ -123,8 +124,9 @@ next_rebalance_date = calc.next_start()
 # call the function that creates a object containing the couple of quarterly start-stop date
 quarterly_date = calc.quarterly_period()
 
-#############################################################################################################
+#######################################################################################################
 
+################################ specific series exclusion #################################
 ##################################### MAIN PART ###################################################
 
 
@@ -155,16 +157,23 @@ for CryptoA in Crypto_Asset:
         Ccy_Pair_Price = np.matrix([])
         
         for cp in currencypair_array:
+            print(cp)
             
             crypto = cp[:3]
             fiat_curr = cp[3:]
-            print(cp)
+            ############ bittrex started on 1st April to exchange on 'eur' fiat pair #################
+            ############ temporarly the related volumes are out of computation ####################
+            if (exchange == 'bittrex' and fiat_curr == 'eur'):
+
+                continue
+            
   
             # defining the dictionary for the MongoDB query
             query_dict = {"Exchange" : exchange, "Pair": cp}
             # retriving the needed information on MongoDB
             matrix = mongo.query_mongo(db_name, collection_converted_data, query_dict)
-     
+            
+            
             try:
                 
                 cp_matrix = matrix.to_numpy()
@@ -312,7 +321,7 @@ emwa_df = calc.emwa_crypto_volume(Crypto_Asset_Volume, Crypto_Asset, reference_d
 
 # computing the second logic matrix
 second_logic_matrix = calc.second_logic_matrix(Crypto_Asset_Volume, first_logic_matrix, Crypto_Asset, reference_date_vector, time_column = 'Y')
-
+print(second_logic_matrix)
 # computing the emwa checked with both the first and second logic matrices
 double_checked_EMWA = calc.emwa_second_logic_check(first_logic_matrix, second_logic_matrix, emwa_df, reference_date_vector, Crypto_Asset, time_column = 'Y')
 
@@ -320,17 +329,26 @@ double_checked_EMWA = calc.emwa_second_logic_check(first_logic_matrix, second_lo
 # every weigfhts is computed in the period that goes from present quarter start_date to 
 # present quarter board meeting date eve
 weights_for_board = calc.quarter_weights(double_checked_EMWA, board_date_eve[1:], Crypto_Asset)
+print(weights_for_board)
+print(data_setup.timestamp_to_human(weights_for_board['Time']))
 
 # compute the syntethic matrix and the rekative syntethic matrix
 syntethic = calc.quarterly_synt_matrix(Crypto_Asset_Prices, weights_for_board, reference_date_vector, board_date_eve, Crypto_Asset)
 syntethic_relative_matrix = calc.relative_syntethic_matrix(syntethic, Crypto_Asset)
+print(syntethic_relative_matrix)
 
 # changing the "Time" column of the second logic matrix using the rebalance date
 second_logic_matrix['Time'] = next_rebalance_date[1:]
+if yesterday_TS == rebalance_start_date[len(rebalance_start_date) - 1]:
+    print('inside')
+    second_logic_matrix = second_logic_matrix[:-1]
+
+print(second_logic_matrix)
 
 # changing the "time" column of the weights in order to disply the application start date of each row
 weights_for_period = weights_for_board 
-weights_for_period['Time'] = next_rebalance_date[1:]
+#weights_for_period['Time'] = next_rebalance_date[1:]
+weights_for_period['Time'] = rebalance_start_date[1:] ##
 
 divisor_array = calc.divisor_adjustment(Crypto_Asset_Prices, weights_for_period, second_logic_matrix, Crypto_Asset, reference_date_vector)
 
@@ -377,14 +395,15 @@ collection_volume.insert_many(volume_up)
 
 # put the EWMA dataframe on MongoDB
 emwa_df['Date'] = human_date
-emwa_df_up = emwa_df[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+emwa_df_up = emwa_df
+emwa_df_up = emwa_df_up[['Date','BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
 emwa_df_up = emwa_df_up.to_dict(orient = 'records') 
 collection_EMWA.insert_many(emwa_df_up)
 
 # put the double checked EMWA on MongoDB
 double_checked_EMWA['Date'] = human_date
 double_EMWA_up = double_checked_EMWA.drop(columns = 'Time')
-double_EMWA_up = double_EMWA_up[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+double_EMWA_up = double_EMWA_up[['Date','BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
 double_EMWA_up = double_EMWA_up.to_dict(orient = 'records')
 collection_EMWA_check.insert_many(double_EMWA_up)
 
@@ -415,7 +434,7 @@ collection_divisor_reshaped.insert_many(reshaped_divisor_up)
 first_date = data_setup.timestamp_to_human(first_logic_matrix['Time'])
 first_logic_matrix['Date'] = first_date
 first_up = first_logic_matrix.drop(columns = 'Time')
-first_up = first_up[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+first_up = first_up[['Date','BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
 first_up = first_up.to_dict(orient = 'records') 
 collection_logic_one.insert_many(first_up)
 
@@ -423,13 +442,14 @@ collection_logic_one.insert_many(first_up)
 second_date = data_setup.timestamp_to_human(second_logic_matrix['Time'])
 second_logic_matrix['Date'] = second_date
 second_up = second_logic_matrix.drop(columns = 'Time')
-second_up = second_up[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+second_up = second_up[['Date','BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
 second_up = second_up.to_dict(orient = 'records') 
 collection_logic_two.insert_many(second_up)
 
 # put the relative synth matrix on MongoDB
 syntethic_relative_matrix['Date'] = human_date
-synth_up = syntethic_relative_matrix[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+synth_up = syntethic_relative_matrix
+synth_up = synth_up[['Date','BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
 synth_up = synth_up.to_dict(orient = 'records') 
 collection_relative_synth.insert_many(synth_up)
 

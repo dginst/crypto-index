@@ -46,7 +46,7 @@ today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
 reference_date_vector = data_setup.timestamp_gen(start_date)
 #reference_date_vector = data_setup.timestamp_to_str(reference_date_vector)
 
-pair_array = ['gbp', 'usd', 'eur', 'cad', 'jpy']
+pair_array = ['gbp', 'usd', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur'] 
 Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC'] 
 # crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
@@ -97,14 +97,19 @@ for Crypto in Crypto_Asset:
             matrix = mongo.query_mongo(db, collection_raw, query_dict)
             matrix = matrix.drop(columns = ['Low', 'High', 'Open'])
             # checking if the matrix is not empty
-            if matrix.shape[0] > 1:
+            if matrix.shape[0] > 1: 
+                
+                if (exchange == 'bittrex' and cp == 'btcusdt'):
+
+                    sub_vol = np.array(matrix.loc[matrix.Time == 1544486400, 'Crypto Volume'])
+                    matrix.loc[matrix.Time == 1544572800, 'Crypto Volume'] = sub_vol
+                    matrix.loc[matrix.Time == 1544659200, 'Crypto Volume'] = sub_vol
 
                 matrix['Pair Volume'] = matrix['Close Price'] * matrix ['Crypto Volume']
 
             # put the manipulated data on MongoDB
             data = matrix.to_dict(orient='records')  
             collection_volume.insert_many(data)
-
 
 
 ############################## fixing historical series main part ##################################

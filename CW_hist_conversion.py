@@ -40,7 +40,7 @@ today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
 reference_date_vector = data_setup.timestamp_gen(start_date)
 
 # pair arrat without USD (no need of conversion)
-pair_array = ['usd', 'gbp', 'eur', 'cad', 'jpy']
+pair_array = ['usd', 'gbp', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur'] 
 Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC'] 
 # crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
@@ -75,13 +75,12 @@ for date in reference_date_vector:
 
     for fiat in pair_array:
         
-        if fiat != 'usd':
+        if (fiat != 'usd' and fiat != 'usdt' and fiat != 'usdc'):
 
             fiat = fiat.upper()
             ex_rate = fiat + '/USD'
             # defining the dictionary for the MongoDB query   
             query_dict_rate = {"Currency": ex_rate, "Date": str(date)}
-
             # retriving the needed information on MongoDB
             matrix_rate = mongo.query_mongo(db, collection_rates, query_dict_rate)
             # finding the conversion rate
@@ -103,7 +102,7 @@ for date in reference_date_vector:
             
             try:
 
-                if fiat != 'usd':
+                if (fiat != 'usd' and fiat != 'usdt' and fiat != 'usdc'):
 
                     # converting the values
                     matrix_data['Close Price'] = matrix_data['Close Price'] / conv_rate

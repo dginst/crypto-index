@@ -315,8 +315,15 @@ def perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016
     # calling the function that creates the array containing the boards date eve series
     board_eve = day_before_board()
 
+##
+    today = datetime.now().strftime('%Y-%m-%d')
+    today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
+    yesterday = today_TS - 86400
+    board_eve = np.append(board_eve, yesterday)
+## 
+
     # calling the function that yields the start and stop date couple
-    rebalance_start = next_quarterly_period(start_date, end_date, initial_val=0) ######## added next!!!!!!
+    rebalance_start = next_quarterly_period(start_date, end_date, initial_val = 0) 
 
     # for every start and stop date couple compute the relative logic matrix 
     i = 1
@@ -367,6 +374,7 @@ def perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016
 def first_logic_matrix(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016', end_date = None):
 
     exchange_vol_percentage = perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges, start_date, end_date, time_column = 'Y')
+    print(exchange_vol_percentage)
     first_logic_matrix = np.array([])
 
     for stop_date in exchange_vol_percentage['Time']:
@@ -381,13 +389,15 @@ def first_logic_matrix(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016', end_
             first_logic_matrix = np.append(first_logic_matrix, 0)
 
         else: 
+
             if np.any(np.isnan(row)):
+
                 first_logic_matrix = np.append(first_logic_matrix, 0) ## consider 0
+
             else:
+
                 first_logic_matrix = np.append(first_logic_matrix, 1)    
 
-    # time column may be unuseful
-    #first_logic_matrix = np.column_stack((np.array(exchange_vol_percentage['Time']), first_logic_matrix))
 
     return first_logic_matrix
 
@@ -548,7 +558,14 @@ def emwa_period_fraction(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, 
 
     # defining the arrays of board eve date and start and stop of each quarter
     board_eve_array = day_before_board()
-    rebalance_interval = next_quarterly_period(initial_val=0) ###### changed in next_...
+
+    ##
+    today = datetime.now().strftime('%Y-%m-%d')
+    today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
+    yesterday = today_TS - 86400
+    board_eve_array = np.append(board_eve_array, yesterday)
+## 
+
 
     # find the EMWA of the volume
     emwa_crypto_vol = emwa_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array, start_date, end_date, time_column = 'N')
@@ -559,7 +576,7 @@ def emwa_period_fraction(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, 
     stop_vector = np.array([])
 
     i = 1
-    for start, stop in next_quarterly_period(initial_val=0):
+    for start, stop in next_quarterly_period(initial_val = 0):
 
         # taking the interval from start of quarter to the eve of the board day
         interval_emwa = emwa_logic[Crypto_list][emwa_logic['Time'].between(start, board_eve_array[i], inclusive = True)]
@@ -732,7 +749,7 @@ def quarterly_synt_matrix(Crypto_Price_Matrix, weights, reference_date_array, bo
     # adding the 'Time' column to price_return DF
     price_return['Time'] = reference_date_array
 
-    rebalance_period = next_quarterly_period(initial_val = 0)
+    rebalance_period = next_quarterly_period(initial_val = 1)
 
     q_synt = np.array([])
 
@@ -740,8 +757,7 @@ def quarterly_synt_matrix(Crypto_Price_Matrix, weights, reference_date_array, bo
     for start, stop in rebalance_period:
 
         start_weights = (weights[Crypto_list][weights['Time'] == board_date_eve[i]]) * synt_ptf_value
-        # print(start_weights)
-
+        
         value_one = start_weights
 
         list_of_date = price_return.loc[price_return.Time.between(start, stop, inclusive = True), 'Time']
@@ -762,8 +778,10 @@ def quarterly_synt_matrix(Crypto_Price_Matrix, weights, reference_date_array, bo
 
                 q_synt = np.row_stack((q_synt, increased_value))
            
-        i = i  + 1
+        i = i + 1
 
+    service_vector = np.zeros((len(reference_date_array) - q_synt.shape[0],q_synt.shape[1]))
+    q_synt = np.row_stack((service_vector, q_synt))
     q_synt_time = np.column_stack((reference_date_array, q_synt))
 
     header = ['Time']
@@ -829,7 +847,15 @@ def divisor_adjustment(Crypto_Price_Matrix, Weights, second_logic_matrix, Crypto
     start_quarter = start_q_fix(start_quarter)
     next_start_quarter = next_start()
 
-    second_logic_matrix['Time'] = next_start_quarter[1:len(next_start_quarter)] ##############
+    try:
+
+        second_logic_matrix['Time'] = next_start_quarter[1:len(next_start_quarter)] ##############
+
+    except ValueError:
+
+         second_logic_matrix['Time'] = next_start_quarter[1:len(next_start_quarter) - 1]
+
+
  
     # for loop that iterates through all the date (length of logic matrix)
     # returning a divisor for each day
@@ -848,7 +874,7 @@ def divisor_adjustment(Crypto_Price_Matrix, Weights, second_logic_matrix, Crypto
         
         else:
 
-            today_price = np.array(Crypto_Price_Matrix.loc[Crypto_Price_Matrix.Time == date, Crypto_list])
+            #today_price = np.array(Crypto_Price_Matrix.loc[Crypto_Price_Matrix.Time == date, Crypto_list])
             yesterday_price = np.array(Crypto_Price_Matrix.loc[Crypto_Price_Matrix.Time == (int(date) - 86400), Crypto_list])
             current_weights = np.array(Weights.loc[Weights.Time == date, Crypto_list])
             previous_weights = np.array(Weights.loc[Weights.Time == next_start_quarter[i], Crypto_list])

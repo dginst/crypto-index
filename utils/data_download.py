@@ -111,16 +111,15 @@ def CW_raw_to_mongo(exchange, currencypair, mongo_collection, start_date = '01-0
     if end_date == None:
 
         end_date = datetime.now().strftime('%m-%d-%Y')
+        
     else:
 
         end_date = data_setup.date_reformat(end_date, '-')
 
     end_date = datetime.strptime(end_date, '%m-%d-%Y')
-
     # transform date into timestamps
     start_date = str(int(time.mktime(start_date.timetuple())))
     end_date = str(int(time.mktime(end_date.timetuple())))
-
     # API settings
     entrypoint = 'https://api.cryptowat.ch/markets/' 
     key = exchange + "/" + currencypair + "/ohlc?periods=" + periods + "&after=" + start_date + "&before=" + end_date
@@ -129,7 +128,6 @@ def CW_raw_to_mongo(exchange, currencypair, mongo_collection, start_date = '01-0
     # API call
     response = requests.get(request_url)
     response = response.json()
-
 
     try: 
 
