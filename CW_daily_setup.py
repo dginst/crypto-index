@@ -32,7 +32,7 @@ pair_array = ['usd', 'gbp', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur'] 
 Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC'] 
 # crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
-Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
+Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 # exchange complete = ['coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
 ####################################### setup mongo connection ###################################
@@ -76,7 +76,7 @@ last_five_days_mongo = date_list[(len(date_list) - 5) : len(date_list)]
 # finding the date to download as difference between complete array of date and 
 # date now stored on MongoDB
 date_to_add = data_setup.Diff(last_five_days, last_five_days_mongo)
-
+print(date_to_add)
 
 if date_to_add != []:
 
@@ -131,8 +131,11 @@ if date_to_add != []:
 
                 # defining the dictionary for the MongoDB query
                 query_dict = {"Exchange" : exchange, "Pair": cp}
-                # retriving the needed information on MongoDB
+                # retrieving the needed information from rawdata collection on MongoDB
                 matrix = mongo.query_mongo(database, collection_raw, query_dict)
+                matrix = matrix.drop(columns = ['Low', 'High','Open'])
+                # retrieving the needed information from cleandata collection
+                service_matrix = mongo.query_mongo(database, collection_clean_check, query_dict)
                 # selecting the date of interest
                 if start_date == end_date:
 
@@ -144,9 +147,8 @@ if date_to_add != []:
     
                 matrix = matrix.drop(columns = ['Exchange', 'Pair'])
                 # checking if the matrix is not empty
-                if matrix.shape[0] > 1:
-                    
-                    
+                if (matrix.shape[0] > 1 or service_matrix.shape[0]>1):
+
                     if start_date == end_date:
                         
                         t_value = matrix.loc[matrix['Time'].isin(relative_reference_vector)]
@@ -156,16 +158,35 @@ if date_to_add != []:
                         # so the values of the day before are substituted for the crytpo price
                         if t_value.empty == True:
 
-                            matrix = t_1_value
-                            matrix = matrix.drop(columns = ['Low', 'High','Open'])
-                            matrix['Time'] = relative_reference_vector[0]
-                            matrix['Close Price'] = t_1_value['Close Price']
-                            matrix['Crypto Volume'] = 0
-                            matrix['Pair Volume'] = 0
+                            if t_1_value.empty == False:
+
+                                matrix = t_1_value
+                                matrix['Time'] = relative_reference_vector[0]
+                                matrix['Close Price'] = t_1_value['Close Price']
+                                matrix['Crypto Volume'] = 0
+                                matrix['Pair Volume'] = 0
+                            
+                            else:
+
+                                t_1_value = service_matrix.loc[service_matrix['Time'] == str((int(relative_reference_vector[0]) - 86400))]
+                                matrix = t_1_value
+                                matrix['Time'] = relative_reference_vector[0]
+                                matrix['Close Price'] = t_1_value['Close Price']
+                                matrix['Crypto Volume'] = 0
+                                matrix['Pair Volume'] = 0
+                        
+                        else:
+
+                            matrix = t_value
+
+                            if matrix.shape[0] != relative_reference_vector.size:
+                                
+                                matrix = data_setup.CW_series_fix_missing(matrix, exchange, Crypto, pair, start_date, end_date)
                     
                     else:
 
                         # checking if the matrix has missing data and if ever fixing it
+                        
                         if matrix.shape[0] != relative_reference_vector.size:
                             
                             matrix = data_setup.CW_series_fix_missing(matrix, exchange, Crypto, pair, start_date, end_date)
@@ -183,6 +204,8 @@ if date_to_add != []:
                 # add exchange and currency_pair column
                 matrix['Exchange'] = exchange
                 matrix['Pair'] = cp
+                print(matrix)
+
                 try:
 
                     # put the manipulated data on MongoDB

@@ -564,7 +564,7 @@ def emwa_period_fraction(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, 
     today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
     yesterday = today_TS - 86400
     board_eve_array = np.append(board_eve_array, yesterday)
-## 
+    ## 
 
 
     # find the EMWA of the volume

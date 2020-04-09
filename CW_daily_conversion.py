@@ -27,12 +27,11 @@ Start_Period = '01-01-2016'
 # set today
 today = datetime.now().strftime('%Y-%m-%d')
 
-# pair arrat without USD (no need of conversion)
-pair_array = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
-# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc'] 
+pair_array = ['usd', 'gbp', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
+# pair complete = ['usd', 'gbp', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
 Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC'] 
 # crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
-Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
+Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 # exchange complete = ['coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
 ####################################### setup mongo connection ###################################
@@ -167,7 +166,7 @@ else:
 collection_final = "CW_final_data"
 
 # defining the MongoDB path where to look for the rates
-query_dict = {'Exchange': "coinbase-pro", 'Pair': "ethusd"} 
+query_dict = {'Exchange': "coinbase-pro", 'Pair': "ethusd"}  
 
 # retrieving data from MongoDB 'index' and "CW_final_data" collection
 matrix = mongo.query_mongo(database, collection_final, query_dict)
@@ -179,7 +178,6 @@ last_five_days_mongo = date_list[(len(date_list) - 5) : len(date_list)]
 # finding the date to download as difference between complete array of date and 
 # date now stored on MongoDB
 date_to_convert = data_setup.Diff(last_five_days, last_five_days_mongo)
-print(date_to_convert)
 
 ######################################## CW_final_data upload #####################################
 

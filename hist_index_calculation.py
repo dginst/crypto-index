@@ -126,7 +126,6 @@ quarterly_date = calc.quarterly_period()
 
 #######################################################################################################
 
-################################ specific series exclusion #################################
 ##################################### MAIN PART ###################################################
 
 
@@ -163,17 +162,25 @@ for CryptoA in Crypto_Asset:
             fiat_curr = cp[3:]
             ############ bittrex started on 1st April to exchange on 'eur' fiat pair #################
             ############ temporarly the related volumes are out of computation ####################
-            if (exchange == 'bittrex' and fiat_curr == 'eur'):
+            if (exchange == 'bittrex' and fiat_curr == 'eur') or (exchange == 'bittrex' and crypto == 'ltc' and fiat_curr == 'usd') or (exchange == 'poloniex' and crypto == 'bch' and fiat_curr == 'usdc'):
 
                 continue
-            
+
+            #####################################################################################
   
             # defining the dictionary for the MongoDB query
             query_dict = {"Exchange" : exchange, "Pair": cp}
             # retriving the needed information on MongoDB
             matrix = mongo.query_mongo(db_name, collection_converted_data, query_dict)
+
+            try:
+
+                matrix = matrix.drop(columns = ['Low', 'High','Open'])
             
-            
+            except:
+
+                pass
+
             try:
                 
                 cp_matrix = matrix.to_numpy()
