@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import io
 import numpy as np
+pd.set_option("display.max_rows", None, "display.max_columns", None)
 
 #connecting to mongo in local
 connection = MongoClient('localhost', 27017)
