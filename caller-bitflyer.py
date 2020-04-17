@@ -10,7 +10,7 @@ db = connection.index
 db.rawdata.create_index([ ("id", -1)] )
 #creating the empty collection rawdata within the database index
 
-collection_bitflyertraw = db.bitflyertraw
+exc_raw_collection = db.EXC_rawdata
 
 ###################### bitflyer
 
@@ -19,9 +19,9 @@ assets2 = ['ETH']
 fiat1 = ['EUR', 'USD', 'JPY']
 fiat2 = ['JPY']
 
-call =[api.bitflyer_ticker(Crypto, Fiat, collection_bitflyertraw)  for Crypto in assets1 for Fiat in fiat1]
-call =[api.bitflyer_ticker(Crypto, Fiat, collection_bitflyertraw)  for Crypto in assets2 for Fiat in fiat2]        
+call =[api.bitflyer_ticker(Crypto, Fiat, exc_raw_collection)  for Crypto in assets1 for Fiat in fiat1]
+call =[api.bitflyer_ticker(Crypto, Fiat, exc_raw_collection)  for Crypto in assets2 for Fiat in fiat2]        
         
 bitflyer = time.time()
 
-print("This script took: {} minutes".format(float(bitflyer-start)))
+print("This script took: {} seconds".format(float(bitflyer-start)))

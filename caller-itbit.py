@@ -10,7 +10,7 @@ db = connection.index
 db.rawdata.create_index([ ("id", -1)] )
 #creating the empty collection rawdata within the database index
 
-collection_itbittraw = db.itbittraw
+exc_raw_collection = db.EXC_rawdata
 
 
 
@@ -22,9 +22,9 @@ fiat1 = ['EUR', 'USD']
 for Crypto in assets1:
     for Fiat in  fiat1:
 
-        api.itbit_ticker(Crypto, Fiat, collection_itbittraw)
+        api.itbit_ticker(Crypto, Fiat, exc_raw_collection)
 
 itbit = time.time()
 
 
-print("This script took: {} minutes".format(float(itbit-start)))
+print("This script took: {} seconds".format(float(itbit-start)))

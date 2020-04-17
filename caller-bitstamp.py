@@ -10,8 +10,7 @@ db = connection.index
 
 #creating the empty collection rawdata within the database index
 
-collection_bitstamptraw = db.bitstamptraw
-
+exc_raw_collection = db.EXC_rawdata
 
 ######################## bitstamp
 
@@ -21,10 +20,10 @@ fiat1 = ['EUR', 'USD']
 for Crypto in assets2:
     for Fiat in fiat1:
 
-        api.bitstamp_ticker(Crypto, Fiat, collection_bitstamptraw)
+        api.bitstamp_ticker(Crypto, Fiat, exc_raw_collection)
 
 bitstamp = time.time()
 kraken = time.time()       
 
 
-print("This script took: {} minutes".format(float(kraken-start)))
+print("This script took: {} seconds".format(float(kraken-start)))
