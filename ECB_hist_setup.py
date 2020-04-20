@@ -70,7 +70,7 @@ standard_date = np.array([])
 for element in mongo_clean['Date']:
 
     standard = datetime.fromtimestamp(int(element))
-    standard = standard.strftime('%d-%m-%Y')
+    standard = standard.strftime('%Y-%m-%d')
     element = str(element)
     new_date = np.append(new_date, element)
     standard_date = np.append(standard_date, standard)

@@ -64,6 +64,35 @@ def timestamp_gen(start_date, end_date = None, EoD = 'Y'):
     return array
 
 
+
+def timestamp_gen_legal_solar(TS_array):
+    
+    legal_16 = (1459209600, 1477612800)
+    legal_17 = (1490572800, 1509062400)
+    legal_18 = (1522065600, 1540555200)
+    legal_19 = (1554120000, 1572004800)
+    legal_20 = (1585569600, 1603454400)
+
+    new_array = np.array([legal_16[0]])
+    for date in TS_array:
+
+        if legal_16[0] <= date <= legal_16[1] or legal_17[0] <= date <= legal_17[1] or legal_18[0] <= date <= legal_18[1] or legal_19[0] <= date <= legal_19[1] or legal_20[0] <= date <= legal_20[1]:
+
+            date = date - 3600
+            new_array = np.append(new_array, date)
+        
+        else:
+
+            new_array = np.append(new_array, date)
+    
+    new_array = new_array[1:len(new_array)]
+
+    return new_array
+    
+
+
+
+
 # function that converts the date array found using the above function into a strandard date array
 # with the date format YYYY-MM-DD
 
@@ -582,6 +611,7 @@ def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
     # defining the array of date to be used
     date = timestamp_gen(Start_Period, End_Period, EoD = 'N')
+    date_ECB = timestamp_gen_legal_solar(date)
     # date = timestamp_convert(date_TS)
     # date = [datetime.strptime(x, '%Y-%m-%d') for x in date]
 
@@ -597,7 +627,7 @@ def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
         database= 'index'
         collection = 'ecb_raw'
-        query = {'TIME_PERIOD': str(date[i]) } 
+        query = {'TIME_PERIOD': str(date_ECB[i]) } 
 
        
         # retrieving data from MongoDB 'index' and 'ecb_raw' collection
