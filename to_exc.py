@@ -4,10 +4,10 @@ import utils.mongo_setup as mongo
 connection = MongoClient('localhost', 27017)
 #creating the database called index
 db = connection.index
-db.rawdata.create_index([ ("id", -1) ])
+db.EXC_rawdata.create_index([ ("id", -1) ])
 #creating the empty collection rawdata within the database index
 
-collection = db.EXC.rawdata
+collection = db.EXC_rawdata
 db = 'index'
 
 ################################# coinbasetraw
@@ -26,6 +26,7 @@ try:
 
   df = df.to_dict(orient='records')  
 
+  
   collection.insert_many(df)
 except:
   print('none_coinbase')
