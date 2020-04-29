@@ -56,38 +56,41 @@ db = connection.index
 
 # drop the pre-existing collection (if there is one)
 db.converted_data.drop()
-db.CW_final_data.drop()
 
 #creating the empty collection cleandata within the database index
-db.CW_final_data.create_index([ ("id", -1) ])
 db.converted_data.create_index([ ("id", -1) ])
-collection_final_data = db.CW_final_data
 collection_converted = db.converted_data
 
 ############################## data conversion main part ##################################
 
 # defining the database name and the collection name
-db_name = "index"
-collection_data = "CW_cleandata"
+db = "index"
+collection_data = "cleandata"
 collection_rates = "ecb_clean"
 
+# queryng the two dataframe
+matrix_rate = mongo.query_mongo(db, collection_rates)
+print(matrix_rate)
+matrix_data = mongo.query_mongo(db, collection_data)
+print(matrix_data)
 # field of conversion 
 conv_fields = ['Close Price', 'Pair Volume']
 
-for date in reference_date_vector:
+for date in reference_date_vector[0:len(reference_date_vector) - 1]:
+
+    date_rate = matrix_rate.loc[matrix_rate.Date == str(date)]
+    #date_data = matrix_data.loc[matrix_data.Time == str(date)]
 
     for fiat in pair_array:
         
         if (fiat != 'usd' and fiat != 'usdt' and fiat != 'usdc'):
 
             fiat = fiat.upper()
-            ex_rate = fiat + '/USD'
-            # defining the dictionary for the MongoDB query   
-            query_dict_rate = {"Currency": ex_rate, "Date": str(date)}
-            # retriving the needed information on MongoDB
-            matrix_rate = mongo.query_mongo(db_name, collection_rates, query_dict_rate)
+            ex_rate = fiat + '/USD'  
+
             # finding the conversion rate
-            conv_rate = np.array(matrix_rate['Rate'])
+            conv_rate = date_rate.loc[date_rate.Currency == ex_rate, ['Rate']]
+            conv_rate = np.array(conv_rate)
 
         currencypair_array = []
         
@@ -96,81 +99,34 @@ for date in reference_date_vector:
             currencypair_array.append(Crypto.lower() + fiat.lower())
         
         for cp in currencypair_array:
-
-            # defining the dictionary for the MongoDB query
-            query_dict_data = {"Pair": cp, "Time": str(date)}
             
-            # retriving the needed information on MongoDB
-            matrix_data = mongo.query_mongo(db_name, collection_data, query_dict_data)
             
             try:
 
                 if (fiat != 'usd' and fiat != 'usdt' and fiat != 'usdc'):
 
                     # converting the values
-                    matrix_data['Close Price'] = matrix_data['Close Price'] / conv_rate
-                    matrix_data['Pair Volume'] = matrix_data['Pair Volume'] / conv_rate
+                    converted_price = matrix_data.loc[(matrix_data['Time'] == str(date)) & (matrix_data['Pair'] == cp), 'Close Price'] / conv_rate
+                    converted_volume = matrix_data.loc[(matrix_data['Time'] == str(date)) & (matrix_data['Pair'] == cp), 'Pair Volume'] / conv_rate
+                    matrix_data.loc[(matrix_data['Time'] == str(date)) & (matrix_data['Pair'] == cp), 'Close Price'] = converted_price
+                    matrix_data.loc[(matrix_data['Time'] == str(date)) & (matrix_data['Pair'] == cp), 'Pair Volume'] = converted_price
 
                 else:
 
                     matrix_data = matrix_data
 
-                # adding a human-readable date format
-                standard_date = np.array([])
-
-                for element in matrix_data['Time']:
-
-                    standard = datetime.fromtimestamp(int(element))
-                    standard = standard.strftime('%d-%m-%Y')
-                    standard_date = np.append(standard_date, standard)
-
-                matrix_data['Standard Date'] = standard_date
-
-                # put the manipulated data on MongoDB
-                data = matrix_data.to_dict(orient = 'records')  
-                collection_converted.insert_many(data)
             
             except TypeError:
 
                 pass
 
-################################### zero volume values fixing part #################################
 
-# define database name and collection name
-db_name = "index"
-collection_converted_data = "converted_data"
+# adding a human-readable date format
+standard_date = [datetime.fromtimestamp(int(element)) for element in matrix_data['Time']]
+standard_date = [element.strftime('%d-%m-%Y') for element in standard_date]
 
-for Crypto in Crypto_Asset:
+matrix_data['Standard Date'] = standard_date
 
-    currencypair_array = []
-
-    for i in pair_array:
-
-        currencypair_array.append(Crypto.lower() + i)
-
-    for exchange in Exchanges:
-        
-        for cp in currencypair_array:
-
-            # defining the dictionary for the MongoDB query
-            query_dict = {"Exchange" : exchange, "Pair": cp}
-            # retriving the needed information on MongoDB
-            matrix = mongo.query_mongo(db_name, collection_converted_data, query_dict)
-            # checking if the matrix is not empty
-            try:
-
-                if matrix.shape[0] > 1:
-
-                    matrix = data_setup.fix_zero_value(matrix)
-
-
-                # put the manipulated data on MongoDB
-                data = matrix.to_dict(orient='records')  
-                collection_final_data.insert_many(data)
-            
-            except AttributeError:
-                pass
-
-# deleting unuseful collection
-
-db.converted_data.drop()
+# put the converted data on MongoDB
+conv_data = matrix_data.to_dict(orient='records')  
+collection_converted.insert_many(conv_data)

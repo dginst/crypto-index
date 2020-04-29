@@ -61,12 +61,12 @@ connection = MongoClient('localhost', 27017)
 db = connection.index
 
 # drop the pre-existing collection (if there is one)
-db.cleandata.drop()
+db.CW_cleandata.drop()
 db.volume_checked_data.drop()
 
 #creating the empty collection "cleandata" within the database index
-db.cleandata.create_index([ ("id", -1) ])
-collection_clean = db.cleandata
+db.CW_cleandata.create_index([ ("id", -1) ])
+collection_clean = db.CW_cleandata
 
 #creating the empty collection "volume_checked_data" within the database index
 db.volume_checked_data.create_index([ ("id", -1) ])
@@ -74,7 +74,7 @@ collection_volume = db.volume_checked_data
 
 # defining the database name and the collection name where to look for data
 db = "index"
-collection_raw = "rawdata"
+collection_raw = "CW_rawdata"
 collection_volume_check = "volume_checked_data"
 
 ############################### fixing the "Pair Volume" information ##############################
@@ -142,14 +142,17 @@ for Crypto in Crypto_Asset:
             # checking if the matrix is not empty
             if matrix.shape[0] > 1:
 
-                # check if the historical series start at the same date as the stert date
+                # check if the historical series start at the same date as the start date
                 # if not fill the dataframe with zero values
                 matrix = data_setup.homogenize_series(matrix, reference_date_vector)
+
+                # check if the series stopped at certain point in the past, if yes fill with zero
+                matrix = data_setup.homogenize_dead_series(matrix, reference_date_vector)
 
                 # checking if the matrix has missing data and if ever fixing it
                 if matrix.shape[0] != reference_date_vector.size:
                     
-                    matrix = data_setup.CW_series_fix_missing(matrix, exchange, Crypto, pair, start_date)
+                    matrix = data_setup.CW_series_fix_missing(matrix, exchange, Crypto, pair, start_date, db = "index", collection = "CW_rawdata")
 
             ######### part that transform the timestamped date into string ###########
             new_date = np.array([])
@@ -168,6 +171,8 @@ for Crypto in Crypto_Asset:
             data = matrix.to_dict(orient='records')  
             collection_clean.insert_many(data)
 
-
+#############################################################################################
+db = connection.index
+db.volume_checked_data.drop()
 
 

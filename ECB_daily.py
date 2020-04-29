@@ -44,6 +44,8 @@ collection_ECB_raw = db.ecb_raw
 
 # defining the array containing all the date from start_period until today
 date_complete = data_setup.timestamp_gen(Start_Period)
+# defining the array considering legal/solar hours
+date_complete = data_setup.timestamp_gen_legal_solar(date_complete)
 # converting the timestamp format date into string
 date_complete = [str(single_date) for single_date in date_complete]
 

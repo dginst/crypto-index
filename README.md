@@ -83,20 +83,20 @@ Is possible to split the index calculation in six main parts.
     daily_lambda = (1 - 0.94) * (0.94 ^ (index))
 
   where the index is the value of intergers in the range (89, 0).
-  The emwa values has two different usages: the computation of the second logic matrix and the computation of the quarterly weights.
+  The ewma values has two different usages: the computation of the second logic matrix and the computation of the quarterly weights.
 
 3) Second logic matrix computation
 
   The second logic matrix is the second and last eligibility check that is needed in order to achieve a correct and consistent composition of the index.
-  The idea is to compare, for each crytpoasset, the aggregate emwa volume of the specified period and then find the percentage that the single cryptoasset has respect to the totoal sum.
-  The first step is to leave out, for each quarter, the cryptoassets that has been eliminated due to the first logic matrix; then the code takes the emwa values for the period between the start date of the quarter and the day before the board meeting day, sum them for sinle cryptoassets and compute the relative percentage of each one.
+  The idea is to compare, for each crytpoasset, the aggregate ewma volume of the specified period and then find the percentage that the single cryptoasset has respect to the totoal sum.
+  The first step is to leave out, for each quarter, the cryptoassets that has been eliminated due to the first logic matrix; then the code takes the ewma values for the period between the start date of the quarter and the day before the board meeting day, sum them for sinle cryptoassets and compute the relative percentage of each one.
   If the relative percentage of a cryptoasset in less than 2%, the crytpoasset will be considered non eligible for the quarter.
-  back the % of the EWMA-volume of any single cryptoasset compared to the aggregate EMWA-volume
+  back the % of the EWMA-volume of any single cryptoasset compared to the aggregate EWMA-volume
 
 4) Quarter Weights computation
 
   The weights computation is performed for each quarter on the day before the board meeting day. 
-  The first step is to leave out from the emwa dataframe all the cryptoassets that have been ideintified as non eligible with the logic matrices; done that the code simply find the relative weights of the cryptoassets ewma: these are the weights of the next quarter.
+  The first step is to leave out from the ewma dataframe all the cryptoassets that have been ideintified as non eligible with the logic matrices; done that the code simply find the relative weights of the cryptoassets ewma: these are the weights of the next quarter.
 
 5) Synthetic Market Cap computation
 

@@ -63,11 +63,11 @@ connection = MongoClient('localhost', 27017)
 db = connection.index
 
 # drop the pre-existing collection (if there is one)
-db.rawdata.drop()
+db.CW_rawdata.drop()
 
 #creating the empty collection rawdata within the database index
 db.rawdata.create_index([ ("id", -1) ])
-collection_raw = db.rawdata
+collection_raw = db.CW_rawdata
 
 ####################################### downloading and storing part #################################
 

@@ -29,7 +29,7 @@ today = datetime.now().strftime('%Y-%m-%d')
 
 # pair arrat without USD (no need of conversion)
 pair_array = ['usd', 'gbp', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
-# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur'] 
+# pair complete = ['usd', 'gbp', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
 Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC'] 
 # crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
 Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
@@ -43,7 +43,7 @@ connection = MongoClient('localhost', 27017)
 db = connection.index
 
 # naming the existing rawdata collection as a variable
-collection_raw = db.rawdata
+collection_raw = db.CW_rawdata
 
 
 ############################################# converted_data check ###########################################
@@ -58,7 +58,7 @@ last_five_days = date_complete[(len(date_complete) - 5) : len(date_complete)]
 
 # defining the MongoDB path where to look for the rates
 database = 'index'
-collection = 'rawdata'
+collection = 'CW_rawdata'
 query = {'Exchange': "coinbase-pro", 'Pair': "ethusd"} 
 
 # retrieving data from MongoDB 'index' and 'ecb_raw' collection
