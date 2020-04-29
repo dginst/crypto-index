@@ -50,3 +50,29 @@ def query_mongo(database, collection, query_dict = None):
             df = df.append(element, ignore_index = True)
       
     return df
+
+def query_mongo2(database, collection, query_dict = None):
+
+    # defining the variable that allows to work with MongoDB
+    db = connection[database]
+    coll = db[collection]
+
+   #     # find in the selected collection the wanted element/s
+    
+    if query_dict == None:
+
+        df = pd.DataFrame(list(coll.find()))
+        try:
+            df = df.drop(columns= '_id')
+        except:
+            df = []
+    else:
+        df = pd.DataFrame(list(coll.find(query_dict)))
+        try:
+            df = df.drop(columns= '_id')
+        except: 
+            df = []
+        
+   
+    print(df)
+    return df
