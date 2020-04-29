@@ -1,3 +1,4 @@
+import utils.mongo_setup as mongo
 from pymongo import MongoClient
 import time
 import pandas as pd
@@ -9,38 +10,50 @@ connection = MongoClient('localhost', 27017)
 db = connection.index
 collection = db.rawdata
 
+database = "index"
+collection = "rawdata2"
+collection_volume_check = "volume_checked_data"
+
+db = connection[database]
+coll = db[collection]
 query_dict = {"Exchange" : 'coinbase-pro', "Pair": 'ethgbp'}
+
+df = mongo.query_mongo(database, collection, query_dict)
+print(df)
 
 #ciao = collection.find()
 
-df = pd.DataFrame(list(collection.find(query_dict)))
-df = df.drop(columns= '_id')
 
-print(df)
+# df = pd.DataFrame(list(coll.find(query_dict)))
+# df = df.drop(columns= '_id')
 
-end = time.time()
+# print(df)
 
-
-
-print("This script took: {} seconds".format(float(end-start)))
+# end = time.time()
 
 
-def query_mongo(database, collection, query_dict = None):
 
-    # defining the variable that allows to work with MongoDB
+# print("This script took: {} seconds".format(float(end-start)))
+
+
+# def query_mongo(database, collection, query_dict = None):
+
+#     # defining the variable that allows to work with MongoDB
+#     db = connection[database]
+#     coll = db[collection]
+
+#     # find in the selected collection the wanted element/s
+#       # find in the selected collection the wanted element/s
     
-    coll = db.collection
+#     if query_dict == None:
 
-    # find in the selected collection the wanted element/s
+#         df = pd.DataFrame(list(coll.find()))
+#         df = df.drop(columns= '_id')
+#     else:
+#         df = pd.DataFrame(list(coll.find(query_dict)))
+        
+#         df = df.drop(columns= '_id')
     
-    if query_dict == None:
+#     print(df)
+#     return df
 
-        df = pd.DataFrame(list(coll.find()))
-        df = df.drop(columns= '_id')
-    else:
-        df = pd.DataFrame(list(coll.find(query_dict)))
-        print(df)
-        df = df.drop(columns= '_id')
-    
-    print(df)
-    return df
