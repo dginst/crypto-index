@@ -32,6 +32,7 @@ import utils.data_setup as data_setup
 import utils.data_download as data_download
 import utils.mongo_setup as mongo
 
+start = time.time()
 ####################################### initial settings ############################################
 
 start_date = '01-01-2016'
@@ -114,7 +115,7 @@ for Crypto in Crypto_Asset:
 
 ############################## fixing historical series main part ##################################
 
-
+print('SECCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOMMMMMMMMMMSDASASDASASASDASD')
 
 for Crypto in Crypto_Asset:
 
@@ -169,5 +170,6 @@ for Crypto in Crypto_Asset:
             collection_clean.insert_many(data)
 
 
+end = time.time()
 
-
+print("This script took: {} seconds".format(float(end-start)))

@@ -27,6 +27,8 @@ import utils.data_setup as data_setup
 import utils.data_download as data_download
 import utils.mongo_setup as mongo
 
+start = time.time()
+
 ####################################### initial settings ############################################
 
 start_date = '01-01-2016'
@@ -74,7 +76,7 @@ conv_fields = ['Close Price', 'Pair Volume']
 for date in reference_date_vector:
 
     for fiat in pair_array:
-        
+        print(fiat)
         if (fiat != 'usd' and fiat != 'usdt' and fiat != 'usdc'):
 
             fiat = fiat.upper()
@@ -132,3 +134,6 @@ for date in reference_date_vector:
 
 
 
+end = time.time()
+
+print("This script took: {} seconds".format(float(end-start)))
