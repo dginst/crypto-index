@@ -82,7 +82,9 @@ def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None, freq =
 
         else:
 
-            Exchange_Rate_List = Exchange_Rate_List.append(Main_Data_Frame, sort=True)
+            Exchange_Rate_List = Exchange_Rate_List.append(Main_Data_Frame, sort = True)
+    
+    Exchange_Rate_List.reset_index(drop = True, inplace = True)
 
     return Exchange_Rate_List
 
@@ -111,7 +113,7 @@ def CW_raw_to_mongo(exchange, currencypair, mongo_collection, start_date = '01-0
     if end_date == None:
 
         end_date = datetime.now().strftime('%m-%d-%Y')
-        
+
     else:
 
         end_date = data_setup.date_reformat(end_date, '-')
@@ -143,7 +145,7 @@ def CW_raw_to_mongo(exchange, currencypair, mongo_collection, start_date = '01-0
             Crypto_Volume = 0
             Pair_Volume = 0
 
-            rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time': Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
+            rawdata = {'Exchange' : Exchange, 'Pair' : Pair, 'Time': Time, 'Low': Low, 'High': High, 'Open': Open, 'Close Price': Close_Price, 'Crypto Volume': Crypto_Volume, 'Pair Volume': Pair_Volume}
 
             mongo_collection.insert_one(rawdata)
 
@@ -160,7 +162,7 @@ def CW_raw_to_mongo(exchange, currencypair, mongo_collection, start_date = '01-0
             Crypto_Volume = r[i][5]
             Pair_Volume = r[i][6]
 
-            rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time': Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
+            rawdata = {'Exchange': Exchange, 'Pair': Pair, 'Time': Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
 
             mongo_collection.insert_one(rawdata)
 

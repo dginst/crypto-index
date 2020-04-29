@@ -374,7 +374,6 @@ def perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016
 def first_logic_matrix(Crypto_Ex_Vol, Exchanges, start_date = '01-01-2016', end_date = None):
 
     exchange_vol_percentage = perc_volumes_per_exchange(Crypto_Ex_Vol, Exchanges, start_date, end_date, time_column = 'Y')
-    print(exchange_vol_percentage)
     first_logic_matrix = np.array([])
 
     for stop_date in exchange_vol_percentage['Time']:
@@ -464,7 +463,7 @@ def smoothing_factor(lambda_smooth = 0.94, moving_average_period = 90):
 
 # function that compute the 90-days EWMA volume for each currency.
 # it returns a dataframe with Crypto (from Crypto_list input) as columns and date as row
-# each position has the daily EMWA of the relative cryptoasset.
+# each position has the daily EWMA of the relative cryptoasset.
 # takes as input:
 # Crypto_Volume_Matrix: Volume matrix where columns are crypto and rows timestamp format days
 # Crypto_list: a list of all the CrytpoAsset
@@ -472,9 +471,9 @@ def smoothing_factor(lambda_smooth = 0.94, moving_average_period = 90):
 # moving_average_period: the period that is set on 90 days as default
 # if not otherwise specififed the returned dataframe will not have the "Time" Column
 
-def emwa_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array, start_date = '01-01-2016', end_date = None, moving_average_period = 90, time_column = 'N'):
+def ewma_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array, start_date = '01-01-2016', end_date = None, moving_average_period = 90, time_column = 'N'):
 
-    emwa_matrix = np.array([])
+    ewma_matrix = np.array([])
     smoothing_array = smoothing_factor()
 
     for date in reference_date_array:
@@ -485,58 +484,58 @@ def emwa_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array, 
             period_volume = Crypto_Volume_Matrix.loc[Crypto_Volume_Matrix.Time.between(start, stop, inclusive = True), Crypto_list]
             period_average = (period_volume * smoothing_array[:, None]).sum()
 
-            if emwa_matrix.size == 0:
+            if ewma_matrix.size == 0:
                 
-                emwa_matrix = np.array(period_average)
+                ewma_matrix = np.array(period_average)
             
             else:
 
-                emwa_matrix = np.row_stack((emwa_matrix, np.array(period_average)))
+                ewma_matrix = np.row_stack((ewma_matrix, np.array(period_average)))
         except:
 
             zero_array = np.zeros(len(Crypto_list))
 
-            if emwa_matrix.size == 0:
+            if ewma_matrix.size == 0:
                 
-                emwa_matrix = zero_array
+                ewma_matrix = zero_array
             
             else:
 
-                emwa_matrix = np.row_stack((emwa_matrix, zero_array))
+                ewma_matrix = np.row_stack((ewma_matrix, zero_array))
 
     
-    emwa_matrix = np.column_stack((reference_date_array, emwa_matrix))
+    ewma_matrix = np.column_stack((reference_date_array, ewma_matrix))
     header = ['Time']
     header.extend(Crypto_list)
-    emwa_DF = pd.DataFrame(emwa_matrix, columns = header)
+    ewma_DF = pd.DataFrame(ewma_matrix, columns = header)
 
     if time_column == 'N':
 
-        emwa_DF = emwa_DF.drop(columns = 'Time')    
+        ewma_DF = ewma_DF.drop(columns = 'Time')    
 
-    return emwa_DF
+    return ewma_DF
 
 
 
-# function uses the first logic matrix and checks the emwa dataframe excluding the cryptoassets 
+# function uses the first logic matrix and checks the ewma dataframe excluding the cryptoassets 
 # than cannot be eligible for every rebalancing periods (from quarter start date to quarter end date). 
-# returns a dataframe of emwa where if the cryptoasset is eligible its value is untouched, otherwise, if the 
+# returns a dataframe of ewma where if the cryptoasset is eligible its value is untouched, otherwise, if the 
 # cryptoasset is to be excluded using the logic matrices, its value will be put to zero.
 
-def emwa_first_logic_check(first_logic_matrix, emwa_dataframe, reference_date_array, Crypto_list, start_date = '01-01-2016', end_date = None, time_column = 'N'):
+def ewma_first_logic_check(first_logic_matrix, ewma_dataframe, reference_date_array, Crypto_list, start_date = '01-01-2016', end_date = None, time_column = 'N'):
 
-    # reshaping the logic matrix in order to make it of the same dimensions of the emwa dataframe
+    # reshaping the logic matrix in order to make it of the same dimensions of the ewma dataframe
     reshaped_logic_m = first_logic_matrix_reshape(first_logic_matrix, reference_date_array, Crypto_list)
     ##reshaped_logic_m = reshaped_logic_m.drop(columns = 'Time')
     
-    # multiplying the logic matrix and the emwa dataframe
-    emwa_checked = emwa_dataframe * reshaped_logic_m
+    # multiplying the logic matrix and the ewma dataframe
+    ewma_checked = ewma_dataframe * reshaped_logic_m
 
     if time_column == 'Y':
         
-        emwa_checked['Time'] = reference_date_array
+        ewma_checked['Time'] = reference_date_array
 
-    return emwa_checked
+    return ewma_checked
 
 
 
@@ -544,7 +543,7 @@ def emwa_first_logic_check(first_logic_matrix, emwa_dataframe, reference_date_ar
 
 ###################################### SECOND LOGIC MATRIX #########################################################
 
-# This function gives back the % of the EWMA-volume of any single cryptoasset compared to the aggregate EMWA-volume
+# This function gives back the % of the EWMA-volume of any single cryptoasset compared to the aggregate EWMA-volume
 # of all the cryptoasset over a defined interval, more specifically over the period between the reconstitution day
 # (start of the quarter) and the eve of the board meeting day
 # takes as input:
@@ -554,7 +553,7 @@ def emwa_first_logic_check(first_logic_matrix, emwa_dataframe, reference_date_ar
 # if not otherwise specififed the returned dataframe will not have the "Time" Column
 # Note that the function is returns the values required in order to verify if the 2nd requirement is respected.
 
-def emwa_period_fraction(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, reference_date_array, start_date = '01-01-2016', end_date = None, time_column = 'N'):
+def ewma_period_fraction(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, reference_date_array, start_date = '01-01-2016', end_date = None, time_column = 'N'):
 
     # defining the arrays of board eve date and start and stop of each quarter
     board_eve_array = day_before_board()
@@ -567,39 +566,39 @@ def emwa_period_fraction(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, 
     ## 
 
 
-    # find the EMWA of the volume
-    emwa_crypto_vol = emwa_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array, start_date, end_date, time_column = 'N')
-    # check the EMWA dataframe using the first logic matrix
-    emwa_logic = emwa_first_logic_check(first_logic_matrix, emwa_crypto_vol, reference_date_array, Crypto_list, start_date, end_date, time_column = 'Y')
+    # find the EWMA of the volume
+    ewma_crypto_vol = ewma_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array, start_date, end_date, time_column = 'N')
+    # check the EWMA dataframe using the first logic matrix
+    ewma_logic = ewma_first_logic_check(first_logic_matrix, ewma_crypto_vol, reference_date_array, Crypto_list, start_date, end_date, time_column = 'Y')
 
-    emwa_volume_fraction = np.array([])
+    ewma_volume_fraction = np.array([])
     stop_vector = np.array([])
 
     i = 1
     for start, stop in next_quarterly_period(initial_val = 0):
 
         # taking the interval from start of quarter to the eve of the board day
-        interval_emwa = emwa_logic[Crypto_list][emwa_logic['Time'].between(start, board_eve_array[i], inclusive = True)]
+        interval_ewma = ewma_logic[Crypto_list][ewma_logic['Time'].between(start, board_eve_array[i], inclusive = True)]
 
-        # sum the interval emwa and then find the percentage of each crypto in term of emwa
-        row_sum = interval_emwa.sum()
+        # sum the interval ewma and then find the percentage of each crypto in term of ewma
+        row_sum = interval_ewma.sum()
         percentage_row = row_sum / row_sum.sum()
 
         # add the single rebalance day to the matrix
         if stop_vector.size == 0:
 
             stop_vector = stop
-            emwa_volume_fraction = np.array(percentage_row)
+            ewma_volume_fraction = np.array(percentage_row)
             
         else:
             stop_vector = np.row_stack((stop_vector, stop))
-            emwa_volume_fraction = np.row_stack((emwa_volume_fraction, np.array(percentage_row)))
+            ewma_volume_fraction = np.row_stack((ewma_volume_fraction, np.array(percentage_row)))
         
         i = i + 1
 
     if time_column != 'N':
 
-        emwa_volume_fraction = np.column_stack((stop_vector, emwa_volume_fraction))
+        ewma_volume_fraction = np.column_stack((stop_vector, ewma_volume_fraction))
         header = ['Time']
         header.extend(Crypto_list)
     
@@ -607,9 +606,9 @@ def emwa_period_fraction(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, 
 
         header = Crypto_list
 
-    emwa_volume_fraction = pd.DataFrame(emwa_volume_fraction, columns = header)
+    ewma_volume_fraction = pd.DataFrame(ewma_volume_fraction, columns = header)
 
-    return emwa_volume_fraction
+    return ewma_volume_fraction
 
 
 
@@ -622,16 +621,16 @@ def emwa_period_fraction(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, 
 
 def second_logic_matrix(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, reference_date_array, time_column = 'Y'):
 
-    # finding the dataframe containing the relative emwa value at every end date of the rebalancing period
-    emwa_volume_fraction = emwa_period_fraction(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, reference_date_array, time_column = 'Y')
-    emwa_no_time = emwa_volume_fraction.drop(columns = 'Time')
+    # finding the dataframe containing the relative ewma value at every end date of the rebalancing period
+    ewma_volume_fraction = ewma_period_fraction(Crypto_Volume_Matrix, first_logic_matrix, Crypto_list, reference_date_array, time_column = 'Y')
+    ewma_no_time = ewma_volume_fraction.drop(columns = 'Time')
 
     # create a dataframe where if the percentage is < 0.02 put 0, otherwise put 1
-    second_logic_matrix = (emwa_no_time >= 0.02) * 1
+    second_logic_matrix = (ewma_no_time >= 0.02) * 1
 
     if time_column == 'Y':
 
-        second_logic_matrix['Time'] = emwa_volume_fraction['Time']
+        second_logic_matrix['Time'] = ewma_volume_fraction['Time']
 
 
     return second_logic_matrix
@@ -678,41 +677,41 @@ def second_logic_matrix_reshape(second_logic_matrix, reference_date_array, Crypt
 
 #################################### WEIGHTS COMPUTATION ############################################
 
-# function uses the first and second logic matrix and checks the emwa dataframe excluding the cryptoassets 
+# function uses the first and second logic matrix and checks the ewma dataframe excluding the cryptoassets 
 # than cannot be eligible for every rebalancing periods (from quarter start date to quarter end date). 
-# returns a dataframe of emwa where if the cryptoasset is eligible its value is untouched, otherwise, if the 
+# returns a dataframe of ewma where if the cryptoasset is eligible its value is untouched, otherwise, if the 
 # cryptoasset is to be excluded using the logic matrices, its value will be put to zero.
 
-def emwa_second_logic_check(first_logic_matrix, second_logic_matrix, emwa_dataframe, reference_date_array, Crypto_list, start_date = '01-01-2016', end_date = None, time_column = 'N'):
+def ewma_second_logic_check(first_logic_matrix, second_logic_matrix, ewma_dataframe, reference_date_array, Crypto_list, start_date = '01-01-2016', end_date = None, time_column = 'N'):
 
-    # reshaping both the logic matrices in order to make them of the same dimensions of the emwa dataframe
+    # reshaping both the logic matrices in order to make them of the same dimensions of the ewma dataframe
     reshaped_first_logic_m = first_logic_matrix_reshape(first_logic_matrix, reference_date_array, Crypto_list)
     reshaped_second_logic_m = second_logic_matrix_reshape(second_logic_matrix, reference_date_array, Crypto_list)
     
-    # applying the first logic matrix to the emwa dataframe
-    emwa_first_checked = emwa_dataframe * reshaped_first_logic_m
+    # applying the first logic matrix to the ewma dataframe
+    ewma_first_checked = ewma_dataframe * reshaped_first_logic_m
 
     # applying the second logic matrix to the previous result
-    emwa_second_checked = emwa_first_checked * reshaped_second_logic_m
+    ewma_second_checked = ewma_first_checked * reshaped_second_logic_m
 
     if time_column != 'N':
 
-        emwa_second_checked['Time'] = reference_date_array
+        ewma_second_checked['Time'] = reference_date_array
 
-    return emwa_second_checked
+    return ewma_second_checked
 
 
 
 # function returns a dataframe (cryptoasset as columns, date as row) containing the weights for
 # each cryptoasset already cleaned by the non-eligible cryptoassets
 # takes as imput:
-# emwa_double_logic_checked : emwa matrix (crypto as columns, ref_array_date as rows) already checked 
+# ewma_double_logic_checked : ewma matrix (crypto as columns, ref_array_date as rows) already checked 
 # by the first and second logic matrix
 # date : array containing single or muptiple date where the weights want to be computed (board_date_eve)
 # Crytpo_list : vector with all the Cryptoassets
 # Note that the function should be used to find weights only on every boards eve date
 
-def quarter_weights(emwa_double_logic_checked, date, Crypto_list):
+def quarter_weights(ewma_double_logic_checked, date, Crypto_list):
     
 
     quarter_weights = pd.DataFrame(date, columns = ['Time'])
@@ -723,7 +722,7 @@ def quarter_weights(emwa_double_logic_checked, date, Crypto_list):
     
     for day in date:
 
-        row = np.array(emwa_double_logic_checked.loc[emwa_double_logic_checked.Time == day, Crypto_list])
+        row = np.array(ewma_double_logic_checked.loc[ewma_double_logic_checked.Time == day, Crypto_list])
         total_row = row.sum()
         weighted_row = row / total_row
 

@@ -43,10 +43,10 @@ db.crypto_volume.drop()
 db.crypto_price_return.drop()
 db.index_weights.drop()
 db.index_level.drop()
-db.index_EMWA.drop()
+db.index_EWMA.drop()
 db.index_logic_matrix_one.drop()
 db.index_logic_matrix_two.drop()
-db.index_EMWA_logic_checked.drop()
+db.index_EWMA_logic_checked.drop()
 db.index_divisor.drop()
 db.index_divisor_reshaped.drop()
 db.index_synth_matrix.drop()
@@ -68,18 +68,18 @@ collection_volume = db.crypto_volume
 # collection for price returns
 db.crypto_price_return.create_index([ ("id", -1) ])
 collection_price_ret = db.crypto_price_return
-# collection for EMWA
-db.index_EMWA.create_index([ ("id", -1) ])
-collection_EMWA = db.index_EMWA
+# collection for EWMA
+db.index_EWMA.create_index([ ("id", -1) ])
+collection_EWMA = db.index_EWMA
 # collection for first logic matrix
 db.index_logic_matrix_one.create_index([ ("id", -1) ])
 collection_logic_one = db.index_logic_matrix_one
 # collection for second logic matrix
 db.index_logic_matrix_two.create_index([ ("id", -1) ])
 collection_logic_two = db.index_logic_matrix_two
-# collection for EMWA double checked with both logic matrix
-db.index_EMWA_logic_checked.create_index([ ("id", -1) ])
-collection_EMWA_check = db.index_EMWA_logic_checked
+# collection for EWMA double checked with both logic matrix
+db.index_EWMA_logic_checked.create_index([ ("id", -1) ])
+collection_EWMA_check = db.index_EWMA_logic_checked
 # collection for the divisor array
 db.index_divisor.create_index([ ("id", -1) ])
 collection_divisor = db.index_divisor
@@ -324,18 +324,18 @@ first_logic_matrix['Time'] = rebalance_stop_date[0:len(rebalance_stop_date)]
 
 
 # computing the Exponential Moving Weighted Average of the selected period
-emwa_df = calc.emwa_crypto_volume(Crypto_Asset_Volume, Crypto_Asset, reference_date_vector, time_column = 'N')
+ewma_df = calc.ewma_crypto_volume(Crypto_Asset_Volume, Crypto_Asset, reference_date_vector, time_column = 'N')
 
 # computing the second logic matrix
 second_logic_matrix = calc.second_logic_matrix(Crypto_Asset_Volume, first_logic_matrix, Crypto_Asset, reference_date_vector, time_column = 'Y')
 print(second_logic_matrix)
-# computing the emwa checked with both the first and second logic matrices
-double_checked_EMWA = calc.emwa_second_logic_check(first_logic_matrix, second_logic_matrix, emwa_df, reference_date_vector, Crypto_Asset, time_column = 'Y')
+# computing the ewma checked with both the first and second logic matrices
+double_checked_EWMA = calc.ewma_second_logic_check(first_logic_matrix, second_logic_matrix, ewma_df, reference_date_vector, Crypto_Asset, time_column = 'Y')
 
 # computing the Weights that each CryptoAsset should have starting from each new quarter
 # every weigfhts is computed in the period that goes from present quarter start_date to 
 # present quarter board meeting date eve
-weights_for_board = calc.quarter_weights(double_checked_EMWA, board_date_eve[1:], Crypto_Asset)
+weights_for_board = calc.quarter_weights(double_checked_EWMA, board_date_eve[1:], Crypto_Asset)
 print(weights_for_board)
 print(data_setup.timestamp_to_human(weights_for_board['Time']))
 
@@ -381,8 +381,7 @@ collection_weights.insert_many(up_weights)
 
 # put the "price_ret" dataframe on MongoDB
 price_ret['Date'] = human_date
-price_ret_up = price_ret.drop(columns = 'Time')
-price_ret_up = price_ret_up[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+price_ret_up = price_ret_up[['Date', 'Time', 'ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
 price_ret_up = price_ret_up.to_dict(orient = 'records')  
 collection_price_ret.insert_many(price_ret_up)
 
@@ -401,18 +400,18 @@ volume_up = volume_up.to_dict(orient = 'records')
 collection_volume.insert_many(volume_up)
 
 # put the EWMA dataframe on MongoDB
-emwa_df['Date'] = human_date
-emwa_df_up = emwa_df
-emwa_df_up = emwa_df_up[['Date','BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
-emwa_df_up = emwa_df_up.to_dict(orient = 'records') 
-collection_EMWA.insert_many(emwa_df_up)
+ewma_df['Date'] = human_date
+ewma_df_up = ewma_df
+ewma_df_up = ewma_df_up[['Date','BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
+ewma_df_up = ewma_df_up.to_dict(orient = 'records') 
+collection_EWMA.insert_many(ewma_df_up)
 
-# put the double checked EMWA on MongoDB
-double_checked_EMWA['Date'] = human_date
-double_EMWA_up = double_checked_EMWA.drop(columns = 'Time')
-double_EMWA_up = double_EMWA_up[['Date','BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
-double_EMWA_up = double_EMWA_up.to_dict(orient = 'records')
-collection_EMWA_check.insert_many(double_EMWA_up)
+# put the double checked EWMA on MongoDB
+double_checked_EWMA['Date'] = human_date
+double_EWMA_up = double_checked_EWMA.drop(columns = 'Time')
+double_EWMA_up = double_EWMA_up[['Date','BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
+double_EWMA_up = double_EWMA_up.to_dict(orient = 'records')
+collection_EWMA_check.insert_many(double_EWMA_up)
 
 # put the index level on MongoDB
 index_1000_base['Date'] = human_date
@@ -467,8 +466,8 @@ print('Crypto_Asset_Volume')
 print(Crypto_Asset_Volume)
 print('Price Returns')
 print(price_ret)
-print('EMWA DataFrame')
-print(emwa_df)
+print('EWMA DataFrame')
+print(ewma_df)
 print('WEIGHTS for board')
 print(weights_for_board)
 print('Syntethic relative matrix')

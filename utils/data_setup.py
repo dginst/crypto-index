@@ -30,7 +30,7 @@ def timestamp_gen(start_date, end_date = None, EoD = 'Y'):
     start = int(time.mktime(start.timetuple()))
 
     if start > 1585440000: ### TDB: make function more flexible, the ts is 29-03-2020 12:00 AM
-
+        
         add_on = 3600*2
 
     else:
@@ -280,7 +280,7 @@ def Check_null(item):
 # doing that the Dataframe related on all the crypto-fiat series would be of the 
 # same dimension and, at the same time, does not affects the computation because also the volume
 # is set to 0.
-# the function uses on default 30 days in order to asses if a series lacking of the first n days
+# the function uses on default 5 days in order to asses if a series lacking of the first n days
 
 def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 5):
 
@@ -315,6 +315,43 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 
 
 
 
+# add description
+
+def homogenize_dead_series(series_to_check, reference_date_array_TS, days_to_check = 5):
+
+    reference_date_array_TS = np.array(reference_date_array_TS)
+    header = list(series_to_check.columns)
+    last_day = reference_date_array_TS[len(reference_date_array_TS) - 1]
+    first_check_day = reference_date_array_TS[len(reference_date_array_TS) - 1 - days_to_check]
+    test_matrix = series_to_check.loc[series_to_check.Time.between(first_check_day, last_day, inclusive = True), header]
+
+    if test_matrix.empty == True:
+
+        print('inside')
+        last_date = np.array(series_to_check['Time'].iloc[len(series_to_check['Time']) -1])
+        first_missing_date = (int(last_date) + 86400)
+        last_missing_date = last_day
+
+        missing_date_array = timestamp_vector(first_missing_date, last_missing_date)
+
+        new_series = pd.DataFrame(missing_date_array, columns = ['Time'])
+        header.remove('Time')
+
+        for element in header:
+
+            new_series[element] = np.zeros(len(missing_date_array))
+
+        complete_series = series_to_check.append(new_series)
+        
+    else:
+
+        complete_series = series_to_check
+    
+    complete_series = complete_series.reset_index(drop = True)
+
+    return complete_series
+
+
 # function takes as input a Dataframe with missing values referred to specific exchange, cryptocurrency
 # and fiat pair and fix it; the dataframe passed as broken_matrix is a CryptoWatch series
 # and is Fixed for the columns 'Time', 'Close Price', 'Crypto Volume', 'Pair Volume'
@@ -322,15 +359,11 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 
 # a volume weighted average of the found values
 # the values of the other exchanges are searched in MongoDB database "index" and in the "rawdata" collection
 
-def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_date = None):
+def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_date = None, db = "index", collection = "CW_rawdata"):
 
 
     # define DataFrame header
     header = ['Time', 'Close Price', 'Crypto Volume', 'Pair Volume']
-
-    # set the index name and collection name to retrieve data from MongoDB
-    db = "index"
-    collection = "rawdata"
 
     # set end_date = today if empty
     if end_date == None:
@@ -560,7 +593,9 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
     return variation_matrix, volume_matrix
 
 
-# add description
+
+# the function allows to fix potential zero values founded in "Crytpo Volume" and "Pair Volume"
+# it takes the Volume values of the previuos day and substitue it into the days with 0-values
 
 def fix_zero_value(matrix):
 
@@ -571,7 +606,7 @@ def fix_zero_value(matrix):
         value_to_check = np.array(matrix.loc[matrix.Time == date,'Crypto Volume'])
         price_check = np.array(matrix.loc[matrix.Time == date,'Close Price'])
 
-        if val_sum != 0 and int(value_to_check) == 0:
+        if (val_sum != 0 and int(value_to_check) == 0):
 
             if int(price_check) == 0:
                 
