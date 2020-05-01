@@ -170,6 +170,7 @@ def coinbase_ticker( Crypto, Fiat, collection):
     
         r = response
         Pair = asset + fiat
+        print(Pair)
         exchange = 'coinbase-pro'
         time = today_ts()
         date = datetime.now()
@@ -258,20 +259,21 @@ def kraken_ticker (Crypto, Fiat, collection):
     key = asset+fiat
     #print(key)
     request_url = entrypoint + key
-    #print(request_url)
+    print(request_url)
     response = requests.get(request_url)
 
     response = response.json()
-
+    print(response)
     try:
         asset = asset.upper()
         fiat = fiat.upper()
         Pair = 'X' + asset + 'Z' + fiat
         exchange = 'kraken'
-        if fiat == 'USDT' or fiat == 'USDC' or fiat == 'CHF' or asset == 'ADA' or asset == 'EOS' or asset == 'BCH':
+        if fiat == 'USDT' or fiat == 'USDC' or fiat == 'CHF' or asset == 'ADA' or asset == 'EOS' or asset == 'BCH' or (asset == 'XRP' and fiat == 'GBP') or (asset == 'LTC' and fiat == 'GBP'):
             Pair = asset + fiat
         r = response['result'][Pair]
         Pair = asset + fiat
+        print(Pair)
         time = today_ts()
         date = datetime.now()
         price = r['c'][0]
