@@ -80,6 +80,8 @@ collection_volume_check = "volume_checked_data"
 
 ############################### fixing the "Pair Volume" information ##############################
 
+tot_matrix = mongo.query_mongo2(db, collection_raw)
+tot_matrix = tot_matrix.drop(columns = ['Low', 'High', 'Open'])
 for Crypto in Crypto_Asset:
 
     currencypair_array = []
@@ -93,10 +95,12 @@ for Crypto in Crypto_Asset:
         for cp in currencypair_array:
 
             # defining the dictionary for the MongoDB query
-            query_dict = {"Exchange" : exchange, "Pair": cp}
+            # query_dict = {"Exchange" : exchange, "Pair": cp}
             # retriving the needed information on MongoDB
-            matrix = mongo.query_mongo(db, collection_raw, query_dict)
-            matrix = matrix.drop(columns = ['Low', 'High', 'Open'])
+            # matrix = mongo.query_mongo(db, collection_raw, query_dict)
+            # matrix = matrix.drop(columns = ['Low', 'High', 'Open'])
+            matrix = tot_matrix.loc[tot_matrix['Exchange'] == exchange] 
+            matrix = matrix.loc[matrix['Pair'] == cp]
             # checking if the matrix is not empty
             if matrix.shape[0] > 1: 
                 
@@ -108,14 +112,19 @@ for Crypto in Crypto_Asset:
 
                 matrix['Pair Volume'] = matrix['Close Price'] * matrix ['Crypto Volume']
 
+
             # put the manipulated data on MongoDB
             data = matrix.to_dict(orient='records')  
             collection_volume.insert_many(data)
 
+end = time.time()
+
+print("This script took: {} seconds".format(float(end-start)))
 
 ############################## fixing historical series main part ##################################
+start = time.time()
 
-print('SECCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOMMMMMMMMMMSDASASDASASASDASD')
+tot_matrix = mongo.query_mongo2(db, collection_volume_check)
 
 for Crypto in Crypto_Asset:
 
@@ -136,9 +145,11 @@ for Crypto in Crypto_Asset:
             pair = cp[3:]
 
             # defining the dictionary for the MongoDB query
-            query_dict = {"Exchange" : exchange, "Pair": cp}
+            # query_dict = {"Exchange" : exchange, "Pair": cp}
             # retriving the needed information on MongoDB
-            matrix = mongo.query_mongo(db, collection_volume_check, query_dict)
+            # matrix = mongo.query_mongo(db, collection_volume_check, query_dict)
+            matrix = tot_matrix.loc[tot_matrix['Exchange'] == exchange] 
+            matrix = matrix.loc[matrix['Pair'] == cp]
             matrix = matrix.drop(columns = ['Exchange', 'Pair'])
             # checking if the matrix is not empty
             if matrix.shape[0] > 1:
@@ -150,9 +161,10 @@ for Crypto in Crypto_Asset:
                 # check if the series stopped at certain point in the past, if yes fill with zero
                 matrix = data_setup.homogenize_dead_series(matrix, reference_date_vector)
 
+                print('here')
                 # checking if the matrix has missing data and if ever fixing it
                 if matrix.shape[0] != reference_date_vector.size:
-                    
+                    print('fix')
                     matrix = data_setup.CW_series_fix_missing(matrix, exchange, Crypto, pair, start_date, db = "index", collection = "CW_rawdata")
 
             ######### part that transform the timestamped date into string ###########

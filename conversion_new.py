@@ -65,21 +65,23 @@ collection_converted = db.converted_data
 
 # defining the database name and the collection name
 db = "index"
-collection_data = "cleandata"
+collection_data = "CW_cleandata"
 collection_rates = "ecb_clean"
 
 # queryng the two dataframe
-matrix_rate = mongo.query_mongo(db, collection_rates)
-print(matrix_rate)
-matrix_data = mongo.query_mongo(db, collection_data)
-print(matrix_data)
+matrix_rate = mongo.query_mongo2(db, collection_rates)
+matrix_data = mongo.query_mongo2(db, collection_data)
+
+
 # field of conversion 
 conv_fields = ['Close Price', 'Pair Volume']
 
 for date in reference_date_vector[0:len(reference_date_vector) - 1]:
 
+    print(date)
     date_rate = matrix_rate.loc[matrix_rate.Date == str(date)]
     #date_data = matrix_data.loc[matrix_data.Time == str(date)]
+    date_matrix = matrix_data.loc[matrix_data.Time == str(date)]
 
     for fiat in pair_array:
         
@@ -101,32 +103,41 @@ for date in reference_date_vector[0:len(reference_date_vector) - 1]:
         for cp in currencypair_array:
             
             
+            cp_matrix = date_matrix.loc[date_matrix.Pair == cp]
+
             try:
 
                 if (fiat != 'usd' and fiat != 'usdt' and fiat != 'usdc'):
 
                     # converting the values
-                    converted_price = matrix_data.loc[(matrix_data['Time'] == str(date)) & (matrix_data['Pair'] == cp), 'Close Price'] / conv_rate
-                    converted_volume = matrix_data.loc[(matrix_data['Time'] == str(date)) & (matrix_data['Pair'] == cp), 'Pair Volume'] / conv_rate
-                    matrix_data.loc[(matrix_data['Time'] == str(date)) & (matrix_data['Pair'] == cp), 'Close Price'] = converted_price
-                    matrix_data.loc[(matrix_data['Time'] == str(date)) & (matrix_data['Pair'] == cp), 'Pair Volume'] = converted_price
+                    cp_matrix['Close Price'] = cp_matrix['Close Price'].div(float(conv_rate))
+                    cp_matrix['Pair Volume'] = cp_matrix['Pair Volume'].div(float(conv_rate))
 
                 else:
 
-                    matrix_data = matrix_data
+                    cp_matrix = cp_matrix
 
             
             except TypeError:
 
                 pass
+        
+
+            try:
+
+                converted_matrix = converted_matrix.append(cp_matrix)
+
+            except:
+
+                converted_matrix = cp_matrix
 
 
 # adding a human-readable date format
-standard_date = [datetime.fromtimestamp(int(element)) for element in matrix_data['Time']]
+standard_date = [datetime.fromtimestamp(int(element)) for element in converted_matrix['Time']]
 standard_date = [element.strftime('%d-%m-%Y') for element in standard_date]
 
-matrix_data['Standard Date'] = standard_date
+converted_matrix['Standard Date'] = standard_date
 
 # put the converted data on MongoDB
-conv_data = matrix_data.to_dict(orient='records')  
+conv_data = converted_matrix.to_dict(orient='records')  
 collection_converted.insert_many(conv_data)

@@ -73,6 +73,4 @@ def query_mongo2(database, collection, query_dict = None):
         except: 
             df = []
         
-   
-    print(df)
     return df

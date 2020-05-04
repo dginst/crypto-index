@@ -393,7 +393,7 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
         # defining the dictionary to use in querying MongoDB
         query_dict = {"Exchange" : element, "Pair": ccy_pair }
         # query MongoDB and rerieve a DataFrame called "matrix"
-        matrix = mongo.query_mongo(db, collection, query_dict)
+        matrix = mongo.query_mongo2(db, collection, query_dict)
         matrix = matrix.drop(columns = ['Exchange', 'Pair', 'Low', 'High','Open'])
 
         # checking if data frame is empty: if not then the ccy_pair exists in the exchange
