@@ -48,7 +48,7 @@ Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', '
 # crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
 Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 # exchange complete = ['coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
-ciao = 'ethusd'
+ciao = 'ethusdt'
 print(ciao[3:])
 ####################################### setup MongoDB connection ###################################
 
@@ -74,20 +74,25 @@ collection_rates = "ecb_clean"
 
 # queryng the two dataframe
 matrix_rate = mongo.query_mongo2(db, collection_rates)
-
 matrix_data = mongo.query_mongo2(db, collection_data)
 
-print(matrix_data.info())
+first_conv_data = matrix_data.loc[matrix_data['Pair'].str[3:] == 'usd']
+print(first_conv_data.info())
+first_conv_data = matrix_data.loc[matrix_data['Pair'].str[3:] == 'usdc']
+print(first_conv_data.info())
+first_conv_data = matrix_data.loc[matrix_data['Pair'].str[3:] == 'usdt']
+print(first_conv_data.info())
 
 df = pd.merge(matrix_rate,matrix_data, on = 'Time')
 
-print(df.head())
 
 df['Currency'] = df['Currency'].apply(lambda x: x.lower())
 
-
-
 df = df.loc[df['Pair'].str[3:] == df['Currency'].str[:3]]
+
+df['Close Price'] = df['Close Price'] * df['Rate']
+
+
         
    
 # df['Close Price'] = df['Close Price'] * df['Rate']
