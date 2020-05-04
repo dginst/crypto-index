@@ -53,12 +53,7 @@ db.index_synth_matrix.drop()
 
 # creating some the empty collections within the database index
 
-# collection for index weights
-db.index_weights.create_index([ ("id", -1) ])
-collection_weights = db.index_weights
-# collection for index level
-db.index_level.create_index([ ("id", -1) ])
-collection_index_level = db.index_level
+
 # collection for crypto prices
 db.crypto_price.create_index([ ("id", -1) ])
 collection_price = db.crypto_price
@@ -80,6 +75,9 @@ collection_logic_two = db.index_logic_matrix_two
 # collection for EWMA double checked with both logic matrix
 db.index_EWMA_logic_checked.create_index([ ("id", -1) ])
 collection_EWMA_check = db.index_EWMA_logic_checked
+# collection for index weights
+db.index_weights.create_index([ ("id", -1) ])
+collection_weights = db.index_weights
 # collection for the divisor array
 db.index_divisor.create_index([ ("id", -1) ])
 collection_divisor = db.index_divisor
@@ -89,6 +87,12 @@ collection_divisor_reshaped = db.index_divisor_reshaped
 # collection for the relative syntethic matrix
 db.index_synth_matrix.create_index([ ("id", -1) ])
 collection_relative_synth = db.index_synth_matrix
+# collection for index level base 1000
+db.index_level_1000.create_index([ ("id", -1) ])
+collection_index_level_1000 = db.index_level_1000
+# collection for index level raw
+db.index_raw_level.create_index([ ("id", -1) ])
+collection_index_level_raw = db.index_level_raw
 
 
 
@@ -328,7 +332,7 @@ ewma_df = calc.ewma_crypto_volume(Crypto_Asset_Volume, Crypto_Asset, reference_d
 
 # computing the second logic matrix
 second_logic_matrix = calc.second_logic_matrix(Crypto_Asset_Volume, first_logic_matrix, Crypto_Asset, reference_date_vector, time_column = 'Y')
-print(second_logic_matrix)
+
 # computing the ewma checked with both the first and second logic matrices
 double_checked_EWMA = calc.ewma_second_logic_check(first_logic_matrix, second_logic_matrix, ewma_df, reference_date_vector, Crypto_Asset, time_column = 'Y')
 
@@ -336,13 +340,11 @@ double_checked_EWMA = calc.ewma_second_logic_check(first_logic_matrix, second_lo
 # every weigfhts is computed in the period that goes from present quarter start_date to 
 # present quarter board meeting date eve
 weights_for_board = calc.quarter_weights(double_checked_EWMA, board_date_eve[1:], Crypto_Asset)
-print(weights_for_board)
-print(data_setup.timestamp_to_human(weights_for_board['Time']))
+
 
 # compute the syntethic matrix and the rekative syntethic matrix
 syntethic = calc.quarterly_synt_matrix(Crypto_Asset_Prices, weights_for_board, reference_date_vector, board_date_eve, Crypto_Asset)
 syntethic_relative_matrix = calc.relative_syntethic_matrix(syntethic, Crypto_Asset)
-print(syntethic_relative_matrix)
 
 # changing the "Time" column of the second logic matrix using the rebalance date
 second_logic_matrix['Time'] = next_rebalance_date[1:]
@@ -374,90 +376,86 @@ human_date = data_setup.timestamp_to_human(reference_date_vector)
 # put the "weights" dataframe on MongoDB
 weight_human_date = data_setup.timestamp_to_human(weights_for_board['Time'])
 weights_for_board['Date'] = weight_human_date
-weights_for_board = weights_for_board[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC', 'Time']]
-up_weights = weights_for_board.drop(columns = ['Time'])
-up_weights = up_weights.to_dict(orient = 'records')     
+weights_for_board = weights_for_board[['Date', 'Time', 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
+up_weights = weights_for_board.to_dict(orient = 'records')     
 collection_weights.insert_many(up_weights)
 
 # put the "price_ret" dataframe on MongoDB
 price_ret['Date'] = human_date
-price_ret_up = price_ret_up[['Date', 'Time', 'ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+price_ret_up = price_ret[['Date', 'Time', 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
 price_ret_up = price_ret_up.to_dict(orient = 'records')  
 collection_price_ret.insert_many(price_ret_up)
 
 # put the "Crypto_Asset_Prices" dataframe on MongoDB
 Crypto_Asset_Prices['Date'] = human_date
-price_up = Crypto_Asset_Prices.drop(columns = 'Time')
-price_up = price_up[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+price_up = Crypto_Asset_Prices[['Date', 'Time', 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
 price_up = price_up.to_dict(orient = 'records')  
 collection_price.insert_many(price_up)
 
 # put the "Crypto_Asset_Volumes" dataframe on MongoDB
 Crypto_Asset_Volume['Date'] = human_date
-volume_up = Crypto_Asset_Volume.drop(columns = 'Time')
-volume_up = volume_up[['Date','ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']]
+volume_up = Crypto_Asset_Volume[['Date', 'Time', 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
 volume_up = volume_up.to_dict(orient = 'records') 
 collection_volume.insert_many(volume_up)
 
 # put the EWMA dataframe on MongoDB
 ewma_df['Date'] = human_date
-ewma_df_up = ewma_df
-ewma_df_up = ewma_df_up[['Date','BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
+ewma_df_up = ewma_df[['Date', 'Time', 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
 ewma_df_up = ewma_df_up.to_dict(orient = 'records') 
 collection_EWMA.insert_many(ewma_df_up)
 
 # put the double checked EWMA on MongoDB
 double_checked_EWMA['Date'] = human_date
-double_EWMA_up = double_checked_EWMA.drop(columns = 'Time')
-double_EWMA_up = double_EWMA_up[['Date','BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
+double_EWMA_up = double_checked_EWMA[['Date', 'Time', 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
 double_EWMA_up = double_EWMA_up.to_dict(orient = 'records')
 collection_EWMA_check.insert_many(double_EWMA_up)
-
-# put the index level on MongoDB
-index_1000_base['Date'] = human_date
-index_val_up = index_1000_base.drop(columns = 'Time')
-index_val_up = index_val_up[['Date', 'Index Value']]
-index_val_up = index_val_up.to_dict(orient = 'records')
-collection_index_level.insert_many(index_val_up)
-
-# put the divisor array on MongoDB
-divisor_date = data_setup.timestamp_to_human(divisor_array['Time'])
-divisor_array['Date'] = divisor_date
-divisor_up = divisor_array.drop(columns = 'Time')
-divisor_up = divisor_up[['Date', 'Divisor Value']]
-divisor_up = divisor_up.to_dict(orient = 'records')
-collection_divisor.insert_many(divisor_up)
-
-# put the reshaped divisor array on MongoDB
-reshaped_divisor_date = data_setup.timestamp_to_human(reshaped_divisor['Time'])
-reshaped_divisor['Date'] = reshaped_divisor_date
-reshaped_divisor_up = reshaped_divisor.drop(columns = 'Time')
-reshaped_divisor_up = reshaped_divisor_up[['Date', 'Divisor Value']]
-reshaped_divisor_up = reshaped_divisor_up.to_dict(orient = 'records')
-collection_divisor_reshaped.insert_many(reshaped_divisor_up)
 
 # put the first logic matrix on MongoDB
 first_date = data_setup.timestamp_to_human(first_logic_matrix['Time'])
 first_logic_matrix['Date'] = first_date
-first_up = first_logic_matrix.drop(columns = 'Time')
-first_up = first_up[['Date','BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
+first_up = first_logic_matrix[['Date', 'Time', 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
 first_up = first_up.to_dict(orient = 'records') 
 collection_logic_one.insert_many(first_up)
 
 # put the second logic matrix on MongoDB
 second_date = data_setup.timestamp_to_human(second_logic_matrix['Time'])
 second_logic_matrix['Date'] = second_date
-second_up = second_logic_matrix.drop(columns = 'Time')
-second_up = second_up[['Date','BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
+second_up = second_logic_matrix[['Date', 'Time', 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
 second_up = second_up.to_dict(orient = 'records') 
 collection_logic_two.insert_many(second_up)
 
 # put the relative synth matrix on MongoDB
-syntethic_relative_matrix['Date'] = human_date
+syntethic_relative_matrix['Date'] = human_date ############
 synth_up = syntethic_relative_matrix
 synth_up = synth_up[['Date','BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
 synth_up = synth_up.to_dict(orient = 'records') 
 collection_relative_synth.insert_many(synth_up)
+
+# put the divisor array on MongoDB
+divisor_date = data_setup.timestamp_to_human(divisor_array['Time'])
+divisor_array['Date'] = divisor_date
+divisor_up = divisor_array[['Date', 'Time', 'Divisor Value']]
+divisor_up = divisor_up.to_dict(orient = 'records')
+collection_divisor.insert_many(divisor_up)
+
+# put the reshaped divisor array on MongoDB
+reshaped_divisor_date = data_setup.timestamp_to_human(reshaped_divisor['Time'])
+reshaped_divisor['Date'] = reshaped_divisor_date
+reshaped_divisor_up = reshaped_divisor[['Date', 'Time', 'Divisor Value']]
+reshaped_divisor_up = reshaped_divisor_up.to_dict(orient = 'records')
+collection_divisor_reshaped.insert_many(reshaped_divisor_up)
+
+# put the index level 1000 on MongoDB
+index_1000_base['Date'] = human_date
+index_val_up = index_1000_base[['Date', 'Time' 'Index Value']]
+index_val_up = index_val_up.to_dict(orient = 'records')
+collection_index_level_1000.insert_many(index_val_up)
+
+# put the index level raw on MongoDB
+index_values['Date'] = human_date
+index_val_up = index_values[['Date', 'Time', 'Index Value']]
+index_val_up = index_val_up.to_dict(orient = 'records')
+collection_index_level_raw.insert_many(index_val_up)
 
 ######## some printing ##########
 print('Crypto_Asset_Prices')
