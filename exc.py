@@ -89,6 +89,8 @@ print(matrix_data['a'])
 
 df = pd.merge(matrix_data,matrix_rate, on = ['Time','a'])
 
+df = df['Close Price'] * df['Rate']
+
 
 # df['Currency'] = df['Currency'].apply(lambda x: x.lower())
 
