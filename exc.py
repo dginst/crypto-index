@@ -72,14 +72,41 @@ db = "index"
 collection_data = "CW_cleandata"
 collection_rates = "ecb_clean"
 
-# queryng the two dataframe
 matrix_rate = mongo.query_mongo2(db, collection_rates)
+matrix_data = mongo.query_mongo2(db, collection_data)
+######################################################
+############# alternativa #########################
+# leave out USD pair
+matrix_data['fiat'] = matrix_data['Pair'].str[3:]
+fiat_to_conv = ['gbp', 'eur', 'cad', 'jpy']
+fiat_no_conv = ['usd', 'usdt', 'usdc']
+matrix_data = matrix_data.loc[matrix_data['fiat'].isin(fiat_to_conv)]
+matrix_no_conv = matrix_data.loc[matrix_data['fiat'].isin(fiat_no_conv)]
+
+matrix_rate['key'] = matrix_rate['Currency'].str[:3].lower() + matrix_rate['Time']
+matrix_data['key'] = matrix_data['Pair'].str[3:] + matrix_rate['Time']
+
+new_df = matrix_data.merge(matrix_rate, on = 'key',  how = 'left')
+new_df['Close Price'] = new_df['Close Price'] / new_df['Rate']
+print(new_df)
+print(new_df.info())
+# rearrange matrix
+new_df = new_df.drop(columns = ['key'])
+final_matrix = new_df.append(matrix_no_conv)
+final_matrix = final_matrix.drop(columns = ['fiat'])
+###################################################
+# queryng the two dataframe
+
 matrix_rate['a'] = [x[:3].lower() for x in matrix_rate['Currency'] ]
 print(matrix_rate['a'])
-matrix_data = mongo.query_mongo2(db, collection_data)
 matrix_data['a'] = [x[3:].lower() for x in matrix_data['Pair'] ]
 print(matrix_data['a'])
+df = pd.merge(matrix_data,matrix_rate, on = ['Time','a'])
 
+df = df['Close Price'] * df['Rate']
+
+print(df.info())
+##########################################
 # first_conv_data = matrix_data.loc[matrix_data['Pair'].str[3:] == 'usd']
 # print(first_conv_data.info())
 # first_conv_data = matrix_data.loc[matrix_data['Pair'].str[3:] == 'usdc']
@@ -87,9 +114,7 @@ print(matrix_data['a'])
 # first_conv_data = matrix_data.loc[matrix_data['Pair'].str[3:] == 'usdt']
 # print(first_conv_data.info())
 
-df = pd.merge(matrix_data,matrix_rate, on = ['Time','a'])
 
-df = df['Close Price'] * df['Rate']
 
 
 # df['Currency'] = df['Currency'].apply(lambda x: x.lower())
@@ -103,7 +128,7 @@ df = df['Close Price'] * df['Rate']
    
 # df['Close Price'] = df['Close Price'] * df['Rate']
 
-print(df.info())
+
 
 
 end = time.time()
