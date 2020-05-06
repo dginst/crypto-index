@@ -51,12 +51,14 @@ start = time.time()
 db = "index"
 collection_data = "CW_cleandata"
 collection_rates = "ecb_clean"
+collection_stable = 'stable_coin_rates'
 
 # querying the data from mongo
 matrix_rate = mongo.query_mongo2(db, collection_rates)
 matrix_data = mongo.query_mongo2(db, collection_data)
 
-# creating subsets only for the crypto/usd, crypto/usdc and crypto/usdt  pairs that don't need conversiont and storing them in mongo
+# creating subsets only for the crypto/usd, crypto/usdc and crypto/usdt
+# pairs that don't need conversiont and storing them in mongo
 first_conv_data = matrix_data.loc[matrix_data['Pair'].str[3:] == 'usd']
 
 first_conv_data = matrix_data.loc[matrix_data['Pair'].str[3:] == 'usdc']
@@ -65,18 +67,14 @@ first_conv_data = matrix_data.loc[matrix_data['Pair'].str[3:] == 'usdt']
 
 
 
-# creating an equal column in both datasets for merging
+# creating an equal column containing the fiat currency in both datasets for merging
+matrix_rate['fiat'] = [x[:3].lower() for x in matrix_rate['Currency']]
+matrix_data['fiat'] = [x[3:].lower() for x in matrix_data['Pair']]
 
-matrix_rate['fiat'] = [x[:3].lower() for x in matrix_rate['Currency'] ]
-matrix_data['fiat'] = [x[3:].lower() for x in matrix_data['Pair'] ]
-
-
-# merging the dataset
-
-df = pd.merge(matrix_data,matrix_rate, on = ['Time','fiat'])
+# merging the dataset on 'Time' and 'fiat' columsn
+df = pd.merge(matrix_data, matrix_rate, on=['Time', 'fiat'])
 
 # converting the prices in usd
-
 df['Close Price'] = df['Close Price'] * df['Rate']
 
 # subsetting the dataset with only the relevant columns

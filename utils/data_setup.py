@@ -394,9 +394,9 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
         query_dict = {"Exchange" : element, "Pair": ccy_pair }
         # query MongoDB and rerieve a DataFrame called "matrix"
         matrix = mongo.query_mongo2(db, collection, query_dict)
-        matrix = matrix.drop(columns = ['Exchange', 'Pair', 'Low', 'High','Open'])
+        matrix = matrix.drop(columns = ['Exchange', 'Pair', 'Low', 'High', 'Open'])
 
-        # checking if data frame is empty: if not then the ccy_pair exists in the exchange
+        # checking if data frame is empty: if not then the crypto-fiat pair exists in the exchange
         # then add to the count variable 
         if matrix.shape[0] > 1:
 
@@ -433,7 +433,7 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
 
         count_none = 0 
 
-        for j in range(count_exchange):
+        for j in range(int(count_exchange)):
 
             try:
 

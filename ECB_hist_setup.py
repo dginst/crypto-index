@@ -7,7 +7,7 @@
 # is possible to change the period of downlaod modifying the "Start_Period"
 #######################################################################################################
 
-# standard library import 
+# standard library import
 import time
 import json
 import os.path
@@ -49,7 +49,7 @@ db = connection.index
 db.ecb_clean.drop()
 
 #creating the empty collection rawdata within the database index
-db.ecb_clean.create_index([ ("id", -1) ])
+db.ecb_clean.create_index([("id", -1)])
 collection_ECB_clean = db.ecb_clean
 
 ###################################### ECB rates manipulation ###################################

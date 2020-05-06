@@ -1,4 +1,5 @@
 import utils.mongo_setup as mongo
+import utils.data_setup as data_setup
 from pymongo import MongoClient
 import time
 import pandas as pd
@@ -7,177 +8,159 @@ from datetime import datetime
 start = time.time()
 pd.set_option("display.max_rows", None, "display.max_columns", None)
 
+# establishing mongoDB connection
 connection = MongoClient('localhost', 27017)
-#creating the database called index
 db = connection.index
-collection = db.rawdata
-collection_ECB_clean = db.ecb_clean
-#USDT exchange rates
 
-########################################################kraken
-database = "index"
-collection = "cleandata"
-query_dict = {'Exchange' : 'kraken', 'Pair' : 'btcusd'}
-query_dict2 = {'Exchange' : 'kraken','Pair' : 'btcusdt'}
-
-df = mongo.query_mongo2(database, collection, query_dict2)
-df2 = mongo.query_mongo2(database, collection, query_dict)
-
-df['rate'] = df['Close Price']/df2['Close Price']
-
-ciao = np.array([])
-for x in df['rate']:
-    if x == 0:
-        ciao = np.append(ciao, 0)
-    else:
-        ciao = np.append(ciao, 1)
-
-
-df['tot_vol'] = (df['Crypto Volume'] + df2['Crypto Volume'])*ciao
-
-########################################################bittrex
+# collection for stablecoins rates
+db.stable_coin_rates.create_index([("id", -1)])
+collection_stable = db.stable_coin_rates
 
 database = "index"
-collection = "cleandata"
-query_dict = {'Exchange' : 'bittrex', 'Pair' : 'btcusd'}
-query_dict2 = {'Exchange' : 'bittrex','Pair' : 'btcusdt'}
+collection = "CW_cleandata"
 
-df3 = mongo.query_mongo2(database, collection, query_dict2)
-df4 = mongo.query_mongo2(database, collection, query_dict)
+######################### USDT exchange rates computation ################################
 
+# kraken usdt exchange rate
 
-df3['rate'] = df3['Close Price']/df4['Close Price']
+query_usd = {'Exchange': 'kraken', 'Pair': 'btcusd'}
+query_usdt = {'Exchange': 'kraken', 'Pair': 'btcusdt'}
 
-ciao = np.array([])
-for x in df3['rate']:
+usdt_kraken = mongo.query_mongo2(database, collection, query_usdt)
+usd_kraken = mongo.query_mongo2(database, collection, query_usd)
+
+usdt_kraken['rate'] = usdt_kraken['Close Price'] / usd_kraken['Close Price']
+
+existence_check = np.array([])
+
+for x in usdt_kraken['rate']:
+
     if x == 0:
-        ciao = np.append(ciao, 0)
+
+        existence_check = np.append(existence_check, 0)
+
     else:
-        ciao = np.append(ciao, 1)
 
-df3.fillna(0, inplace = True)
-df3['tot_vol'] = (df3['Crypto Volume'] + df4['Crypto Volume'])*ciao
+        existence_check = np.append(existence_check, 1)
 
 
+usdt_kraken['tot_vol'] = (usdt_kraken['Crypto Volume'] + usd_kraken['Crypto Volume']) * existence_check
+
+# bittrex usdt exchange rate 
+
+query_usd = {'Exchange' : 'bittrex', 'Pair' : 'btcusd'}
+query_usdt = {'Exchange' : 'bittrex','Pair' : 'btcusdt'}
+
+usdt_bittrex = mongo.query_mongo2(database, collection, query_usdt)
+usd_bittrex = mongo.query_mongo2(database, collection, query_usd)
 
 
-#final rates
+usdt_bittrex['rate'] = usdt_bittrex['Close Price'] / usd_bittrex['Close Price']
 
-df['final_rates'] = ((df['rate']*df['tot_vol']) + (df3['rate'] * df3['tot_vol'])) / (df['tot_vol'] + df3['tot_vol'])
+existence_check = np.array([])
 
-df['Rate'] = 1/df['final_rates']
+for x in usdt_bittrex['rate']:
 
-df = df.replace([np.inf, -np.inf], np.nan)
-
-df.fillna(0, inplace = True)
-
-currency = np.array([])
-for x in df['final_rates']:
-    currency = np.append(currency, 'USDT/USD')
-
-df = df.drop(columns=['Close Price', 'Pair Volume', 'Crypto Volume', 'Exchange', 'Pair', 'rate', 'tot_vol', 'final_rates' ])
-df = df.rename({'Time': 'Date'}, axis='columns')
-df['Currency'] = currency
-
-new_date = np.array([])
-standard_date = np.array([])
-
-for element in df['Date']:
-
-    standard = datetime.fromtimestamp(int(element))
-    standard = standard.strftime('%Y-%m-%d')
-    element = str(element)
-    new_date = np.append(new_date, element)
-    standard_date = np.append(standard_date, standard)
-
-df['Date'] = new_date
-df['Standard Date'] = standard_date
-
-data = df.to_dict(orient='records')  
-collection_ECB_clean.insert_many(data)
-
-print(df.head())
-
-#USDC exchange rates
-
-########################################################kraken
-database = "index"
-collection = "cleandata"
-query_dict = {'Exchange' : 'kraken', 'Pair' : 'btcusd'}
-query_dict2 = {'Exchange' : 'kraken','Pair' : 'btcusdc'}
-
-df = mongo.query_mongo2(database, collection, query_dict2)
-df2 = mongo.query_mongo2(database, collection, query_dict)
-
-df['rate'] = df['Close Price']/df2['Close Price']
-
-ciao = np.array([])
-for x in df['rate']:
     if x == 0:
-        ciao = np.append(ciao, 0)
+
+        existence_check = np.append(existence_check, 0)
+
     else:
-        ciao = np.append(ciao, 1)
 
+        existence_check = np.append(existence_check, 1)
 
-df['tot_vol'] = (df['Crypto Volume'] + df2['Crypto Volume'])*ciao
+usdt_bittrex.fillna(0, inplace=True)
+usdt_bittrex['tot_vol'] = (usdt_bittrex['Crypto Volume'] + usd_bittrex['Crypto Volume']) * existence_check
 
-########################################################coinbase
+# usdt rates weighted average computation
 
-database = "index"
-collection = "cleandata"
-query_dict = {'Exchange' : 'coinbase-pro', 'Pair' : 'btcusd'}
-query_dict2 = {'Exchange' : 'coinbase-pro','Pair' : 'btcusdc'}
+kraken_weighted = usdt_kraken['rate'] * usdt_kraken['tot_vol']
+bittrex_weighted = usdt_bittrex['rate'] * usdt_bittrex['tot_vol']
+total_weights = usdt_kraken['tot_vol'] + usdt_bittrex['tot_vol']
+usdt_rates = (kraken_weighted + bittrex_weighted) / total_weights
+usdt_rates = 1 / usdt_rates
+usdt_rates = pd.DataFrame(usdt_rates, columns=['Rate'])
+usdt_rates = usdt_rates.replace([np.inf, -np.inf], np.nan)
+usdt_rates.fillna(0, inplace=True)
 
-df3 = mongo.query_mongo2(database, collection, query_dict2)
-df4 = mongo.query_mongo2(database, collection, query_dict)
+usdt_rates['Currency'] = np.zeros(len(usdt_rates['Rate']))
+usdt_rates['Currency'] = [str(x).replace('0', 'USDT/USD') for x in usdt_rates['Currency']]
+usdt_rates['Time'] = usd_bittrex['Time']
+usdt_rates['Standard Date'] = data_setup.timestamp_to_human(usd_bittrex['Time'])
 
+# df = df.rename({'Time': 'Date'}, axis='columns')
 
-df3['rate'] = df3['Close Price']/df4['Close Price']
+# USDT mongoDB upload
+usdt_data = usdt_rates.to_dict(orient='records')  
+collection_stable.insert_many(usdt_data)
 
-ciao = np.array([])
-for x in df3['rate']:
+######################### USDC exchange rates computation ################################
+
+# kraken usdc exchange rate 
+
+query_usdc = {'Exchange': 'kraken', 'Pair': 'btcusdc'}
+usdc_kraken = mongo.query_mongo2(database, collection, query_usdc)
+
+usdc_kraken['rate'] = usdc_kraken['Close Price'] / usd_kraken['Close Price']
+
+existence_check = np.array([])
+
+for x in usdc_kraken['rate']:
+
     if x == 0:
-        ciao = np.append(ciao, 0)
+
+        existence_check = np.append(existence_check, 0)
+
     else:
-        ciao = np.append(ciao, 1)
 
-df3.fillna(0, inplace = True)
-df3['tot_vol'] = (df3['Crypto Volume'] + df4['Crypto Volume'])*ciao
+        existence_check = np.append(existence_check, 1)
 
 
+usdc_kraken['tot_vol'] = (usdc_kraken['Crypto Volume'] + usd_kraken['Crypto Volume']) * existence_check
 
-#final rates
+# coinbase usdc exchange rate 
 
-df['final_rates'] = ((df['rate']*df['tot_vol']) + (df3['rate'] * df3['tot_vol'])) / (df['tot_vol'] + df3['tot_vol'])
+query_usd_coinbase = {'Exchange': 'coinbase-pro', 'Pair': 'btcusd'}
+query_usdc_coinbase = {'Exchange': 'coinbase-pro', 'Pair': 'btcusdc'}
 
-df['Rate'] = 1/df['final_rates']
+usdc_coinbase = mongo.query_mongo2(database, collection, query_usdc_coinbase)
+usd_coinbase = mongo.query_mongo2(database, collection, query_usd_coinbase)
 
-df = df.replace([np.inf, -np.inf], np.nan)
 
-df.fillna(0, inplace = True)
+usdc_coinbase['rate'] = usdc_coinbase['Close Price'] / usd_coinbase['Close Price']
 
-currency = np.array([])
-for x in df['final_rates']:
-    currency = np.append(currency, 'USDC/USD')
+existence_check = np.array([])
 
-df = df.drop(columns=['Close Price', 'Pair Volume', 'Crypto Volume', 'Exchange', 'Pair', 'rate', 'tot_vol', 'final_rates' ])
-df = df.rename({'Time': 'Date'}, axis='columns')
-df['Currency'] = currency
+for x in usdc_coinbase['rate']:
 
-new_date = np.array([])
-standard_date = np.array([])
+    if x == 0:
 
-for element in df['Date']:
+        existence_check = np.append(existence_check, 0)
 
-    standard = datetime.fromtimestamp(int(element))
-    standard = standard.strftime('%Y-%m-%d')
-    element = str(element)
-    new_date = np.append(new_date, element)
-    standard_date = np.append(standard_date, standard)
+    else:
 
-df['Date'] = new_date
-df['Standard Date'] = standard_date
+        existence_check = np.append(existence_check, 1)
 
-data = df.to_dict(orient='records')  
-collection_ECB_clean.insert_many(data)
-print(df.head())
+usdc_coinbase.fillna(0, inplace=True)
+usdc_coinbase['tot_vol'] = (usdc_coinbase['Crypto Volume'] + usd_coinbase['Crypto Volume']) * existence_check
+
+# usdc rates weighted average computation
+
+kraken_weighted = usdc_kraken['rate'] * usdc_kraken['tot_vol']
+coinbase_weighted = usdc_coinbase['rate'] * usdc_coinbase['tot_vol']
+total_weights = usdc_kraken['tot_vol'] + usdc_coinbase['tot_vol']
+usdc_rates = (kraken_weighted + coinbase_weighted) / total_weights
+usdc_rates = 1 / usdc_rates
+usdc_rates = pd.DataFrame(usdc_rates, columns=['Rate'])
+usdc_rates = usdc_rates.replace([np.inf, -np.inf], np.nan)
+usdc_rates.fillna(0, inplace=True)
+
+usdc_rates['Currency'] = np.zeros(len(usdc_rates['Rate']))
+usdc_rates['Currency'] = [str(x).replace('0', 'USDC/USD') for x in usdc_rates['Currency']]
+usdc_rates['Time'] = usd_coinbase['Time']
+usdc_rates['Standard Date'] = data_setup.timestamp_to_human(usd_coinbase['Time'])
+
+# USDC mongoDB upload
+
+usdc_data = usdc_rates.to_dict(orient='records')
+collection_stable.insert_many(usdc_data)
