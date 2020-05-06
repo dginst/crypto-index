@@ -70,6 +70,8 @@ collection_final_data = db.CW_final_data
 collection_converted = db.converted_data
 
 ########################## USDC/USD and USDT/USD computation ###########################
+start = time.time()
+
 database = "index"
 collection = "CW_cleandata"
 
@@ -101,8 +103,8 @@ usdt_kraken['tot_vol'] = (usdt_kraken['Crypto Volume'] + usd_kraken['Crypto Volu
 
 # bittrex usdt/usd exchange rate 
 
-query_usd = {'Exchange' : 'bittrex', 'Pair' : 'btcusd'}
-query_usdt = {'Exchange' : 'bittrex','Pair' : 'btcusdt'}
+query_usd = {'Exchange': 'bittrex', 'Pair': 'btcusd'}
+query_usdt = {'Exchange': 'bittrex','Pair': 'btcusdt'}
 
 usdt_bittrex = mongo.query_mongo2(database, collection, query_usdt)
 usd_bittrex = mongo.query_mongo2(database, collection, query_usd)
@@ -137,7 +139,7 @@ usdt_rates = usdt_rates.replace([np.inf, -np.inf], np.nan)
 usdt_rates.fillna(0, inplace=True)
 
 usdt_rates['Currency'] = np.zeros(len(usdt_rates['Rate']))
-usdt_rates['Currency'] = [str(x).replace('0', 'USDT/USD') for x in usdt_rates['Currency']]
+usdt_rates['Currency'] = [str(x).replace('0.0', 'USDT/USD') for x in usdt_rates['Currency']]
 usdt_rates['Time'] = usd_bittrex['Time']
 usdt_rates['Standard Date'] = data_setup.timestamp_to_human(usd_bittrex['Time'])
 
@@ -147,7 +149,7 @@ usdt_rates['Standard Date'] = data_setup.timestamp_to_human(usd_bittrex['Time'])
 usdt_data = usdt_rates.to_dict(orient='records')  
 collection_stable.insert_many(usdt_data)
 
-######################### USDC exchange rates computation ################################
+# USDC exchange rates computation 
 
 # kraken usdc/usd exchange rate 
 
@@ -209,7 +211,7 @@ usdc_rates = usdc_rates.replace([np.inf, -np.inf], np.nan)
 usdc_rates.fillna(0, inplace=True)
 
 usdc_rates['Currency'] = np.zeros(len(usdc_rates['Rate']))
-usdc_rates['Currency'] = [str(x).replace('0', 'USDC/USD') for x in usdc_rates['Currency']]
+usdc_rates['Currency'] = [str(x).replace('0.0', 'USDC/USD') for x in usdc_rates['Currency']]
 usdc_rates['Time'] = usd_coinbase['Time']
 usdc_rates['Standard Date'] = data_setup.timestamp_to_human(usd_coinbase['Time'])
 
@@ -218,81 +220,89 @@ usdc_rates['Standard Date'] = data_setup.timestamp_to_human(usd_coinbase['Time']
 usdc_data = usdc_rates.to_dict(orient='records')
 collection_stable.insert_many(usdc_data)
 
+end = time.time()
+
+print("This script took: {} seconds".format(float(end - start)))
+
 ############################## data conversion main part ##################################
 
+start = time.time()
 # defining the database name and the collection name
-db_name = "index"
+db = "index"
 collection_data = "CW_cleandata"
 collection_rates = "ecb_clean"
+collection_stable = 'stable_coin_rates'
 
-# field of conversion 
-conv_fields = ['Close Price', 'Pair Volume']
+# querying the data from mongo
+matrix_rate = mongo.query_mongo2(db, collection_rates)
+matrix_rate = matrix_rate.rename({'Date': 'Time'}, axis='columns')
+matrix_data = mongo.query_mongo2(db, collection_data)
+matrix_rate_stable = mongo.query_mongo2(db, collection_stable)
 
-for date in reference_date_vector:
+# creating a column containing the fiat currency 
+matrix_rate['fiat'] = [x[:3].lower() for x in matrix_rate['Currency']]
+matrix_data['fiat'] = [x[3:].lower() for x in matrix_data['Pair']]
+matrix_rate_stable['fiat'] = [x[3:].lower() for x in matrix_rate_stable['Currency']]
 
-    for fiat in pair_array:
-        print(fiat)
-        if (fiat != 'usd' and fiat != 'usdt' and fiat != 'usdc'):
+# creating a matrix for usd
+usd_matrix = matrix_data.loc[matrix_data['fiat'] == 'usd']
+usd_matrix = usd_matrix[['Time', 'Close Price', 'Crypto Volume', 'Pair Volume', 'Exchange', 'Pair']]
 
-            fiat = fiat.upper()
-            ex_rate = fiat + '/USD'
-            # defining the dictionary for the MongoDB query   
-            query_dict_rate = {"Currency": ex_rate, "Date": str(date)}
-            # retriving the needed information on MongoDB
-            matrix_rate = mongo.query_mongo(db_name, collection_rates, query_dict_rate)
-            # finding the conversion rate
-            conv_rate = np.array(matrix_rate['Rate'])
+## converting non-usd fiat currencies ##
 
-        currencypair_array = []
-        
-        for Crypto in Crypto_Asset:
+# creating a matrix for conversion
+conv_fiat = ['gbp', 'eur', 'cad', 'jpy']
+conv_matrix = matrix_data.loc[matrix_data['fiat'].isin(conv_fiat)]
 
-            currencypair_array.append(Crypto.lower() + fiat.lower())
-        
-        for cp in currencypair_array:
+# merging the dataset on 'Time' and 'fiat' column
+conv_merged = pd.merge(conv_matrix, matrix_rate, on=['Time', 'fiat'])
 
-            # defining the dictionary for the MongoDB query
-            query_dict_data = {"Pair": cp, "Time": str(date)}
-            
-            # retriving the needed information on MongoDB
-            matrix_data = mongo.query_mongo(db_name, collection_data, query_dict_data)
-            
-            try:
+# converting the prices in usd
+conv_merged['Close Price'] = conv_merged['Close Price'] * conv_merged['Rate']
+conv_merged['Pair Volume'] = conv_merged['Pair Volume'] * conv_merged['Rate']
 
-                if (fiat != 'usd' and fiat != 'usdt' and fiat != 'usdc'):
+# subsetting the dataset with only the relevant columns
+conv_merged = conv_merged[['Time', 'Close Price', 'Crypto Volume', 'Pair Volume', 'Exchange', 'Pair']]
 
-                    # converting the values
-                    matrix_data['Close Price'] = matrix_data['Close Price'] / conv_rate
-                    matrix_data['Pair Volume'] = matrix_data['Pair Volume'] / conv_rate
+## converting stablecoins currencies ##
 
-                else:
+# creating a matrix for stablecoins
+stablecoin = ['usdc', 'usdt']
+stablecoin_matrix = matrix_data.loc[matrix_data['fiat'].isin(stablecoin)]
 
-                    matrix_data = matrix_data
+# merging the dataset on 'Time' and 'fiat' column
+stable_merged = pd.merge(stablecoin_matrix, matrix_rate_stable, on=['Time', 'fiat'])
 
-                # adding a human-readable date format
-                standard_date = np.array([])
+# converting the prices in usd
+stable_merged['Close Price'] = stable_merged['Close Price'] * stable_merged['Rate']
+stable_merged['Pair Volume'] = stable_merged['Pair Volume'] * stable_merged['Rate']
 
-                for element in matrix_data['Time']:
+# subsetting the dataset with only the relevant columns
+stable_merged = stable_merged[['Time', 'Close Price', 'Crypto Volume', 'Pair Volume', 'Exchange', 'Pair']]
 
-                    standard = datetime.fromtimestamp(int(element))
-                    standard = standard.strftime('%d-%m-%Y')
-                    standard_date = np.append(standard_date, standard)
 
-                matrix_data['Standard Date'] = standard_date
+# reunite the dataframes and put data on MongoDB
 
-                # put the manipulated data on MongoDB
-                data = matrix_data.to_dict(orient='records')  
-                collection_converted.insert_many(data)
-            
-            except TypeError:
+converted_data = conv_merged
+converted_data = converted_data.append(stable_merged)
+converted_data = converted_data.append(usd_matrix)
 
-                pass
+data = converted_data.to_dict(orient='records')  
+collection_converted.insert_many(data)
+
+end = time.time()
+
+print("This script took: {} seconds".format(float(end - start)))
+
 
 ################################### zero volume values fixing part #################################
 
 # define database name and collection name
 db_name = "index"
 collection_converted_data = "converted_data"
+
+# retriving the needed information on MongoDB
+matrix = mongo.query_mongo(db_name, collection_converted_data)
 
 for Crypto in Crypto_Asset:
 
@@ -303,23 +313,22 @@ for Crypto in Crypto_Asset:
         currencypair_array.append(Crypto.lower() + i)
 
     for exchange in Exchanges:
+
+        ex_matrix = matrix.loc[matrix['Exchange'] == exchange]
         
         for cp in currencypair_array:
 
-            # defining the dictionary for the MongoDB query
-            query_dict = {"Exchange" : exchange, "Pair": cp}
-            # retriving the needed information on MongoDB
-            matrix = mongo.query_mongo(db_name, collection_converted_data, query_dict)
+            cp_matrix = ex_matrix.loc[ex_matrix['Pair'] == cp]
             # checking if the matrix is not empty
             try:
 
-                if matrix.shape[0] > 1:
+                if cp_matrix.shape[0] > 1:
 
-                    matrix = data_setup.fix_zero_value(matrix)
+                    cp_matrix = data_setup.fix_zero_value(cp_matrix)
 
 
                 # put the manipulated data on MongoDB
-                data = matrix.to_dict(orient='records')  
+                data = cp_matrix.to_dict(orient='records')
                 collection_final_data.insert_many(data)
             
             except AttributeError:
@@ -327,7 +336,7 @@ for Crypto in Crypto_Asset:
 
 # deleting unuseful collection
 
-db.converted_data.drop()
+# db.converted_data.drop()
 end = time.time()
 
-print("This script took: {} seconds".format(float(end-start)))
+print("This script took: {} seconds".format(float(end - start)))
