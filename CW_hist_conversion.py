@@ -8,14 +8,7 @@
 
 # standard library import
 import time
-import json
-import os.path
-from pathlib import Path
 from datetime import datetime
-from datetime import *
-import time
-import requests
-from requests import get
 
 # third party import
 from pymongo import MongoClient
@@ -24,7 +17,6 @@ import numpy as np
 
 # local import
 import utils.data_setup as data_setup
-import utils.data_download as data_download
 import utils.mongo_setup as mongo
 
 start = time.time()
@@ -35,7 +27,7 @@ start_date = '01-01-2016'
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
-today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
+today_TS = int(datetime.strptime(today, '%Y-%m-%d').timestamp()) + 3600
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
@@ -242,7 +234,7 @@ matrix_rate_stable = mongo.query_mongo2(db, collection_stable)
 # creating a column containing the fiat currency 
 matrix_rate['fiat'] = [x[:3].lower() for x in matrix_rate['Currency']]
 matrix_data['fiat'] = [x[3:].lower() for x in matrix_data['Pair']]
-matrix_rate_stable['fiat'] = [x[3:].lower() for x in matrix_rate_stable['Currency']]
+matrix_rate_stable['fiat'] = [x[:4].lower() for x in matrix_rate_stable['Currency']]
 
 # creating a matrix for usd
 usd_matrix = matrix_data.loc[matrix_data['fiat'] == 'usd']
@@ -280,7 +272,6 @@ stable_merged['Pair Volume'] = stable_merged['Pair Volume'] * stable_merged['Rat
 # subsetting the dataset with only the relevant columns
 stable_merged = stable_merged[['Time', 'Close Price', 'Crypto Volume', 'Pair Volume', 'Exchange', 'Pair']]
 
-
 # reunite the dataframes and put data on MongoDB
 
 converted_data = conv_merged
@@ -302,10 +293,11 @@ db_name = "index"
 collection_converted_data = "converted_data"
 
 # retriving the needed information on MongoDB
-matrix = mongo.query_mongo(db_name, collection_converted_data)
+matrix = mongo.query_mongo2(db_name, collection_converted_data)
 
 for Crypto in Crypto_Asset:
 
+    print(Crypto)
     currencypair_array = []
 
     for i in pair_array:
@@ -327,13 +319,21 @@ for Crypto in Crypto_Asset:
                     cp_matrix = data_setup.fix_zero_value(cp_matrix)
 
 
-                # put the manipulated data on MongoDB
-                data = cp_matrix.to_dict(orient='records')
-                collection_final_data.insert_many(data)
-            
+                try:
+
+                    final_matrix = final_matrix.append(cp_matrix)
+
+                except:
+
+                    final_matrix = cp_matrix
+
             except AttributeError:
                 pass
 
+# put the manipulated data on MongoDB
+data = final_matrix.to_dict(orient='records')
+collection_final_data.insert_many(data)
+            
 # deleting unuseful collection
 
 # db.converted_data.drop()
