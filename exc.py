@@ -56,30 +56,53 @@ collection_stable = 'stable_coin_rates'
 # querying the data from mongo
 matrix_rate = mongo.query_mongo2(db, collection_rates)
 matrix_data = mongo.query_mongo2(db, collection_data)
+matrix_rate_stable = mongo.query_mongo2(db, collection_stable)
 
-# creating subsets only for the crypto/usd, crypto/usdc and crypto/usdt
-# pairs that don't need conversiont and storing them in mongo
-first_conv_data = matrix_data.loc[matrix_data['Pair'].str[3:] == 'usd']
-
-first_conv_data = matrix_data.loc[matrix_data['Pair'].str[3:] == 'usdc']
-
-first_conv_data = matrix_data.loc[matrix_data['Pair'].str[3:] == 'usdt']
-
-
-
-# creating an equal column containing the fiat currency in both datasets for merging
+# creating a column containing the fiat currency 
 matrix_rate['fiat'] = [x[:3].lower() for x in matrix_rate['Currency']]
 matrix_data['fiat'] = [x[3:].lower() for x in matrix_data['Pair']]
+matrix_rate_stable['fiat'] = [x[3:].lower() for x in matrix_rate_stable['Currency']]
 
-# merging the dataset on 'Time' and 'fiat' columsn
-df = pd.merge(matrix_data, matrix_rate, on=['Time', 'fiat'])
+# creating a matrix for usd
+usd_matrix = matrix_data.loc[matrix_data['fiat'] == 'usd']
+usd_matrix = usd_matrix[['Time', 'Close Price', 'Crypto Volume', 'Standard Date']]
+
+## converting non-usd fiat currencies ##
+
+# creating a matrix for conversion
+conv_fiat = ['gbp', 'eur', 'cad', 'jpy']
+conv_matrix = matrix_data.loc[matrix_data['fiat'].isin(conv_fiat)]
+
+# merging the dataset on 'Time' and 'fiat' column
+conv_merged = pd.merge(conv_matrix, matrix_rate, on=['Time', 'fiat'])
 
 # converting the prices in usd
-df['Close Price'] = df['Close Price'] * df['Rate']
+conv_merged['Close Price'] = conv_merged['Close Price'] * conv_merged['Rate']
 
 # subsetting the dataset with only the relevant columns
+conv_merged = conv_merged[['Time', 'Close Price', 'Crypto Volume', 'Standard Date']]
 
-df = df[['Time', 'Close Price', 'Crypto Volume', 'Standard Date']]
+## converting stablecoins currencies ##
+
+# creating a matrix for stablecoins
+stablecoin = ['usdc', 'usdt']
+stablecoin_matrix = matrix_data.loc[matrix_data['fiat'].isin(stablecoin)]
+
+# merging the dataset on 'Time' and 'fiat' column
+stable_merged = pd.merge(stablecoin_matrix, matrix_rate_stable, on=['Time', 'fiat'])
+
+# converting the prices in usd
+stable_merged['Close Price'] = stable_merged['Close Price'] * conv_merged['Rate']
+
+# subsetting the dataset with only the relevant columns
+stable_merged = stable_merged[['Time', 'Close Price', 'Crypto Volume', 'Standard Date']]
+
+
+# reunite the dataframes and put data on MongoDB
+
+converted_data = conv_merged
+converted_data = converted_data.append(stable_merged)
+converted_data = converted_data.append(usd_matrix)
 
 #storing the prices in mongo 
 
