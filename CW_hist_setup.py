@@ -49,9 +49,9 @@ reference_date_vector = data_setup.timestamp_gen(start_date)
 
 pair_array = ['gbp', 'usd', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur'] 
-Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC'] 
-# crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
-Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
+Crypto_Asset = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
+# crypto complete [ 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
+Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 # exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
 ####################################### setup MongoDB connection ###################################
@@ -66,11 +66,11 @@ db.CW_cleandata.drop()
 db.volume_checked_data.drop()
 
 #creating the empty collection "cleandata" within the database index
-db.CW_cleandata.create_index([ ("id", -1) ])
+db.CW_cleandata.create_index([("id", -1)])
 collection_clean = db.CW_cleandata
 
 #creating the empty collection "volume_checked_data" within the database index
-db.volume_checked_data.create_index([ ("id", -1) ])
+db.volume_checked_data.create_index([("id", -1)])
 collection_volume = db.volume_checked_data
 
 # defining the database name and the collection name where to look for data
@@ -81,7 +81,7 @@ collection_volume_check = "volume_checked_data"
 ############################### fixing the "Pair Volume" information ##############################
 
 tot_matrix = mongo.query_mongo2(db, collection_raw)
-tot_matrix = tot_matrix.drop(columns = ['Low', 'High', 'Open'])
+tot_matrix = tot_matrix.drop(columns=['Low', 'High', 'Open'])
 for Crypto in Crypto_Asset:
 
     currencypair_array = []
