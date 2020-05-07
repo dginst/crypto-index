@@ -15,22 +15,21 @@ import numpy as np
 from . import mongo_setup as mongo
 
 
-
 ################################# TIME AND TIME ARRAYS FUNCTIONS ########################################
 
 # function that generate an array of date in timstamp format starting from start_date to end_date
-# given in mm-dd-yyyy forma; if not specified end_date = today() 
+# given in mm-dd-yyyy forma; if not specified end_date = today()
 # function only returns value of timestamp in second since epoch where every day is in the exact 12:00 am UTC
 # function considers End of Day price series so, if not otherwise specified,
 # the returned array of date will be from start to today - 1 (EoD = 'Y')
 
-def timestamp_gen(start_date, end_date = None, EoD = 'Y'):
+def timestamp_gen(start_date, end_date=None, EoD='Y'):
 
-    start = datetime.strptime(start_date,'%m-%d-%Y')
+    start = datetime.strptime(start_date, '%m-%d-%Y')
     start = int(time.mktime(start.timetuple()))
 
-    if start > 1585440000: ### TDB: make function more flexible, the ts is 29-03-2020 12:00 AM
-        
+    if start > 1585440000:  # TDB: make function more flexible, the ts is 29-03-2020 12:00 AM
+
         add_on = 3600*2
 
     else:
@@ -41,22 +40,22 @@ def timestamp_gen(start_date, end_date = None, EoD = 'Y'):
 
         end_date = datetime.now().strftime('%m-%d-%Y')
 
-    end_date = datetime.strptime(end_date,'%m-%d-%Y')
+    end_date = datetime.strptime(end_date, '%m-%d-%Y')
     end = int(time.mktime(end_date.timetuple()))
     end = end + add_on
 
     start = start + add_on
     array = np.array([start])
     date = start
-   
+
     while date < end:
         date = date + 86400
         array = np.append(array, date)
-    
+
     if EoD == 'Y':
-        
+
         array = array[:len(array) - 1]
-    
+
     else:
 
         pass
@@ -64,9 +63,8 @@ def timestamp_gen(start_date, end_date = None, EoD = 'Y'):
     return array
 
 
-
 def timestamp_gen_legal_solar(TS_array):
-    
+
     legal_16 = (1459209600, 1477612800)
     legal_17 = (1490572800, 1509062400)
     legal_18 = (1522065600, 1540555200)
@@ -80,17 +78,14 @@ def timestamp_gen_legal_solar(TS_array):
 
             date = date - 3600
             new_array = np.append(new_array, date)
-        
+
         else:
 
             new_array = np.append(new_array, date)
-    
+
     new_array = new_array[1:len(new_array)]
 
     return new_array
-    
-
-
 
 
 # function that converts the date array found using the above function into a strandard date array
@@ -110,6 +105,7 @@ def timestamp_convert(date_array):
 
 # function takes as input an array and return the same array in string format
 
+
 def timestamp_to_str(date_array):
 
     new_array = list()
@@ -120,7 +116,7 @@ def timestamp_to_str(date_array):
         if new_array == []:
 
             new_array = new_array.append(new_date)
-        
+
         else:
 
             new_array = new_array.append(new_date)
@@ -131,7 +127,7 @@ def timestamp_to_str(date_array):
 # the function takes an array of timestamp as input and return an array od human readable date in
 # dd-mm-yyyy format
 
-def timestamp_to_human(ts_array, date_format = '%Y-%m-%d'):
+def timestamp_to_human(ts_array, date_format='%Y-%m-%d'):
 
     human_date = [datetime.fromtimestamp(int(date)) for date in ts_array]
     human_date = [date.strftime(date_format) for date in human_date]
@@ -142,7 +138,7 @@ def timestamp_to_human(ts_array, date_format = '%Y-%m-%d'):
 # the input start and stop has to be timestamp date in INTEGER format
 
 
-def timestamp_vector(start, stop, lag = 86400):
+def timestamp_vector(start, stop, lag=86400):
 
     array = np.array([start])
 
@@ -155,22 +151,21 @@ def timestamp_vector(start, stop, lag = 86400):
     return array
 
 
-
 # function that generate an array of date starting from start_date to end_date
-# if not specified end_date = today() 
+# if not specified end_date = today()
 # default format is in second since the epoch (timeST = 'Y'), type timeST='N' for date in format YY-mm-dd
 # function considers End of Day price series so, if not otherwise specified,
 # the returned array of date will be from start to today - 1
 # write all date in MM/DD/YYYY format
 
-def date_array_gen(start_date, end_date = None, timeST = 'Y', EoD = 'Y'):
+def date_array_gen(start_date, end_date=None, timeST='Y', EoD='Y'):
 
     # set end_date = today if empty
     if end_date == None:
         end_date = datetime.now().strftime('%m-%d-%Y')
 
     date_index = pd.date_range(start_date, end_date)
-    
+
     DateList = date_list(date_index, timeST)
 
     if EoD == 'Y':
@@ -179,67 +174,69 @@ def date_array_gen(start_date, end_date = None, timeST = 'Y', EoD = 'Y'):
     return DateList
 
 
-
 # given a start date and a period (number of days) the function returns an array containing
-# the "period" date going back from the start date (default) or starting from the start date 
-# (direction='forward') the output can be both in timestamp since epoch (default) or in date 
+# the "period" date going back from the start date (default) or starting from the start date
+# (direction='forward') the output can be both in timestamp since epoch (default) or in date
 # MM/DD/YYYY (timeST='N')
 
-def period_array(start_date, period, direction = 'backward', timeST='Y'):
+def period_array(start_date, period, direction='backward', timeST='Y'):
 
     start_date = date_reformat(start_date, '-')
 
     if direction == 'backward':
-        end_date = datetime.strptime(start_date,'%m-%d-%Y') - timedelta(days = period) 
+        end_date = datetime.strptime(
+            start_date, '%m-%d-%Y') - timedelta(days=period)
         date_index = pd.date_range(end_date, start_date)
 
     else:
-        end_date = datetime.strptime(start_date,'%m-%d-%Y') + timedelta(days = period) 
+        end_date = datetime.strptime(
+            start_date, '%m-%d-%Y') + timedelta(days=period)
         date_index = pd.date_range(start_date, end_date)
-    
-    DateList = date_list(date_index, timeST)
-    
-    return DateList
 
+    DateList = date_list(date_index, timeST)
+
+    return DateList
 
 
 # function that returns a list containing date in timestamp format
 
-def date_list(date_index, timeST = 'Y', lag_adj = 3600):
-    
+def date_list(date_index, timeST='Y', lag_adj=3600):
+
     DateList = []
-    
+
     for date in date_index:
         val = int(time.mktime(date.timetuple()))
         val = val + lag_adj
         DateList.append(val)
-   
+
     NoStamp = []
-    if timeST =='N':
+    if timeST == 'N':
         for string in DateList:
             value = int(string)
-            NoStamp.append(datetime.utcfromtimestamp(value).strftime('%Y-%m-%d'))
+            NoStamp.append(datetime.utcfromtimestamp(
+                value).strftime('%Y-%m-%d'))
         return NoStamp
     else:
         return DateList
 
 
-
 # function that reforms the inserted date according to the choosen separator
-# function takes as input date with "/" seprator and without separator for 
-# both the YY ans YYYY format; works on default with MM-DD_YYYY format and 
+# function takes as input date with "/" seprator and without separator for
+# both the YY ans YYYY format; works on default with MM-DD_YYYY format and
 # if different has to be specified ('YYYY-DD-MM' or 'YYYY-MM-DD')
 
-def date_reformat(date_to_check, separator = '-', order = 'MM-DD-YYYY'):
+def date_reformat(date_to_check, separator='-', order='MM-DD-YYYY'):
     if ("/" in date_to_check and len(date_to_check) == 10):
-        return_date = date_to_check.replace("/", separator)  
+        return_date = date_to_check.replace("/", separator)
     elif ("/" in date_to_check and len(date_to_check) == 8):
         return_date = date_to_check.replace("/", separator)
     elif ("/" not in date_to_check and (len(date_to_check) == 8 or len(date_to_check) == 6)):
         if (order == 'YYYY-DD-MM' or order == 'YYYY-MM-DD'):
-            return_date = date_to_check[:4] + separator + date_to_check[4:6] + separator + date_to_check[6:]
+            return_date = date_to_check[:4] + separator + \
+                date_to_check[4:6] + separator + date_to_check[6:]
         else:
-            return_date = date_to_check[:2] + separator + date_to_check[2:4] + separator + date_to_check[4:]
+            return_date = date_to_check[:2] + separator + \
+                date_to_check[2:4] + separator + date_to_check[4:]
     else:
         return_date = date_to_check
 
@@ -253,40 +250,39 @@ def date_reformat(date_to_check, separator = '-', order = 'MM-DD-YYYY'):
 
 # function that returns a list containing the elements of list_1 (bigger one) not included in list_2 (smaller one)
 
-def Diff(list_1, list_2): 
-    
-    return (list(set(list_1) - set(list_2))) 
+def Diff(list_1, list_2):
 
+    return (list(set(list_1) - set(list_2)))
 
 
 # function that checks if a item(array, matrix, string,...) is null
 
-def Check_null(item): 
+def Check_null(item):
 
     try:
 
-        return len(item) == 0 
+        return len(item) == 0
 
-    except TypeError: 
-        
-        pass 
-    
-    return False 
+    except TypeError:
 
+        pass
+
+    return False
 
 
 # function that aims to homogenize the crypto-fiat series downloaded from CryptoWatch
 # substituting the first n missing values of the series with 0 values
-# doing that the Dataframe related on all the crypto-fiat series would be of the 
+# doing that the Dataframe related on all the crypto-fiat series would be of the
 # same dimension and, at the same time, does not affects the computation because also the volume
 # is set to 0.
 # the function uses on default 5 days in order to asses if a series lacking of the first n days
 
-def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 5):
+def homogenize_series(series_to_check, reference_date_array_TS, days_to_check=5):
 
     reference_date_array_TS = np.array(reference_date_array_TS)
     header = list(series_to_check.columns)
-    test_matrix = series_to_check.loc[series_to_check.Time.between(reference_date_array_TS[0], reference_date_array_TS[days_to_check], inclusive = True), header]
+    test_matrix = series_to_check.loc[series_to_check.Time.between(
+        reference_date_array_TS[0], reference_date_array_TS[days_to_check], inclusive=True), header]
 
     if test_matrix.empty == True:
 
@@ -295,62 +291,69 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check = 
         first_missing_date = reference_date_array_TS[0]
         missing_date_array = timestamp_vector(first_missing_date, first_date)
 
-        new_series = pd.DataFrame(missing_date_array, columns = ['Time'])
-
         header.remove('Time')
-        for element in header:
 
-            new_series[element] = np.zeros(len(missing_date_array))
+        zero_mat = np.zeros((len(missing_date_array), 3))
+        zero_df = pd.DataFrame(zero_mat, columns=header)
+        zero_df['Time'] = missing_date_array
+        # new_series = pd.DataFrame(missing_date_array, columns = ['Time'])
 
+        # header.remove('Time')
+        # for element in header:
 
-        complete_series = new_series.append(series_to_check)
-        
+        #     new_series[element] = np.zeros(len(missing_date_array))
+
+        complete_series = zero_df.append(series_to_check)
+
     else:
 
         complete_series = series_to_check
-    
-    complete_series = complete_series.reset_index(drop = True)
+
+    complete_series = complete_series.reset_index(drop=True)
 
     return complete_series
 
 
-
 # add description
 
-def homogenize_dead_series(series_to_check, reference_date_array_TS, days_to_check = 5):
+def homogenize_dead_series(series_to_check, reference_date_array_TS, days_to_check=5):
 
     reference_date_array_TS = np.array(reference_date_array_TS)
     header = list(series_to_check.columns)
     last_day = reference_date_array_TS[len(reference_date_array_TS) - 1]
-    first_check_day = reference_date_array_TS[len(reference_date_array_TS) - 1 - days_to_check]
-    test_matrix = series_to_check.loc[series_to_check.Time.between(first_check_day, last_day, inclusive = True), header]
+    first_check_day = reference_date_array_TS[len(
+        reference_date_array_TS) - 1 - days_to_check]
+    test_matrix = series_to_check.loc[series_to_check.Time.between(
+        first_check_day, last_day, inclusive=True), header]
 
     if test_matrix.empty == True:
 
         print('inside')
-        last_date = np.array(series_to_check['Time'].iloc[len(series_to_check['Time']) -1])
+        last_date = np.array(
+            series_to_check['Time'].iloc[len(series_to_check['Time']) - 1])
         first_missing_date = (int(last_date) + 86400)
         last_missing_date = last_day
 
-        missing_date_array = timestamp_vector(first_missing_date, last_missing_date)
+        missing_date_array = timestamp_vector(
+            first_missing_date, last_missing_date)
 
         # new_series = pd.DataFrame(missing_date_array, columns = ['Time'])
         header.remove('Time')
 
-        zero_mat = np.zeros_like((len(header), len(missing_date_array)))
-        zero_df = pd.DataFrame(zero_mat, columns = header)
+        zero_mat = np.zeros((len(missing_date_array), 3))
+        zero_df = pd.DataFrame(zero_mat, columns=header)
         zero_df['Time'] = missing_date_array
         # for element in header:
 
         #     new_series[element] = np.zeros(len(missing_date_array))
 
         complete_series = series_to_check.append(zero_df)
-        
+
     else:
 
         complete_series = series_to_check
-    
-    complete_series = complete_series.reset_index(drop = True)
+
+    complete_series = complete_series.reset_index(drop=True)
 
     return complete_series
 
@@ -358,12 +361,11 @@ def homogenize_dead_series(series_to_check, reference_date_array_TS, days_to_che
 # function takes as input a Dataframe with missing values referred to specific exchange, cryptocurrency
 # and fiat pair and fix it; the dataframe passed as broken_matrix is a CryptoWatch series
 # and is Fixed for the columns 'Time', 'Close Price', 'Crypto Volume', 'Pair Volume'
-# the function, in order to fix, looks for the same crypto-fiat pair on all the exchanges and returns 
+# the function, in order to fix, looks for the same crypto-fiat pair on all the exchanges and returns
 # a volume weighted average of the found values
 # the values of the other exchanges are searched in MongoDB database "index" and in the "rawdata" collection
 
-def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_date = None, db = "index", collection = "CW_rawdata"):
-
+def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_date, end_date=None, db="index", collection="CW_rawdata"):
 
     # define DataFrame header
     header = ['Time', 'Close Price', 'Crypto Volume', 'Pair Volume']
@@ -379,7 +381,8 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
     ccy_pair = cryptocurrency.lower() + pair.lower()
 
     # set the list af all exchanges and then pop out the one in subject
-    exchange_list = ['bitflyer', 'poloniex', 'bitstamp','bittrex','coinbase-pro','gemini','kraken']
+    exchange_list = ['bitflyer', 'poloniex', 'bitstamp',
+                     'bittrex', 'coinbase-pro', 'gemini', 'kraken']
     exchange_list.remove(exchange)
 
     # iteratively find the missing value in all the exchanges
@@ -388,29 +391,33 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
     fixing_pair_vol = np.array([])
     fixing_volume = np.array([])
 
-    # variable that count how many exchanges actually have values for the selected crypto+pair 
+    # variable that count how many exchanges actually have values for the selected crypto+pair
     count_exchange = 0
 
     for element in exchange_list:
-        
+
         # defining the dictionary to use in querying MongoDB
-        query_dict = {"Exchange" : element, "Pair": ccy_pair }
+        query_dict = {"Exchange": element, "Pair": ccy_pair}
         # query MongoDB and rerieve a DataFrame called "matrix"
         matrix = mongo.query_mongo2(db, collection, query_dict)
-        matrix = matrix.drop(columns = ['Exchange', 'Pair', 'Low', 'High', 'Open'])
+        matrix = matrix.drop(
+            columns=['Exchange', 'Pair', 'Low', 'High', 'Open'])
 
         # checking if data frame is empty: if not then the crypto-fiat pair exists in the exchange
-        # then add to the count variable 
+        # then add to the count variable
         if matrix.shape[0] > 1:
 
             count_exchange = count_exchange + 1
-    
+
             # if the matrix is not null, find variation and volume of the selected exchange
             # and assign them to the related matrix
-            variations_price, volumes = substitute_finder(broken_array, reference_array, matrix, 'Close Price')
-            variations_cry_vol, volumes = substitute_finder(broken_array, reference_array, matrix, 'Crypto Volume')
-            variations_pair_vol, volumes = substitute_finder(broken_array, reference_array, matrix, 'Pair Volume')
-            variation_time = variations_price[:,0]
+            variations_price, volumes = substitute_finder(
+                broken_array, reference_array, matrix, 'Close Price')
+            variations_cry_vol, volumes = substitute_finder(
+                broken_array, reference_array, matrix, 'Crypto Volume')
+            variations_pair_vol, volumes = substitute_finder(
+                broken_array, reference_array, matrix, 'Pair Volume')
+            variation_time = variations_price[:, 0]
 
             # assigning the retrived variation in each exchanges for the selected crypto-fiat pair
             if fixing_price.size == 0:
@@ -422,19 +429,22 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
 
             else:
 
-                fixing_price = np.column_stack((fixing_price, variations_price[:, 1]))
-                fixing_cry_vol = np.column_stack((fixing_cry_vol, variations_cry_vol[:, 1]))
-                fixing_pair_vol = np.column_stack((fixing_pair_vol, variations_pair_vol[:, 1]))
+                fixing_price = np.column_stack(
+                    (fixing_price, variations_price[:, 1]))
+                fixing_cry_vol = np.column_stack(
+                    (fixing_cry_vol, variations_cry_vol[:, 1]))
+                fixing_pair_vol = np.column_stack(
+                    (fixing_pair_vol, variations_pair_vol[:, 1]))
                 fixing_volume = np.column_stack((fixing_volume, volumes[:, 1]))
-    
+
     # find the volume weighted variation for all the variables
     weighted_var_price = []
     weighted_cry_vol = []
     weighted_pair_vol = []
 
-    for i in range(len(fixing_price)): 
+    for i in range(len(fixing_price)):
 
-        count_none = 0 
+        count_none = 0
 
         for j in range(int(count_exchange)):
 
@@ -474,37 +484,39 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
             pair_vol = fixing_pair_vol[i].sum() / fixing_volume[i].sum()
             weighted_var_price.append(price)
             weighted_cry_vol.append(cry_vol)
-            weighted_pair_vol.append(pair_vol)   
-        
+            weighted_pair_vol.append(pair_vol)
+
         elif count_none != count_exchange and count_exchange > 1 and fixing_price.size > count_exchange:
 
-            price = fixing_price[i,:].sum() / fixing_volume[i,:].sum()
-            cry_vol = fixing_cry_vol[i,:].sum() / fixing_volume[i,:].sum()
-            pair_vol = fixing_pair_vol[i,:].sum() / fixing_volume[i,:].sum()
+            price = fixing_price[i, :].sum() / fixing_volume[i, :].sum()
+            cry_vol = fixing_cry_vol[i, :].sum() / fixing_volume[i, :].sum()
+            pair_vol = fixing_pair_vol[i, :].sum() / fixing_volume[i, :].sum()
             weighted_var_price.append(price)
             weighted_cry_vol.append(cry_vol)
             weighted_pair_vol.append(pair_vol)
 
     # create a matrix with columns: timestamp date, weighted variatons of prices, weightes variations of volume both crypto and pair
     try:
-        variation_matrix = np.column_stack((variation_time, weighted_var_price, weighted_cry_vol, weighted_pair_vol))
+        variation_matrix = np.column_stack(
+            (variation_time, weighted_var_price, weighted_cry_vol, weighted_pair_vol))
         variation_matrix = np.nan_to_num(variation_matrix)
 
-        for i, row in enumerate(variation_matrix[:,0]):    
+        for i, row in enumerate(variation_matrix[:, 0]):
 
-        
             # find previuos value and multiply the variation in order to obtain the new values to insert
-            previous_values = broken_matrix[broken_matrix['Time'] == row - 86400].iloc[:,1:4]
+            previous_values = broken_matrix[broken_matrix['Time']
+                                            == row - 86400].iloc[:, 1:4]
             if previous_values.empty == True:
-                previous_values = np.zeros((1,3))
-        
+                previous_values = np.zeros((1, 3))
+
             new_values = previous_values * (1 + variation_matrix[i, 1:])
-            new_values = pd.DataFrame(np.column_stack((row, new_values)), columns = header)
+            new_values = pd.DataFrame(np.column_stack(
+                (row, new_values)), columns=header)
 
             # insert the new values into the broken_matrix
             broken_matrix = broken_matrix.append(new_values)
-            broken_matrix = broken_matrix.sort_values(by = ['Time'])
-            broken_matrix = broken_matrix.reset_index(drop = True)
+            broken_matrix = broken_matrix.sort_values(by=['Time'])
+            broken_matrix = broken_matrix.reset_index(drop=True)
 
         fixed_matrix = broken_matrix
         int_date = np.array([])
@@ -515,23 +527,25 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
             new_date = int(date)
             new_date = str(new_date)
             int_date = np.append(int_date, new_date)
-        
+
         fixed_matrix['Time'] = int_date
 
-    # this exception allows to manage the case in which the broken_matrix is the only existing matrix 
+    # this exception allows to manage the case in which the broken_matrix is the only existing matrix
     # containing the soecific crypto - fiat pair; in other words just 1 exchange trades on that cp
     # so, we put the missing values to 0 and complete the dataframe with the standard dimension
     except UnboundLocalError:
-        
+
         zeros_matrix = np.zeros((len(reference_array), len(header) - 1))
         fixed_matrix = np.column_stack((reference_array, zeros_matrix))
-        fixed_matrix = pd.DataFrame(fixed_matrix, columns = header)
+        fixed_matrix = pd.DataFrame(fixed_matrix, columns=header)
         header.remove('Time')
 
         for day in broken_matrix['Time']:
 
-            values_to_insert = np.array(broken_matrix.loc[broken_matrix.Time == day][header])
-            fixed_matrix.loc[fixed_matrix.Time == day, header] = values_to_insert
+            values_to_insert = np.array(
+                broken_matrix.loc[broken_matrix.Time == day][header])
+            fixed_matrix.loc[fixed_matrix.Time ==
+                             day, header] = values_to_insert
 
         int_date = np.array([])
 
@@ -541,11 +555,10 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
             new_date = int(date)
             new_date = str(new_date)
             int_date = np.append(int_date, new_date)
-        
-        fixed_matrix['Time'] = int_date 
+
+        fixed_matrix['Time'] = int_date
 
     return fixed_matrix
-
 
 
 # given a matrix (where_to_lookup), a date reference array and, broken date array with missing date
@@ -561,31 +574,37 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
     # find the elements of ref array not included in broken array (the one to check)
     missing_item = Diff(reference_array, broken_array)
     missing_item.sort()
-    variations = [] 
+    variations = []
     volumes = []
     for element in missing_item:
-        # for each missing element try to find it in where to look up, if KeyError occurred 
+        # for each missing element try to find it in where to look up, if KeyError occurred
         # meaning the searched item is not found, then append zero
         try:
 
-            today_alt = where_to_lookup[where_to_lookup['Time'] == element][position]
-            today_value = float(where_to_lookup[where_to_lookup['Time'] == element][position])
-            yesterday_value = float(where_to_lookup[where_to_lookup['Time'] == element - 86400][position])
+            today_alt = where_to_lookup[where_to_lookup['Time']
+                                        == element][position]
+            today_value = float(
+                where_to_lookup[where_to_lookup['Time'] == element][position])
+            yesterday_value = float(
+                where_to_lookup[where_to_lookup['Time'] == element - 86400][position])
             numerator = today_value - yesterday_value
-            variation = np.divide(numerator, yesterday_value, out = np.zeros_like(numerator), where = numerator != 0.0 )
-            volume = float(where_to_lookup[where_to_lookup['Time'] == element]['Pair Volume']) ##consider crytpo vol
+            variation = np.divide(numerator, yesterday_value, out=np.zeros_like(
+                numerator), where=numerator != 0.0)
+            # consider crytpo vol
+            volume = float(
+                where_to_lookup[where_to_lookup['Time'] == element]['Pair Volume'])
             variation = variation * volume
             variations.append(variation)
             volumes.append(volume)
 
         except KeyError:
 
-            variations.append(0) 
+            variations.append(0)
             volumes.append(0)
 
         except TypeError:
 
-            variations.append(0) 
+            variations.append(0)
             volumes.append(0)
 
     volumes = np.array(volumes)
@@ -594,7 +613,6 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
     volume_matrix = np.column_stack((missing_item, volumes))
 
     return variation_matrix, volume_matrix
-
 
 
 # the function allows to fix potential zero values founded in "Crypto Volume" and "Pair Volume"
@@ -606,30 +624,28 @@ def fix_zero_value(matrix):
 
     for date in matrix['Time']:
 
-        value_to_check = np.array(matrix.loc[matrix.Time == date,'Crypto Volume'])
-        price_check = np.array(matrix.loc[matrix.Time == date,'Close Price'])
+        value_to_check = np.array(
+            matrix.loc[matrix.Time == date, 'Crypto Volume'])
+        price_check = np.array(matrix.loc[matrix.Time == date, 'Close Price'])
 
         if (val_sum != 0 and int(value_to_check) == 0):
 
             if int(price_check) == 0:
-                
-                previous_price = np.array(matrix.loc[matrix.Time == str(int(date) - 86400),'Close Price'])
+
+                previous_price = np.array(
+                    matrix.loc[matrix.Time == str(int(date) - 86400), 'Close Price'])
                 matrix.loc[matrix.Time == date, 'Close Price'] = previous_price
 
-            previous_c_vol = np.array(matrix.loc[matrix.Time == str(int(date) - 86400), 'Crypto Volume'])
-            previous_p_vol =  np.array(matrix.loc[matrix.Time == str(int(date) - 86400), 'Pair Volume'])
+            previous_c_vol = np.array(
+                matrix.loc[matrix.Time == str(int(date) - 86400), 'Crypto Volume'])
+            previous_p_vol = np.array(
+                matrix.loc[matrix.Time == str(int(date) - 86400), 'Pair Volume'])
             matrix.loc[matrix.Time == date, 'Crypto Volume'] = previous_c_vol
             matrix.loc[matrix.Time == date, 'Pair Volume'] = previous_p_vol
-            
+
         val_sum = val_sum + value_to_check
-    
+
     return matrix
-    
-
-
-
-
-
 
 
 ###############################################################################################
@@ -645,10 +661,10 @@ def fix_zero_value(matrix):
 # key_curr_vector that passes the list of currencies of interest
 # start_Period and End_Period
 
-def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
+def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST='N'):
 
     # defining the array of date to be used
-    date = timestamp_gen(Start_Period, End_Period, EoD = 'N')
+    date = timestamp_gen(Start_Period, End_Period, EoD='N')
     date_ECB = timestamp_gen_legal_solar(date)
     # date = timestamp_convert(date_TS)
     # date = [datetime.strptime(x, '%Y-%m-%d') for x in date]
@@ -659,41 +675,42 @@ def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
     # for each date in "date" array the funcion retrieves data from ECB website
     # and append the result in the returning matrix
     Exchange_Matrix = np.array([])
- 
 
     for i, single_date in enumerate(date):
 
-        database= 'index'
+        database = 'index'
         collection = 'ecb_raw'
-        query = {'TIME_PERIOD': str(date_ECB[i]) } 
+        query = {'TIME_PERIOD': str(date_ECB[i])}
 
-       
         # retrieving data from MongoDB 'index' and 'ecb_raw' collection
         single_date_ex_matrix = mongo.query_mongo2(database, collection, query)
 
         # check if rates exist in the specified date
         if Check_null(single_date_ex_matrix) == False:
-            
+
             # find the USD/EUR rates useful for conversions
-            cambio_USD_EUR = float(np.array(single_date_ex_matrix.loc[single_date_ex_matrix.CURRENCY == 'USD', 'OBS_VALUE']))
-            
+            cambio_USD_EUR = float(np.array(
+                single_date_ex_matrix.loc[single_date_ex_matrix.CURRENCY == 'USD', 'OBS_VALUE']))
+
             # add a column to DF with the USD based rates
-            single_date_ex_matrix['USD based rate'] = (single_date_ex_matrix['OBS_VALUE']) / cambio_USD_EUR
+            single_date_ex_matrix['USD based rate'] = (
+                single_date_ex_matrix['OBS_VALUE']) / cambio_USD_EUR
 
             # creat date array
-            date_arr = np.full(len(key_curr_vector),single_date)
-          
+            date_arr = np.full(len(key_curr_vector), single_date)
+
             # creating the array with 'XXX/USD' format
             curr_arr = single_date_ex_matrix['CURRENCY'] + '/USD'
             curr_arr = np.where(curr_arr == 'USD/USD', 'EUR/USD', curr_arr)
-          
+
             # creating the array with rate values USD based
             rate_arr = single_date_ex_matrix['USD based rate']
-            rate_arr = np.where(rate_arr == 1.000000, 1/single_date_ex_matrix['OBS_VALUE'][0], rate_arr)
-    
+            rate_arr = np.where(rate_arr == 1.000000, 1 /
+                                single_date_ex_matrix['OBS_VALUE'][0], rate_arr)
+
             # stacking the array together
             array = np.column_stack((date_arr, curr_arr, rate_arr))
-         
+
             # filling the return matrix
             if Exchange_Matrix.size == 0:
 
@@ -704,10 +721,10 @@ def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
                 Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
 
         # if the query returns an empty matrix, function will takes values of the
-        # last useful day        
+        # last useful day
         else:
 
-            date_arr = np.full(len(key_curr_vector),single_date)
+            date_arr = np.full(len(key_curr_vector), single_date)
 
             # take the curr_arr values of the previous day
             curr_arr = curr_arr
@@ -719,7 +736,7 @@ def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
             array = np.column_stack((date_arr, curr_arr, rate_arr))
 
             if Exchange_Matrix.size == 0:
-                
+
                 Exchange_Matrix = array
 
             else:
@@ -728,15 +745,13 @@ def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
     if timeST != 'N':
 
-        for j, element in enumerate(Exchange_Matrix[:,0]):
+        for j, element in enumerate(Exchange_Matrix[:, 0]):
 
             to_date = datetime.strptime(element, '%Y-%m-%d')
             time_stamp = datetime.timestamp(to_date) + 3600
-            Exchange_Matrix[j ,0] = int(time_stamp)
+            Exchange_Matrix[j, 0] = int(time_stamp)
 
-
-    return pd.DataFrame(Exchange_Matrix, columns = header)
-
+    return pd.DataFrame(Exchange_Matrix, columns=header)
 
 
 # function returns a matrix of exchange rates USD based that contains
@@ -747,12 +762,12 @@ def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 # input:
 # key_curr_vector that passes the list of currencies of interest
 
-def ECB_daily_setup (key_curr_vector, timeST = 'N'):
+def ECB_daily_setup(key_curr_vector, timeST='N'):
 
     # defining the array of date to be used
     today = datetime.now().strftime('%m-%d-%Y')
-    yesterday = (datetime.now() - timedelta(days = 1)).strftime('%m-%d-%Y')
-    date = date_array_gen(yesterday, today, timeST = 'N', EoD = 'N')
+    yesterday = (datetime.now() - timedelta(days=1)).strftime('%m-%d-%Y')
+    date = date_array_gen(yesterday, today, timeST='N', EoD='N')
     date = [datetime.strptime(x, '%Y-%m-%d') for x in date]
 
     # defining the headers of the returning data frame
@@ -763,36 +778,39 @@ def ECB_daily_setup (key_curr_vector, timeST = 'N'):
     Exchange_Matrix = np.array([])
 
     # defining the MongoDB path where to look for the rates
-    database= 'index'
+    database = 'index'
     collection = 'ecb_raw'
-    query = {'TIME_PERIOD': date[1]} 
-    
+    query = {'TIME_PERIOD': date[1]}
+
     # retrieving data from MongoDB 'index' and 'ecb_raw' collection
     single_date_ex_matrix = mongo.query_mongo(database, collection, query)
 
     # check if rates exist in the specified date
     if Check_null(single_date_ex_matrix) == False:
-        
+
         # find the USD/EUR rates useful for conversions
-        cambio_USD_EUR = float(np.array(single_date_ex_matrix.loc[single_date_ex_matrix.CURRENCY == 'USD', 'OBS_VALUE']))
-        
+        cambio_USD_EUR = float(np.array(
+            single_date_ex_matrix.loc[single_date_ex_matrix.CURRENCY == 'USD', 'OBS_VALUE']))
+
         # add a column to DF with the USD based rates
-        single_date_ex_matrix['USD based rate'] = (single_date_ex_matrix['OBS_VALUE']) / cambio_USD_EUR
+        single_date_ex_matrix['USD based rate'] = (
+            single_date_ex_matrix['OBS_VALUE']) / cambio_USD_EUR
 
         # creat date array
         date_arr = np.full(len(key_curr_vector), date[1])
-        
+
         # creating the array with 'XXX/USD' format
         curr_arr = single_date_ex_matrix['CURRENCY'] + '/USD'
         curr_arr = np.where(curr_arr == 'USD/USD', 'EUR/USD', curr_arr)
-        
+
         # creating the array with rate values USD based
         rate_arr = single_date_ex_matrix['USD based rate']
-        rate_arr = np.where(rate_arr == 1.000000, 1/single_date_ex_matrix['OBS_VALUE'][0], rate_arr)
+        rate_arr = np.where(rate_arr == 1.000000, 1 /
+                            single_date_ex_matrix['OBS_VALUE'][0], rate_arr)
 
         # stacking the array together
         array = np.column_stack((date_arr, curr_arr, rate_arr))
-        
+
         # filling the return matrix
         if Exchange_Matrix.size == 0:
 
@@ -803,13 +821,13 @@ def ECB_daily_setup (key_curr_vector, timeST = 'N'):
             Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
 
     # if the query returns an empty matrix, function will takes values of the
-    # last useful day        
+    # last useful day
     else:
 
         # set the MongoDB query to yestarday
-        query = {'TIME_PERIOD': date[0]} 
-    
-        # retrieving data from MongoDB 'index' and 'ecb_raw' collection 
+        query = {'TIME_PERIOD': date[0]}
+
+        # retrieving data from MongoDB 'index' and 'ecb_raw' collection
         single_date_ex_matrix = mongo.query_mongo(database, collection, query)
 
         date_arr = np.full(len(key_curr_vector), date[1])
@@ -817,16 +835,17 @@ def ECB_daily_setup (key_curr_vector, timeST = 'N'):
         # creating the array with 'XXX/USD' format
         curr_arr = single_date_ex_matrix['CURRENCY'] + '/USD'
         curr_arr = np.where(curr_arr == 'USD/USD', 'EUR/USD', curr_arr)
-        
+
         # creating the array with rate values USD based
         rate_arr = single_date_ex_matrix['USD based rate']
-        rate_arr = np.where(rate_arr == 1.000000, 1/single_date_ex_matrix['OBS_VALUE'][0], rate_arr)
+        rate_arr = np.where(rate_arr == 1.000000, 1 /
+                            single_date_ex_matrix['OBS_VALUE'][0], rate_arr)
 
         # stack the array together
         array = np.column_stack((date_arr, curr_arr, rate_arr))
 
         if Exchange_Matrix.size == 0:
-            
+
             Exchange_Matrix = array
 
         else:
@@ -835,14 +854,12 @@ def ECB_daily_setup (key_curr_vector, timeST = 'N'):
 
     if timeST != 'N':
 
-        for j, element in enumerate(Exchange_Matrix[:,0]):
+        for j, element in enumerate(Exchange_Matrix[:, 0]):
 
             to_date = datetime.strptime(element, '%Y-%m-%d')
             time_stamp = datetime.timestamp(to_date) + 3600
             Exchange_Matrix[j, 0] = int(time_stamp)
-
-
-    return pd.DataFrame(Exchange_Matrix, columns = header)
+    return pd.DataFrame(Exchange_Matrix, columns=header)
 
 #################################################################################
 
@@ -855,33 +872,32 @@ def ECB_daily_setup (key_curr_vector, timeST = 'N'):
 # Ex_Rate_matrix = data frame of ECB exchange rates
 # currency = string that specify the currency of CW_matrix (EUR, CAD, GBP,...)
 
-def CW_data_setup (CW_matrix, currency):
+def CW_data_setup(CW_matrix, currency):
 
     currency = currency.upper()
 
     if currency != 'USD':
-            
+
         ex_curr = currency + '/USD'
 
-    
-        #connecting to mongo in local
+        # connecting to mongo in local
         connection = MongoClient('localhost', 27017)
         db = connection.index
 
         # defining the MongoDB path where to look for the rates
-       
-        for i in range (len(CW_matrix['Time'])):
-            
+
+        for i in range(len(CW_matrix['Time'])):
+
             date = str(CW_matrix['Time'][i])
 
-           # defining the MongoDB path where to look for the rates 
-            database= 'index'
+           # defining the MongoDB path where to look for the rates
+            database = 'index'
             collection = 'ecb_clean'
-            query = {'Date': date, 'Currency' : ex_curr} 
-        
+            query = {'Date': date, 'Currency': ex_curr}
+
             # retrieving data from MongoDB 'index' and 'ecb_raw' collection
             single_date_rate = mongo.query_mongo(database, collection, query)
-           
+
             if single_date_rate.shape[0] == 1:
 
                 rate = single_date_rate['Rate']
@@ -890,46 +906,47 @@ def CW_data_setup (CW_matrix, currency):
 
                 single_date_rate = single_date_rate.iloc[0]
 
-        
             rate = single_date_rate['Rate']
 
-            CW_matrix['Close Price'][i] = float(CW_matrix['Close Price'][i] / rate)
-            CW_matrix['Pair Volume'][i] = float(CW_matrix['Pair Volume'][i] / rate)
-    
+            CW_matrix['Close Price'][i] = float(
+                CW_matrix['Close Price'][i] / rate)
+            CW_matrix['Pair Volume'][i] = float(
+                CW_matrix['Pair Volume'][i] / rate)
+
     else:
 
         CW_matrix = CW_matrix
 
     return CW_matrix
-        
+
 
 ########################################################################################################
 
 ##################################### OLD UNUSED FUNCTIONS ############################################
 
 
-#function takes a .json file from Cryptowatch API and transforms it into a matrix
+# function takes a .json file from Cryptowatch API and transforms it into a matrix
 # the matrix has the headers : ['Time' ,'Open',	'High',	'Low',	'Close',""+Crypto+" Volume" , ""+Pair+" Volume"]
-#if the downloaded file does not have results the function returns an empty array
-#note that the "time" column contains value in timestamp format
-#86400 is the daily frequency in seconds
+# if the downloaded file does not have results the function returns an empty array
+# note that the "time" column contains value in timestamp format
+# 86400 is the daily frequency in seconds
 
-def json_to_matrix(file_path, Crypto='',Pair=''):
-    raw_json=pd.read_json(file_path)
+def json_to_matrix(file_path, Crypto='', Pair=''):
+    raw_json = pd.read_json(file_path)
     if Crypto == '':
-        Crypto="Crypto"
-    if Pair=='':
-        Pair="Pair"
-    header=['Time' ,'Open',	'High',	'Low',	'Close Price',""+Crypto+" Volume" , ""+Pair+" Volume"]
-    if "result" in raw_json.keys(): #testing if the file has the 'result' list of value
-        matrix= pd.DataFrame(raw_json['result']['86400'], columns=header)
+        Crypto = "Crypto"
+    if Pair == '':
+        Pair = "Pair"
+    header = ['Time', 'Open',	'High',	'Low',	'Close Price',
+              ""+Crypto+" Volume", ""+Pair+" Volume"]
+    if "result" in raw_json.keys():  # testing if the file has the 'result' list of value
+        matrix = pd.DataFrame(raw_json['result']['86400'], columns=header)
         # for i, element in enumerate(matrix['time']):
         #     matrix['time'][i]=datetime.strptime(str(datetime.fromtimestamp(matrix['time'][i]))[:10], '%Y-%m-%d').strftime('%d/%m/%y')
     else:
-        matrix=np.array([])
-    
-    return matrix
+        matrix = np.array([])
 
+    return matrix
 
 
 # return a sorted array of the size of reference_array.
@@ -937,22 +954,21 @@ def json_to_matrix(file_path, Crypto='',Pair=''):
 # broken_array HAS TO BE smaller than reference array
 # default sorting is in ascending way, if descending is needed specify versus='desc'
 
-def fill_time_array(broken_array, ref_array, versus = 'asc'):
-    
+def fill_time_array(broken_array, ref_array, versus='asc'):
+
     difference = Diff(ref_array, broken_array)
-    
+
     for element in difference:
         broken_array.add(element)
     broken_array = list(broken_array)
-    
+
     if versus == 'desc':
-        broken_array.sort(reverse = True)
-    
+        broken_array.sort(reverse=True)
+
     else:
         broken_array.sort()
-    
-    return broken_array
 
+    return broken_array
 
 
 # function that given a list of items, find the items and relative indexes in another list/vector
@@ -978,6 +994,6 @@ def find_index(list_to_find, where_to_find):
     index = np.array(index)
     item = np.array(item)
     indexed_item = np.column_stack((item, index))
-    indexed_item = indexed_item[indexed_item[:,0].argsort()]
+    indexed_item = indexed_item[indexed_item[:, 0].argsort()]
 
     return indexed_item

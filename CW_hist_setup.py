@@ -1,7 +1,7 @@
 ######################################################################################################
 # The file completes the historical series of Cryptocurrencies market data stored on MongoDB
 # The main rules for the manipulation of raw data are the followings:
-# - if a certain Crypto-Fiat pair does not start at the beginning of the period but later, the file 
+# - if a certain Crypto-Fiat pair does not start at the beginning of the period but later, the file
 #   will put a series of zeros from the start period until the actual beginning of the series
 # - if a certain data is missing in a certain date the file will compute a value to insert using
 #   all the values displayed, for the same Crypto-Fiat pair, in the other exchanges.
@@ -40,10 +40,12 @@ reference_date_vector = data_setup.timestamp_gen(start_date)
 #reference_date_vector = data_setup.timestamp_to_str(reference_date_vector)
 
 pair_array = ['gbp', 'usd', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
-# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur'] 
-Crypto_Asset = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
+# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur']
+Crypto_Asset = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH',
+                'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
 # crypto complete [ 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
-Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
+Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp',
+             'gemini', 'bittrex', 'kraken', 'bitflyer']
 # exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
 ####################################### setup MongoDB connection ###################################
@@ -84,22 +86,25 @@ for Crypto in Crypto_Asset:
         currencypair_array.append(Crypto.lower() + i)
 
     for exchange in Exchanges:
-       
+
         for cp in currencypair_array:
 
-            matrix = tot_matrix.loc[tot_matrix['Exchange'] == exchange] 
+            matrix = tot_matrix.loc[tot_matrix['Exchange'] == exchange]
             matrix = matrix.loc[matrix['Pair'] == cp]
             # checking if the matrix is not empty
             if matrix.shape[0] > 1:
-                
+
                 if (exchange == 'bittrex' and cp == 'btcusdt'):
 
-                    sub_vol = np.array(matrix.loc[matrix.Time == 1544486400, 'Crypto Volume'])
-                    matrix.loc[matrix.Time == 1544572800, 'Crypto Volume'] = sub_vol
-                    matrix.loc[matrix.Time == 1544659200, 'Crypto Volume'] = sub_vol
+                    sub_vol = np.array(
+                        matrix.loc[matrix.Time == 1544486400, 'Crypto Volume'])
+                    matrix.loc[matrix.Time == 1544572800,
+                               'Crypto Volume'] = sub_vol
+                    matrix.loc[matrix.Time == 1544659200,
+                               'Crypto Volume'] = sub_vol
 
-                matrix['Pair Volume'] = matrix['Close Price'] * matrix['Crypto Volume']
-
+                matrix['Pair Volume'] = matrix['Close Price'] * \
+                    matrix['Crypto Volume']
 
             # put the manipulated data on MongoDB
             data = matrix.to_dict(orient='records')
@@ -126,15 +131,15 @@ for Crypto in Crypto_Asset:
         currencypair_array.append(Crypto.lower() + i)
 
     for exchange in Exchanges:
-        
-        ex_matrix = tot_matrix.loc[tot_matrix['Exchange'] == exchange] 
+
+        ex_matrix = tot_matrix.loc[tot_matrix['Exchange'] == exchange]
         print(exchange)
         for cp in currencypair_array:
 
             print(cp)
             crypto = cp[:3]
             pair = cp[3:]
-            
+
             cp_matrix = ex_matrix.loc[ex_matrix['Pair'] == cp]
             cp_matrix = cp_matrix.drop(columns=['Exchange', 'Pair'])
             # checking if the matrix is not empty
@@ -142,15 +147,18 @@ for Crypto in Crypto_Asset:
 
                 # check if the historical series start at the same date as the start date
                 # if not fill the dataframe with zero values
-                cp_matrix = data_setup.homogenize_series(cp_matrix, reference_date_vector)
+                cp_matrix = data_setup.homogenize_series(
+                    cp_matrix, reference_date_vector)
 
                 # check if the series stopped at certain point in the past, if yes fill with zero
-                cp_matrix = data_setup.homogenize_dead_series(cp_matrix, reference_date_vector)
+                cp_matrix = data_setup.homogenize_dead_series(
+                    cp_matrix, reference_date_vector)
 
                 # checking if the matrix has missing data and if ever fixing it
                 if cp_matrix.shape[0] != reference_date_vector.size:
 
-                    cp_matrix = data_setup.CW_series_fix_missing(cp_matrix, exchange, Crypto, pair, start_date, db="index", collection="CW_rawdata")
+                    cp_matrix = data_setup.CW_series_fix_missing(
+                        cp_matrix, exchange, Crypto, pair, start_date, db="index", collection="CW_rawdata")
 
                 ######### part that transform the timestamped date into string ###########
                 new_date = np.array([])
@@ -166,7 +174,7 @@ for Crypto in Crypto_Asset:
                 cp_matrix['Exchange'] = exchange
                 cp_matrix['Pair'] = cp
                 # put the manipulated data on MongoDB
-                data = cp_matrix.to_dict(orient='records') 
+                data = cp_matrix.to_dict(orient='records')
                 collection_clean.insert_many(data)
 
 #############################################################################################
