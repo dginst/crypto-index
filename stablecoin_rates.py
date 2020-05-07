@@ -1,5 +1,5 @@
-import utils.mongo_setup as mongo
-import utils.data_setup as data_setup
+import cryptoindex.mongo_setup as mongo
+import cryptoindex.data_setup as data_setup
 from pymongo import MongoClient
 import time
 import pandas as pd

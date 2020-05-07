@@ -13,14 +13,7 @@
 
 # standard library import
 import time
-import json
-import os.path
-from pathlib import Path
 from datetime import datetime
-from datetime import *
-import time
-import requests
-from requests import get
 
 # third party import
 import pandas as pd
@@ -28,9 +21,8 @@ import numpy as np
 from pymongo import MongoClient
 
 # local import
-import utils.data_setup as data_setup
-import utils.data_download as data_download
-import utils.mongo_setup as mongo
+import cryptoindex.data_setup as data_setup
+import cryptoindex.mongo_setup as mongo
 
 start = time.time()
 ####################################### initial settings ############################################
@@ -40,7 +32,7 @@ start_date = '01-01-2016'
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
-today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
+today_TS = int(datetime.strptime(today, '%Y-%m-%d').timestamp()) + 3600
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
@@ -56,20 +48,20 @@ Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'krake
 
 ####################################### setup MongoDB connection ###################################
 
-#connecting to mongo in local
+# connecting to mongo in local
 connection = MongoClient('localhost', 27017)
-#creating the database called index
+# creating the database called index
 db = connection.index
 
 # drop the pre-existing collection (if there is one)
 db.CW_cleandata.drop()
 db.volume_checked_data.drop()
 
-#creating the empty collection "cleandata" within the database index
+# creating the empty collection "cleandata" within the database index
 db.CW_cleandata.create_index([("id", -1)])
 collection_clean = db.CW_cleandata
 
-#creating the empty collection "volume_checked_data" within the database index
+# creating the empty collection "volume_checked_data" within the database index
 db.volume_checked_data.create_index([("id", -1)])
 collection_volume = db.volume_checked_data
 
@@ -82,6 +74,7 @@ collection_volume_check = "volume_checked_data"
 
 tot_matrix = mongo.query_mongo2(db, collection_raw)
 tot_matrix = tot_matrix.drop(columns=['Low', 'High', 'Open'])
+
 for Crypto in Crypto_Asset:
 
     currencypair_array = []
@@ -91,18 +84,13 @@ for Crypto in Crypto_Asset:
         currencypair_array.append(Crypto.lower() + i)
 
     for exchange in Exchanges:
-        
+       
         for cp in currencypair_array:
 
-            # defining the dictionary for the MongoDB query
-            # query_dict = {"Exchange" : exchange, "Pair": cp}
-            # retriving the needed information on MongoDB
-            # matrix = mongo.query_mongo(db, collection_raw, query_dict)
-            # matrix = matrix.drop(columns = ['Low', 'High', 'Open'])
             matrix = tot_matrix.loc[tot_matrix['Exchange'] == exchange] 
             matrix = matrix.loc[matrix['Pair'] == cp]
             # checking if the matrix is not empty
-            if matrix.shape[0] > 1: 
+            if matrix.shape[0] > 1:
                 
                 if (exchange == 'bittrex' and cp == 'btcusdt'):
 
@@ -110,21 +98,23 @@ for Crypto in Crypto_Asset:
                     matrix.loc[matrix.Time == 1544572800, 'Crypto Volume'] = sub_vol
                     matrix.loc[matrix.Time == 1544659200, 'Crypto Volume'] = sub_vol
 
-                matrix['Pair Volume'] = matrix['Close Price'] * matrix ['Crypto Volume']
+                matrix['Pair Volume'] = matrix['Close Price'] * matrix['Crypto Volume']
 
 
             # put the manipulated data on MongoDB
-            data = matrix.to_dict(orient='records')  
+            data = matrix.to_dict(orient='records')
             collection_volume.insert_many(data)
 
 end = time.time()
 
-print("This script took: {} seconds".format(float(end-start)))
+print("This script took: {} seconds".format(float(end - start)))
 
 ############################## fixing historical series main part ##################################
 start = time.time()
 
 tot_matrix = mongo.query_mongo2(db, collection_volume_check)
+# test
+tot_matrix = tot_matrix.loc[tot_matrix.Time != 0]
 
 for Crypto in Crypto_Asset:
 
@@ -137,52 +127,47 @@ for Crypto in Crypto_Asset:
 
     for exchange in Exchanges:
         
+        ex_matrix = tot_matrix.loc[tot_matrix['Exchange'] == exchange] 
         print(exchange)
         for cp in currencypair_array:
 
             print(cp)
             crypto = cp[:3]
             pair = cp[3:]
-
-            # defining the dictionary for the MongoDB query
-            # query_dict = {"Exchange" : exchange, "Pair": cp}
-            # retriving the needed information on MongoDB
-            # matrix = mongo.query_mongo(db, collection_volume_check, query_dict)
-            matrix = tot_matrix.loc[tot_matrix['Exchange'] == exchange] 
-            matrix = matrix.loc[matrix['Pair'] == cp]
-            matrix = matrix.drop(columns = ['Exchange', 'Pair'])
+            
+            cp_matrix = ex_matrix.loc[ex_matrix['Pair'] == cp]
+            cp_matrix = cp_matrix.drop(columns=['Exchange', 'Pair'])
             # checking if the matrix is not empty
-            if matrix.shape[0] > 1:
+            if cp_matrix.shape[0] > 1:
 
                 # check if the historical series start at the same date as the start date
                 # if not fill the dataframe with zero values
-                matrix = data_setup.homogenize_series(matrix, reference_date_vector)
+                cp_matrix = data_setup.homogenize_series(cp_matrix, reference_date_vector)
 
                 # check if the series stopped at certain point in the past, if yes fill with zero
-                matrix = data_setup.homogenize_dead_series(matrix, reference_date_vector)
+                cp_matrix = data_setup.homogenize_dead_series(cp_matrix, reference_date_vector)
 
-                print('here')
                 # checking if the matrix has missing data and if ever fixing it
-                if matrix.shape[0] != reference_date_vector.size:
-                    print('fix')
-                    matrix = data_setup.CW_series_fix_missing(matrix, exchange, Crypto, pair, start_date, db = "index", collection = "CW_rawdata")
+                if cp_matrix.shape[0] != reference_date_vector.size:
 
-            ######### part that transform the timestamped date into string ###########
-            new_date = np.array([])
-            for element in matrix['Time']:
+                    cp_matrix = data_setup.CW_series_fix_missing(cp_matrix, exchange, Crypto, pair, start_date, db="index", collection="CW_rawdata")
 
-                element = str(element)
-                new_date = np.append(new_date, element)
+                ######### part that transform the timestamped date into string ###########
+                new_date = np.array([])
+                for element in cp_matrix['Time']:
 
-            matrix['Time'] = new_date
-            ########################################################################
+                    element = str(element)
+                    new_date = np.append(new_date, element)
 
-            # add exchange and currency_pair column
-            matrix['Exchange'] = exchange
-            matrix['Pair'] = cp
-            # put the manipulated data on MongoDB
-            data = matrix.to_dict(orient='records')  
-            collection_clean.insert_many(data)
+                cp_matrix['Time'] = new_date
+                ########################################################################
+
+                # add exchange and currency_pair column
+                cp_matrix['Exchange'] = exchange
+                cp_matrix['Pair'] = cp
+                # put the manipulated data on MongoDB
+                data = cp_matrix.to_dict(orient='records') 
+                collection_clean.insert_many(data)
 
 #############################################################################################
 db = connection.index
@@ -190,4 +175,4 @@ db.volume_checked_data.drop()
 
 end = time.time()
 
-print("This script took: {} seconds".format(float(end-start)))
+print("This script took: {} seconds".format(float(end - start)))

@@ -172,7 +172,7 @@ def CW_raw_to_mongo(exchange, currencypair, mongo_collection, start_date = '01-0
         Exchange = exchange
         Pair = currencypair
         Time = 0
-        Open  = 0
+        Open = 0
         High = 0
         Low = 0
         Close_Price = 0
@@ -180,7 +180,7 @@ def CW_raw_to_mongo(exchange, currencypair, mongo_collection, start_date = '01-0
         Pair_Volume = 0
 
 
-        rawdata = { 'Exchange' : Exchange, 'Pair' : Pair, 'Time': Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
+        rawdata = {'Exchange' : Exchange, 'Pair' : Pair, 'Time': Time, 'Low':Low, 'High':High, 'Open':Open, 'Close Price':Close_Price, 'Crypto Volume':Crypto_Volume, 'Pair Volume': Pair_Volume}
 
         mongo_collection.insert_one(rawdata)
 

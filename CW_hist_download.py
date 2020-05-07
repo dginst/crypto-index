@@ -11,14 +11,7 @@
 
 # standard library import
 import time
-import json
-import os.path
-from pathlib import Path
 from datetime import datetime
-from datetime import *
-import time
-import requests
-from requests import get
 
 # third party import
 import pandas as pd
@@ -26,9 +19,9 @@ import numpy as np
 from pymongo import MongoClient
 
 # local import
-import utils.data_setup as data_setup
-import utils.data_download as data_download
-import utils.mongo_setup as mongo
+import cryptoindex.data_setup as data_setup
+import cryptoindex.data_download as data_download
+import cryptoindex.mongo_setup as mongo
 
 ####################################### initial settings ############################################
 
@@ -52,7 +45,7 @@ pair_array = ['gbp', 'usd', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc'] 
 Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC'] 
 # crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
-Exchanges = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
+Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 # exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
 ####################################### setup MongoDB connection ###################################

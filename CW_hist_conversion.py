@@ -16,8 +16,8 @@ import pandas as pd
 import numpy as np
 
 # local import
-import utils.data_setup as data_setup
-import utils.mongo_setup as mongo
+import cryptoindex.data_setup as data_setup
+import cryptoindex.mongo_setup as mongo
 
 start = time.time()
 

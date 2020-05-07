@@ -1,14 +1,6 @@
 # standard library import
-import sys
 import time
-import json
-import os.path
-from pathlib import Path
 from datetime import datetime
-from datetime import *
-import time
-import requests
-from requests import get
 
 # third party import
 import numpy as np
@@ -16,9 +8,9 @@ from pymongo import MongoClient
 import pandas as pd
 
 # local import
-import utils.data_setup as data_setup
-import utils.data_download as data_download
-import utils.mongo_setup as mongo
+import cryptoindex.data_setup as data_setup
+import cryptoindex.data_download as data_download
+import cryptoindex.mongo_setup as mongo
 
 ####################################### initial settings ############################################
 
@@ -50,7 +42,7 @@ date_complete = data_setup.timestamp_gen_legal_solar(date_complete)
 date_complete = [str(single_date) for single_date in date_complete]
 
 # searching only the last five days
-last_five_days = date_complete[(len(date_complete) - 5) : len(date_complete)]
+last_five_days = date_complete[(len(date_complete) - 5):len(date_complete)]
 
 
 # date_complete = data_setup.timestamp_to_str(date_complete)
@@ -64,7 +56,7 @@ matrix = mongo.query_mongo(database, collection, query)
 
 # checking the time column
 date_list = np.array(matrix["TIME_PERIOD"])
-last_five_days_mongo = date_list[(len(date_list) - 5) : len(date_list)]
+last_five_days_mongo = date_list[(len(date_list) - 5):len(date_list)]
 
 # finding the date to download as difference between complete array of date and 
 # date now stored on MongoDB
@@ -91,7 +83,7 @@ for single_date in date_to_download:
         Exchange_Rate_List = single_date_ex_matrix
 
     else:
-        Exchange_Rate_List = Exchange_Rate_List.append(single_date_ex_matrix, sort = True)
+        Exchange_Rate_List = Exchange_Rate_List.append(single_date_ex_matrix, sort=True)
 
 ########################## upload the raw data to MongoDB ############################
 
@@ -101,5 +93,5 @@ if Exchange_Rate_List.empty == True:
 
 else:
 
-    data = Exchange_Rate_List.to_dict(orient = 'records')  
+    data = Exchange_Rate_List.to_dict(orient='records')  
     collection_ECB_raw.insert_many(data)

@@ -3,7 +3,7 @@ import os.path
 from pathlib import Path
 import json
 from datetime import datetime
-import utils.calc as calc
+import cryptoindex.calc as calc
 from datetime import *
 import time
 
@@ -13,9 +13,9 @@ import numpy as np
 import pandas as pd
 
 # local import
-import utils.mongo_setup as mongo
-import utils.data_setup as data_setup
-import utils.data_download as data_download
+import cryptoindex.mongo_setup as mongo
+import cryptoindex.data_setup as data_setup
+import cryptoindex.data_download as data_download
 
 ############################################# INITIAL SETTINGS #############################################
 

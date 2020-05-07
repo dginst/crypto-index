@@ -4,9 +4,9 @@ from pathlib import Path
 import json
 from pymongo import MongoClient
 from datetime import datetime
-import utils.data_setup as data_setup
-import utils.data_download as data_download
-import utils.calc as calc
+import cryptoindex.data_setup as data_setup
+import cryptoindex.data_download as data_download
+import cryptoindex.calc as calc
 import pandas as pd
 from datetime import *
 import time

@@ -9,14 +9,7 @@
 
 # standard library import
 import time
-import json
-import os.path
-from pathlib import Path
 from datetime import datetime
-from datetime import *
-import time
-import requests
-from requests import get
 
 # third party import
 from pymongo import MongoClient
@@ -24,9 +17,9 @@ import pandas as pd
 import numpy as np
 
 # local import
-import utils.data_setup as data_setup
-import utils.data_download as data_download
-import utils.mongo_setup as mongo
+import cryptoindex.data_setup as data_setup
+import cryptoindex.data_download as data_download
+import cryptoindex.mongo_setup as mongo
 
 ####################################### initial settings ############################################
 

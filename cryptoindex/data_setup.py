@@ -334,14 +334,17 @@ def homogenize_dead_series(series_to_check, reference_date_array_TS, days_to_che
 
         missing_date_array = timestamp_vector(first_missing_date, last_missing_date)
 
-        new_series = pd.DataFrame(missing_date_array, columns = ['Time'])
+        # new_series = pd.DataFrame(missing_date_array, columns = ['Time'])
         header.remove('Time')
 
-        for element in header:
+        zero_mat = np.zeros_like((len(header), len(missing_date_array)))
+        zero_df = pd.DataFrame(zero_mat, columns = header)
+        zero_df['Time'] = missing_date_array
+        # for element in header:
 
-            new_series[element] = np.zeros(len(missing_date_array))
+        #     new_series[element] = np.zeros(len(missing_date_array))
 
-        complete_series = series_to_check.append(new_series)
+        complete_series = series_to_check.append(zero_df)
         
     else:
 
@@ -594,7 +597,7 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
 
 
 
-# the function allows to fix potential zero values founded in "Crytpo Volume" and "Pair Volume"
+# the function allows to fix potential zero values founded in "Crypto Volume" and "Pair Volume"
 # it takes the Volume values of the previuos day and substitue it into the days with 0-values
 
 def fix_zero_value(matrix):
@@ -666,7 +669,7 @@ def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST = 'N'):
 
        
         # retrieving data from MongoDB 'index' and 'ecb_raw' collection
-        single_date_ex_matrix = mongo.query_mongo(database, collection, query)
+        single_date_ex_matrix = mongo.query_mongo2(database, collection, query)
 
         # check if rates exist in the specified date
         if Check_null(single_date_ex_matrix) == False:

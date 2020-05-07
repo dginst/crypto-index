@@ -3,7 +3,7 @@ import os.path
 from pathlib import Path
 import json
 from datetime import datetime
-import utils.calc as calc
+import cryptoindex.calc as calc
 from datetime import *
 import time
 
@@ -13,9 +13,9 @@ import numpy as np
 import pandas as pd
 
 # local import
-import utils.mongo_setup as mongo
-import utils.data_setup as data_setup
-import utils.data_download as data_download
+import cryptoindex.mongo_setup as mongo
+import cryptoindex.data_setup as data_setup
+import cryptoindex.data_download as data_download
 
 ############################################# INITIAL SETTINGS #############################################
 
@@ -55,43 +55,43 @@ db.index_synth_matrix.drop()
 
 
 # collection for crypto prices
-db.crypto_price.create_index([ ("id", -1) ])
+db.crypto_price.create_index([("id", -1)])
 collection_price = db.crypto_price
 # collection for crytpo volume
-db.crypto_volume.create_index([ ("id", -1) ])
+db.crypto_volume.create_index([("id", -1)])
 collection_volume = db.crypto_volume
 # collection for price returns
-db.crypto_price_return.create_index([ ("id", -1) ])
+db.crypto_price_return.create_index([("id", -1)])
 collection_price_ret = db.crypto_price_return
 # collection for EWMA
-db.index_EWMA.create_index([ ("id", -1) ])
+db.index_EWMA.create_index([("id", -1)])
 collection_EWMA = db.index_EWMA
 # collection for first logic matrix
-db.index_logic_matrix_one.create_index([ ("id", -1) ])
+db.index_logic_matrix_one.create_index([("id", -1)])
 collection_logic_one = db.index_logic_matrix_one
 # collection for second logic matrix
-db.index_logic_matrix_two.create_index([ ("id", -1) ])
+db.index_logic_matrix_two.create_index([("id", -1)])
 collection_logic_two = db.index_logic_matrix_two
 # collection for EWMA double checked with both logic matrix
-db.index_EWMA_logic_checked.create_index([ ("id", -1) ])
+db.index_EWMA_logic_checked.create_index([("id", -1)])
 collection_EWMA_check = db.index_EWMA_logic_checked
 # collection for index weights
-db.index_weights.create_index([ ("id", -1) ])
+db.index_weights.create_index([("id", -1)])
 collection_weights = db.index_weights
 # collection for the divisor array
-db.index_divisor.create_index([ ("id", -1) ])
+db.index_divisor.create_index([("id", -1)])
 collection_divisor = db.index_divisor
 # collection for the reshaped divisor array
-db.index_divisor_reshaped.create_index([ ("id", -1) ])
+db.index_divisor_reshaped.create_index([("id", -1)])
 collection_divisor_reshaped = db.index_divisor_reshaped
 # collection for the relative syntethic matrix
-db.index_synth_matrix.create_index([ ("id", -1) ])
+db.index_synth_matrix.create_index([("id", -1)])
 collection_relative_synth = db.index_synth_matrix
 # collection for index level base 1000
-db.index_level_1000.create_index([ ("id", -1) ])
+db.index_level_1000.create_index([("id", -1)])
 collection_index_level_1000 = db.index_level_1000
 # collection for index level raw
-db.index_raw_level.create_index([ ("id", -1) ])
+db.index_raw_level.create_index([("id", -1)])
 collection_index_level_raw = db.index_level_raw
 
 
@@ -104,7 +104,7 @@ start_date = '01-01-2016'
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
-today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600 + 3600 ###
+today_TS = int(datetime.strptime(today, '%Y-%m-%d').timestamp()) + 3600 + 3600 ###
 yesterday_TS = today_TS - 86400
 
 # define end date as as MM-DD-YYYY
@@ -173,13 +173,13 @@ for CryptoA in Crypto_Asset:
             #####################################################################################
   
             # defining the dictionary for the MongoDB query
-            query_dict = {"Exchange" : exchange, "Pair": cp}
+            query_dict = {"Exchange": exchange, "Pair": cp}
             # retriving the needed information on MongoDB
             matrix = mongo.query_mongo(db_name, collection_converted_data, query_dict)
 
             try:
 
-                matrix = matrix.drop(columns = ['Low', 'High','Open'])
+                matrix = matrix.drop(columns=['Low', 'High', 'Open'])
             
             except:
 

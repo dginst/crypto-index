@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-import utils.mongo_setup as mongo
+import cryptoindex.mongo_setup as mongo
 
 connection = MongoClient('localhost', 27017)
 #creating the database called index
