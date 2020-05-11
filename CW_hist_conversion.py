@@ -69,14 +69,14 @@ start = time.time()
 database = "index"
 collection = "CW_cleandata"
 
-# taking btcusd historical
-first_query = {'Pair': 'btcusd', 'Exchange': 'coinbase-pro'}
+# taking BTCUSD pair historical
+first_query = {'Pair': 'btcusd', 'Exchange': 'kraken'}
 coinbase_call = mongo.query_mongo2(database, collection, first_query)
 price_df = coinbase_call[['Close Price']]
 volume_df = coinbase_call[['Pair Volume']]
-price_df = price_df.rename(columns={'Close Price': 'coinbase-pro'})
-volume_df = volume_df.rename(columns={'Pair Volume': 'coinbase-pro'})
-Exchanges.remove('coinbase-pro')
+price_df = price_df.rename(columns={'Close Price': 'kraken'})
+volume_df = volume_df.rename(columns={'Pair Volume': 'kraken'})
+Exchanges.remove('kraken')
 
 for exchange in Exchanges:
 
@@ -311,30 +311,30 @@ conv_merged = conv_merged[['Time', 'Close Price',
 stablecoin = ['usdc', 'usdt']
 stablecoin_matrix = matrix_data.loc[matrix_data['fiat'].isin(stablecoin)]
 
-# # merging the dataset on 'Time' and 'fiat' column
-# stable_merged = pd.merge(
-#     stablecoin_matrix, matrix_rate_stable, on=['Time', 'fiat'])
+# merging the dataset on 'Time' and 'fiat' column
+stable_merged = pd.merge(
+    stablecoin_matrix, matrix_rate_stable, on=['Time', 'fiat'])
 
-# # converting the prices in usd
-# stable_merged['Close Price'] = stable_merged['Close Price'] / \
-#     stable_merged['Rate']
-# stable_merged['Close Price'] = stable_merged['Close Price'].replace(
-#     [np.inf, -np.inf], np.nan)
-# stable_merged['Close Price'].fillna(0, inplace=True)
-# stable_merged['Pair Volume'] = stable_merged['Pair Volume'] / \
-#     stable_merged['Rate']
-# stable_merged['Pair Volume'] = stable_merged['Pair Volume'].replace(
-#     [np.inf, -np.inf], np.nan)
-# stable_merged['Pair Volume'].fillna(0, inplace=True)
+# converting the prices in usd
+stable_merged['Close Price'] = stable_merged['Close Price'] / \
+    stable_merged['Rate']
+stable_merged['Close Price'] = stable_merged['Close Price'].replace(
+    [np.inf, -np.inf], np.nan)
+stable_merged['Close Price'].fillna(0, inplace=True)
+stable_merged['Pair Volume'] = stable_merged['Pair Volume'] / \
+    stable_merged['Rate']
+stable_merged['Pair Volume'] = stable_merged['Pair Volume'].replace(
+    [np.inf, -np.inf], np.nan)
+stable_merged['Pair Volume'].fillna(0, inplace=True)
 
-# # subsetting the dataset with only the relevant columns
-# stable_merged = stable_merged[['Time', 'Close Price',
-#                                'Crypto Volume', 'Pair Volume', 'Exchange', 'Pair']]
+# subsetting the dataset with only the relevant columns
+stable_merged = stable_merged[['Time', 'Close Price',
+                               'Crypto Volume', 'Pair Volume', 'Exchange', 'Pair']]
 
 # reunite the dataframes and put data on MongoDB
 
-stable_merged = stablecoin_matrix[['Time', 'Close Price',
-                                   'Crypto Volume', 'Pair Volume', 'Exchange', 'Pair']]
+# stable_merged = stablecoin_matrix[['Time', 'Close Price',
+#                                    'Crypto Volume', 'Pair Volume', 'Exchange', 'Pair']]
 
 
 converted_data = conv_merged
@@ -368,7 +368,7 @@ for Crypto in Crypto_Asset:
         currencypair_array.append(Crypto.lower() + i)
 
     for exchange in Exchanges:
-
+        print(exchange)
         ex_matrix = matrix.loc[matrix['Exchange'] == exchange]
 
         for cp in currencypair_array:

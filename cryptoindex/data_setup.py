@@ -1,9 +1,5 @@
 # standard library import
-import json
-import os.path
-from pathlib import Path
 from datetime import datetime
-from datetime import *
 import time
 
 # third party import
@@ -997,3 +993,185 @@ def find_index(list_to_find, where_to_find):
     indexed_item = indexed_item[indexed_item[:, 0].argsort()]
 
     return indexed_item
+
+########################################################################################################
+########################################################################################################
+# function takes as input a Dataframe with missing values referred to specific exchange, cryptocurrency
+# and fiat pair and fix it; the dataframe passed as broken_matrix is a CryptoWatch series
+# and is Fixed for the columns 'Time', 'Close Price', 'Crypto Volume', 'Pair Volume'
+# the function, in order to fix, looks for the same crypto-fiat pair on all the exchanges and returns
+# a volume weighted average of the found values
+# the values of the other exchanges are searched in MongoDB database "index" and in the "rawdata" collection
+
+
+def CW_series_fix_missing2(broken_matrix, exchange, cryptocurrency, pair, start_date, db, collection, end_date=None):
+
+    # define DataFrame header
+    header = ['Time', 'Close Price', 'Crypto Volume', 'Pair Volume']
+
+    # set end_date = today if empty
+    if end_date == None:
+        end_date = datetime.now().strftime('%m-%d-%Y')
+
+    # creating the reference date array from start date to end date
+    reference_array = timestamp_gen(start_date, end_date)
+    # select just the date on broken_matrix
+    broken_array = broken_matrix['Time']
+    ccy_pair = cryptocurrency.lower() + pair.lower()
+
+    # set the list af all exchanges and then pop out the one in subject
+    exchange_list = ['bitflyer', 'poloniex', 'bitstamp',
+                     'bittrex', 'coinbase-pro', 'gemini', 'kraken']
+    exchange_list.remove(exchange)
+
+    # iteratively find the missing value in all the exchanges
+    fixing_price = np.array([])
+    fixing_cry_vol = np.array([])
+    fixing_pair_vol = np.array([])
+
+    # defining the dictionary to use in querying MongoDB
+    query_dict = {"Pair": ccy_pair}
+    # query MongoDB and rerieve a DataFrame called "matrix"
+    matrix = mongo.query_mongo2(db, collection, query_dict)
+    matrix = matrix.drop(columns=['Pair'])
+    exc_with_pair = list(matrix['Exchange'].unique())
+    print(exc_with_pair)
+    for element in exc_with_pair:
+
+        print(element)
+        ex_matrix = matrix.loc[matrix.Exchange == element]
+        print(ex_matrix.head(10))
+        # checking if data frame is empty: if not then the crypto-fiat
+        # pair exists in the exchange then add to the count variable
+        if ex_matrix.shape[0] > 1:
+
+            # if the matrix is not null, find variation and volume
+            # of the selected exchange and assign them to the related matrix
+            variations_price = substitute_finder2(
+                broken_array, reference_array, ex_matrix, 'Close Price')
+            variations_cry_vol = substitute_finder2(
+                broken_array, reference_array, ex_matrix, 'Crypto Volume')
+            variations_pair_vol = substitute_finder2(
+                broken_array, reference_array, ex_matrix, 'Pair Volume')
+
+            # assigning the retrived variation in each exchanges for the
+            # selected crypto-fiat pair
+            if fixing_price.size == 0:
+
+                fixing_price = variations_price[:, 1]
+                fixing_cry_vol = variations_cry_vol[:, 1]
+                fixing_pair_vol = variations_pair_vol[:, 1]
+
+            else:
+
+                fixing_price = np.column_stack(
+                    (fixing_price, variations_price[:, 1]))
+                fixing_cry_vol = np.column_stack(
+                    (fixing_cry_vol, variations_cry_vol[:, 1]))
+                fixing_pair_vol = np.column_stack(
+                    (fixing_pair_vol, variations_pair_vol[:, 1]))
+
+    missing_item_time = [int(x) for x in variations_price[:, 0]]
+    print(missing_item_time)
+    fixing_price_df = pd.DataFrame(fixing_price)
+    fixing_cry_vol_df = pd.DataFrame(fixing_cry_vol)
+    fixing_pair_vol_df = pd.DataFrame(fixing_pair_vol)
+
+    # compute row sum of every missing items
+    fixing_price_df['sum'] = fixing_price_df.sum(axis=1)
+    fixing_cry_vol_df['sum'] = fixing_cry_vol_df.sum(axis=1)
+    fixing_pair_vol_df['sum'] = fixing_pair_vol_df.sum(axis=1)
+
+    # adding time column
+    fixing_price_df['missing date'] = missing_item_time
+    fixing_cry_vol_df['missing date'] = missing_item_time
+    fixing_pair_vol_df['missing date'] = missing_item_time
+
+    # computing weighted variations for each element
+    fixing_price_df['weighted'] = fixing_price_df['sum'] / \
+        fixing_pair_vol_df['sum']
+    fixing_price_df.fillna(0, inplace=True)
+    fixing_cry_vol_df['weighted'] = fixing_cry_vol_df['sum'] / \
+        fixing_pair_vol_df['sum']
+    fixing_cry_vol_df.fillna(0, inplace=True)
+    fixing_pair_vol_df['weighted'] = fixing_pair_vol_df['sum'] / \
+        fixing_pair_vol_df['sum']
+    # create a matrix with columns: timestamp date, weighted variatons of
+    # prices, weightes variations of volume both crypto and pair
+    zero_mat = np.zeros((len(reference_array), 4))
+    new_df = pd.DataFrame(zero_mat, columns=header)
+    new_df['Time'] = reference_array
+    header = header.remove('Time')
+    merged = pd.merge(new_df, broken_matrix, on='Time', how='left')
+    merged.fillna(0, inplace=True)
+    print(merged.head(10))
+    merged = merged.drop(
+        columns=['Close Price_x', 'Crypto Volume_x', 'Pair Volume_x'])
+
+    for element in fixing_price_df['missing date']:
+
+        previous_value = merged.loc[merged.Time == int(element) - 86400]
+
+        price_var = float(fixing_price_df.loc[fixing_price_df['missing date'] ==
+                                              element, 'weighted'])
+        crypto_vol_var = float(fixing_cry_vol_df.loc[fixing_cry_vol_df['missing date'] ==
+                                                     element, 'weighted'])
+        crypto_pair_var = float(fixing_pair_vol_df.loc[fixing_pair_vol_df['missing date'] ==
+                                                       element, 'weighted'])
+        merged['Close Price_y'] = previous_value['Close Price_y'] * \
+            (1 + price_var)
+        merged['Crypto Volume_y'] = previous_value['Crypto Volume_y'] * \
+            (1 + crypto_vol_var)
+        merged['Pair Volume_y'] = previous_value['Pair Volume_y'] * \
+            (1 + crypto_pair_var)
+
+    merged = merged.rename(columns={
+        'Close Price_y': 'Close Price', 'Crypto Volume_y': 'Crypto Volume', 'Pair Volume_y': 'Pair Volume'})
+
+    return merged
+
+
+# given a matrix (where_to_lookup), a date reference array and, broken date array with missing date
+# function returns two matrices:
+# the first one is about the "position" information and can be "Close Price", "Crypto Volume" or "Pair Volume"
+# where the first column contains the list of date that broken array misses and
+# the second column contains the variations of the "position" info between T and T-1
+# the second one contains the volume variations as seconda column and date as first
+
+
+def substitute_finder2(broken_array, reference_array, where_to_lookup, position):
+
+    # find the elements of ref array not included in broken array (the one to check)
+    missing_item = Diff(reference_array, broken_array)
+    missing_item.sort()
+    variations = np.array([])
+
+    for element in missing_item:
+        # for each missing element try to find it in where to look up, if KeyError occurred
+        # meaning the searched item is not found, then append zero
+        try:
+
+            today_value = float(
+                where_to_lookup[where_to_lookup['Time'] == element][position])
+            yesterday_value = float(
+                where_to_lookup[where_to_lookup['Time'] == element - 86400][position])
+            numerator = today_value - yesterday_value
+            variation = np.divide(numerator, yesterday_value, out=np.zeros_like(
+                numerator), where=numerator != 0.0)
+            # consider crytpo vol
+            volume = float(
+                where_to_lookup[where_to_lookup['Time'] == element]['Pair Volume'])
+            variation = variation * volume
+            variations = np.append(variations, variation)
+
+        except KeyError:
+
+            variations = np.append(variations, 0)
+
+        except TypeError:
+
+            variations = np.append(variations, 0)
+
+    variation_matrix = np.column_stack((missing_item, variations))
+
+    return variation_matrix

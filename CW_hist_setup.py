@@ -16,7 +16,6 @@ import time
 from datetime import datetime
 
 # third party import
-import pandas as pd
 import numpy as np
 from pymongo import MongoClient
 
@@ -41,8 +40,7 @@ reference_date_vector = data_setup.timestamp_gen(start_date)
 
 pair_array = ['gbp', 'usd', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur']
-Crypto_Asset = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH',
-                'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
+Crypto_Asset = ['BTC', 'ETH']
 # crypto complete [ 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
 Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp',
              'gemini', 'bittrex', 'kraken', 'bitflyer']
@@ -75,6 +73,7 @@ collection_volume_check = "volume_checked_data"
 ############################### fixing the "Pair Volume" information ##############################
 
 tot_matrix = mongo.query_mongo2(db, collection_raw)
+tot_matrix = tot_matrix.loc[tot_matrix.Time != 0]
 tot_matrix = tot_matrix.drop(columns=['Low', 'High', 'Open'])
 
 for Crypto in Crypto_Asset:
@@ -107,8 +106,13 @@ for Crypto in Crypto_Asset:
                     matrix['Crypto Volume']
 
             # put the manipulated data on MongoDB
-            data = matrix.to_dict(orient='records')
-            collection_volume.insert_many(data)
+            try:
+
+                data = matrix.to_dict(orient='records')
+                collection_volume.insert_many(data)
+
+            except TypeError:
+                pass
 
 end = time.time()
 
@@ -118,8 +122,7 @@ print("This script took: {} seconds".format(float(end - start)))
 start = time.time()
 
 tot_matrix = mongo.query_mongo2(db, collection_volume_check)
-# test
-tot_matrix = tot_matrix.loc[tot_matrix.Time != 0]
+
 
 for Crypto in Crypto_Asset:
 
@@ -157,8 +160,8 @@ for Crypto in Crypto_Asset:
                 # checking if the matrix has missing data and if ever fixing it
                 if cp_matrix.shape[0] != reference_date_vector.size:
 
-                    cp_matrix = data_setup.CW_series_fix_missing(
-                        cp_matrix, exchange, Crypto, pair, start_date, db="index", collection="CW_rawdata")
+                    cp_matrix = data_setup.CW_series_fix_missing2(
+                        cp_matrix, exchange, Crypto, pair, start_date, db, collection_volume_check)
 
                 ######### part that transform the timestamped date into string ###########
                 new_date = np.array([])
