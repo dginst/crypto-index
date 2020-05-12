@@ -40,8 +40,9 @@ reference_date_vector = data_setup.timestamp_gen(start_date)
 
 pair_array = ['gbp', 'usd', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur']
-Crypto_Asset = ['BTC', 'ETH']
-# crypto complete [ 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
+Crypto_Asset = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH',
+                'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
+# crypto complete ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
 Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp',
              'gemini', 'bittrex', 'kraken', 'bitflyer']
 # exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
@@ -161,7 +162,7 @@ for Crypto in Crypto_Asset:
                 if cp_matrix.shape[0] != reference_date_vector.size:
 
                     cp_matrix = data_setup.CW_series_fix_missing2(
-                        cp_matrix, exchange, Crypto, pair, start_date, db, collection_volume_check)
+                        cp_matrix, exchange, cp, reference_date_vector, db, collection_volume_check)
 
                 ######### part that transform the timestamped date into string ###########
                 new_date = np.array([])

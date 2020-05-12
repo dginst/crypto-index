@@ -273,7 +273,7 @@ def Check_null(item):
 # is set to 0.
 # the function uses on default 5 days in order to asses if a series lacking of the first n days
 
-def homogenize_series(series_to_check, reference_date_array_TS, days_to_check=5):
+def homogenize_series(series_to_check, reference_date_array_TS, days_to_check=1):
 
     reference_date_array_TS = np.array(reference_date_array_TS)
     header = list(series_to_check.columns)
@@ -500,12 +500,12 @@ def CW_series_fix_missing(broken_matrix, exchange, cryptocurrency, pair, start_d
         for i, row in enumerate(variation_matrix[:, 0]):
 
             # find previuos value and multiply the variation in order to obtain the new values to insert
-            previous_values = broken_matrix[broken_matrix['Time']
-                                            == row - 86400].iloc[:, 1:4]
-            if previous_values.empty == True:
-                previous_values = np.zeros((1, 3))
+            prev_vals = broken_matrix[broken_matrix['Time']
+                                      == row - 86400].iloc[:, 1:4]
+            if prev_vals.empty == True:
+                prev_vals = np.zeros((1, 3))
 
-            new_values = previous_values * (1 + variation_matrix[i, 1:])
+            new_values = prev_vals * (1 + variation_matrix[i, 1:])
             new_values = pd.DataFrame(np.column_stack(
                 (row, new_values)), columns=header)
 
@@ -1004,75 +1004,71 @@ def find_index(list_to_find, where_to_find):
 # the values of the other exchanges are searched in MongoDB database "index" and in the "rawdata" collection
 
 
-def CW_series_fix_missing2(broken_matrix, exchange, cryptocurrency, pair, start_date, db, collection, end_date=None):
+def CW_series_fix_missing2(broken_matrix, exchange, crypto_fiat_pair, reference_array, db, collection):
+
+    # define the list af all exchanges and then pop out
+    # the exchanges subject to the fixing
+    exchange_list = ['bitflyer', 'poloniex', 'bitstamp',
+                     'bittrex', 'coinbase-pro', 'gemini', 'kraken']
+    exchange_list.remove(exchange)
 
     # define DataFrame header
     header = ['Time', 'Close Price', 'Crypto Volume', 'Pair Volume']
 
-    # set end_date = today if empty
-    if end_date == None:
-        end_date = datetime.now().strftime('%m-%d-%Y')
-
-    # creating the reference date array from start date to end date
-    reference_array = timestamp_gen(start_date, end_date)
     # select just the date on broken_matrix
     broken_array = broken_matrix['Time']
-    ccy_pair = cryptocurrency.lower() + pair.lower()
-
-    # set the list af all exchanges and then pop out the one in subject
-    exchange_list = ['bitflyer', 'poloniex', 'bitstamp',
-                     'bittrex', 'coinbase-pro', 'gemini', 'kraken']
-    exchange_list.remove(exchange)
 
     # iteratively find the missing value in all the exchanges
     fixing_price = np.array([])
     fixing_cry_vol = np.array([])
     fixing_pair_vol = np.array([])
 
-    # defining the dictionary to use in querying MongoDB
-    query_dict = {"Pair": ccy_pair}
-    # query MongoDB and rerieve a DataFrame called "matrix"
+    # query MongoDB and rerieve a DataFrame containing
+    # all the data related to the specified crypto-fiat pair
+    query_dict = {"Pair": crypto_fiat_pair}
     matrix = mongo.query_mongo2(db, collection, query_dict)
     matrix = matrix.drop(columns=['Pair'])
+
+    # defining the list of exchanges that actually trade the
+    # specified crypto-fiat pair
     exc_with_pair = list(matrix['Exchange'].unique())
-    print(exc_with_pair)
+
     for element in exc_with_pair:
 
-        print(element)
+        # print(element)
+        # reducing the total matrix selecting only the element of the
+        # selected exchange
         ex_matrix = matrix.loc[matrix.Exchange == element]
-        print(ex_matrix.head(10))
-        # checking if data frame is empty: if not then the crypto-fiat
-        # pair exists in the exchange then add to the count variable
-        if ex_matrix.shape[0] > 1:
 
-            # if the matrix is not null, find variation and volume
-            # of the selected exchange and assign them to the related matrix
-            variations_price = substitute_finder2(
-                broken_array, reference_array, ex_matrix, 'Close Price')
-            variations_cry_vol = substitute_finder2(
-                broken_array, reference_array, ex_matrix, 'Crypto Volume')
-            variations_pair_vol = substitute_finder2(
-                broken_array, reference_array, ex_matrix, 'Pair Volume')
+        # find variation of price and volume for the selected exchange
+        variations_price = substitute_finder2(
+            broken_array, reference_array, ex_matrix, 'Close Price')
+        variations_cry_vol = substitute_finder2(
+            broken_array, reference_array, ex_matrix, 'Crypto Volume')
+        variations_pair_vol = substitute_finder2(
+            broken_array, reference_array, ex_matrix, 'Pair Volume')
 
-            # assigning the retrived variation in each exchanges for the
-            # selected crypto-fiat pair
-            if fixing_price.size == 0:
+        # assigning the retrived variation in each exchanges for the
+        # selected crypto-fiat pair
+        if fixing_price.size == 0:
 
-                fixing_price = variations_price[:, 1]
-                fixing_cry_vol = variations_cry_vol[:, 1]
-                fixing_pair_vol = variations_pair_vol[:, 1]
+            fixing_price = variations_price[:, 1]
+            fixing_cry_vol = variations_cry_vol[:, 1]
+            fixing_pair_vol = variations_pair_vol[:, 1]
 
-            else:
+        else:
 
-                fixing_price = np.column_stack(
-                    (fixing_price, variations_price[:, 1]))
-                fixing_cry_vol = np.column_stack(
-                    (fixing_cry_vol, variations_cry_vol[:, 1]))
-                fixing_pair_vol = np.column_stack(
-                    (fixing_pair_vol, variations_pair_vol[:, 1]))
+            fixing_price = np.column_stack(
+                (fixing_price, variations_price[:, 1]))
+            fixing_cry_vol = np.column_stack(
+                (fixing_cry_vol, variations_cry_vol[:, 1]))
+            fixing_pair_vol = np.column_stack(
+                (fixing_pair_vol, variations_pair_vol[:, 1]))
 
+    # defining the array containming the list of missing date
     missing_item_time = [int(x) for x in variations_price[:, 0]]
-    print(missing_item_time)
+
+    # defining the dataframes containing the variations of price and volume
     fixing_price_df = pd.DataFrame(fixing_price)
     fixing_cry_vol_df = pd.DataFrame(fixing_cry_vol)
     fixing_pair_vol_df = pd.DataFrame(fixing_pair_vol)
@@ -1094,39 +1090,44 @@ def CW_series_fix_missing2(broken_matrix, exchange, cryptocurrency, pair, start_
     fixing_cry_vol_df['weighted'] = fixing_cry_vol_df['sum'] / \
         fixing_pair_vol_df['sum']
     fixing_cry_vol_df.fillna(0, inplace=True)
-    fixing_pair_vol_df['weighted'] = fixing_pair_vol_df['sum'] / \
-        fixing_pair_vol_df['sum']
-    # create a matrix with columns: timestamp date, weighted variatons of
-    # prices, weightes variations of volume both crypto and pair
-    zero_mat = np.zeros((len(reference_array), 4))
-    new_df = pd.DataFrame(zero_mat, columns=header)
-    new_df['Time'] = reference_array
-    header = header.remove('Time')
+    # fixing_pair_vol_df['weighted'] = fixing_pair_vol_df['sum'] / \
+    #     fixing_pair_vol_df['sum']
+    fixing_pair_vol_df.fillna(0, inplace=True)
+    print(fixing_price_df)
+    print(fixing_cry_vol_df)
+    print(fixing_pair_vol_df)
+
+    # merging a column dataframe containing the reference array
+    # with the broken matrix values, the missing date will display
+    # NaN and will be fixed afterwards
+    new_df = pd.DataFrame(reference_array, columns=['Time'])
     merged = pd.merge(new_df, broken_matrix, on='Time', how='left')
+    # print(merged.head(100))
+    # print(merged.loc[merged['Time'].isin(missing_item_time)])
     merged.fillna(0, inplace=True)
-    print(merged.head(10))
-    merged = merged.drop(
-        columns=['Close Price_x', 'Crypto Volume_x', 'Pair Volume_x'])
+    # print(merged.head(10))
+    # print(merged.loc[merged['Time'].isin(missing_item_time)])
 
-    for element in fixing_price_df['missing date']:
+    for element in missing_item_time:
 
-        previous_value = merged.loc[merged.Time == int(element) - 86400]
+        prev_val = merged.loc[merged.Time == int(element) - 86400]
+        print(prev_val)
 
         price_var = float(fixing_price_df.loc[fixing_price_df['missing date'] ==
                                               element, 'weighted'])
         crypto_vol_var = float(fixing_cry_vol_df.loc[fixing_cry_vol_df['missing date'] ==
                                                      element, 'weighted'])
-        crypto_pair_var = float(fixing_pair_vol_df.loc[fixing_pair_vol_df['missing date'] ==
-                                                       element, 'weighted'])
-        merged['Close Price_y'] = previous_value['Close Price_y'] * \
+        # crypto_pair_var = float(fixing_pair_vol_df.loc[fixing_pair_vol_df['missing date'] ==
+        #                                                element, 'weighted'])
+        merged.loc[merged.Time == element, 'Close Price'] = float(prev_val['Close Price']) * \
             (1 + price_var)
-        merged['Crypto Volume_y'] = previous_value['Crypto Volume_y'] * \
+        new_price = float(merged.loc[merged.Time == element, 'Close Price'])
+        merged.loc[merged.Time == element, 'Crypto Volume'] = float(prev_val['Crypto Volume']) * \
             (1 + crypto_vol_var)
-        merged['Pair Volume_y'] = previous_value['Pair Volume_y'] * \
-            (1 + crypto_pair_var)
+        new_vol = float(merged.loc[merged.Time == element, 'Crypto Volume'])
+        merged.loc[merged.Time == element, 'Pair Volume'] = new_price * new_vol
 
-    merged = merged.rename(columns={
-        'Close Price_y': 'Close Price', 'Crypto Volume_y': 'Crypto Volume', 'Pair Volume_y': 'Pair Volume'})
+    print(merged.loc[merged['Time'].isin(missing_item_time)])
 
     return merged
 
