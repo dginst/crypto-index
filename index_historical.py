@@ -31,7 +31,8 @@ db = connection.index
 
 # define database name and collection name
 db_name = "index"
-collection_converted_data = "CW_final_data"
+#collection_converted_data = "CW_final_data"
+collection_converted_data = "converted_data"
 
 # drop the pre-existing collection (if there is one)
 db.crypto_price.drop()
@@ -270,8 +271,9 @@ for CryptoA in Crypto_Asset:
                 Ex_PriceVol = np.column_stack(
                     (Ex_PriceVol, np.zeros(reference_date_vector.size)))
 
-    # dataframes that contain volume and price of a single crytpo for all the exchanges.
-    # if an exchange does not have value in the crypto will be insertd a column with zero
+    # dataframes that contain volume and price of a single crytpo
+    # for all the exchanges; if an exchange does not have value
+    # in the crypto will be insertd a column with zero
     Exchange_Vol_DF = pd.DataFrame(Exchange_Volume, columns=Exchanges)
     Exchange_Price_DF = pd.DataFrame(Exchange_Price, columns=Exchanges)
 
@@ -290,18 +292,20 @@ for CryptoA in Crypto_Asset:
             (logic_matrix_one, first_logic_array))
 
     try:
-        # computing the volume weighted average price of the single Crypto_Asset ("CryptoA") into a single vector
+        # computing the volume weighted average price of the single
+        # Crypto_Asset ("CryptoA") into a single vector
         Ex_price_num = Ex_PriceVol.sum(axis=1)
         Ex_price_den = Exchange_Volume.sum(axis=1)
-        Exchange_Price = np.divide(Ex_price_num, Ex_price_den, out=np.zeros_like(
-            Ex_price_num), where=Ex_price_num != 0.0)
+        Exchange_Price = np.divide(Ex_price_num, Ex_price_den,
+                                   out=np.zeros_like(Ex_price_num),
+                                   where=Ex_price_num != 0.0)
         # computing the total volume  average price of the single Crypto_Asset ("CryptoA") into a single vector
         Exchange_Volume = Exchange_Volume.sum(axis=1)
     except np.AxisError:
         Exchange_Price = Exchange_Price
         Exchange_Volume = Exchange_Volume
 
-    # creating every loop the matrices containing the data referred to all the Cryptoassets
+    # creating every loop the matrices of all Cryptoassets
     # Crypto_Asset_Price contains the prices of all the cryptocurrencies
     # Crypto_Asset_Volume contains the volume of all the cryptocurrencies
     if Crypto_Asset_Prices.size == 0:
@@ -343,11 +347,13 @@ ewma_df = calc.ewma_crypto_volume(
 
 # computing the second logic matrix
 second_logic_matrix = calc.second_logic_matrix(
-    Crypto_Asset_Volume, first_logic_matrix, Crypto_Asset, reference_date_vector, time_column='Y')
+    Crypto_Asset_Volume, first_logic_matrix, Crypto_Asset,
+    reference_date_vector, time_column='Y')
 
 # computing the ewma checked with both the first and second logic matrices
 double_checked_EWMA = calc.ewma_second_logic_check(
-    first_logic_matrix, second_logic_matrix, ewma_df, reference_date_vector, Crypto_Asset, time_column='Y')
+    first_logic_matrix, second_logic_matrix, ewma_df,
+    reference_date_vector, Crypto_Asset, time_column='Y')
 
 # computing the Weights that each CryptoAsset should have starting from each new quarter
 # every weigfhts is computed in the period that goes from present quarter start_date to
@@ -422,6 +428,7 @@ collection_volume.insert_many(volume_up)
 
 # put the EWMA dataframe on MongoDB
 ewma_df['Date'] = human_date
+ewma_df['Time'] = reference_date_vector
 ewma_df_up = ewma_df[['Date', 'Time', 'BTC', 'ETH', 'XRP',
                       'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
 ewma_df_up = ewma_df_up.to_dict(orient='records')
@@ -474,12 +481,14 @@ collection_divisor_reshaped.insert_many(reshaped_divisor_up)
 
 # put the index level 1000 on MongoDB
 index_1000_base['Date'] = human_date
-index_val_up = index_1000_base[['Date', 'Time' 'Index Value']]
+index_1000_base['Time'] = reference_date_vector
+index_val_up = index_1000_base[['Date', 'Time', 'Index Value']]
 index_val_up = index_val_up.to_dict(orient='records')
 collection_index_level_1000.insert_many(index_val_up)
 
 # put the index level raw on MongoDB
 index_values['Date'] = human_date
+index_values['Time'] = reference_date_vector
 index_val_up = index_values[['Date', 'Time', 'Index Value']]
 index_val_up = index_val_up.to_dict(orient='records')
 collection_index_level_raw.insert_many(index_val_up)

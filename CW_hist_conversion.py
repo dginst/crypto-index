@@ -21,7 +21,7 @@ import cryptoindex.mongo_setup as mongo
 
 start = time.time()
 
-####################################### initial settings ############################################
+# initial settings ############################################
 
 start_date = '01-01-2016'
 
@@ -43,7 +43,7 @@ Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp',
              'gemini', 'bittrex', 'kraken', 'bitflyer']
 # exchange complete = ['coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
-####################################### setup MongoDB connection ###################################
+# setup MongoDB connection ###################################
 
 # connecting to mongo in local
 connection = MongoClient('localhost', 27017)
@@ -63,7 +63,7 @@ collection_stable = db.stable_coin_rates
 collection_final_data = db.CW_final_data
 collection_converted = db.converted_data
 
-########################## USDC/USD and USDT/USD computation ###########################
+# USDC/USD and USDT/USD computation ###########################
 start = time.time()
 
 database = "index"
@@ -106,53 +106,23 @@ print(average_df.head(10))
 
 # kraken usdt/usd exchange rate
 
-#query_usd = {'Exchange': 'bitstamp', 'Pair': 'btcusd'}
 query_usdt = {'Exchange': 'kraken', 'Pair': 'btcusdt'}
 usdt_kraken = mongo.query_mongo2(database, collection, query_usdt)
-#usd_kraken = mongo.query_mongo2(database, collection, query_usd)
+
 
 # computing the rate
 usdt_kraken['rate'] = usdt_kraken['Close Price'] / average_df['average usd']
 usdt_kraken.fillna(0, inplace=True)
-# composing a vector that allows to exclude days where the stablecoin-usd pair does not exist
-# existence_check = np.array([])
-# for x in usdt_kraken['rate']:
-
-#     if x == 0:
-
-#         existence_check = np.append(existence_check, 0)
-
-#     else:
-
-#         existence_check = np.append(existence_check, 1)
-
-# usdt_kraken['tot_vol'] = (
-#     usdt_kraken['Crypto Volume'] + usd_kraken['Crypto Volume']) * existence_check
 
 # bittrex usdt/usd exchange rate
 
 query_usdt = {'Exchange': 'bittrex', 'Pair': 'btcusdt'}
-
 usdt_bittrex = mongo.query_mongo2(database, collection, query_usdt)
 
 # computing the rate
 usdt_bittrex['rate'] = usdt_bittrex['Close Price'] / average_df['average usd']
 
-# composing a vector that allows to exclude days where the stablecoin-usd pair does not exist
-# existence_check = np.array([])
-# for x in usdt_bittrex['rate']:
-
-#     if x == 0:
-
-#         existence_check = np.append(existence_check, 0)
-
-#     else:
-
-#         existence_check = np.append(existence_check, 1)
-
 usdt_bittrex.fillna(0, inplace=True)
-# usdt_bittrex['tot_vol'] = (
-#     usdt_bittrex['Crypto Volume'] + usd_bittrex['Crypto Volume']) * existence_check
 
 # usdt rates weighted average computation
 
@@ -172,7 +142,6 @@ usdt_rates['Time'] = coinbase_call['Time']
 usdt_rates['Standard Date'] = data_setup.timestamp_to_human(
     coinbase_call['Time'])
 
-# df = df.rename({'Time': 'Date'}, axis='columns')
 
 # USDT mongoDB upload
 usdt_data = usdt_rates.to_dict(orient='records')
@@ -187,21 +156,6 @@ usdc_kraken = mongo.query_mongo2(database, collection, query_usdc)
 
 usdc_kraken['rate'] = usdc_kraken['Close Price'] / average_df['average usd']
 usdc_kraken.fillna(0, inplace=True)
-# existence_check = np.array([])
-
-# for x in usdc_kraken['rate']:
-
-#     if x == 0:
-
-#         existence_check = np.append(existence_check, 0)
-
-#     else:
-
-#         existence_check = np.append(existence_check, 1)
-
-
-# usdc_kraken['tot_vol'] = (
-#     usdc_kraken['Crypto Volume'] + usd_kraken['Crypto Volume']) * existence_check
 
 # coinbase usdc exchange rate
 
@@ -212,21 +166,7 @@ usdc_coinbase = mongo.query_mongo2(database, collection, query_usdc_coinbase)
 usdc_coinbase['rate'] = usdc_coinbase['Close Price'] / \
     average_df['average usd']
 
-# existence_check = np.array([])
-
-# for x in usdc_coinbase['rate']:
-
-#     if x == 0:
-
-#         existence_check = np.append(existence_check, 0)
-
-#     else:
-
-#         existence_check = np.append(existence_check, 1)
-
 usdc_coinbase.fillna(0, inplace=True)
-# usdc_coinbase['tot_vol'] = (
-#     usdc_coinbase['Crypto Volume'] + usd_coinbase['Crypto Volume']) * existence_check
 
 # usdc rates weighted average computation
 
@@ -255,7 +195,7 @@ end = time.time()
 
 print("This script took: {} seconds".format(float(end - start)))
 
-############################## data conversion main part ##################################
+# data conversion main part ##################################
 
 start = time.time()
 # defining the database name and the collection name
@@ -281,7 +221,7 @@ usd_matrix = matrix_data.loc[matrix_data['fiat'] == 'usd']
 usd_matrix = usd_matrix[['Time', 'Close Price',
                          'Crypto Volume', 'Pair Volume', 'Exchange', 'Pair']]
 
-## converting non-usd fiat currencies ##
+# converting non-usd fiat currencies ##
 
 # creating a matrix for conversion
 conv_fiat = ['gbp', 'eur', 'cad', 'jpy']
@@ -305,7 +245,7 @@ conv_merged['Pair Volume'].fillna(0, inplace=True)
 conv_merged = conv_merged[['Time', 'Close Price',
                            'Crypto Volume', 'Pair Volume', 'Exchange', 'Pair']]
 
-## converting stablecoins currencies ##
+# converting stablecoins currencies ##
 
 # creating a matrix for stablecoins
 stablecoin = ['usdc', 'usdt']
@@ -329,14 +269,10 @@ stable_merged['Pair Volume'].fillna(0, inplace=True)
 
 # subsetting the dataset with only the relevant columns
 stable_merged = stable_merged[['Time', 'Close Price',
-                               'Crypto Volume', 'Pair Volume', 'Exchange', 'Pair']]
+                               'Crypto Volume', 'Pair Volume',
+                               'Exchange', 'Pair']]
 
 # reunite the dataframes and put data on MongoDB
-
-# stable_merged = stablecoin_matrix[['Time', 'Close Price',
-#                                    'Crypto Volume', 'Pair Volume', 'Exchange', 'Pair']]
-
-
 converted_data = conv_merged
 converted_data = converted_data.append(stable_merged)
 converted_data = converted_data.append(usd_matrix)
@@ -349,7 +285,7 @@ end = time.time()
 print("This script took: {} seconds".format(float(end - start)))
 
 
-################################### zero volume values fixing part #################################
+# zero volume values fixing part ###############################
 
 # define database name and collection name
 db_name = "index"
@@ -357,23 +293,27 @@ collection_converted_data = "converted_data"
 
 # retriving the needed information on MongoDB
 matrix = mongo.query_mongo2(db_name, collection_converted_data)
+matrix['Crypto'] = matrix['Pair'].str[:3]
 
 for Crypto in Crypto_Asset:
 
+    cry_matrix = matrix.loc[matrix.Crypto == Crypto.lower()]
     print(Crypto)
-    currencypair_array = []
+    exc_list = list(matrix['Exchange'].unique())
+    print(exc_list)
 
-    for i in pair_array:
-
-        currencypair_array.append(Crypto.lower() + i)
-
-    for exchange in Exchanges:
+    for exchange in exc_list:
         print(exchange)
-        ex_matrix = matrix.loc[matrix['Exchange'] == exchange]
+        ex_matrix = cry_matrix.loc[cry_matrix.Exchange == exchange]
+        ex_matrix.drop(columns=['Crypto'])
+        # finding the crypto-fiat pair in the selected exchange
+        pair_list = list(ex_matrix['Pair'].unique())
+        print(pair_list)
 
-        for cp in currencypair_array:
+        for cp in pair_list:
 
-            cp_matrix = ex_matrix.loc[ex_matrix['Pair'] == cp]
+            print(cp)
+            cp_matrix = ex_matrix.loc[ex_matrix.Pair == cp]
             # checking if the matrix is not empty
             try:
 
@@ -396,9 +336,6 @@ for Crypto in Crypto_Asset:
 data = final_matrix.to_dict(orient='records')
 collection_final_data.insert_many(data)
 
-# deleting unuseful collection
-
-# db.converted_data.drop()
 end = time.time()
 
 print("This script took: {} seconds".format(float(end - start)))

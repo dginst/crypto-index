@@ -29,12 +29,12 @@ start_date = '01-01-2016'
 
 # set end_date as today, otherwise comment and choose an end_date
 end_date = datetime.now().strftime('%m-%d-%Y')
-# end_date = 
+# end_date =
 
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
-today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
+today_TS = int(datetime.strptime(today, '%Y-%m-%d').timestamp()) + 3600
 
 
 # define the variable containing all the date from start_date to today.
@@ -42,24 +42,26 @@ today_TS = int(datetime.strptime(today,'%Y-%m-%d').timestamp()) + 3600
 reference_date_vector = data_setup.timestamp_gen(start_date)
 
 pair_array = ['gbp', 'usd', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
-# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc'] 
-Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC'] 
+# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
+Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP',
+                'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
 # crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
-Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
+Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp',
+             'gemini', 'bittrex', 'kraken', 'bitflyer']
 # exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
 ####################################### setup MongoDB connection ###################################
 
-#connecting to mongo in local
+# connecting to mongo in local
 connection = MongoClient('localhost', 27017)
-#creating the database called index
+# creating the database called index
 db = connection.index
 
 # drop the pre-existing collection (if there is one)
 db.CW_rawdata.drop()
 
-#creating the empty collection rawdata within the database index
-db.rawdata.create_index([ ("id", -1) ])
+# creating the empty collection rawdata within the database index
+db.rawdata.create_index([("id", -1)])
 collection_raw = db.CW_rawdata
 
 ####################################### downloading and storing part #################################
@@ -71,15 +73,12 @@ for Crypto in Crypto_Asset:
         currencypair_array.append(Crypto.lower() + i)
 
     for exchange in Exchanges:
-    
-    
+
         for cp in currencypair_array:
 
             crypto = cp[:3]
             pair = cp[3:]
             # create the matrix for the single currency_pair connecting to CryptoWatch website
-            data_download.CW_raw_to_mongo(exchange, cp, collection_raw, start_date, end_date)
-
-
-
+            data_download.CW_raw_to_mongo(
+                exchange, cp, collection_raw, start_date, end_date)
 

@@ -273,14 +273,19 @@ def Check_null(item):
 # is set to 0.
 # the function uses on default 5 days in order to asses if a series lacking of the first n days
 
-def homogenize_series(series_to_check, reference_date_array_TS, days_to_check=1):
+def homogenize_series(series_to_check, reference_date_array_TS,
+                      days_to_check=1):
 
     reference_date_array_TS = np.array(reference_date_array_TS)
     header = list(series_to_check.columns)
-    test_matrix = series_to_check.loc[series_to_check.Time.between(
-        reference_date_array_TS[0], reference_date_array_TS[days_to_check], inclusive=True), header]
+    test_matrix = series_to_check.loc[
+        series_to_check.Time.between(
+            reference_date_array_TS[0],
+            reference_date_array_TS[days_to_check],
+            inclusive=True), header
+    ]
 
-    if test_matrix.empty == True:
+    if test_matrix.empty is True:
 
         first_date = np.array(series_to_check['Time'].iloc[0])
         last_missing_date = (int(first_date) - 86400)
@@ -292,12 +297,6 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check=1)
         zero_mat = np.zeros((len(missing_date_array), 3))
         zero_df = pd.DataFrame(zero_mat, columns=header)
         zero_df['Time'] = missing_date_array
-        # new_series = pd.DataFrame(missing_date_array, columns = ['Time'])
-
-        # header.remove('Time')
-        # for element in header:
-
-        #     new_series[element] = np.zeros(len(missing_date_array))
 
         complete_series = zero_df.append(series_to_check)
 
@@ -312,7 +311,8 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check=1)
 
 # add description
 
-def homogenize_dead_series(series_to_check, reference_date_array_TS, days_to_check=5):
+def homogenize_dead_series(series_to_check, reference_date_array_TS,
+                           days_to_check=5):
 
     reference_date_array_TS = np.array(reference_date_array_TS)
     header = list(series_to_check.columns)
@@ -322,7 +322,7 @@ def homogenize_dead_series(series_to_check, reference_date_array_TS, days_to_che
     test_matrix = series_to_check.loc[series_to_check.Time.between(
         first_check_day, last_day, inclusive=True), header]
 
-    if test_matrix.empty == True:
+    if test_matrix.empty is True:
 
         print('inside')
         last_date = np.array(
@@ -1132,12 +1132,13 @@ def CW_series_fix_missing2(broken_matrix, exchange, crypto_fiat_pair, reference_
     return merged
 
 
-# given a matrix (where_to_lookup), a date reference array and, broken date array with missing date
-# function returns two matrices:
-# the first one is about the "position" information and can be "Close Price", "Crypto Volume" or "Pair Volume"
-# where the first column contains the list of date that broken array misses and
-# the second column contains the variations of the "position" info between T and T-1
-# the second one contains the volume variations as seconda column and date as first
+# given a matrix (where_to_lookup), a date reference array and, broken date array
+# with missing date function returns two matrices:
+# the first one is about the "position" information and can be "Close Price",
+# "Crypto Volume" or "Pair Volume" where the first column contains the list
+# of date that broken array misses and the second column contains the variations
+# of the "position" info between T and T-1 the second one contains the volume
+# variations as seconda column and date as first
 
 
 def substitute_finder2(broken_array, reference_array, where_to_lookup, position):

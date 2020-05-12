@@ -517,6 +517,7 @@ def ewma_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array, 
 # returns a dataframe of ewma where if the cryptoasset is eligible its value is untouched, otherwise, if the
 # cryptoasset is to be excluded using the logic matrices, its value will be put to zero.
 
+
 def ewma_first_logic_check(first_logic_matrix, ewma_dataframe, reference_date_array, Crypto_list, start_date='01-01-2016', end_date=None, time_column='N'):
 
     # reshaping the logic matrix in order to make it of the same dimensions of the ewma dataframe
@@ -797,6 +798,7 @@ def quarterly_synt_matrix(Crypto_Price_Matrix, weights, reference_date_array, bo
 # a DF with the same number of rows and columns but instead of values starting from 100 in rebalance day, it returns
 # the daily relative weights of each cryptoasset
 
+
 def relative_syntethic_matrix(syntethic_matrix, Crypto_list):
 
     syntethic_matrix['row_sum'] = syntethic_matrix[Crypto_list].sum(axis=1)
@@ -949,7 +951,6 @@ def divisor_reshape(divisor_adjustment_array, reference_date_array, start_date='
         reshaped_matrix = reshaped_matrix.drop(columns='Time')
 
     return reshaped_matrix
-
 
 
 # function that returns an array of the daily level of the Index, where:
