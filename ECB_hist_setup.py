@@ -1,11 +1,12 @@
-######################################################################################################
-# The file aims to complete the historical series of European Central Bank Websites exchange rates.
-# It retrieves the rates from MongoDB in the database "index" and collection "ecb_raw" then add values
-# for all the holidays and weekends simply copiyng the value of the last day with value.
-# Morover the file takes the rates as EUR based exchange rates and returns USD based exchange rates.
-# The completed USD based historical series is saved back in MongoDb in the collection "ecb_clean"
-# is possible to change the period of downlaod modifying the "Start_Period"
-#######################################################################################################
+# ############################################################################
+# The file aims to complete the historical series of European Central Bank
+# Websites exchange rates. It retrieves the rates from MongoDB in the database
+# "index" and collection "ecb_raw" then add values for all the holidays and
+# weekends simply copiyng the value of the last day with value.
+# Morover the file takes the rates as EUR based exchange rates and returns
+# USD based exchange rates. The completed USD based historical series is put
+# back on MongoDb in the collection "ecb_clean"
+# #############################################################################
 
 # standard library import
 from datetime import datetime
@@ -17,7 +18,7 @@ import numpy as np
 # local import
 import cryptoindex.data_setup as data_setup
 
-# initial settings ############################################
+# #################### initial settings ################################
 
 Start_Period = '12-31-2015'
 
@@ -28,7 +29,7 @@ End_Period = datetime.now().strftime('%m-%d-%Y')
 
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
-# setup mongo connection ###################################
+# ################## setup mongo connection ##########################
 
 # connecting to mongo in local
 connection = MongoClient('localhost', 27017)
@@ -69,7 +70,7 @@ for element in mongo_clean['Date']:
 mongo_clean['Date'] = new_date
 mongo_clean['Standard Date'] = standard_date
 
-# upload the manipulated data in MongoDB ############################
+# ############# upload the manipulated data in MongoDB ##################
 
 data = mongo_clean.to_dict(orient='records')
 collection_ECB_clean.insert_many(data)

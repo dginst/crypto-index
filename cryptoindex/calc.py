@@ -465,9 +465,11 @@ def smoothing_factor(lambda_smooth=0.94, moving_average_period=90):
 # Crypto_list: a list of all the CrytpoAsset
 # reference_date_array
 # moving_average_period: the period that is set on 90 days as default
-# if not otherwise specififed the returned dataframe will not have the "Time" Column
+# if not otherwise specififed the returned dataframe do not the "Time" Column
 
-def ewma_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array, start_date='01-01-2016', end_date=None, moving_average_period=90, time_column='N'):
+def ewma_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array,
+                       start_date='01-01-2016', end_date=None,
+                       moving_average_period=90, time_column='N'):
 
     ewma_matrix = np.array([])
     smoothing_array = smoothing_factor()
@@ -509,6 +511,28 @@ def ewma_crypto_volume(Crypto_Volume_Matrix, Crypto_list, reference_date_array, 
     if time_column == 'N':
 
         ewma_DF = ewma_DF.drop(columns='Time')
+
+    return ewma_DF
+
+
+# daily ewma
+
+def daily_ewma_crypto_volume(Crypto_Volume_Matrix, Crypto_list,
+                             moving_average_period=90):
+
+    smoothing_array = smoothing_factor()
+    last_row = Crypto_Volume_Matrix.tail(1)
+    stop = int(last_row['Time'])
+    start = stop - (86400 * 89)
+
+    Crypto_Volume_Matrix['Time'] = pd.to_numeric(Crypto_Volume_Matrix['Time'])
+
+    period_volume = Crypto_Volume_Matrix.loc[Crypto_Volume_Matrix.Time.between(
+        start, stop, inclusive=True), Crypto_list]
+    period_average = np.array(
+        (period_volume*smoothing_array[:, None]).sum(axis=0))
+    period_average = period_average.reshape(1, -1)
+    ewma_DF = pd.DataFrame(period_average, columns=Crypto_list)
 
     return ewma_DF
 

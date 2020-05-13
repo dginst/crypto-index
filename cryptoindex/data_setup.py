@@ -120,8 +120,8 @@ def timestamp_to_str(date_array):
     return new_array
 
 
-# the function takes an array of timestamp as input and return an array od human readable date in
-# dd-mm-yyyy format
+# the function takes an array of timestamp as input and return an
+# array of human readable date in dd-mm-yyyy format
 
 def timestamp_to_human(ts_array, date_format='%Y-%m-%d'):
 
@@ -130,8 +130,9 @@ def timestamp_to_human(ts_array, date_format='%Y-%m-%d'):
 
     return human_date
 
-# function that creates a date array in timestamp format adding the choosen lag (1 day on default)
-# the input start and stop has to be timestamp date in INTEGER format
+# function that creates a date array in timestamp format adding the choosen
+# lag (1 day = 86400 sec on default) the input start and stop has to be
+# timestamp date in INTEGER format
 
 
 def timestamp_vector(start, stop, lag=86400):

@@ -1,41 +1,36 @@
-######################################################################################################
-# The file download from the CryotoWatch websites the market data of this set of Cryptocurrencies:
-# 'ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV'and 'ETC'
+# ############################################################################
+# The file download from the CryotoWatch websites the market data of this set
+# of Cryptocurrencies: 'ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA',
+# 'ZEC', 'XMR', 'EOS', 'BSV' and 'ETC'
 # from this set of exchanges:
-# 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken' and 'bitflyer'
+# 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini',
+# 'bittrex', 'kraken' and 'bitflyer'
 # and for each fiat currenncies in this set:
 # 'gbp', 'usd', 'eur', 'cad' and 'jpy'
-# Once downloaded the file saves the raw data on MongoDB in the database "index" and collection "rawdata"
-# It is possible to change the period of downlaod modifying the "start_date"
-#######################################################################################################
+# Once downloaded the file saves the raw data on MongoDB in the database
+# "index" and collection "CW_rawdata".
+# #############################################################################
 
 # standard library import
-import time
 from datetime import datetime
 
 # third party import
-import pandas as pd
-import numpy as np
 from pymongo import MongoClient
 
 # local import
 import cryptoindex.data_setup as data_setup
 import cryptoindex.data_download as data_download
-import cryptoindex.mongo_setup as mongo
 
-####################################### initial settings ############################################
+# ################### initial settings #########################
 
 start_date = '01-01-2016'
 
 # set end_date as today, otherwise comment and choose an end_date
 end_date = datetime.now().strftime('%m-%d-%Y')
-# end_date =
-
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
 today_TS = int(datetime.strptime(today, '%Y-%m-%d').timestamp()) + 3600
-
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
@@ -45,12 +40,14 @@ pair_array = ['gbp', 'usd', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
 Crypto_Asset = ['ETH', 'BTC', 'LTC', 'BCH', 'XRP',
                 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
-# crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
+# crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM',
+#  'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
 Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp',
              'gemini', 'bittrex', 'kraken', 'bitflyer']
-# exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
+# exchange complete = [ 'coinbase-pro', 'poloniex',
+# 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
-####################################### setup MongoDB connection ###################################
+# ################# setup MongoDB connection #####################
 
 # connecting to mongo in local
 connection = MongoClient('localhost', 27017)
@@ -64,7 +61,7 @@ db.CW_rawdata.drop()
 db.rawdata.create_index([("id", -1)])
 collection_raw = db.CW_rawdata
 
-####################################### downloading and storing part #################################
+# ################# downloading and storing part ################
 
 for Crypto in Crypto_Asset:
 
@@ -78,7 +75,7 @@ for Crypto in Crypto_Asset:
 
             crypto = cp[:3]
             pair = cp[3:]
-            # create the matrix for the single currency_pair connecting to CryptoWatch website
+            # create the matrix for the single currency_pair connecting
+            # to CryptoWatch website
             data_download.CW_raw_to_mongo(
                 exchange, cp, collection_raw, start_date, end_date)
-
