@@ -17,18 +17,18 @@ import numpy as np
 # local import
 import cryptoindex.data_setup as data_setup
 
-####################################### initial settings ############################################
+# initial settings ############################################
 
 Start_Period = '12-31-2015'
 
 # set today as End_period
 End_Period = datetime.now().strftime('%m-%d-%Y')
 # or
-#End_Period = '03-01-2020'
+# End_Period = '03-01-2020'
 
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
-####################################### setup mongo connection ###################################
+# setup mongo connection ###################################
 
 # connecting to mongo in local
 connection = MongoClient('localhost', 27017)
@@ -41,7 +41,7 @@ db.ecb_clean.drop()
 db.ecb_clean.create_index([("id", -1)])
 collection_ECB_clean = db.ecb_clean
 
-###################################### ECB rates manipulation ###################################
+# ECB rates manipulation ###################################
 
 # makes the raw data clean through the ECB_setup function
 try:
@@ -51,9 +51,10 @@ try:
 
 except UnboundLocalError:
 
-    print("The first date of the chosen period does not exist in ECB websites. Be sure to avoid holiday as first date")
+    print("The first date of the chosen period does not exist in ECB websites.\
+        Be sure to avoid holiday as first date")
 
-######### part that transform the timestamped date into string ###########
+# transform the timestamp format date into string
 new_date = np.array([])
 standard_date = np.array([])
 
@@ -67,11 +68,8 @@ for element in mongo_clean['Date']:
 
 mongo_clean['Date'] = new_date
 mongo_clean['Standard Date'] = standard_date
-########################################################################
 
-########################## upload the manipulated data in MongoDB ############################
-
-# upload the data in ecb_clean collection
+# upload the manipulated data in MongoDB ############################
 
 data = mongo_clean.to_dict(orient='records')
 collection_ECB_clean.insert_many(data)
