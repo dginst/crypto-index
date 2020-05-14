@@ -1,10 +1,22 @@
-######################################################################################################
-# The file retrieves data from MongoDB collection "cleandata" and, for each Crypto-Fiat historical
-# series, converts the data into USD values using the ECB manipulated rates stored on MongoDB in
-# the collection "ecb_clean"
-# Once everything is converted into USD the historical series is saved into MongoDB in the collection
-# "converted_data"
-#######################################################################################################
+# ############################################################################
+# The script is divided in three main parts.
+# 1) USDT and USDC rates computation
+# using the weighted average value of btc/usd rates (computed using all the
+# avalilable exchanges) and the average btc/usdc and btc/usdc rates, the script
+# computes USDT/USD and USDC/USD rate. The historical series of rates is
+# uploaded on MongoDB in the collection "stable_coin_rates"
+# 2) non-USD  values conversion into USD
+# The file retrieves data from MongoDB collection "CW_cleandata" and, for each
+# Crypto-Fiat historical series, converts the data into USD values using
+# the ECB rates stored on MongoDB in the collection "ecb_clean" and the
+# computed stablecoin rates saved in the "stable_coin_rates" collection.
+# Once everything has been converted, the script upload the dataframe on
+# MongoDB collection "converted_data".
+# 3) filling the zero-volume values
+# the script, if the historical series have date where the crypto-pair is
+# traded but the volume displayed is zero, takes the previous day value
+# and fills the missing volume.
+# ###############################################################################
 
 # standard library import
 import time
@@ -21,7 +33,7 @@ import cryptoindex.mongo_setup as mongo
 
 start = time.time()
 
-# initial settings ############################################
+# ############# initial settings #############################
 
 start_date = '01-01-2016'
 
