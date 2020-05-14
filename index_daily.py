@@ -169,7 +169,12 @@ for CryptoA in Crypto_Asset:
 
             # ######### LEAVING OUT NEW CRYPTO-FIAT PAIRS ##################
 
-            if (exchange == 'bittrex' and fiat_curr == 'eur') or (exchange == 'bittrex' and crypto == 'ltc' and fiat_curr == 'usd') or (exchange == 'poloniex' and crypto == 'bch' and fiat_curr == 'usdc'):
+            c_1 = (exchange == 'bittrex' and fiat_curr == 'eur')
+            c_2 = (exchange == 'bittrex' and crypto ==
+                   'ltc' and fiat_curr == 'usd')
+            c_3 = (exchange == 'poloniex' and crypto ==
+                   'bch' and fiat_curr == 'usdc')
+            if c_1 or c_2 or c_3:
 
                 continue
 
@@ -222,8 +227,9 @@ for CryptoA in Crypto_Asset:
 
             np.seterr(all=None, divide='warn')
             Ccy_Pair_Price = np.divide(Ccy_Pair_PriceVolume,
-                                       Ccy_Pair_Volume, out=np.zeros_like(
-                                           Ccy_Pair_Volume), where=Ccy_Pair_Volume != 0.0)
+                                       Ccy_Pair_Volume,
+                                       out=np.zeros_like(Ccy_Pair_Volume),
+                                       where=Ccy_Pair_Volume != 0.0)
             Ccy_Pair_Price = np.nan_to_num(Ccy_Pair_Price)
             Ccy_Pair_PxV = Ccy_Pair_Price * Ccy_Pair_Volume
 
@@ -288,8 +294,9 @@ for CryptoA in Crypto_Asset:
         # Crypto_Asset ("CryptoA") into a single vector
         Ex_price_num = Ex_PriceVol.sum(axis=1)
         Ex_price_den = Exchange_Volume.sum(axis=1)
-        Exchange_Price = np.divide(Ex_price_num, Ex_price_den, out=np.zeros_like(
-            Ex_price_num), where=Ex_price_num != 0.0)
+        Exchange_Price = np.divide(Ex_price_num, Ex_price_den,
+                                   out=np.zeros_like(Ex_price_num),
+                                   where=Ex_price_num != 0.0)
         # computing the total volume  average price of the
         # single Crypto_Asset ("CryptoA") into a single vector
         Exchange_Volume = Exchange_Volume.sum(axis=1)

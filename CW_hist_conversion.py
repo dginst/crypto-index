@@ -38,12 +38,14 @@ pair_array = ['usd', 'gbp', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur']
 Crypto_Asset = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH',
                 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
-# crypto complete ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
+# crypto complete ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
+# 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
 Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp',
              'gemini', 'bittrex', 'kraken', 'bitflyer']
-# exchange complete = ['coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
+# exchange complete = ['coinbase-pro', 'poloniex',
+#  'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
-# setup MongoDB connection ###################################
+# ################ setup MongoDB connection ################
 
 # connecting to mongo in local
 connection = MongoClient('localhost', 27017)
@@ -63,13 +65,15 @@ collection_stable = db.stable_coin_rates
 collection_final_data = db.CW_final_data
 collection_converted = db.converted_data
 
-# USDC/USD and USDT/USD computation ###########################
+# ########## USDC/USD and USDT/USD computation #####################
+
 start = time.time()
 
+# MongoDB index and collection names definition
 database = "index"
 collection = "CW_cleandata"
 
-# taking BTCUSD pair historical
+# taking BTC/USD pair historical
 first_query = {'Pair': 'btcusd', 'Exchange': 'kraken'}
 coinbase_call = mongo.query_mongo2(database, collection, first_query)
 price_df = coinbase_call[['Close Price']]
@@ -102,39 +106,54 @@ average_df['Time'] = coinbase_call['Time']
 average_df = average_df.replace([np.inf, -np.inf], np.nan)
 average_df.fillna(0, inplace=True)
 print(average_df.head(10))
-# USDT exchange rates computation
 
-# kraken usdt/usd exchange rate
+# ############# USDT exchange rates computation ##########
+# BTC/USDT is traded on Poloniex, Kraken and bittrex
+# Poloniex has the entire historoical values from 01/01/2016
 
+# POLONIEX usdt/usd exchange rate
+query_usdt = {'Exchange': 'poloniex', 'Pair': 'btcusdt'}
+usdt_poloniex = mongo.query_mongo2(database, collection, query_usdt)
+
+# KRAKEN usdt/usd exchange rate
 query_usdt = {'Exchange': 'kraken', 'Pair': 'btcusdt'}
 usdt_kraken = mongo.query_mongo2(database, collection, query_usdt)
 
-
-# computing the rate
-usdt_kraken['rate'] = usdt_kraken['Close Price'] / average_df['average usd']
-usdt_kraken.fillna(0, inplace=True)
-
-# bittrex usdt/usd exchange rate
-
+# BITTREX usdt/usd exchange rate
 query_usdt = {'Exchange': 'bittrex', 'Pair': 'btcusdt'}
 usdt_bittrex = mongo.query_mongo2(database, collection, query_usdt)
 
-# computing the rate
-usdt_bittrex['rate'] = usdt_bittrex['Close Price'] / average_df['average usd']
+# computing the rate on each exchange
+usdt_kraken['rate'] = usdt_kraken['Close Price'] / average_df['average usd']
+usdt_kraken.fillna(0, inplace=True)
 
+usdt_bittrex['rate'] = usdt_bittrex['Close Price'] / average_df['average usd']
 usdt_bittrex.fillna(0, inplace=True)
 
-# usdt rates weighted average computation
+usdt_poloniex['rate'] = usdt_poloniex['Close Price'] / \
+    average_df['average usd']
+usdt_poloniex.fillna(0, inplace=True)
 
+# USDT rate weighted average computation
+poloniex_weighted = usdt_poloniex['rate'] * usdt_poloniex['Pair Volume']
 kraken_weighted = usdt_kraken['rate'] * usdt_kraken['Pair Volume']
 bittrex_weighted = usdt_bittrex['rate'] * usdt_bittrex['Pair Volume']
-total_weights = usdt_kraken['Pair Volume'] + usdt_bittrex['Pair Volume']
-usdt_rates = (kraken_weighted + bittrex_weighted) / total_weights
+
+total_weights = usdt_kraken['Pair Volume'] + \
+    usdt_bittrex['Pair Volume'] + usdt_poloniex['Pair Volume']
+
+usdt_rates = (kraken_weighted + bittrex_weighted +
+              poloniex_weighted) / total_weights
+
 usdt_rates = 1 / usdt_rates
+
+# tranforming the data structure into a dataframe
 usdt_rates = pd.DataFrame(usdt_rates, columns=['Rate'])
 usdt_rates = usdt_rates.replace([np.inf, -np.inf], np.nan)
 usdt_rates.fillna(0, inplace=True)
 
+# adding Currency (USDT/USD), Time (timestamp),
+# and Standard Date (YYYY-MM-DD) columns
 usdt_rates['Currency'] = np.zeros(len(usdt_rates['Rate']))
 usdt_rates['Currency'] = [str(x).replace('0.0', 'USDT/USD')
                           for x in usdt_rates['Currency']]
@@ -142,43 +161,58 @@ usdt_rates['Time'] = coinbase_call['Time']
 usdt_rates['Standard Date'] = data_setup.timestamp_to_human(
     coinbase_call['Time'])
 
-
 # USDT mongoDB upload
 usdt_data = usdt_rates.to_dict(orient='records')
 collection_stable.insert_many(usdt_data)
 
-# USDC exchange rates computation
 
-# kraken usdc/usd exchange rate
+# ############# USDC exchange rates computation ############
+# BTC/USDC is traded on Poloniex, Kraken and bittrex
+# Poloniex has the entire historoical values from 01/01/2016
 
+# POLONIEX usdc/usd exchange rate
+query_usdc = {'Exchange': 'poloniex', 'Pair': 'btcusdc'}
+usdc_poloniex = mongo.query_mongo2(database, collection, query_usdc)
+
+# KRAKEN usdc/usd exchange rate
 query_usdc = {'Exchange': 'kraken', 'Pair': 'btcusdc'}
 usdc_kraken = mongo.query_mongo2(database, collection, query_usdc)
+
+# COINBASE_PRO usdc exchange rate
+query_usdc_coinbase = {'Exchange': 'coinbase-pro', 'Pair': 'btcusdc'}
+usdc_coinbase = mongo.query_mongo2(database, collection, query_usdc_coinbase)
+
+# computing the rate on each exchange
+usdc_poloniex['rate'] = usdc_poloniex['Close Price'] / \
+    average_df['average usd']
+usdc_poloniex.fillna(0, inplace=True)
 
 usdc_kraken['rate'] = usdc_kraken['Close Price'] / average_df['average usd']
 usdc_kraken.fillna(0, inplace=True)
 
-# coinbase usdc exchange rate
-
-query_usdc_coinbase = {'Exchange': 'coinbase-pro', 'Pair': 'btcusdc'}
-
-usdc_coinbase = mongo.query_mongo2(database, collection, query_usdc_coinbase)
-
 usdc_coinbase['rate'] = usdc_coinbase['Close Price'] / \
     average_df['average usd']
-
 usdc_coinbase.fillna(0, inplace=True)
 
-# usdc rates weighted average computation
-
+# USDC rates weighted average computation
+poloniex_weighted = usdc_poloniex['rate'] * usdc_poloniex['Pair Volume']
 kraken_weighted = usdc_kraken['rate'] * usdc_kraken['Pair Volume']
 coinbase_weighted = usdc_coinbase['rate'] * usdc_coinbase['Pair Volume']
-total_weights = usdc_kraken['Pair Volume'] + usdc_coinbase['Pair Volume']
-usdc_rates = (kraken_weighted + coinbase_weighted) / total_weights
+
+total_weights = usdc_kraken['Pair Volume'] + \
+    usdc_coinbase['Pair Volume'] + usdc_poloniex['Pair Volume']
+
+usdc_rates = (kraken_weighted + coinbase_weighted +
+              poloniex_weighted) / total_weights
 usdc_rates = 1 / usdc_rates
+
+# tranforming the data structure into a dataframe
 usdc_rates = pd.DataFrame(usdc_rates, columns=['Rate'])
 usdc_rates = usdc_rates.replace([np.inf, -np.inf], np.nan)
 usdc_rates.fillna(0, inplace=True)
 
+# adding Currency (USDC/USD), Time (timestamp),
+# and Standard Date (YYYY-MM-DD) columns
 usdc_rates['Currency'] = np.zeros(len(usdc_rates['Rate']))
 usdc_rates['Currency'] = [str(x).replace('0.0', 'USDC/USD')
                           for x in usdc_rates['Currency']]
@@ -187,7 +221,6 @@ usdc_rates['Standard Date'] = data_setup.timestamp_to_human(
     coinbase_call['Time'])
 
 # USDC mongoDB upload
-
 usdc_data = usdc_rates.to_dict(orient='records')
 collection_stable.insert_many(usdc_data)
 
@@ -195,7 +228,9 @@ end = time.time()
 
 print("This script took: {} seconds".format(float(end - start)))
 
-# data conversion main part ##################################
+# ##############################################################
+
+# ################# DATA CONVERSION MAIN PART ##################
 
 start = time.time()
 # defining the database name and the collection name
@@ -216,12 +251,13 @@ matrix_data['fiat'] = [x[3:].lower() for x in matrix_data['Pair']]
 matrix_rate_stable['fiat'] = [x[:4].lower()
                               for x in matrix_rate_stable['Currency']]
 
-# creating a matrix for usd
+# ############ creating a USD subset which will not be converted #########
+
 usd_matrix = matrix_data.loc[matrix_data['fiat'] == 'usd']
 usd_matrix = usd_matrix[['Time', 'Close Price',
                          'Crypto Volume', 'Pair Volume', 'Exchange', 'Pair']]
 
-# converting non-usd fiat currencies ##
+# ########### converting non-USD fiat currencies #########################
 
 # creating a matrix for conversion
 conv_fiat = ['gbp', 'eur', 'cad', 'jpy']
@@ -245,7 +281,7 @@ conv_merged['Pair Volume'].fillna(0, inplace=True)
 conv_merged = conv_merged[['Time', 'Close Price',
                            'Crypto Volume', 'Pair Volume', 'Exchange', 'Pair']]
 
-# converting stablecoins currencies ##
+# ############## converting STABLECOINS currencies #########################
 
 # creating a matrix for stablecoins
 stablecoin = ['usdc', 'usdt']
@@ -285,7 +321,7 @@ end = time.time()
 print("This script took: {} seconds".format(float(end - start)))
 
 
-# zero volume values fixing part ###############################
+# ################ ZERO VOLUMES VALUE FILLING #####################
 
 # define database name and collection name
 db_name = "index"
