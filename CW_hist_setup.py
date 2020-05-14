@@ -45,10 +45,11 @@ today_TS = int(datetime.strptime(today, '%Y-%m-%d').timestamp()) + 3600
 reference_date_vector = data_setup.timestamp_gen(start_date)
 # reference_date_vector = data_setup.timestamp_to_str(reference_date_vector)
 
-pair_array = ['gbp', 'usd', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
-# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur']
-Crypto_Asset = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH',
-                'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
+pair_array = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
+# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
+Crypto_Asset = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
+                'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV'
+                ]
 # crypto complete ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
 # 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
 Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp',
@@ -195,7 +196,7 @@ for Crypto in Crypto_Asset:
 
 # #######################################################################
 db = connection.index
-db.volume_checked_data.drop()
+# db.volume_checked_data.drop()
 
 end = time.time()
 
