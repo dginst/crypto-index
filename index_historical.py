@@ -11,19 +11,20 @@ import cryptoindex.mongo_setup as mongo
 import cryptoindex.data_setup as data_setup
 import cryptoindex.calc as calc
 
-############################################# INITIAL SETTINGS #############################################
+# ############# INITIAL SETTINGS ################################
 
 pair_array = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
 Crypto_Asset = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH',
                 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
-# crypto complete [ 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
+# crypto complete [ 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
+# 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
 Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp',
              'gemini', 'bittrex', 'kraken', 'bitflyer']
-# exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
-#############################################################################################################
+# exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp',
+# 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
-####################################### setup mongo connection ###################################
+# ################## setup mongo connection ################
 
 # connecting to mongo in local
 connection = MongoClient('localhost', 27017)
@@ -31,7 +32,7 @@ db = connection.index
 
 # define database name and collection name
 db_name = "index"
-#collection_converted_data = "CW_final_data"
+# collection_converted_data = "CW_final_data"
 collection_converted_data = "converted_data"
 
 # drop the pre-existing collection (if there is one)
@@ -48,8 +49,7 @@ db.index_divisor.drop()
 db.index_divisor_reshaped.drop()
 db.index_synth_matrix.drop()
 
-# creating some the empty collections within the database index
-
+# creating the needed empty collections
 
 # collection for crypto prices
 db.crypto_price.create_index([("id", -1)])
@@ -91,15 +91,15 @@ collection_index_level_1000 = db.index_level_1000
 db.index_raw_level.create_index([("id", -1)])
 collection_index_level_raw = db.index_level_raw
 
-
-##################################### DATE SETTINGS ###################################################
+# ################### DATE SETTINGS ####################
 
 # define the start date as MM-DD-YYYY
 start_date = '01-01-2016'
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
-today_TS = int(datetime.strptime(today, '%Y-%m-%d').timestamp()) + 3600 + 3600
+add_onn = 3600 * 2
+today_TS = int(datetime.strptime(today, '%Y-%m-%d').timestamp()) + add_onn
 yesterday_TS = today_TS - 86400
 
 # define end date as as MM-DD-YYYY
@@ -111,7 +111,8 @@ end_date = datetime.now().strftime('%m-%d-%Y')
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
 reference_date_vector = data_setup.timestamp_gen(start_date, end_date)
 
-# define all the useful arrays containing the rebalance start date, stop date, board meeting date
+# define all the useful arrays containing the rebalance
+# start date, stop date, board meeting date
 rebalance_start_date = calc.start_q('01-01-2016')
 rebalance_start_date = calc.start_q_fix(rebalance_start_date)
 rebalance_stop_date = calc.stop_q(rebalance_start_date)
@@ -120,12 +121,11 @@ board_date_eve = calc.day_before_board()
 next_rebalance_date = calc.next_start()
 
 
-# call the function that creates a object containing the couple of quarterly start-stop date
+# call the function that creates a object containing the
+# couple of quarterly start-stop date
 quarterly_date = calc.quarterly_period()
 
-#######################################################################################################
-
-##################################### MAIN PART ###################################################
+# #################### MAIN PART ###############################
 
 
 # initialize the matrices that will contain the
@@ -161,13 +161,13 @@ for CryptoA in Crypto_Asset:
 
             crypto = cp[:3]
             fiat_curr = cp[3:]
-            ############ bittrex started on 1st April to exchange on 'eur' fiat pair #################
-            ############ temporarly the related volumes are out of computation ####################
+            # ######### LEAVING OUT NEW CRYPTO-FIAT PAIRS ##################
+
             if (exchange == 'bittrex' and fiat_curr == 'eur') or (exchange == 'bittrex' and crypto == 'ltc' and fiat_curr == 'usd') or (exchange == 'poloniex' and crypto == 'bch' and fiat_curr == 'usdc'):
 
                 continue
 
-            #####################################################################################
+            # ###############################################################
 
             # defining the dictionary for the MongoDB query
             query_dict = {"Exchange": exchange, "Pair": cp}
@@ -193,7 +193,8 @@ for CryptoA in Crypto_Asset:
                 volume = cp_matrix[:, 3]  # 2 for crypto vol, 3 for pair volume
                 price = cp_matrix[:, 1]
 
-                # every "cp" the for loop adds a column in the matrices referred to the single "exchange"
+                # every "cp" the for loop adds a column in the matrices
+                # referred to the single "exchange"
                 if Ccy_Pair_PriceVolume.size == 0:
                     Ccy_Pair_PriceVolume = priceXvolume
                     Ccy_Pair_Volume = volume
@@ -401,7 +402,8 @@ human_date = data_setup.timestamp_to_human(reference_date_vector)
 weight_human_date = data_setup.timestamp_to_human(weights_for_board['Time'])
 weights_for_board['Date'] = weight_human_date
 weights_for_board = weights_for_board[['Date', 'Time', 'BTC', 'ETH',
-                                       'XRP', 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
+                                       'XRP', 'LTC', 'BCH', 'EOS', 'ETC',
+                                       'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']]
 up_weights = weights_for_board.to_dict(orient='records')
 collection_weights.insert_many(up_weights)
 
