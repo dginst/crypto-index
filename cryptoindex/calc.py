@@ -20,11 +20,11 @@ def is_business_day(date):
 
 
 # function that checks if "date_to_check" is a date
-# if positive retunr 'True'
+# if positive return 'True'
 
 def validate_date(date_to_check):
 
-    if isinstance(date_to_check, datetime) == True:
+    if isinstance(date_to_check, datetime):
         response = True
     else:
         response = False
@@ -32,7 +32,7 @@ def validate_date(date_to_check):
     return response
 
 
-# function that returns the previous nearest date to "date_to_check" (second since epoch date input variable)
+# function that returns the previous nearest date to "date_to_check" (seconds since epoch date input variable)
 # looking into "date_array" array
 
 def minus_nearer_date(date_array, date_to_check):
@@ -52,9 +52,9 @@ def minus_nearer_date(date_array, date_to_check):
     return nearest_date
 
 
-# function that returns the first previous business day of the imput date
+# function that returns the first previous business day of the input date
 
-def previuos_business_day(date):
+def previous_business_day(date):
 
     while is_business_day(date) == False:
         date = date - timedelta(days=1)
@@ -169,7 +169,7 @@ def board_meeting_day(start_date='12-21-2015', stop_date=None, delta=None, timeS
     for result in perdelta(start_date, stop_date, delta):
 
         # checks if the date generated is a business day, if not finds the first previous BD
-        result = previuos_business_day(result)
+        result = previous_business_day(result)
 
         if timeST == 'Y':
 
