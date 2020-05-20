@@ -32,26 +32,6 @@ def validate_date(date_to_check):
     return response
 
 
-# function that returns the previous nearest date to "date_to_check" (seconds since epoch date input variable)
-# looking into "date_array" array
-
-def minus_nearer_date(date_array, date_to_check):
-
-    only_lesser = np.array([])
-    for element in date_array:
-
-        if element < date_to_check:
-
-            only_lesser = np.append(only_lesser, element)
-
-    nearest_date = only_lesser[only_lesser.size - 1]
-    ## alternative with minimun distance #####
-    # min_dist = np.absolute(only_lesser - date_to_check)
-    # nearest_date = np.amin(min_dist) + date_to_check
-
-    return nearest_date
-
-
 # function that returns the first previous business day of the input date
 
 def previous_business_day(date):
