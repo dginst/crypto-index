@@ -11,18 +11,18 @@ import cryptoindex.mongo_setup as mongo
 import cryptoindex.data_setup as data_setup
 import cryptoindex.calc as calc
 
-# ############### INITIAL SETTINGS #######################
+# ############# INITIAL SETTINGS ################################
 
 pair_array = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
 Crypto_Asset = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH',
                 'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
-# crypto complete [ 'BTC', 'ETH', 'XRP', 'LTC', 'BCH',
-#  'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
+# crypto complete [ 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
+# 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
 Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp',
              'gemini', 'bittrex', 'kraken', 'bitflyer']
-# exchange complete = [ 'coinbase-pro', 'poloniex',
-# 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
+# exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp',
+# 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
 
 # ################# setup mongo connection ################
@@ -37,6 +37,7 @@ db_name = "index"
 coll_data = "CW_final_data"
 coll_log1 = 'index_logic_matrix_one'
 coll_log2 = 'index_logic_matrix_two'
+coll_ewma = 'index_EWMA'
 coll_price = 'crypto_price'
 coll_volume = 'crypto_volume'
 coll_divisor = 'index_divisor'
@@ -51,6 +52,12 @@ coll_1000_index = 'index_level_1000'
 # collection for index weights
 db.index_weights.create_index([("id", -1)])
 collection_weights = db.index_weights
+# collection for index level base 1000
+db.index_level_1000.create_index([("id", -1)])
+collection_index_level = db.index_level_1000
+# collection for index level raw
+db.index_raw_level.create_index([("id", -1)])
+collection_index_level = db.index_level_raw
 # collection for crypto prices
 db.crypto_price.create_index([("id", -1)])
 collection_price = db.crypto_price
@@ -81,12 +88,7 @@ collection_divisor_reshaped = db.index_divisor_reshaped
 # collection for the relative syntethic matrix
 db.index_synth_matrix.create_index([("id", -1)])
 collection_relative_synth = db.index_synth_matrix
-# collection for index level raw
-db.index_raw_level.create_index([("id", -1)])
-collection_index_raw = db.index_level_raw
-# collection for index level base 1000
-db.index_level_1000.create_index([("id", -1)])
-collection_index_1000 = db.index_level_1000
+
 
 # ################ DATE SETTINGS ########################
 
@@ -102,6 +104,7 @@ today_human = data_setup.timestamp_to_human([today_TS])
 yesterday_human = data_setup.timestamp_to_human([yesterday_TS])
 two_before_human = data_setup.timestamp_to_human([two_before_TS])
 
+
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
 reference_date_vector = data_setup.timestamp_gen(start_date)
@@ -115,12 +118,17 @@ board_date = calc.board_meeting_day()
 board_date_eve = calc.day_before_board()
 next_rebalance_date = calc.next_start()
 
-
 # call the function that creates a object containing
 # the couple of quarterly start-stop date
 quarterly_date = calc.quarterly_period()
 
-# ############# MAIN PART #########################
+# defining time variables
+old_reb_start = rebalance_start_date[len(rebalance_start_date) - 2]
+new_reb_start = rebalance_start_date[len(rebalance_start_date) - 1]
+next_reb_stop = rebalance_stop_date[len(rebalance_stop_date) - 1]
+curr_board_eve = board_date_eve[len(board_date_eve) - 1]
+
+# ####################### MAIN PART #################################
 
 # downloading the daily value from MongoDB and put it into a dataframe
 
@@ -347,128 +355,21 @@ hist_volume = hist_volume.append(Crypto_Asset_Volume)
 daily_ewma = calc.daily_ewma_crypto_volume(hist_volume, Crypto_Asset)
 # daily_ewma = ewma_df.iloc[[len(reference_date_vector) - 1]]
 
-
 # downloading from mongoDB the current logic matrices (1 e 2)
 logic_one = mongo.query_mongo(db_name, coll_log1)
-# taking only the logic value referred to the current period
-current_logic_one = logic_one.iloc[[len(logic_one['Date']) - 2]]
-current_logic_one = current_logic_one.drop(columns=['Date', 'Time'])
 logic_two = mongo.query_mongo(db_name, coll_log2)
+# taking only the logic value referred to the new period
+current_logic_one = logic_one.iloc[[len(logic_one['Date']) - 2]]  # check -2
+current_logic_one = current_logic_one.drop(columns=['Date', 'Time'])
 # taking only the logic value referred to the current period
-current_logic_two = logic_two.iloc[[len(logic_two['Date']) - 2]]
+current_logic_two = logic_two.iloc[[len(logic_two['Date']) - 2]]  # check -2
 current_logic_two = current_logic_two.drop(columns=['Date', 'Time'])
-
-# computing the ewma checked with both the first and second logic matrices
-daily_ewma_first_check = (np.array(daily_ewma) * np.array(current_logic_one))
-daily_ewma_double_check = daily_ewma_first_check * np.array(current_logic_two)
-daily_ewma_double_check = pd.DataFrame(daily_ewma_double_check,
-                                       columns=Crypto_Asset)
 
 # downloading from mongoDB the current weights
 weights = mongo.query_mongo(db_name, coll_weights)
 
-# compute  the relative syntethic matrix
-yesterday_rel_matrix = mongo.query_mongo(
-    db_name, coll_rel_synt, {'Date': two_before_human[0]})
-yesterday_rel_matrix = yesterday_rel_matrix.drop(columns=['Date'])
-daily_return = np.array(price_ret.loc[:, Crypto_Asset])
-daily_rel_matrix = (1 + daily_return) * np.array(yesterday_rel_matrix)
-daily_rel_matrix = pd.DataFrame(daily_rel_matrix, columns=Crypto_Asset)
-
-# daily index value computation
-current_divisor = mongo.query_mongo(
-    db_name, coll_divisor_res, {'Date': two_before_human[0]})
-curr_div_val = np.array(current_divisor['Divisor Value'])
-index_numerator = np.array(
-    Crypto_Asset_Prices[Crypto_Asset])*np.array(daily_rel_matrix)
-numerator_sum = index_numerator.sum(axis=1)
-num = pd.DataFrame(numerator_sum)
-daily_index_value = np.array(num)/curr_div_val
-raw_index_df = pd.DataFrame(daily_index_value, columns=['Index Value'])
-
-# retrieving from mongoDB the yesterday value of the raw index
-yesterday_raw_index = mongo.query_mongo(
-    db_name, coll_raw_index, {'Date': two_before_human[0]})
-yesterday_raw_index = yesterday_raw_index.drop(columns=['Date', 'Time'])
-raw_curr = yesterday_raw_index.append(raw_index_df)
-variation = raw_curr.pct_change()
-variation = np.array(variation.iloc[1])
-
-# retrieving from mongoDB the yesterday value of the raw index
-yesterday_1000_index = mongo.query_mongo(
-    db_name, coll_1000_index,  {'Date': two_before_human[0]})
-daily_index_1000 = np.array(
-    yesterday_1000_index['Index Value']) * (1 + variation)
-daily_index_1000_df = pd.DataFrame(daily_index_1000, columns=['Index Value'])
-print(daily_index_1000_df)
-
-# ############ MONGO DB UPLOADS ############################################
-# creating the array with human readable Date
-human_date = data_setup.timestamp_to_human(reference_date_vector)
-
-
-# put the daily return on MongoDB
-price_ret['Date'] = yesterday_human
-price_ret_up = price_ret[['Date', 'Time', 'BTC', 'ETH', 'XRP',
-                          'LTC', 'BCH', 'EOS', 'ETC', 'ZEC',
-                          'ADA', 'XLM', 'XMR', 'BSV']]
-price_ret_up = price_ret_up.to_dict(orient='records')
-collection_price_ret.insert_many(price_ret_up)
-
-# put the daily crypto prices on MongoDB
-Crypto_Asset_Prices['Date'] = yesterday_human
-price_up = Crypto_Asset_Prices[['Date', 'Time', 'BTC', 'ETH', 'XRP',
-                                'LTC', 'BCH', 'EOS', 'ETC', 'ZEC',
-                                'ADA', 'XLM', 'XMR', 'BSV']]
-price_up = price_up.to_dict(orient='records')
-collection_price.insert_many(price_up)
-
-# put the daily crypto volumes on MongoDB
-Crypto_Asset_Volume['Date'] = yesterday_human
-volume_up = Crypto_Asset_Volume[['Date', 'Time', 'BTC', 'ETH', 'XRP',
-                                 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC',
-                                 'ADA', 'XLM', 'XMR', 'BSV']]
-volume_up = volume_up.to_dict(orient='records')
-collection_volume.insert_many(volume_up)
-
-# put the EWMA dataframe on MongoDB
-daily_ewma['Date'] = yesterday_human
-daily_ewma['Time'] = str(today_TS)
-ewma_df_up = daily_ewma[['Date', 'Time', 'BTC', 'ETH', 'XRP',
-                         'LTC', 'BCH', 'EOS', 'ETC', 'ZEC',
-                         'ADA', 'XLM', 'XMR', 'BSV']]
-ewma_df_up = ewma_df_up.to_dict(orient='records')
-collection_EWMA.insert_many(ewma_df_up)
-
-# put the double checked EWMA on MongoDB
-daily_ewma_double_check['Date'] = yesterday_human
-daily_ewma_double_check['Time'] = str(today_TS)
-double_EWMA_up = daily_ewma_double_check[[
-    'Date', 'Time', 'BTC', 'ETH', 'XRP',
-    'LTC', 'BCH', 'EOS', 'ETC', 'ZEC',
-    'ADA', 'XLM', 'XMR', 'BSV']]
-double_EWMA_up = double_EWMA_up.to_dict(orient='records')
-collection_EWMA_check.insert_many(double_EWMA_up)
-
-# put the relative synth matrix on MongoDB
-daily_rel_matrix['Date'] = yesterday_human
-daily_rel_matrix['Time'] = str(today_TS)
-synth_up = daily_rel_matrix[['Date', 'Time', 'BTC', 'ETH', 'XRP',
-                             'LTC', 'BCH', 'EOS', 'ETC', 'ZEC',
-                             'ADA', 'XLM', 'XMR', 'BSV']]
-synth_up = synth_up.to_dict(orient='records')
-collection_relative_synth.insert_many(synth_up)
-
-# put the index level raw on MongoDB
-raw_index_df['Date'] = yesterday_human
-raw_index_df['Time'] = str(today_TS)
-raw_index_val_up = raw_index_df[['Date', 'Time', 'Index Value']]
-raw_index_val_up = raw_index_val_up.to_dict(orient='records')
-collection_index_raw.insert_many(raw_index_val_up)
-
-# put the index level 1000 on MongoDB
-daily_index_1000_df['Date'] = yesterday_human
-daily_index_1000_df['Time'] = str(today_TS)
-index_val_up = daily_index_1000_df[['Date', 'Time', 'Index Value']]
-index_val_up = index_val_up.to_dict(orient='records')
-collection_index_1000.insert_many(index_val_up)
+# find new divisor value
+yest_price = np.array(two_before_price)
+new_divisor_df = calc.new_divisor(yest_price, weights, logic_two,
+                                  Crypto_Asset, old_reb_start,
+                                  new_reb_start)

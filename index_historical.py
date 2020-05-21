@@ -15,9 +15,9 @@ import cryptoindex.calc as calc
 
 pair_array = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
-Crypto_Asset = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH',
-                'EOS', 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
-# crypto complete [ 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
+Crypto_Asset = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
+                'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
+# crypto complete ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
 # 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
 Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp',
              'gemini', 'bittrex', 'kraken', 'bitflyer']
@@ -40,7 +40,8 @@ db.crypto_price.drop()
 db.crypto_volume.drop()
 db.crypto_price_return.drop()
 db.index_weights.drop()
-db.index_level.drop()
+db.index_level_1000.drop()
+db.index_level_raw.drop()
 db.index_EWMA.drop()
 db.index_logic_matrix_one.drop()
 db.index_logic_matrix_two.drop()
@@ -88,7 +89,7 @@ collection_relative_synth = db.index_synth_matrix
 db.index_level_1000.create_index([("id", -1)])
 collection_index_level_1000 = db.index_level_1000
 # collection for index level raw
-db.index_raw_level.create_index([("id", -1)])
+db.index_level_raw.create_index([("id", -1)])
 collection_index_level_raw = db.index_level_raw
 
 # ################### DATE SETTINGS ####################
@@ -334,7 +335,7 @@ Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns=Crypto_Asset)
 # compute the price returns over the defined period
 price_ret = Crypto_Asset_Prices.pct_change()
 
-# then add the 'Time' column
+# add the 'Time' column
 time_header = ['Time']
 time_header.extend(Crypto_Asset)
 Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns=time_header)
@@ -384,9 +385,11 @@ syntethic_relative_matrix = calc.relative_syntethic_matrix(
 
 # changing the "Time" column of the second logic matrix
 # using the rebalance date
-second_logic_matrix['Time'] = next_rebalance_date[1:]
+second_logic_matrix['Time'] = next_rebalance_date[:len(
+    next_rebalance_date) - 1]
+
 if yesterday_TS == rebalance_start_date[len(rebalance_start_date) - 1]:
-    print('inside')
+
     second_logic_matrix = second_logic_matrix[:-1]
 
 print(second_logic_matrix)
@@ -396,11 +399,14 @@ print(second_logic_matrix)
 weights_for_period = weights_for_board
 # weights_for_period['Time'] = next_rebalance_date[1:]
 weights_for_period['Time'] = rebalance_start_date[1:]
+print(weights_for_period)
 
 divisor_array = calc.divisor_adjustment(
     Crypto_Asset_Prices, weights_for_period,
     second_logic_matrix, Crypto_Asset,
     reference_date_vector)
+
+print(divisor_array)
 
 reshaped_divisor = calc.divisor_reshape(divisor_array, reference_date_vector)
 

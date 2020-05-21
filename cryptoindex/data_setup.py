@@ -11,11 +11,13 @@ import numpy as np
 from . import mongo_setup as mongo
 
 
-################################# TIME AND TIME ARRAYS FUNCTIONS ########################################
+# ################ TIME AND TIME ARRAYS FUNCTIONS #############################
 
-# function that generate an array of date in timstamp format starting from start_date to end_date
-# given in mm-dd-yyyy forma; if not specified end_date = today()
-# function only returns value of timestamp in second since epoch where every day is in the exact 12:00 am UTC
+# function that generate an array of date in timstamp format starting from
+# start_date to end_date given in mm-dd-yyyy format;
+# if not specified end_date = today()
+# function only returns timestamp value in second since epoch where every
+# day is in the exact 12:00 am UTC
 # function considers End of Day price series so, if not otherwise specified,
 # the returned array of date will be from start to today - 1 (EoD = 'Y')
 
@@ -32,7 +34,7 @@ def timestamp_gen(start_date, end_date=None, EoD='Y'):
 
         add_on = 3600
 
-    if end_date == None:
+    if end_date is None:
 
         end_date = datetime.now().strftime('%m-%d-%Y')
 
@@ -289,7 +291,7 @@ def homogenize_series(series_to_check, reference_date_array_TS,
     if test_matrix.empty is True:
 
         first_date = np.array(series_to_check['Time'].iloc[0])
-        last_missing_date = (int(first_date) - 86400)
+        # last_missing_date = (int(first_date) - 86400) ##
         first_missing_date = reference_date_array_TS[0]
         missing_date_array = timestamp_vector(first_missing_date, first_date)
 
