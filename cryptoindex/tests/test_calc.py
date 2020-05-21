@@ -172,6 +172,17 @@ def test_next_quarterly_peiod():
     assert check_range == test_range
 
 
+def test_next_start():
+
+    start_date = '01-01-2019'
+    stop_date = '01-01-2020'
+
+    st_date = np.array([1.5463008e+09, 1.5540768e+09,
+                        1.5619392e+09, 1.5698880e+09, 1.5778404e+09])
+    st_gen = calc.next_start(start_date, stop_date)
+
+    assert np.array_equal(st_date, st_gen)
+
 # ###########################################################################
 
 # #################### FIRST LOGIC MATRIX ###################################
