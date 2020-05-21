@@ -1,8 +1,8 @@
 "Tests for `cryptoindex.calc` module."
 
-import numpy as np
 from datetime import datetime
 
+import numpy as np
 from cryptoindex import calc
 
 
@@ -29,12 +29,13 @@ def test_date_validation():
 
 def test_previous_business_day():
 
-    # is Bday
+    # is Bday 'mm-dd-yyyy'
     bday = '05-08-2020'
     bday = datetime.strptime(bday, '%m-%d-%Y')
-    assert calc.previous_business_day(bday) == bday
+    test_day = calc.previous_business_day(bday)
+    assert test_day == bday
 
-    # is Saturday
+    # is Saturday 'mm-dd-yyyy'
     sat = '05-09-2020'
     sat = datetime.strptime(sat, '%m-%d-%Y')
     assert calc.previous_business_day(sat) == bday
@@ -61,13 +62,24 @@ def test_perdelta():
 def test_start_q_fix():
 
     str_date = ['01-01-2019', '04-01-2019', '07-01-2019', '10-01-2019']
-    ts_date = np.array([1.5463008e+09, 1.5540768e+09,
-                        1.5619392e+09, 1.5698880e+09])
+    ts_date = np.array([1.5463008e+09, 1.5540696e+09,
+                        1.5619320e+09, 1.5698808e+09])
 
     # coverting string in datetime and then in epoch timestamp.
     ts_array = np.array([int(datetime.strptime(x, '%m-%d-%Y').timestamp())
                          for x in str_date])
 
     ts_gen = calc.start_q_fix(ts_array)
+
+    assert np.array_equal(ts_date, ts_gen)
+
+
+def test_start_q():
+
+    str_date = ['01-01-2019', '04-01-2019', '07-01-2019', '10-01-2019']
+    ts_date = np.array([1.5463008e+09, 1.5540768e+09,
+                        1.5619392e+09, 1.5698880e+09])
+
+    ts_gen = calc.start_q('01-01-2019', '01-01-2020')
 
     assert np.array_equal(ts_date, ts_gen)

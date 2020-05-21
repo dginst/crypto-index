@@ -1,6 +1,7 @@
-import API_request as api
-from pymongo import MongoClient
 import time
+
+import cryptoindex.API_request as api
+from pymongo import MongoClient
 
 start = time.time()
 

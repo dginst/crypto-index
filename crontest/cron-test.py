@@ -1,4 +1,4 @@
-# import API_request as api 
+# import cryptoindex.API_request as api
 # from pymongo import MongoClient
 # import time
 
@@ -37,7 +37,7 @@
 # # call = [api.coinbase_ticker(Crypto, Fiat, collection_coinbasetraw) for Crypto in assets2  for Fiat in fiat2]
 # # call = [api.coinbase_ticker(Crypto, Fiat, collection_coinbasetraw) for Crypto in assets3  for Fiat in fiat3]
 # # coinbase = time.time()
-        
+
 
 # ######################### KRAKEN
 
@@ -54,7 +54,7 @@
 # call =[api.kraken_ticker(Crypto, Fiat, collection_krakentraw)  for Crypto in assets for Fiat in fiat]
 # call =[api.kraken_ticker(Crypto, Fiat, collection_krakentraw)  for Crypto in assets1 for Fiat in fiat1]
 # call =[api.kraken_ticker(Crypto, Fiat, collection_krakentraw)  for Crypto in assets2 for Fiat in fiat2]
-# kraken = time.time()       
+# kraken = time.time()
 
 # ######################## itbit
 
@@ -102,7 +102,7 @@
 # call =[api.bittrex_ticker(Crypto, Fiat, collection_bittrextraw)  for Crypto in assets for Fiat in stbc]
 # call =[api.bittrex_ticker(Crypto, Fiat, collection_bittrextraw)  for Crypto in assets1 for Fiat in stbc1]
 # call =[api.bittrex_ticker(Crypto, Fiat, collection_bittrextraw)  for Crypto in assets2 for Fiat in stbc2]
-        
+
 # bittrex = time.time()
 # ######################## poloniex
 
@@ -120,8 +120,8 @@
 # # fiat2 = ['JPY']
 
 # # call =[api.bitflyer_ticker(Crypto, Fiat, collection_bitflyertraw)  for Crypto in assets1 for Fiat in fiat1]
-# # call =[api.bitflyer_ticker(Crypto, Fiat, collection_bitflyertraw)  for Crypto in assets2 for Fiat in fiat2]        
-        
+# # call =[api.bitflyer_ticker(Crypto, Fiat, collection_bitflyertraw)  for Crypto in assets2 for Fiat in fiat2]
+
 # # bitflyer = time.time()
 # end = time.time()
 
@@ -137,14 +137,13 @@
 
 from datetime import datetime
 
+
 def today_ts():
 
     today = datetime.now().strftime('%Y-%m-%d-%H')
-    today_TS = int(datetime.strptime(today,'%Y-%m-%d-%H').timestamp())
+    today_TS = int(datetime.strptime(today, '%Y-%m-%d-%H').timestamp())
 
+    return today_TS
 
-    return today_TS 
-
-    
 
 print(today_ts())

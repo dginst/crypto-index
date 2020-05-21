@@ -87,6 +87,9 @@ def start_q(start_date='01-01-2016', stop_date=None, delta=relativedelta(months=
         stop_date = datetime.now().strftime('%m-%d-%Y')
         stop_date = datetime.strptime(stop_date, '%m-%d-%Y')
 
+    else:
+        stop_date = datetime.strptime(stop_date, '%m-%d-%Y')
+
     start_day_arr = np.array([])
 
     for result in perdelta(start_date, stop_date, delta=relativedelta(months=3)):
