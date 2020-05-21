@@ -123,6 +123,7 @@ next_rebalance_date = calc.next_start()
 quarterly_date = calc.quarterly_period()
 
 # defining time variables
+old_reb_start = rebalance_start_date[len(rebalance_start_date) - 2]
 new_reb_start = rebalance_start_date[len(rebalance_start_date) - 1]
 next_reb_stop = rebalance_stop_date[len(rebalance_stop_date) - 1]
 curr_board_eve = board_date_eve[len(board_date_eve) - 1]
@@ -356,10 +357,19 @@ daily_ewma = calc.daily_ewma_crypto_volume(hist_volume, Crypto_Asset)
 
 # downloading from mongoDB the current logic matrices (1 e 2)
 logic_one = mongo.query_mongo(db_name, coll_log1)
+logic_two = mongo.query_mongo(db_name, coll_log2)
 # taking only the logic value referred to the new period
 current_logic_one = logic_one.iloc[[len(logic_one['Date']) - 2]]  # check -2
 current_logic_one = current_logic_one.drop(columns=['Date', 'Time'])
-logic_two = mongo.query_mongo(db_name, coll_log2)
 # taking only the logic value referred to the current period
 current_logic_two = logic_two.iloc[[len(logic_two['Date']) - 2]]  # check -2
 current_logic_two = current_logic_two.drop(columns=['Date', 'Time'])
+
+# downloading from mongoDB the current weights
+weights = mongo.query_mongo(db_name, coll_weights)
+
+# find new divisor value
+yest_price = np.array(two_before_price)
+new_divisor_df = calc.new_divisor(yest_price, weights, logic_two,
+                                  Crypto_Asset, old_reb_start,
+                                  new_reb_start)

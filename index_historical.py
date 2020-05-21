@@ -385,7 +385,8 @@ syntethic_relative_matrix = calc.relative_syntethic_matrix(
 
 # changing the "Time" column of the second logic matrix
 # using the rebalance date
-second_logic_matrix['Time'] = next_rebalance_date[1:]
+second_logic_matrix['Time'] = next_rebalance_date[:len(
+    next_rebalance_date) - 1]
 
 if yesterday_TS == rebalance_start_date[len(rebalance_start_date) - 1]:
 
