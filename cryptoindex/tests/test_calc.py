@@ -86,7 +86,7 @@ def test_start_q_fix():
 
 def test_start_q():
 
-    str_date = ['01-01-2019', '04-01-2019', '07-01-2019', '10-01-2019']
+    # str_date = ['01-01-2019', '04-01-2019', '07-01-2019', '10-01-2019']
 
     # str_date in epoch timestamp
     ts_date = np.array([1.5463008e+09, 1.5540768e+09,
