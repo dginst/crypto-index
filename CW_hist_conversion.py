@@ -104,20 +104,15 @@ for exchange in Exchanges:
     volume_df[exchange] = single_vol
 
 
-print(price_df.head(10))
-
-print(volume_df.head(10))
-
 num = (price_df * volume_df).sum(axis=1)
-print(num.head(10))
 den = volume_df.sum(axis=1)
-print(den.head(20))
+
 average_usd = num / den
 average_df = pd.DataFrame(average_usd, columns=['average usd'])
 average_df['Time'] = coinbase_call['Time']
 average_df = average_df.replace([np.inf, -np.inf], np.nan)
 average_df.fillna(0, inplace=True)
-print(average_df.head(10))
+
 
 # ############# USDT exchange rates computation ##########
 # BTC/USDT is traded on Poloniex, Kraken and bittrex
