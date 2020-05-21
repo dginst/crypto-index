@@ -2,17 +2,17 @@
 import datetime
 from datetime import *
 from datetime import date, datetime, timedelta
-from dateutil.relativedelta import relativedelta
 
 # third party import
 import numpy as np
 import pandas as pd
-
+from dateutil.relativedelta import relativedelta
 
 ############################################# DATE SETTINGS FUNCTIONS ##################################
 
 # function that check if a date is a business day
 # returns "True" is the date is a BD, "False" otherwise
+
 
 def is_business_day(date):
 
