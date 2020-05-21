@@ -2,148 +2,154 @@ from pymongo import MongoClient
 import cryptoindex.mongo_setup as mongo
 
 connection = MongoClient('localhost', 27017)
-#creating the database called index
+# creating the database called index
 db = connection.index
-db.EXC_rawdata.create_index([ ("id", -1) ])
-#creating the empty collection rawdata within the database index
+db.EXC_rawdata.create_index([("id", -1)])
+# creating the empty collection rawdata within the database index
 
 collection = db.EXC_rawdata
 db = 'index'
 
-################################# coinbasetraw
+# coinbasetraw
 
 try:
 
-  coll = 'coinbasetraw'
+    coll = 'coinbasetraw'
 
-  df = mongo.query_mongo(db, coll)
+    df = mongo.query_mongo(db, coll)
 
-  df = df.rename(columns={'pair' : 'Pair', 'exchange' : 'Exchange', 'time' : 'Time', 'price' : 'Close Price', 'volume' : 'Crypto Volume'})
+    df = df.rename(columns={'pair': 'Pair', 'exchange': 'Exchange',
+                            'time': 'Time', 'price': 'Close Price', 'volume': 'Crypto Volume'})
 
-  df['Time'] = df['Time'].apply(str)
+    df['Time'] = df['Time'].apply(str)
 
-  df['Pair'] = df['Pair'].str.lower()
+    df['Pair'] = df['Pair'].str.lower()
 
-  df = df.to_dict(orient='records')  
+    df = df.to_dict(orient='records')
 
-  
-  collection.insert_many(df)
+    collection.insert_many(df)
 except:
-  print('none_coinbase')
+    print('none_coinbase')
 
 
-################################# bitflyertraw
+# bitflyertraw
 
 
 coll = 'bitflyertraw'
 
 df = mongo.query_mongo(db, coll)
 
-df = df.rename(columns={'pair' : 'Pair', 'exchange' : 'Exchange', 'time' : 'Time', 'price' : 'Close Price', 'volume' : 'Crypto Volume'})
+df = df.rename(columns={'pair': 'Pair', 'exchange': 'Exchange',
+                        'time': 'Time', 'price': 'Close Price', 'volume': 'Crypto Volume'})
 
 df['Time'] = df['Time'].apply(str)
 
 df['Pair'] = df['Pair'].str.lower()
 
-df = df.to_dict(orient='records')  
+df = df.to_dict(orient='records')
 
 collection.insert_many(df)
 
 
-################################# krakentraw
+# krakentraw
 
 coll = 'krakentraw'
 
 df = mongo.query_mongo(db, coll)
 
-df = df.rename(columns={'pair' : 'Pair', 'exchange' : 'Exchange', 'time' : 'Time', 'price' : 'Close Price', 'volume' : 'Crypto Volume'})
+df = df.rename(columns={'pair': 'Pair', 'exchange': 'Exchange',
+                        'time': 'Time', 'price': 'Close Price', 'volume': 'Crypto Volume'})
 
 df['Time'] = df['Time'].apply(str)
 
 df['Pair'] = df['Pair'].str.lower()
 
-df = df.to_dict(orient='records')  
+df = df.to_dict(orient='records')
 
 collection.insert_many(df)
 
 
-################################# bitstamptraw
+# bitstamptraw
 
 coll = 'bitstamptraw'
 
 df = mongo.query_mongo(db, coll)
 
-df = df.rename(columns={'pair' : 'Pair', 'exchange' : 'Exchange', 'time' : 'Time', 'price' : 'Close Price', 'volume' : 'Crypto Volume'})
+df = df.rename(columns={'pair': 'Pair', 'exchange': 'Exchange',
+                        'time': 'Time', 'price': 'Close Price', 'volume': 'Crypto Volume'})
 
 df['Time'] = df['Time'].apply(str)
 
 df['Pair'] = df['Pair'].str.lower()
 
-df = df.to_dict(orient='records')  
+df = df.to_dict(orient='records')
 
 collection.insert_many(df)
 
-################################# geminitraw
+# geminitraw
 
 coll = 'geminitraw'
 
 df = mongo.query_mongo(db, coll)
 
-df = df.rename(columns={'pair' : 'Pair', 'exchange' : 'Exchange', 'time' : 'Time', 'price' : 'Close Price', 'volume' : 'Crypto Volume'})
+df = df.rename(columns={'pair': 'Pair', 'exchange': 'Exchange',
+                        'time': 'Time', 'price': 'Close Price', 'volume': 'Crypto Volume'})
 
 df['Time'] = df['Time'].apply(str)
 
 df['Pair'] = df['Pair'].str.lower()
 
-df = df.to_dict(orient='records')  
+df = df.to_dict(orient='records')
 
 collection.insert_many(df)
 
-################################# itbittraw
+# itbittraw
 
 coll = 'itbittraw'
 
 df = mongo.query_mongo(db, coll)
 
-df = df.rename(columns={'pair' : 'Pair', 'exchange' : 'Exchange', 'time' : 'Time', 'price' : 'Close Price', 'volume' : 'Crypto Volume'})
+df = df.rename(columns={'pair': 'Pair', 'exchange': 'Exchange',
+                        'time': 'Time', 'price': 'Close Price', 'volume': 'Crypto Volume'})
 
 df['Time'] = df['Time'].apply(str)
 
 df['Pair'] = df['Pair'].str.lower()
 
-df = df.to_dict(orient='records')  
+df = df.to_dict(orient='records')
 
 collection.insert_many(df)
 
-################################# bittrextraw
+# bittrextraw
 
 coll = 'bittrextraw'
 
 df = mongo.query_mongo(db, coll)
 
-df = df.rename(columns={'pair' : 'Pair', 'exchange' : 'Exchange', 'time' : 'Time', 'price' : 'Close Price', 'volume' : 'Crypto Volume'})
+df = df.rename(columns={'pair': 'Pair', 'exchange': 'Exchange',
+                        'time': 'Time', 'price': 'Close Price', 'volume': 'Crypto Volume'})
 
 df['Time'] = df['Time'].apply(str)
 
 df['Pair'] = df['Pair'].str.lower()
 
-df = df.to_dict(orient='records')  
+df = df.to_dict(orient='records')
 
 collection.insert_many(df)
 
-################################# poloniextraw
+# poloniextraw
 
 coll = 'poloniextraw'
 
 df = mongo.query_mongo(db, coll)
 
-df = df.rename(columns={'pair' : 'Pair', 'exchange' : 'Exchange', 'time' : 'Time', 'price' : 'Close Price', 'volume' : 'Crypto Volume'})
+df = df.rename(columns={'pair': 'Pair', 'exchange': 'Exchange',
+                        'time': 'Time', 'price': 'Close Price', 'volume': 'Crypto Volume'})
 
 df['Time'] = df['Time'].apply(str)
 
 df['Pair'] = df['Pair'].str.lower()
 
-df = df.to_dict(orient='records')  
+df = df.to_dict(orient='records')
 
 collection.insert_many(df)
-
