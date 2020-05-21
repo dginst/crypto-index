@@ -122,7 +122,7 @@ def test_board_meeting_day():
     stop_date = '01-01-2020'
 
     # dates in epoch timestamp of the dates:
-    # respectively:  01-01-2019', '04-01-2019', '07-01-2019', '10-01-2019'
+    # respectively:  03-21-2019', '06-21-2019', '09-20-2019', '12-20-2019'
     # (mm:dd:yyyy format)
     ts_bmd_days = np.array([1.5531264e+09,  1.5610752e+09,
                             1.5689376e+09, 1.5768000e+09])
@@ -130,3 +130,40 @@ def test_board_meeting_day():
     ts_gen = calc.board_meeting_day(start_date, stop_date)
 
     assert np.array_equal(ts_bmd_days, ts_gen)
+
+
+def test_day_before_board():
+
+    start_date = '03-21-2019'
+    stop_date = '01-01-2020'
+
+    # dates in epoch timestamp of the dates:
+    # respectively:  03-20-2019', '06-20-2019', '09-19-2019', '12-19-2019'
+    # (mm:dd:yyyy format)
+    ts_bm_days = np.array([1.5530400e+09, 1.5609888e+09,
+                           1.5688512e+09,  1.5767136e+09])
+
+    ts_gen = calc.day_before_board(start_date, stop_date)
+
+    assert np.array_equal(ts_bm_days, ts_gen)
+
+
+def test_next_quarterly_peiod():
+
+    start_date = '01-01-2019'
+    stop_date = '01-01-2020'
+
+    check_range = [(1554076800, 1561852800),
+                   (1561939200, 1569801600),
+                   (1569888000, 1577754000)
+                   ]
+
+    test_range = calc.next_quarterly_period(start_date, stop_date)
+
+    # creating a list from perdelta func
+    test_range = [(x, y) for x, y in test_range]
+
+    assert check_range == test_range
+
+
+def
