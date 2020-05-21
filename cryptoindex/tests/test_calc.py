@@ -153,6 +153,12 @@ def test_next_quarterly_peiod():
     start_date = '01-01-2019'
     stop_date = '01-01-2020'
 
+    # dates in epoch timestamp of the dates:
+    # respectively:  (04-01-2019', '06-30-2019'),
+    #                ('07-01-2019', '09-30-2019'),
+    #                ('10-01-2019', '12-31-2019')
+    # (mm:dd:yyyy format)
+
     check_range = [(1554076800, 1561852800),
                    (1561939200, 1569801600),
                    (1569888000, 1577754000)
@@ -160,10 +166,12 @@ def test_next_quarterly_peiod():
 
     test_range = calc.next_quarterly_period(start_date, stop_date)
 
-    # creating a list from perdelta func
+    # creating a list from next_quarterly_period
     test_range = [(x, y) for x, y in test_range]
 
     assert check_range == test_range
 
 
-def
+# ###########################################################################
+
+# #################### FIRST LOGIC MATRIX ###################################
