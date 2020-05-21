@@ -1,5 +1,6 @@
 "Tests for `cryptoindex.calc` module."
 
+import numpy as np
 from datetime import datetime
 
 from cryptoindex import calc
@@ -55,3 +56,18 @@ def test_perdelta():
     test_range = [x.strftime('%m-%d-%Y') for x in test_range]
 
     assert test_range == check_range
+
+
+def test_start_q_fix():
+
+    str_date = ['01-01-2019', '04-01-2019', '07-01-2019', '10-01-2019']
+    ts_date = np.array([1.5463008e+09, 1.5540768e+09,
+                        1.5619392e+09, 1.5698880e+09])
+
+    # coverting string in datetime and then in epoch timestamp.
+    ts_array = np.array([int(datetime.strptime(x, '%m-%d-%Y').timestamp())
+                         for x in str_date])
+
+    ts_gen = calc.start_q_fix(ts_array)
+
+    assert np.array_equal(ts_date, ts_gen)
