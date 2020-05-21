@@ -112,7 +112,9 @@ def next_start(start_date='01-01-2016', stop_date=None, timeST='Y'):
     else:
         stop_date = datetime.strptime(stop_date, '%m-%d-%Y')
 
-    start_quarter = np.array([])
+    # creating the arrays containing the start and stop date of each quarter
+    start_quarter = start_q_fix(start_q(start_date, stop_date, timeST))
+    stop_quarter = stop_q(start_quarter)
 
     next_start_date = int(stop_quarter[len(stop_quarter) - 1]) + day_in_sec
 
