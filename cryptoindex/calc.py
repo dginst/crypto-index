@@ -112,7 +112,7 @@ def next_start(start_date='01-01-2016', stop_date=None, timeST='Y'):
     else:
         stop_date = datetime.strptime(stop_date, '%m-%d-%Y')
 
-    start_day_arr = np.array([])
+    start_quarter = np.array([])
 
     next_start_date = int(stop_quarter[len(stop_quarter) - 1]) + day_in_sec
 
