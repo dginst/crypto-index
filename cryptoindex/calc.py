@@ -121,7 +121,7 @@ def next_start(start_date='01-01-2016', stop_date=None, timeST='Y'):
     return start_quarter
 
 
-# the function returns an array containing the stop_date of each quarter
+# the function returns an array containing the stop_date of each quarter in epoch timestamp
 # each stop date is computed starting from the array resulting from the
 # function "start_q" that contain a list of start date for each quarter.
 # the start_q array resulting from the funtion is taken as input
@@ -158,7 +158,10 @@ def board_meeting_day(start_date='12-21-2015', stop_date=None, delta=None,
                       timeST='Y', lag_adj=3600):
 
     # defining the delta period between each board day
-    delta = relativedelta(months=3)
+
+    if delta == None:
+
+        delta = relativedelta(months=3)
 
     # transforming start_date string into date
     start_date = datetime.strptime(start_date, '%m-%d-%Y')
@@ -168,13 +171,17 @@ def board_meeting_day(start_date='12-21-2015', stop_date=None, delta=None,
         stop_date = datetime.now().strftime('%m-%d-%Y')
         stop_date = datetime.strptime(stop_date, '%m-%d-%Y')
 
+    else:
+
+        stop_date = datetime.strptime(stop_date, '%m-%d-%Y')
+
     board_day = np.array([])
 
     for result in perdelta(start_date, stop_date, delta):
 
         # checks if the date generated is a business day
         # and if not substitute it
-        result = previuos_business_day(result)
+        result = previous_business_day(result)
 
         if timeST == 'Y':
 
