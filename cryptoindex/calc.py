@@ -16,6 +16,7 @@ from . import data_setup
 
 # the function returns a series of value between "start" and "end" with
 # "delta" increase. Can be used for date date as well
+# the result is an iterable object of dates
 
 def perdelta(start, end, delta=relativedelta(months=3)):
 
@@ -28,6 +29,7 @@ def perdelta(start, end, delta=relativedelta(months=3)):
 # the function generates an array cointaing the first date of each quarter.
 # it starts counting from the start_date (01-01-2016) to the stop_date
 # (today as default) and returns a list of date in timestamp format
+# the result is an numpy array caontaining dates in timestamp format
 
 
 def start_q(start_date='01-01-2016', stop_date=None, timeST='Y', lag_adj=3600):
@@ -71,6 +73,7 @@ def start_q(start_date='01-01-2016', stop_date=None, timeST='Y', lag_adj=3600):
 # function that returns an array of timestamped date all with the exact
 # same HH:MM:SS; specifically the functions change the given date
 # (timestamp format) into 12:00 AM UTC
+# the output could be an array with date in timestamp format != 12:00 AM UTC
 
 def start_q_fix(start_q_array):
 
@@ -194,6 +197,7 @@ def board_meeting_day(start_date='12-21-2015', stop_date=None, delta=None,
 # no input is required, the function uses the above "board_day_meeting()"
 # function and presents the same default input
 
+
 def day_before_board(start_date='12-21-2015', stop_date=None, delta=None,
                      timeST='Y', lag_adj=3600):
 
@@ -285,6 +289,7 @@ def is_business_day(date):
 
 # function returns the first previous business day of the imput date
 # if the input date is not a business date
+# the output is a date as str 'mm-dd-yyyy' format
 
 def previous_business_day(date):
 
