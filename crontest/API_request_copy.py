@@ -1,11 +1,11 @@
-import requests
-from requests import get
 from datetime import *
-import pandas as pd
-import numpy as np
 from time import sleep
 
+import numpy as np
+import pandas as pd
+import requests
 from pymongo import MongoClient
+from requests import get
 
 # this file cointains all the API calls for each pricing source. Every script call the api,
 # downloads the data and stores them in mongoDB.
@@ -242,7 +242,6 @@ def kraken_ticker(Crypto, Fiat):
     return request_url
 
 
-
 #####################################################################################################
 ################################     BITTREX    #####################################################
 #####################################################################################################
@@ -258,7 +257,6 @@ def bittrex_ticker(Crypto, Fiat):
     request_url = entrypoint + key
 
     return request_url
-
 
 
 #####################################################################################################
@@ -424,7 +422,6 @@ def gemini_ticker(Crypto, Fiat):
 
     # bitstamp_df = pd.DataFrame(response, columns=header)
     # bitstamp_df = bitstamp_df.drop(columns = ['open', 'high', 'low', 'vwap', 'volume usd'])
-
 
     #####################################################################################################
     ################################    BITSTAMP    #####################################################
