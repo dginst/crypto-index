@@ -123,7 +123,7 @@ def next_start(start_date='01-01-2016', stop_date=None, timeST='Y'):
     return start_quarter
 
 
-# the function returns an array containing the stop_date of each quarter in epoch timestamp
+# the function returns an array containing the stop_date of each quarter in ts
 # each stop date is computed starting from the array resulting from the
 # function "start_q" that contain a list of start date for each quarter.
 # the start_q array resulting from the funtion is taken as input
