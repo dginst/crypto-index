@@ -367,7 +367,7 @@ daily_ewma_double_check = pd.DataFrame(daily_ewma_double_check,
 # downloading from mongoDB the current weights
 weights = mongo.query_mongo(db_name, coll_weights)
 
-# compute  the relative syntethic matrix
+# compute the relative syntethic matrix
 yesterday_rel_matrix = mongo.query_mongo(
     db_name, coll_rel_synt, {'Date': two_before_human[0]})
 yesterday_rel_matrix = yesterday_rel_matrix.drop(columns=['Date'])
@@ -459,16 +459,22 @@ synth_up = daily_rel_matrix[['Date', 'Time', 'BTC', 'ETH', 'XRP',
 synth_up = synth_up.to_dict(orient='records')
 collection_relative_synth.insert_many(synth_up)
 
+# uploading the collection of the reshaped divisor
+current_divisor['Date'] = yesterday_human
+current_divisor['Time'] = yesterday_TS
+div_res_up = current_divisor.to_dict(orient='records')
+collection_divisor_reshaped.insert_many(div_res_up)
+
 # put the index level raw on MongoDB
 raw_index_df['Date'] = yesterday_human
-raw_index_df['Time'] = str(today_TS)
+raw_index_df['Time'] = yesterday_TS
 raw_index_val_up = raw_index_df[['Date', 'Time', 'Index Value']]
 raw_index_val_up = raw_index_val_up.to_dict(orient='records')
 collection_index_raw.insert_many(raw_index_val_up)
 
 # put the index level 1000 on MongoDB
 daily_index_1000_df['Date'] = yesterday_human
-daily_index_1000_df['Time'] = str(today_TS)
+daily_index_1000_df['Time'] = yesterday_TS
 index_val_up = daily_index_1000_df[['Date', 'Time', 'Index Value']]
 index_val_up = index_val_up.to_dict(orient='records')
 collection_index_1000.insert_many(index_val_up)

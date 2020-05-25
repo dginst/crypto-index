@@ -88,7 +88,12 @@ collection_divisor_reshaped = db.index_divisor_reshaped
 # collection for the relative syntethic matrix
 db.index_synth_matrix.create_index([("id", -1)])
 collection_relative_synth = db.index_synth_matrix
-
+# collection for index level raw
+db.index_raw_level.create_index([("id", -1)])
+collection_index_raw = db.index_level_raw
+# collection for index level base 1000
+db.index_level_1000.create_index([("id", -1)])
+collection_index_1000 = db.index_level_1000
 
 # ################ DATE SETTINGS ########################
 
@@ -428,3 +433,84 @@ daily_index_1000 = np.array(
     yesterday_1000_index['Index Value']) * (1 + variation)
 daily_index_1000_df = pd.DataFrame(daily_index_1000, columns=['Index Value'])
 print(daily_index_1000_df)
+
+
+# ############ MONGO DB UPLOADS ############################################
+
+# put the daily crypto prices on MongoDB
+Crypto_Asset_Prices['Date'] = yesterday_human
+price_up = Crypto_Asset_Prices[['Date', 'Time', 'BTC', 'ETH', 'XRP',
+                                'LTC', 'BCH', 'EOS', 'ETC', 'ZEC',
+                                'ADA', 'XLM', 'XMR', 'BSV']]
+price_up = price_up.to_dict(orient='records')
+collection_price.insert_many(price_up)
+
+# put the daily crypto volumes on MongoDB
+Crypto_Asset_Volume['Date'] = yesterday_human
+volume_up = Crypto_Asset_Volume[['Date', 'Time', 'BTC', 'ETH', 'XRP',
+                                 'LTC', 'BCH', 'EOS', 'ETC', 'ZEC',
+                                 'ADA', 'XLM', 'XMR', 'BSV']]
+volume_up = volume_up.to_dict(orient='records')
+collection_volume.insert_many(volume_up)
+
+# put the daily return on MongoDB
+price_ret['Date'] = yesterday_human
+price_ret_up = price_ret[['Date', 'Time', 'BTC', 'ETH', 'XRP',
+                          'LTC', 'BCH', 'EOS', 'ETC', 'ZEC',
+                          'ADA', 'XLM', 'XMR', 'BSV']]
+price_ret_up = price_ret_up.to_dict(orient='records')
+collection_price_ret.insert_many(price_ret_up)
+
+# put the new logic row on MongoDB
+
+# put the new second row on MongoDB
+
+# put the EWMA dataframe on MongoDB
+daily_ewma['Date'] = yesterday_human
+daily_ewma['Time'] = str(today_TS)
+ewma_df_up = daily_ewma[['Date', 'Time', 'BTC', 'ETH', 'XRP',
+                         'LTC', 'BCH', 'EOS', 'ETC', 'ZEC',
+                         'ADA', 'XLM', 'XMR', 'BSV']]
+ewma_df_up = ewma_df_up.to_dict(orient='records')
+collection_EWMA.insert_many(ewma_df_up)
+
+# put the double checked EWMA on MongoDB
+daily_ewma_double_check['Date'] = yesterday_human
+daily_ewma_double_check['Time'] = str(today_TS)
+double_EWMA_up = daily_ewma_double_check[[
+    'Date', 'Time', 'BTC', 'ETH', 'XRP',
+    'LTC', 'BCH', 'EOS', 'ETC', 'ZEC',
+    'ADA', 'XLM', 'XMR', 'BSV']]
+double_EWMA_up = double_EWMA_up.to_dict(orient='records')
+collection_EWMA_check.insert_many(double_EWMA_up)
+
+# put the relative synth matrix on MongoDB
+daily_synt_rel['Date'] = yesterday_human
+daily_synt_rel['Time'] = str(today_TS)
+synth_up = daily_synt_rel[['Date', 'Time', 'BTC', 'ETH', 'XRP',
+                           'LTC', 'BCH', 'EOS', 'ETC', 'ZEC',
+                           'ADA', 'XLM', 'XMR', 'BSV']]
+synth_up = synth_up.to_dict(orient='records')
+collection_relative_synth.insert_many(synth_up)
+
+
+# uploading the collection of the reshaped divisor
+current_divisor = new_divisor_df['Divisor Value']
+current_divisor['Date'] = yesterday_human
+current_divisor['Time'] = yesterday_TS
+div_res_up = current_divisor.to_dict(orient='records')
+collection_divisor_reshaped.insert_many(div_res_up)
+
+# put the index level raw on MongoDB
+raw_index_df['Date'] = yesterday_human
+raw_index_df['Time'] = yesterday_TS
+raw_index_val_up = raw_index_df[['Date', 'Time', 'Index Value']]
+raw_index_val_up = raw_index_val_up.to_dict(orient='records')
+collection_index_raw.insert_many(raw_index_val_up)
+
+# put the index level 1000 on MongoDB
+daily_index_1000_df['Date'] = yesterday_human
+daily_index_1000_df['Time'] = yesterday_TS
+index_val_up = daily_index_1000_df[['Date', 'Time', 'Index Value']]
+index_val_up = index_val_up.to_dict(orient='records')
+collection_index_1000.insert_many(index_val_up)
