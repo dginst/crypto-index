@@ -61,7 +61,7 @@ for i, single_date in enumerate(date):
         key_curr_vector, date[i])
     # put a sllep time in order to do not overuse API connection
     time.sleep(0.05)
-
+    print(single_date_ex_matrix)
     # put all the downloaded data into a DafaFrame
     if Exchange_Rate_List.size == 0:
 

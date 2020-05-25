@@ -64,7 +64,7 @@ collection_raw = db.CW_rawdata
 # ################# downloading and storing part ################
 
 for Crypto in Crypto_Asset:
-
+    print(Crypto)
     currencypair_array = []
     for i in pair_array:
         currencypair_array.append(Crypto.lower() + i)
