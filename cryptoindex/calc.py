@@ -46,7 +46,7 @@ def start_q(start_date='01-01-2016', stop_date=None, timeST='Y', lag_adj=3600):
         stop_date = datetime.now().strftime('%m-%d-%Y')
         stop_date = datetime.strptime(stop_date, '%m-%d-%Y')
 
-    else:
+    elif type(stop_date) == str:
         stop_date = datetime.strptime(stop_date, '%m-%d-%Y')
 
     start_day_arr = np.array([])
@@ -98,11 +98,8 @@ def next_start(start_date='01-01-2016', stop_date=None, timeST='Y'):
 
     day_in_sec = 86400
 
-    try:
+    if type(start_date) == str:
         start_date = datetime.strptime(start_date, '%m-%d-%Y')
-
-    except TypeError:
-        pass
 
     if stop_date is None:
 
@@ -220,12 +217,8 @@ def day_before_board(start_date='12-21-2015', stop_date=None, delta=None,
 
 def quarterly_period(start_date='01-01-2016', stop_date=None, timeST='Y'):
 
-    try:
-
+    if type(start_date) == str:
         start_date = datetime.strptime(start_date, '%m-%d-%Y')
-
-    except TypeError:
-        pass
 
     if stop_date is None:
 
@@ -255,11 +248,8 @@ def next_quarterly_period(start_date='01-01-2016', stop_date=None,
 
     # if start_date.isnumeric() is True:
 
-    try:
+    if type(start_date) == str:
         start_date = datetime.strptime(start_date, '%m-%d-%Y')
-
-    except TypeError:
-        pass
 
     if stop_date is None:
 

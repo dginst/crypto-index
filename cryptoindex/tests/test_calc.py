@@ -1,7 +1,7 @@
 "Tests for `cryptoindex.calc` module."
 
 # standard library import
-from datetime import datetime
+from datetime import datetime, tzinfo, timezone
 
 # third party import
 import numpy as np
@@ -87,12 +87,27 @@ def test_start_q_fix():
 def test_start_q():
 
     # str_date = ['01-01-2019', '04-01-2019', '07-01-2019', '10-01-2019']
-
     # str_date in epoch timestamp
     ts_date = np.array([1.5463008e+09, 1.5540768e+09,
                         1.5619392e+09, 1.5698880e+09])
 
     ts_gen = calc.start_q('01-01-2019', '01-01-2020')
+
+    assert np.array_equal(ts_date, ts_gen)
+
+    # checking if without declaring the second positional argument of the
+    # start_q function, the function is still working
+    start = datetime.strptime('01-01-2019', '%m-%d-%Y')
+    today = datetime.now().strftime('%m-%d-%Y')
+    today = datetime.strptime(today, '%m-%d-%Y')
+
+    ts_date = calc.perdelta(start, today)
+
+    # converting the perdelta-generated array of dates tu utc-timestamp
+    ts_date = np.array([x.replace(tzinfo=timezone.utc).timestamp()
+                        for x in ts_date])
+
+    ts_gen = calc.start_q(start)
 
     assert np.array_equal(ts_date, ts_gen)
 
@@ -131,6 +146,22 @@ def test_board_meeting_day():
 
     assert np.array_equal(ts_bmd_days, ts_gen)
 
+    # checking if without declaring the second positional argument of the
+    # board_meeting_day function, the function is still working
+    start = datetime.strptime('01-01-2019', '%m-%d-%Y')
+    today = datetime.now().strftime('%m-%d-%Y')
+    today = datetime.strptime(today, '%m-%d-%Y')
+
+    ts_date = calc.perdelta(start, today)
+
+    # converting the perdelta-generated array of dates tu utc-timestamp
+    ts_date = np.array([x.replace(tzinfo=timezone.utc).timestamp()
+                        for x in ts_date])
+    start = '01-01-2019'
+    ts_gen = calc.board_meeting_day(start)
+
+    assert np.array_equal(ts_date, ts_gen)
+
 
 def test_day_before_board():
 
@@ -165,7 +196,6 @@ def test_next_quarterly_peiod():
                    ]
 
     test_range = calc.next_quarterly_period(start_date, stop_date)
-
     # creating a list from next_quarterly_period
     test_range = [(x, y) for x, y in test_range]
 
@@ -182,6 +212,26 @@ def test_next_start():
     st_gen = calc.next_start(start_date, stop_date)
 
     assert np.array_equal(st_date, st_gen)
+
+    # checking if without declaring the second positional argument of the
+    # next_start function, the function is still working
+    start = datetime.strptime('01-01-2019', '%m-%d-%Y')
+    today = datetime.now().strftime('%m-%d-%Y')
+    today = datetime.strptime(today, '%m-%d-%Y')
+
+    day_in_sec = 86400
+    # converting the perdelta-generated array of dates tu utc-timestamp
+    start_quarter = calc.start_q_fix(calc.start_q(start, today))
+    stop_quarter = calc.stop_q(start_quarter)
+
+    next_start_date = int(stop_quarter[len(stop_quarter) - 1]) + day_in_sec
+
+    ts_date = np.append(start_quarter, next_start_date)
+
+    start = '01-01-2019'
+    ts_gen = calc.next_start(start)
+
+    assert np.array_equal(ts_date, ts_gen)
 
 # ###########################################################################
 
