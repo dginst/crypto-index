@@ -8,7 +8,6 @@ import json
 import os.path
 import sys
 import time
-from datetime import *
 from datetime import datetime
 from pathlib import Path
 
