@@ -127,7 +127,7 @@ quarterly_date = calc.quarterly_period()
 # defining the dictionary for the MongoDB query
 query_dict = {"Time": str(yesterday_TS)}
 # retriving the needed information on MongoDB
-daily_matrix = mongo.query_mongo(db_name, coll_data, query_dict)
+daily_matrix = mongo.query_mongo2(db_name, coll_data, query_dict)
 
 # initialize the matrices that will contain the prices
 # and volumes of all the cryptoasset
