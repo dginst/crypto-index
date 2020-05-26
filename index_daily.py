@@ -322,7 +322,7 @@ Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns=Crypto_Asset)
 Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns=Crypto_Asset)
 
 # compute the price return of the day
-two_before_price = mongo.query_mongo(
+two_before_price = mongo.query_mongo2(
     db_name, coll_price, {"Time": two_before_TS})
 two_before_price = two_before_price.drop(columns=['Time', 'Date'])
 return_df = two_before_price.append(Crypto_Asset_Prices)
@@ -341,7 +341,7 @@ print(price_ret)
 
 
 # computing the Exponential Weighted Moving Average of the day
-hist_volume = mongo.query_mongo(db_name, coll_volume)
+hist_volume = mongo.query_mongo2(db_name, coll_volume)
 hist_volume = hist_volume.drop(columns=['Date'])
 hist_volume = hist_volume.append(Crypto_Asset_Volume)
 daily_ewma = calc.daily_ewma_crypto_volume(hist_volume, Crypto_Asset)
@@ -349,11 +349,11 @@ daily_ewma = calc.daily_ewma_crypto_volume(hist_volume, Crypto_Asset)
 
 
 # downloading from mongoDB the current logic matrices (1 e 2)
-logic_one = mongo.query_mongo(db_name, coll_log1)
+logic_one = mongo.query_mongo2(db_name, coll_log1)
 # taking only the logic value referred to the current period
 current_logic_one = logic_one.iloc[[len(logic_one['Date']) - 2]]
 current_logic_one = current_logic_one.drop(columns=['Date', 'Time'])
-logic_two = mongo.query_mongo(db_name, coll_log2)
+logic_two = mongo.query_mongo2(db_name, coll_log2)
 # taking only the logic value referred to the current period
 current_logic_two = logic_two.iloc[[len(logic_two['Date']) - 2]]
 current_logic_two = current_logic_two.drop(columns=['Date', 'Time'])
@@ -368,7 +368,7 @@ daily_ewma_double_check = pd.DataFrame(daily_ewma_double_check,
 weights = mongo.query_mongo(db_name, coll_weights)
 
 # compute the relative syntethic matrix
-yesterday_rel_matrix = mongo.query_mongo(
+yesterday_rel_matrix = mongo.query_mongo2(
     db_name, coll_rel_synt, {'Date': two_before_human[0]})
 yesterday_rel_matrix = yesterday_rel_matrix.drop(columns=['Date'])
 daily_return = np.array(price_ret.loc[:, Crypto_Asset])
@@ -376,7 +376,7 @@ daily_rel_matrix = (1 + daily_return) * np.array(yesterday_rel_matrix)
 daily_rel_matrix = pd.DataFrame(daily_rel_matrix, columns=Crypto_Asset)
 
 # daily index value computation
-current_divisor = mongo.query_mongo(
+current_divisor = mongo.query_mongo2(
     db_name, coll_divisor_res, {'Date': two_before_human[0]})
 curr_div_val = np.array(current_divisor['Divisor Value'])
 index_numerator = np.array(
@@ -387,7 +387,7 @@ daily_index_value = np.array(num)/curr_div_val
 raw_index_df = pd.DataFrame(daily_index_value, columns=['Index Value'])
 
 # retrieving from mongoDB the yesterday value of the raw index
-yesterday_raw_index = mongo.query_mongo(
+yesterday_raw_index = mongo.query_mongo2(
     db_name, coll_raw_index, {'Date': two_before_human[0]})
 yesterday_raw_index = yesterday_raw_index.drop(columns=['Date', 'Time'])
 raw_curr = yesterday_raw_index.append(raw_index_df)
@@ -395,7 +395,7 @@ variation = raw_curr.pct_change()
 variation = np.array(variation.iloc[1])
 
 # retrieving from mongoDB the yesterday value of the raw index
-yesterday_1000_index = mongo.query_mongo(
+yesterday_1000_index = mongo.query_mongo2(
     db_name, coll_1000_index,  {'Date': two_before_human[0]})
 daily_index_1000 = np.array(
     yesterday_1000_index['Index Value']) * (1 + variation)
