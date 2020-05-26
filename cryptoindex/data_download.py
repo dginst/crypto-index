@@ -2,7 +2,7 @@
 import io
 import os
 import time
-from datetime import *
+from datetime import datetime
 
 import numpy as np
 
