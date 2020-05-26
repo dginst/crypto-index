@@ -39,7 +39,9 @@ start_date = '01-01-2016'
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
-today_TS = int(datetime.strptime(today, '%Y-%m-%d').timestamp()) + 3600
+today_TS = int(datetime.strptime(today, '%Y-%m-%d').timestamp()) + 3600*2
+yesterday_TS = today_TS - 86400
+print(yesterday_TS)
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
@@ -68,14 +70,17 @@ db = connection.index
 db.converted_data.drop()
 db.CW_final_data.drop()
 db.stable_coin_rates.drop()
+db.exchange_pair_key.drop()
 
 # creating the empty collection cleandata within the database index
 db.CW_final_data.create_index([("id", -1)])
 db.converted_data.create_index([("id", -1)])
 db.stable_coin_rates.create_index([("id", -1)])
+db.exchange_pair_key.create_index([("id", -1)])
 collection_stable = db.stable_coin_rates
 collection_final_data = db.CW_final_data
 collection_converted = db.converted_data
+collection_key = db.exchange_pair_key
 
 # ########## USDC/USD and USDT/USD computation #####################
 
@@ -327,6 +332,44 @@ end = time.time()
 
 print("This script took: {} seconds".format(float(end - start)))
 
+# ############### logic matrix of pair ############################
+
+# define database name and collection name
+db_name = "index"
+collection_converted_data = "converted_data"
+
+# retriving the needed information on MongoDB
+q_dict = {'Time': str(yesterday_TS)}
+matrix_last_day = mongo.query_mongo2(
+    db_name, collection_converted_data, q_dict)
+old_head = matrix_last_day.columns
+matrix_last_day['key'] = matrix_last_day['Exchange'] + matrix_last_day['Pair']
+matrix_last_day['logic'] = 1
+matrix_last_day = matrix_last_day.drop(columns=old_head)
+
+# creating the list containing all the possible exchange-pair key
+all_key = []
+for exc in Exchanges:
+
+    for cry in Crypto_Asset:
+
+        for i in pair_array:
+
+            all_key.append(exc + '&' + cry.lower() + i)
+
+# creating the logic check dataframe
+header = ['key', 'logic_value']
+key_df = pd.DataFrame(columns=header)
+key_df['key'] = all_key
+# key_df['logic_value'] = np.zeros(len(all_key) - 1)
+
+merged = pd.merge(key_df, matrix_last_day, on='key', how='left')
+merged.fillna(0, inplace=True)
+
+key_df['logic_value'] = merged['logic']
+
+data = key_df.to_dict(orient='records')
+collection_key.insert_many(data)
 
 # ################ ZERO VOLUMES VALUE FILLING #####################
 

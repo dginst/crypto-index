@@ -1,8 +1,7 @@
 # standard library import
 import io
-import os
 import time
-from datetime import *
+from datetime import datetime
 
 import numpy as np
 
@@ -15,7 +14,7 @@ from requests import get
 from . import data_setup
 from . import mongo_setup as mongo
 
-################################## ECB rates download function ###########################################
+# #################### ECB rates download function ###################
 
 # function that downloads the exchange rates from the ECB web page and returns a matrix (pd.DataFrame) that
 # indicates: on the first column the date, on the second tha exchange rate vakue eutro based,
@@ -26,14 +25,15 @@ from . import mongo_setup as mongo
 # Start_Period has to be in YYYY-MM-DD format
 
 
-def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period=None, freq='D',
-                        curr_den='EUR', type_rates='SP00', series_var='A'):
+def ECB_rates_extractor(key_curr_vector, Start_Period, End_Period=None,
+                        freq='D', curr_den='EUR',
+                        type_rates='SP00', series_var='A'):
 
     # reforming the data into the correct format
     Start_Period = data_setup.date_reformat(Start_Period, '-', 'YYYY-MM-DD')
 
     # set end_period = start_period if empty, so that is possible to perform daily download
-    if End_Period == None:
+    if End_Period is None:
         End_Period = Start_Period
     else:
         End_Period = data_setup.date_reformat(End_Period, '-', 'YYYY-MM-DD')

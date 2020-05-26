@@ -137,27 +137,28 @@ import cryptoindex.data_download as data_download
 head = ['Time', 'Val']
 head1 = ['Time', 'letter']
 a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-b = ['a', 'b', 'c', 'd', 'f', 'g', 'h', 'i', 'l', 'm']
+b = ['aa&', 'b&', 'cccc&', 'dggg&', 'f&hh',
+     'gjjj&', 'f&h', 'u&i', 'lu&h', '8&m']
 g = [1, 5, 8, 9]
 h = ['ciao', 'x', 'y', 'z']
 c = np.column_stack((a, b))
 p = np.column_stack((g, h))
 d = pd.DataFrame(c, columns=head)
 e = pd.DataFrame(p, columns=head1)
-zer = np.zeros_like(np.array(e))
-header = e.columns
-logic = np.column_stack((1, 2))
-zer = pd.DataFrame(zer, columns=header)
-zer.loc[:, :] = logic
-print(header)
-print(d)
-print(e)
-print(zer)
-print(zer.loc[1:, :])
+# zer = np.zeros_like(np.array(e))
+# header = e.columns
+# logic = np.column_stack((1, 2))
+# zer = pd.DataFrame(zer, columns=header)
+# zer.loc[:, :] = logic
+# print(header)
+# print(d)
+# print(e)
+# print(zer)
+# print(zer.loc[1:, :])
 
 # # print(list(d['Time'].unique()))
-# merged = pd.merge(d, e, on='Time', how='left')
-# print(merged)
+merged = pd.merge(d, e, on='Time', how='left')
+print(merged)
 # # k = e.apply(lambda x: x.nunique())
 # # print(type(k))
 # # index_ = list(k.index)
@@ -168,3 +169,12 @@ print(zer.loc[1:, :])
 # d['Time'] = pd.to_numeric(d['Time'])
 # d['gfgfg'] = d['Time'].cumsum()
 # print(d)
+m = 'ciao&bello'
+s = m[:m.find('&')]
+l = m[m.find('&') + 1:]
+print(s)
+print(l)
+ffffff = merged['Val'].str.split('&', expand=True)
+#merged['asdf'] = merged['altro'].str(0)
+print(merged)
+print(ffffff[0])
