@@ -242,9 +242,9 @@ def date_reformat(date_to_check, separator='-', order='MM-DD-YYYY'):
     return return_date
 
 
-#####################################################################################################
+# ###########################################################################
 
-################################### DATA FIXING FUNCTIONS ########################################
+# ########################## DATA FIXING FUNCTIONS ##########################
 
 
 # function that returns a list containing the elements of list_1 (bigger one) not included in list_2 (smaller one)
@@ -785,7 +785,7 @@ def ECB_daily_setup(key_curr_vector, timeST='N'):
     single_date_ex_matrix = mongo.query_mongo(database, collection, query)
 
     # check if rates exist in the specified date
-    if Check_null(single_date_ex_matrix) == False:
+    if Check_null(single_date_ex_matrix) is False:
 
         # find the USD/EUR rates useful for conversions
         cambio_USD_EUR = float(np.array(
@@ -1034,7 +1034,6 @@ def CW_series_fix_missing2(broken_matrix, exchange, crypto_fiat_pair,
 
     for element in exc_with_pair:
 
-        # print(element)
         # reducing the total matrix selecting only the element of the
         # selected exchange
         ex_matrix = matrix.loc[matrix.Exchange == element]
@@ -1111,8 +1110,6 @@ def CW_series_fix_missing2(broken_matrix, exchange, crypto_fiat_pair,
     for element in missing_item_time:
 
         prev_val = merged.loc[merged.Time == int(element) - 86400]
-        # print('prev val')
-        # print(prev_val)
 
         price_var = float(fixing_price_df.loc[fixing_price_df['missing date'] ==
                                               element, 'weighted'])
@@ -1142,31 +1139,37 @@ def CW_series_fix_missing2(broken_matrix, exchange, crypto_fiat_pair,
 # variations as seconda column and date as first
 
 
-def substitute_finder2(broken_array, reference_array, where_to_lookup, position):
+def substitute_finder2(broken_array, reference_array,
+                       where_to_lookup, position):
 
-    # find the elements of ref array not included in broken array (the one to check)
+    # find the elements of ref array not included in
+    # broken array (the one to check)
     missing_item = Diff(reference_array, broken_array)
     missing_item.sort()
     variations = np.array([])
     volumes = np.array([])
 
     for element in missing_item:
-        # for each missing element try to find it in where_to_lookup, if KeyError occurred
-        # meaning the searched item is not found, then append zero
+        # for each missing element try to find it in where_to_lookup,
+        # if KeyError occurred meaning the searched item is not found,
+        # then append zero
         try:
 
             today_value = float(
                 where_to_lookup[where_to_lookup['Time'] == element][position])
 
             yesterday_value = float(
-                where_to_lookup[where_to_lookup['Time'] == element - 86400][position])
+                where_to_lookup[where_to_lookup['Time'] ==
+                                element - 86400][position])
 
             numerator = today_value - yesterday_value
-            variation = np.divide(numerator, yesterday_value, out=np.zeros_like(
-                numerator), where=numerator != 0.0)
+            variation = np.divide(numerator, yesterday_value,
+                                  out=np.zeros_like(numerator),
+                                  where=numerator != 0.0)
             # consider crytpo vol
             volume = float(
-                where_to_lookup[where_to_lookup['Time'] == element]['Pair Volume'])
+                where_to_lookup[where_to_lookup['Time'] ==
+                                element]['Pair Volume'])
             variation = variation * volume
             variations = np.append(variations, variation)
             volumes = np.append(volumes, volume)
@@ -1185,3 +1188,81 @@ def substitute_finder2(broken_array, reference_array, where_to_lookup, position)
     volume_matrix = np.column_stack((missing_item, volumes))
 
     return variation_matrix, volume_matrix
+
+# add descr
+
+
+def daily_fix_missing(curr_df, tot_curr_df, tot_prev_df):
+
+    exchange = curr_df['Exchange']
+    pair = curr_df['Pair']
+
+    # select a sub-df containing only the pair of interest of the previous
+    # and current dataframes
+    pair_prev_df = tot_prev_df.loc[tot_prev_df.Pair == pair]
+    pair_curr_df = tot_curr_df.loc[tot_curr_df.Pair == pair]
+
+    # find the list of exchange that actually trade the crypto-fiat pair
+    exc_with_pair = list(pair_prev_df['Exchange'].unique())
+    exc_with_pair.remove(exchange)
+
+    fixing_price = np.array([])
+    fixing_p_vol = np.array([])
+
+    for el in exc_with_pair:
+
+        # find a subdataframe related with the single exchange of the loop
+        ex_pair_prev_df = pair_prev_df.loc[pair_prev_df.Exchange == el]
+        ex_pair_curr_df = pair_curr_df.loc[pair_curr_df.Exchange == el]
+
+        weight_var, volume = daily_sub_finder(ex_pair_curr_df, ex_pair_prev_df)
+
+        if fixing_price.size == 0:
+
+            fixing_price = weight_var
+            fixing_p_vol = volume
+
+        else:
+
+            fixing_price = np.column_stack((fixing_price, weight_var))
+            fixing_p_vol = np.column_stack((fixing_p_vol, volume))
+
+    # defining the dataframes containing the variations of price and volume
+    fixing_price_df = pd.DataFrame(fixing_price)
+    fixing_p_vol_df = pd.DataFrame(fixing_p_vol)
+
+    # compute row sum
+    fixing_price_df['sum'] = fixing_price_df.sum(axis=1)
+    fixing_p_vol_df['sum'] = fixing_p_vol_df.sum(axis=1)
+
+    # computing weighted variation
+    fixing_price_df['weighted'] = fixing_price_df['sum'] / \
+        fixing_p_vol_df['sum']
+    fixing_price_df.fillna(0, inplace=True)
+
+    price_var = float(fixing_price_df['weighted'])
+
+    return price_var
+
+
+# add descr
+
+def daily_sub_finder(curr_df, prev_df):
+
+    # find the price of the two days
+    curr_price = float(curr_df['Close Price'])
+    prev_price = float(prev_df['Close Price'])
+
+    # find the volume of the two days
+    curr_vol = float(curr_df['Pair Volume'])
+
+    # find the "Close Price" variation
+    numerator = curr_price - prev_price
+    variation = np.divide(numerator, prev_price,
+                          out=np.zeros_like(numerator),
+                          where=numerator != 0.0)
+
+    # multiply the variation and the current volume
+    weight_var = variation * curr_vol
+
+    return weight_var, curr_vol

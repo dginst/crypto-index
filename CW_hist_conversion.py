@@ -343,7 +343,8 @@ q_dict = {'Time': str(yesterday_TS)}
 matrix_last_day = mongo.query_mongo2(
     db_name, collection_converted_data, q_dict)
 old_head = matrix_last_day.columns
-matrix_last_day['key'] = matrix_last_day['Exchange'] + matrix_last_day['Pair']
+matrix_last_day['key'] = matrix_last_day['Exchange'] + \
+    '&' + matrix_last_day['Pair']
 matrix_last_day['logic'] = 1
 matrix_last_day = matrix_last_day.drop(columns=old_head)
 

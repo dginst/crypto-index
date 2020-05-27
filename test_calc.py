@@ -139,7 +139,7 @@ head1 = ['Time', 'letter']
 a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 b = ['aa&', 'b&', 'cccc&', 'dggg&', 'f&hh',
      'gjjj&', 'f&h', 'u&i', 'lu&h', '8&m']
-g = [1, 5, 8, 9]
+g = [1, 50, 88, 99]
 h = ['ciao', 'x', 'y', 'z']
 c = np.column_stack((a, b))
 p = np.column_stack((g, h))
@@ -169,12 +169,7 @@ print(merged)
 # d['Time'] = pd.to_numeric(d['Time'])
 # d['gfgfg'] = d['Time'].cumsum()
 # print(d)
-m = 'ciao&bello'
-s = m[:m.find('&')]
-l = m[m.find('&') + 1:]
-print(s)
-print(l)
-ffffff = merged['Val'].str.split('&', expand=True)
-#merged['asdf'] = merged['altro'].str(0)
+merged.fillna('NaN', inplace=True)
 print(merged)
-print(ffffff[0])
+aaa = merged.loc[merged['letter'] != 'NaN']
+print(aaa)
