@@ -33,15 +33,16 @@ import cryptoindex.mongo_setup as mongo
 
 start = time.time()
 
-# ############# initial settings #############################
+# ################## initial settings #####################################
 
 start_date = '01-01-2016'
-
+hour_in_sec = 3600
+day_in_sec = 86400
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
-today_TS = int(datetime.strptime(today, '%Y-%m-%d').timestamp()) + 3600*2
-yesterday_TS = today_TS - 86400
-print(yesterday_TS)
+today_TS = int(datetime.strptime(
+    today, '%Y-%m-%d').timestamp()) + hour_in_sec * 2
+yesterday_TS = today_TS - day_in_sec
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
@@ -159,8 +160,8 @@ bittrex_weighted = usdt_bittrex['rate'] * usdt_bittrex['Pair Volume']
 total_weights = usdt_kraken['Pair Volume'] + \
     usdt_bittrex['Pair Volume'] + usdt_poloniex['Pair Volume']
 
-usdt_rates = (kraken_weighted + bittrex_weighted +
-              poloniex_weighted) / total_weights
+usdt_rates = (kraken_weighted + bittrex_weighted
+              + poloniex_weighted) / total_weights
 
 usdt_rates = 1 / usdt_rates
 
@@ -219,8 +220,8 @@ coinbase_weighted = usdc_coinbase['rate'] * usdc_coinbase['Pair Volume']
 total_weights = usdc_kraken['Pair Volume'] + \
     usdc_coinbase['Pair Volume'] + usdc_poloniex['Pair Volume']
 
-usdc_rates = (kraken_weighted + coinbase_weighted +
-              poloniex_weighted) / total_weights
+usdc_rates = (kraken_weighted + coinbase_weighted
+              + poloniex_weighted) / total_weights
 usdc_rates = 1 / usdc_rates
 
 # tranforming the data structure into a dataframe
@@ -406,6 +407,8 @@ for Crypto in Crypto_Asset:
 
             print(cp)
             cp_matrix = ex_matrix.loc[ex_matrix.Pair == cp]
+            head = cp_matrix.columns
+            final_matrix = pd.DataFrame(columns=head)
             # checking if the matrix is not empty
             try:
 
@@ -413,13 +416,7 @@ for Crypto in Crypto_Asset:
 
                     cp_matrix = data_setup.fix_zero_value(cp_matrix)
 
-                try:
-
                     final_matrix = final_matrix.append(cp_matrix)
-
-                except:
-
-                    final_matrix = cp_matrix
 
             except AttributeError:
                 pass
