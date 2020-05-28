@@ -92,9 +92,9 @@ collection = "CW_cleandata"
 
 # taking BTC/USD pair historical
 first_query = {'Pair': 'btcusd', 'Exchange': 'kraken'}
-coinbase_call = mongo.query_mongo2(database, collection, first_query)
-price_df = coinbase_call[['Close Price']]
-volume_df = coinbase_call[['Pair Volume']]
+first_call = mongo.query_mongo2(database, collection, first_query)
+price_df = first_call[['Close Price']]
+volume_df = first_call[['Pair Volume']]
 price_df = price_df.rename(columns={'Close Price': 'kraken'})
 volume_df = volume_df.rename(columns={'Pair Volume': 'kraken'})
 Exchanges.remove('kraken')
@@ -102,11 +102,16 @@ Exchanges.remove('kraken')
 for exchange in Exchanges:
 
     query = {'Pair': 'btcusd', 'Exchange': exchange}
-    single_ex = mongo.query_mongo2(database, collection)
-    single_price = single_ex['Close Price']
-    single_vol = single_ex['Pair Volume']
-    price_df[exchange] = single_price
-    volume_df[exchange] = single_vol
+    single_ex = mongo.query_mongo2(database, collection, query)
+
+    try:
+        single_price = single_ex['Close Price']
+        single_vol = single_ex['Pair Volume']
+        price_df[exchange] = single_price
+        volume_df[exchange] = single_vol
+
+    except TypeError:
+        pass
 
 
 num = (price_df * volume_df).sum(axis=1)
@@ -114,7 +119,7 @@ den = volume_df.sum(axis=1)
 
 average_usd = num / den
 average_df = pd.DataFrame(average_usd, columns=['average usd'])
-average_df['Time'] = coinbase_call['Time']
+average_df['Time'] = first_call['Time']
 average_df = average_df.replace([np.inf, -np.inf], np.nan)
 average_df.fillna(0, inplace=True)
 
@@ -169,9 +174,9 @@ usdt_rates.fillna(0, inplace=True)
 usdt_rates['Currency'] = np.zeros(len(usdt_rates['Rate']))
 usdt_rates['Currency'] = [str(x).replace('0.0', 'USDT/USD')
                           for x in usdt_rates['Currency']]
-usdt_rates['Time'] = coinbase_call['Time']
+usdt_rates['Time'] = first_call['Time']
 usdt_rates['Standard Date'] = data_setup.timestamp_to_human(
-    coinbase_call['Time'])
+    first_call['Time'])
 
 # USDT mongoDB upload
 usdt_data = usdt_rates.to_dict(orient='records')
@@ -228,9 +233,9 @@ usdc_rates.fillna(0, inplace=True)
 usdc_rates['Currency'] = np.zeros(len(usdc_rates['Rate']))
 usdc_rates['Currency'] = [str(x).replace('0.0', 'USDC/USD')
                           for x in usdc_rates['Currency']]
-usdc_rates['Time'] = coinbase_call['Time']
+usdc_rates['Time'] = first_call['Time']
 usdc_rates['Standard Date'] = data_setup.timestamp_to_human(
-    coinbase_call['Time'])
+    first_call['Time'])
 
 # USDC mongoDB upload
 usdc_data = usdc_rates.to_dict(orient='records')
