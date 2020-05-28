@@ -1,10 +1,40 @@
-# va messo check con CW clean del giorno prima. prendo tutti le key formtae
-# da crypto-fiat-exchange e faccio il check sui dati del giorno.
-# se ci sono dati nuovi vediamo il da farsi
-# se mancano dati (seri morta) lo individuo e metto 0
+# #############################################################################
+# The script manages the daily raw data downloaded from CryptoWatch and upload
+# the fixed values on "CW_cleandata" collection on MongoDB
+# 1) Computing the "Pair Volume" information
+# the script artificially computes the "Pair Volume" information multiplying
+# the "Close Price" and the "Crypto Volume"; the data is uploaded on the
+# MongoDB collection 'volume_checked_data'
+# 2) Daily data management
+# The main rules for the manipulation of raw data are the followings:
+# - check if the daily downloaded data contains all the crypto-fiat couples
+#   that are present in the historical series; the check is performed using
+#   the collection "exchange_pair_key" that contains a list of all possible
+#   keys (formed by 'exchange' + '&' + 'cryptofiat') and a related logic value
+#   (1 if the historical series exists, 0 if not):
+#   - DEAD KEYS --> the script may find that one or more existing keys
+#     (logic value 1) are not present un the daily downloaded data;
+#     the reason may be that the the key is no longer traded and, for the
+#     sake of equal matrix dimension, an artificial dataframe with 0 values
+#     is uploaded on MongoDB;
+#   - NEW KEYS --> the script may find that the downloaded data presents one
+#     or more keys that have not been traded in the past (logic value 0);
+#     for all the new keys the collection "exchange_pair_key" is updated
+#     (logic value from 0 to 1) and is creted an artificial historical
+#     series with 0 values from 01-01-2016 to "yesterday"
+# - compare the previous day value for all the keys in which the script put
+#   0 in order to manage a potential dead series:
+#   - if the previous day "Close Price" is 0, then nothing changes
+#   - if the previous day "Close Price" is != 0 then the script computes
+#     the weighted average variation of the same crypto-fiat pair on others
+#     exchanges and apply the computed variation to the previous day "Close
+#     Price" obtaining an artificial "Close Price";
+#    - N.B. Pair Volume ad Crypto Volume are not fixed
+# Once the data has been managed the script put the daily data on MongoDB
+# in the collection "CW_cleandata"
+# ############################################################################
 
 # standard library import
-import time
 from datetime import datetime
 
 # third party import
