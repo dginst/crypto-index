@@ -79,15 +79,19 @@ collection_volume_check = "volume_checked_data"
 
 # ############################ missing days check #############################
 
-# this section allows to check if CW_clean data comtains the new values of the
-# day. the check is based on a 5-days period and allows
-# set start_period
+# this section allows to check if CW_clean data contains the new values of the
+# day, the check is based on a 5-days period and allows
+
+hour_in_sec = 3600
+day_in_sec = 86400
 Start_Period = '01-01-2016'
+
 # set today
 today = datetime.now().strftime('%Y-%m-%d')
-today_TS = int(datetime.strptime(today, '%Y-%m-%d').timestamp()) + 3600*2
-yesterday_TS = today_TS - 86400
-two_before_TS = yesterday_TS - 86400
+today_TS = int(datetime.strptime(
+    today, '%Y-%m-%d').timestamp()) + hour_in_sec * 2
+yesterday_TS = today_TS - day_in_sec
+two_before_TS = yesterday_TS - day_in_sec
 
 # defining the array containing all the date from start_period until today
 date_complete_int = data_setup.timestamp_gen(Start_Period)
@@ -121,7 +125,7 @@ if date_to_add != []:
             [date_to_add[0]], date_format='%m-%d-%Y')
         start_date = start_date[0]
         end_date = data_setup.timestamp_to_human(
-            [date_to_add[len(date_to_add)-1]], date_format='%m-%d-%Y')
+            [date_to_add[len(date_to_add) - 1]], date_format='%m-%d-%Y')
         end_date = end_date[0]
 
     else:
@@ -247,12 +251,12 @@ if new_key.empty is False:
         new_price = new_key.loc[new_key.key == key, 'Close Price']
         new_p_vol = new_key.loc[new_key.key == key, 'Pair Volume']
         new_c_vol = new_key.loc[new_key.key == key, 'Crypto Volume']
-        key_hist_df.loc[key_hist_df.Time ==
-                        yesterday_TS, 'Close Price'] = new_price
-        key_hist_df.loc[key_hist_df.Time ==
-                        yesterday_TS, 'Pair Volume'] = new_p_vol
-        key_hist_df.loc[key_hist_df.Time ==
-                        yesterday_TS, 'Crypto Volume'] = new_c_vol
+        key_hist_df.loc[key_hist_df.Time
+                        == yesterday_TS, 'Close Price'] = new_price
+        key_hist_df.loc[key_hist_df.Time
+                        == yesterday_TS, 'Pair Volume'] = new_p_vol
+        key_hist_df.loc[key_hist_df.Time
+                        == yesterday_TS, 'Crypto Volume'] = new_c_vol
 
         # upload the dataframe on MongoDB collection "CW_cleandata"
         data = key_hist_df.to_dict(orient='records')
@@ -267,9 +271,10 @@ else:
 database = "index"
 collection_clean_check = "CW_cleandata"
 q_dict = {'Time': str(two_before_TS)}
+
 # downloading from MongoDB the matrix referring to the previuos day
 day_before_matrix = mongo.query_mongo2(db, collection_clean_check, q_dict)
-print(day_before_matrix)
+
 # add the "key" column
 day_before_matrix['key'] = day_before_matrix['Exchange'] + \
     '&' + day_before_matrix['Pair']

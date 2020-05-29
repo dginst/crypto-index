@@ -35,7 +35,7 @@ start_date = '01-01-2016'
 
 # define today date as timestamp
 today = datetime.now().strftime('%Y-%m-%d')
-today_TS = int(datetime.strptime(today, '%Y-%m-%d').timestamp()) + 3600*2
+today_TS = int(datetime.strptime(today, '%Y-%m-%d').timestamp()) + 3600 * 2
 yesterday_TS = today_TS - 86400
 two_before_TS = yesterday_TS - 86400
 
@@ -63,14 +63,10 @@ connection = MongoClient('localhost', 27017)
 db = connection.index
 
 # creating the empty collection cleandata within the database index
-db.CW_final_data.create_index([("id", -1)])
-db.converted_data.create_index([("id", -1)])
-db.stable_coin_rates.create_index([("id", -1)])
-db.exchange_pair_key.create_index([("id", -1)])
 collection_stable = db.stable_coin_rates
 collection_final_data = db.CW_final_data
-collection_converted = db.converted_data
-collection_key = db.exchange_pair_key
+collection_converted = db.CW_converted_data
+collection_key = db.CW_keys
 
 # ########## USDC/USD and USDT/USD computation #####################
 
@@ -159,8 +155,8 @@ bittrex_weighted = usdt_bittrex['rate'] * usdt_bittrex['Pair Volume']
 total_weights = usdt_kraken['Pair Volume'] + \
     usdt_bittrex['Pair Volume'] + usdt_poloniex['Pair Volume']
 
-usdt_rates = (kraken_weighted + bittrex_weighted +
-              poloniex_weighted) / total_weights
+usdt_rates = (kraken_weighted + bittrex_weighted
+              + poloniex_weighted) / total_weights
 
 usdt_rates = 1 / usdt_rates
 
@@ -223,8 +219,8 @@ coinbase_weighted = usdc_coinbase['rate'] * usdc_coinbase['Pair Volume']
 total_weights = usdc_kraken['Pair Volume'] + \
     usdc_coinbase['Pair Volume'] + usdc_poloniex['Pair Volume']
 
-usdc_rates = (kraken_weighted + coinbase_weighted +
-              poloniex_weighted) / total_weights
+usdc_rates = (kraken_weighted + coinbase_weighted
+              + poloniex_weighted) / total_weights
 usdc_rates = 1 / usdc_rates
 
 # tranforming the data structure into a dataframe
@@ -247,7 +243,6 @@ usdc_data = usdc_rates.to_dict(orient='records')
 collection_stable.insert_many(usdc_data)
 
 # ########################################################################
-
 # ################# defining the time vector for the check ###############
 
 # defining the array containing all the date from start_period until today
@@ -369,7 +364,7 @@ date_to_convert = data_setup.Diff(last_five_days, last_five_days_mongo)
 
 # ################### CW_final_data upload ##################################
 
-collection_converted = 'converted_data'
+collection_converted = 'CW_converted_data'
 
 if date_to_convert != []:
 

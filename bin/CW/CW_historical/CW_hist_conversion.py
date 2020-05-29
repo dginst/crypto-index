@@ -68,20 +68,23 @@ connection = MongoClient('localhost', 27017)
 db = connection.index
 
 # drop the pre-existing collection (if there is one)
-db.converted_data.drop()
+db.CW_converted_data.drop()
 db.CW_final_data.drop()
 db.stable_coin_rates.drop()
-db.exchange_pair_key.drop()
+db.CW_keys.drop()
+db.EXC_keys.drop()
 
 # creating the empty collection cleandata within the database index
 db.CW_final_data.create_index([("id", -1)])
-db.converted_data.create_index([("id", -1)])
+db.CW_converted_data.create_index([("id", -1)])
 db.stable_coin_rates.create_index([("id", -1)])
-db.exchange_pair_key.create_index([("id", -1)])
+db.CW_keys.create_index([("id", -1)])
+db.EXC_keys.create_index([("id", -1)])
 collection_stable = db.stable_coin_rates
 collection_final_data = db.CW_final_data
-collection_converted = db.converted_data
-collection_key = db.exchange_pair_key
+collection_converted = db.CW_converted_data
+collection_CW_key = db.CW_keys
+collection_EXC_key = db.ECX_keys
 
 # ########## USDC/USD and USDT/USD computation #####################
 
@@ -338,11 +341,12 @@ end = time.time()
 
 print("This script took: {} seconds".format(float(end - start)))
 
-# ############### logic matrix of pair ############################
+# #####################################################################
+# ############### LOGIC MATRIX OF KEYS ################################
 
 # define database name and collection name
 db_name = "index"
-collection_converted_data = "converted_data"
+collection_converted_data = "CW_converted_data"
 
 # retriving the needed information on MongoDB
 q_dict = {'Time': str(yesterday_TS)}
@@ -376,7 +380,8 @@ merged.fillna(0, inplace=True)
 key_df['logic_value'] = merged['logic']
 
 data = key_df.to_dict(orient='records')
-collection_key.insert_many(data)
+collection_CW_key.insert_many(data)
+collection_EXC_key.insert_many(data)
 
 # ################ ZERO VOLUMES VALUE FILLING #####################
 
