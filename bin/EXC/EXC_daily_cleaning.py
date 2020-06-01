@@ -64,7 +64,10 @@ q_dict = {'Time': yesterday_TS}
 daily_matrix = mongo.query_mongo2(db, coll_EXC_raw, q_dict)
 daily_matrix = daily_matrix[['Pair', 'Exchange',
                              'Close Price', 'Time',
-                             'Crypto Volume', 'ticker_time']]
+                             'Crypto Volume', 'date']]
+
+# creating a column containing the hour of extraction
+daily_matrix['hour'] = daily_matrix['date'].str[11:16]
 
 daily_matrix = daily_matrix.loc[daily_matrix.Time != 0]
 
@@ -117,6 +120,25 @@ daily_matrix['Pair Volume'] = daily_matrix['Close Price'] * \
     daily_matrix['Crypto Volume']
 
 # ############################################################################
+# ################# EXTRACTION HOURS DEFINITION ##############################
+
+# creating 4 different df for each exctraction hour
+daily_matrix_00 = daily_matrix.loc[daily_matrix.hour == '00:00']
+daily_matrix_12 = daily_matrix.loc[daily_matrix.hour == '12:00']
+daily_matrix_16 = daily_matrix.loc[daily_matrix.hour == '16:00']
+daily_matrix_20 = daily_matrix.loc[daily_matrix.hour == '20:00']
+
+# creating the exchange-pair couples key for the daily matrix
+# for each above defined df
+daily_matrix_00['key'] = daily_matrix_00['Exchange'] + \
+    '&' + daily_matrix_00['Pair']
+daily_matrix_12['key'] = daily_matrix_12['Exchange'] + \
+    '&' + daily_matrix_12['Pair']
+daily_matrix_16['key'] = daily_matrix_16['Exchange'] + \
+    '&' + daily_matrix_16['Pair']
+daily_matrix_20['key'] = daily_matrix_20['Exchange'] + \
+    '&' + daily_matrix_20['Pair']
+
 # ########### DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
 
 collection_logic_key = 'EXC_keys'
@@ -126,8 +148,6 @@ q_dict = {'Time': yesterday_TS}
 # matrix containing the exchange-pair logic values
 logic_key = mongo.query_mongo2(db, collection_logic_key)
 
-# creating the exchange-pair couples key for the daily matrix
-daily_matrix['key'] = daily_matrix['Exchange'] + '&' + daily_matrix['Pair']
 # ########## adding the dead series to the daily values ##################
 
 # selecting only the exchange-pair couples present in the historical series
@@ -136,13 +156,43 @@ key_present = key_present.drop(columns=['logic_value'])
 # applying a left join between the prresent keys matrix and the daily
 # matrix, this operation returns a matrix containing all the keys in
 # "key_present" and, if some keys are missing in "daily_matrix" put NaN
-merged = pd.merge(key_present, daily_matrix, on='key', how='left')
+merged = pd.merge(key_present, daily_matrix_00, on='key', how='left')
 # assigning some columns values and substituting NaN with 0
 # in the "merged" df
 merged['Time'] = yesterday_TS
 split_val = merged['key'].str.split('&', expand=True)
 merged['Exchange'] = split_val[0]
 merged['Pair'] = split_val[1]
+
+# define a df containing only the NaN value, so the keys
+# that are not present in daily_matrix_00
+merged_check = merged
+merged_check.fillna('NaN', inplace=True)
+check_key = merged_check.loc[merged_check['Close Price'] == 'NaN', 'key']
+# join the dataframes that contains the keys not present in daily_matrix_00
+# and the daily_matrix_12
+check_12 = pd.merge(check_key, daily_matrix_12, on=key, how=left)
+check_12.fillna('NaN', inplace=True)
+# isolate the potential non-NaN resulting from the join, the df would
+# contain the keys present in the extraction hour 12:00
+present_12 = check_12.loc[check_12['Close Price']=! 'NaN']
+
+# if the "present_12" df is not empty, then substitute the values for each
+# keys in the "merged" df, otherwise pass
+if present_12.empty is False:
+
+    for k in present_12['key']:
+
+        price = present_12.loc[present_12['key'] == k, 'Close Price']
+        p_vol = present_12.loc[present_12['key'] == k, 'Pair Volume']
+        c_vol = present_12.loc[present_12['key'] == k, 'Crypto Volume']
+        merged.loc[merged['key'] == k, 'Close Price'] = price
+        merged.loc[merged['key'] == k, 'Pair Volume'] = p_vol
+        merged.loc[merged['key'] == k, 'Crypto Volume'] = c_vol
+else:
+    pass
+
+# giving 0 to all the remainig values
 merged.fillna(0, inplace=True)
 
 # ########## checking potential new exchange-pair couple ##################
