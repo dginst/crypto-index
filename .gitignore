@@ -5,8 +5,9 @@ anotherTest.py
 test_main.py
 
 
-# downloaded files
+# downloaded and output files
 *.json
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
