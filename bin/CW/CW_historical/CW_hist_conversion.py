@@ -127,7 +127,10 @@ average_df['Time'] = first_call['Time']
 average_df = average_df.replace([np.inf, -np.inf], np.nan)
 average_df.fillna(0, inplace=True)
 
-
+# first_query = {'Pair': 'btcusd', 'Exchange': 'kraken'}
+# first_call = mongo.query_mongo2(database, collection, first_query)
+# average_df = first_call
+# average_df['average usd'] = average_df['Close Price']
 # ############# USDT exchange rates computation ##########
 # BTC/USDT is traded on Poloniex, Kraken and bittrex
 # Poloniex has the entire historoical values from 01/01/2016

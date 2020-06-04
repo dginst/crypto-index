@@ -81,40 +81,40 @@ daily_matrix['Pair'] = [element.replace(
 daily_matrix['Pair'] = [element.replace(
     'USDC_BCHABC', 'bchusdc') for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDC_LTC', 'ltcusdc')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDT_LTC', 'ltcusdt')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDC_XRP', 'xrpusdc')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDT_XRP', 'xrpusdt')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDC_ZEC', 'zecusdc')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDT_ZEC', 'zecusdt')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDC_EOS', 'eosusdc')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDT_EOS', 'eosusdt')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDC_ETC', 'etcusdc')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDT_ETC', 'etcusdt')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDC_STR', 'xlmusdc')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDT_STR', 'xlmusdt')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDC_BTC', 'btcusdc')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDT_BTC', 'btcusdt')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDC_ETH', 'ethusdc')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('USDT_ETH', 'ethusdt')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.lower() for element in daily_matrix['Pair']]
 daily_matrix['Pair'] = [element.replace('xbt', 'btc')
-                    for element in daily_matrix['Pair']]
+                        for element in daily_matrix['Pair']]
 
 daily_matrix['Pair Volume'] = daily_matrix['Close Price'] * \
     daily_matrix['Crypto Volume']
@@ -175,7 +175,7 @@ check_12 = pd.merge(check_key, daily_matrix_12, on=key, how=left)
 check_12.fillna('NaN', inplace=True)
 # isolate the potential non-NaN resulting from the join, the df would
 # contain the keys present in the extraction hour 12:00
-present_12 = check_12.loc[check_12['Close Price']=! 'NaN']
+present_12 = check_12.loc[check_12['Close Price'] != 'NaN']
 
 # if the "present_12" df is not empty, then substitute the values for each
 # keys in the "merged" df, otherwise pass
@@ -301,84 +301,84 @@ collection_clean.insert_many(data)
 
 for Crypto in Crypto_Asset:
 
-     print(Crypto)
-      currencypair_array = []
+    print(Crypto)
+    currencypair_array = []
 
-       for i in pair_array:
+    for i in pair_array:
 
-            currencypair_array.append(Crypto.lower() + i)
+        currencypair_array.append(Crypto.lower() + i)
 
-        for exchange in Exchanges:
+    for exchange in Exchanges:
 
-            print(exchange)
-            for cp in currencypair_array:
+        print(exchange)
+        for cp in currencypair_array:
 
-                print(cp)
-                crypto = cp[:3]
-                pair = cp[3:]
+            print(cp)
+            crypto = cp[:3]
+            pair = cp[3:]
 
-                # defining the dictionary for the MongoDB query
-                query_dict = {"Exchange": exchange, "Pair": cp}
-                # retrieving the needed information from rawdata collection on MongoDB
-                matrix = mongo.query_mongo(
-                    database, collection_raw, query_dict)
-                matrix = matrix.drop(
-                    columns=['Ticker_time', 'Date', 'Bid', 'Ask', 'Traded_id'])
+            # defining the dictionary for the MongoDB query
+            query_dict = {"Exchange": exchange, "Pair": cp}
+            # retrieving the needed information from rawdata collection on MongoDB
+            matrix = mongo.query_mongo(
+                database, collection_raw, query_dict)
+            matrix = matrix.drop(
+                columns=['Ticker_time', 'Date', 'Bid', 'Ask', 'Traded_id'])
 
-                # selecting the date of interest
-                matrix = matrix.loc[matrix['Time'].isin(
-                    relative_reference_vector)]
+            # selecting the date of interest
+            matrix = matrix.loc[matrix['Time'].isin(
+                relative_reference_vector)]
 
-                # checking if the matrix is not empty
-                if matrix.shape[0] > 1:
+            # checking if the matrix is not empty
+            if matrix.shape[0] > 1:
 
-                    matrix['Pair Volume'] = matrix['Crypto Volume'] * \
-                        matrix['Close Price']
+                matrix['Pair Volume'] = matrix['Crypto Volume'] * \
+                    matrix['Close Price']
 
-                # if the matrix is empty, the code searches the value in CW rawdata
+            # if the matrix is empty, the code searches the value in CW rawdata
+            else:
+
+                # querying the rawdata from CW_rawdata collection looking for data
+                CW_matrix = mongo.query_mongo(
+                    database, collection_CW_raw, query_dict)
+
+                # checking if the exchange-pair exists in CW_rawdata
+                if CW_matrix.shape[0] > 1:
+
+                    CW_matrix.drop(columns=['Low', 'High', 'Open'])
+                    # selecting the date of interest
+                    int_ref_vector = [int(date)
+                                      for date in relative_reference_vector]
+                    CW_matrix = CW_matrix.loc[CW_matrix['Time'].isin(
+                        int_ref_vector)]
+                    CW_matrix['Pair Volume'] = CW_matrix['Crypto Volume'] * \
+                        CW_matrix['Close Price']
+                    # renaming CW_matrix
+                    matrix = CW_matrix
+
+                # if it not exists code takes the day before values
                 else:
 
-                    # querying the rawdata from CW_rawdata collection looking for data
-                    CW_matrix = mongo.query_mongo(
-                        database, collection_CW_raw, query_dict)
+                    yesterday_matrix = mongo.query_mongo(
+                        database, collection_clean_check, query_dict)
+                    yesterday_date = [str(int(date) - 86400)
+                                      for date in relative_reference_vector]
+                    yesterday_matrix = yesterday_matrix.loc[yesterday_matrix['Time'].isin(
+                        yesterday_date)]
+                    # renaming yesterday_matrix and changing "Time" column values
+                    matrix = yesterday_matrix
+                    matrix['Time'] = [str(int(date) + 86400)
+                                      for date in matrix['Time']]
 
-                    # checking if the exchange-pair exists in CW_rawdata
-                    if CW_matrix.shape[0] > 1:
+            try:
 
-                        CW_matrix.drop(columns=['Low', 'High', 'Open'])
-                        # selecting the date of interest
-                        int_ref_vector = [int(date)
-                                          for date in relative_reference_vector]
-                        CW_matrix = CW_matrix.loc[CW_matrix['Time'].isin(
-                            int_ref_vector)]
-                        CW_matrix['Pair Volume'] = CW_matrix['Crypto Volume'] * \
-                            CW_matrix['Close Price']
-                        # renaming CW_matrix
-                        matrix = CW_matrix
+                # put the manipulated data on MongoDB
+                data = matrix.to_dict(orient='records')
+                collection_clean.insert_many(data)
 
-                    # if it not exists code takes the day before values
-                    else:
+            except:
 
-                        yesterday_matrix = mongo.query_mongo(
-                            database, collection_clean_check, query_dict)
-                        yesterday_date = [str(int(date) - 86400)
-                                          for date in relative_reference_vector]
-                        yesterday_matrix = yesterday_matrix.loc[yesterday_matrix['Time'].isin(
-                            yesterday_date)]
-                        # renaming yesterday_matrix and changing "Time" column values
-                        matrix = yesterday_matrix
-                        matrix['Time'] = [str(int(date) + 86400)
-                                          for date in matrix['Time']]
-
-                try:
-
-                    # put the manipulated data on MongoDB
-                    data = matrix.to_dict(orient='records')
-                    collection_clean.insert_many(data)
-
-                except:
-
-                    pass
+                pass
 
 else:
 

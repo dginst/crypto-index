@@ -134,17 +134,17 @@ import cryptoindex.data_download as data_download
 # board_date_eve = calc.day_before_board()
 # next_rebalance_date = calc.next_start()
 
-head = ['Time', 'Val']
-head1 = ['Time', 'letter']
-a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-b = ['aa&', 'b&', 'cccc&', 'dggg&', 'f&hh',
-     'gjjj&', 'f&h', 'u&i', 'lu&h', '8&m']
-g = [1, 50, 88, 99]
-h = ['ciao', 'x', 'y', 'z']
-c = np.column_stack((a, b))
-p = np.column_stack((g, h))
-d = pd.DataFrame(c, columns=head)
-e = pd.DataFrame(p, columns=head1)
+# head = ['Time', 'Val']
+# head1 = ['Time', 'letter']
+# a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+# b = ['aa&', 'b&', 'cccc&', 'dggg&', 'f&hh',
+#      'gjjj&', 'f&h', 'u&i', 'lu&h', '8&m']
+# g = [1, 50, 88, 99]
+# h = ['ciao', 'x', 'y', 'z']
+# c = np.column_stack((a, b))
+# p = np.column_stack((g, h))
+# d = pd.DataFrame(c, columns=head)
+# e = pd.DataFrame(p, columns=head1)
 # zer = np.zeros_like(np.array(e))
 # header = e.columns
 # logic = np.column_stack((1, 2))
@@ -157,8 +157,8 @@ e = pd.DataFrame(p, columns=head1)
 # print(zer.loc[1:, :])
 
 # # print(list(d['Time'].unique()))
-merged = pd.merge(d, e, on='Time', how='left')
-print(merged)
+# merged = pd.merge(d, e, on='Time', how='left')
+# print(merged)
 # # k = e.apply(lambda x: x.nunique())
 # # print(type(k))
 # # index_ = list(k.index)
@@ -169,7 +169,26 @@ print(merged)
 # d['Time'] = pd.to_numeric(d['Time'])
 # d['gfgfg'] = d['Time'].cumsum()
 # print(d)
-merged.fillna('NaN', inplace=True)
-print(merged)
-aaa = merged.loc[merged['letter'] != 'NaN']
-print(aaa)
+# merged.fillna('NaN', inplace=True)
+# print(merged)
+# aaa = merged.loc[merged['letter'] != 'NaN']
+# print(aaa)
+a = '2020-04-21T20:00:06.410+00:00'
+print(type(a))
+hour = a[11:16]
+print(hour)
+# connecting to mongo in local
+connection = MongoClient('localhost', 27017)
+# creating the database called index
+db = 'index'
+
+# naming the existing collections as a variable
+coll = 'EXC_rawtest'
+
+mat = mongo.query_mongo2(db, coll)
+mat['date'] = [str(el) for el in mat['date']]
+mat = mat[['Pair', 'Exchange',
+           'Close Price', 'Time',
+           'Crypto Volume', 'date']]
+mat['hour'] = mat['date'].str[11:16]
+print(mat.head(10))

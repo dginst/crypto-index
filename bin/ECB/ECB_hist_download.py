@@ -1,30 +1,21 @@
-######################################################################################################
-# The file download from the European Central Bank Websites the exchange rates for the currencies 'USD',
-# 'GBP', 'CAD' and 'JPY'. Then store the retrieved data on MongoDB in the database "index"
-# and collection "ecb_raw". is possible to change the period of downlaod modifying the "Start_Period"
-#######################################################################################################
+# ############################################################################
+# The file download from the European Central Bank Websites the exchange rates
+# for the currencies 'USD', 'GBP', 'CAD' and 'JPY'. Then store the retrieved
+# data on MongoDB in the database "index" and collection "ecb_raw"
+# ############################################################################
 # standard import
-import json
-import os.path
-import sys
 import time
 from datetime import datetime
-from pathlib import Path
-
 
 # local import
 import cryptoindex.data_download as data_download
 import cryptoindex.data_setup as data_setup
-import cryptoindex.mongo_setup as mongo
 
 # third party import
-from pymongo import MongoClient
-from requests import get
-import numpy as np
 import pandas as pd
-import requests
+from pymongo import MongoClient
 
-####################################### initial settings ############################################
+# ################### initial settings ########################################
 
 Start_Period = '2015-12-31'
 
@@ -33,7 +24,7 @@ End_Period = datetime.now().strftime('%Y-%m-%d')
 
 key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 
-####################################### setup mongo connection ###################################
+# ############# setup mongo connection ###################################
 
 # connecting to mongo in local
 connection = MongoClient('localhost', 27017)
@@ -46,7 +37,7 @@ db.ecb_raw.drop()
 db.ecb_raw.create_index([("id", -1)])
 collection_ECB_raw = db.ecb_raw
 
-######################################## ECB rates raw data download ###################################
+# ####################### ECB rates raw data download #########################
 
 # create an array of date containing the list of date to download
 date = data_setup.date_array_gen(Start_Period, End_Period, timeST='N', EoD='N')
@@ -71,8 +62,7 @@ for i, single_date in enumerate(date):
         Exchange_Rate_List = Exchange_Rate_List.append(
             single_date_ex_matrix, sort=True)
 
-########################## upload the raw data to MongoDB ############################
+# ################ upload the raw data to MongoDB #######################
 
 data = Exchange_Rate_List.to_dict(orient='records')
-
 collection_ECB_raw.insert_many(data)
