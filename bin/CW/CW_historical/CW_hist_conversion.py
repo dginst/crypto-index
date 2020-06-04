@@ -395,6 +395,9 @@ collection_converted_data = "converted_data"
 # retriving the needed information on MongoDB
 matrix = mongo.query_mongo2(db_name, collection_converted_data)
 matrix['Crypto'] = matrix['Pair'].str[:3]
+head = ['Time', 'Close Price', 'Crypto Volume',
+        'Pair Volume', 'Exchange', 'Pair', 'Crypto']
+final_matrix = pd.DataFrame(columns=head)
 
 for Crypto in Crypto_Asset:
 
@@ -415,8 +418,7 @@ for Crypto in Crypto_Asset:
 
             print(cp)
             cp_matrix = ex_matrix.loc[ex_matrix.Pair == cp]
-            head = cp_matrix.columns
-            final_matrix = pd.DataFrame(columns=head)
+
             # checking if the matrix is not empty
             try:
 

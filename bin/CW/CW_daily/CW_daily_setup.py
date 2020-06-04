@@ -283,17 +283,17 @@ day_before_matrix['key'] = day_before_matrix['Exchange'] + \
 for key_val in day_before_matrix['key']:
 
     new_val = merged.loc[merged.key == key_val]
-
+    print(new_val)
     # if the new 'Close Price' referred to a certain key is 0 the script
     # check the previous day value: if is == 0 then pass, if is != 0
     # the values related to the selected key needs to be corrected
     # ###### IF A EXC-PAIR DIES AT A CERTAIN POINT, THE SCRIPT
     # CHANGES THE VALUES. MIGHT BE WRONG #######################
-    if new_val['Close Price'] == 0:
+    if np.array(new_val['Close Price']) == 0.0:
 
         d_before_val = day_before_matrix.loc[day_before_matrix.key == key_val]
 
-        if d_before_val['Close Price'] != 0:
+        if np.array(d_before_val['Close Price']) != 0.0:
 
             price_var = data_setup.daily_fix_missing(
                 new_val, merged, day_before_matrix)
