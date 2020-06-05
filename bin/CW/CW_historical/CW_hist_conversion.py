@@ -390,7 +390,7 @@ collection_EXC_key.insert_many(data)
 
 # define database name and collection name
 db_name = "index"
-collection_converted_data = "converted_data"
+collection_converted_data = "CW_converted_data"
 
 # retriving the needed information on MongoDB
 matrix = mongo.query_mongo2(db_name, collection_converted_data)
