@@ -33,7 +33,7 @@ db = connection.index
 # define database name and collection name
 db_name = "index"
 collection_converted_data = "CW_final_data"
-collection_converted_data = "converted_data"
+#collection_converted_data = "CW_converted_data"
 
 # drop the pre-existing collection (if there is one)
 db.crypto_price.drop()
@@ -164,10 +164,10 @@ for CryptoA in Crypto_Asset:
             fiat_curr = cp[3:]
             # ######### LEAVING OUT NEW CRYPTO-FIAT PAIRS ##################
             c_1 = (exchange == 'bittrex' and fiat_curr == 'eur')
-            c_2 = (exchange == 'bittrex' and crypto ==
-                   'ltc' and fiat_curr == 'usd')
-            c_3 = (exchange == 'poloniex' and crypto ==
-                   'bch' and fiat_curr == 'usdc')
+            c_2 = (exchange == 'bittrex' and crypto
+                   == 'ltc' and fiat_curr == 'usd')
+            c_3 = (exchange == 'poloniex' and crypto
+                   == 'bch' and fiat_curr == 'usdc')
 
             if c_1 or c_2 or c_3:
                 continue
