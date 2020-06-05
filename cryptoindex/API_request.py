@@ -1,10 +1,9 @@
-import requests
-from requests import get
-from datetime import *
-import pandas as pd
-import numpy as np
+from datetime import datetime, timedelta
 from time import sleep
 
+import numpy as np
+import pandas as pd
+import requests
 from pymongo import MongoClient
 
 # this file cointains all the API calls for each pricing source. Every script call the api,
@@ -94,9 +93,9 @@ def today_ts():
     return str(today_TS)
 
 
-#####################################################################################################
-################################ COINBASE - PRO #####################################################
-#####################################################################################################
+# ############################################################################
+# ############################### COINBASE - PRO #############################
+# ############################################################################
 
 # REST API request for coinbase-pro exchange.
 # It requires:
@@ -106,13 +105,13 @@ def today_ts():
 # granularity = in seconds. Ex 86400 = 1 day
 # this api gives back 300 responses max for each request.
 
-# -------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 # function that given Crypto (ex. BTC), Fiat (ex. USD), start DAte and End Date
-# retrieve the Historical Series from start date to End Date of the definend Crypto + Fiat
-# on the Coinbase Pro Exchange
-# the output will be displayed in three columns containing: 'Time' in timestamp format,
-# 'Close Price' in "Fiat" currency, 'Crypto Volume' in "Crypto" amount
+# retrieve the Historical Series from start date to End Date of the definend
+# Crypto + Fiat on the Coinbase Pro Exchange
+# the output will be displayed in three columns containing: 'Time' in timestamp
+# format, 'Close Price' in "Fiat" currency, 'Crypto Volume' in "Crypto" amount
 
 
 def Coinbase_API(Crypto, Fiat, Start_Date, End_Date=None, granularity="86400"):
@@ -273,7 +272,7 @@ def kraken_API(Start_Date, End_Date, Crypto, Fiat, interval="1440"):
     return Kraken_df
 
 
-########################################## kraken ticker
+# Kraken ticker
 
 
 def kraken_ticker(Crypto, Fiat, collection):
