@@ -84,7 +84,7 @@ collection_stable = db.stable_coin_rates
 collection_final_data = db.CW_final_data
 collection_converted = db.CW_converted_data
 collection_CW_key = db.CW_keys
-collection_EXC_key = db.ECX_keys
+collection_EXC_key = db.EXC_keys
 
 # ########## USDC/USD and USDT/USD computation #####################
 
@@ -363,6 +363,8 @@ matrix_last_day['logic'] = 1
 matrix_last_day = matrix_last_day.drop(columns=old_head)
 
 # creating the list containing all the possible exchange-pair key
+Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp',
+             'gemini', 'bittrex', 'kraken', 'bitflyer']
 all_key = []
 for exc in Exchanges:
 
