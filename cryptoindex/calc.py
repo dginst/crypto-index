@@ -1,5 +1,5 @@
 # standard library import
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # third party import
 import numpy as np
@@ -33,12 +33,12 @@ def perdelta(start, end, delta=relativedelta(months=3)):
 # the result is an numpy array caontaining dates in timestamp format
 
 
-def start_q(start_date="01-01-2016", stop_date=None, timeST="Y", lag_adj=3600):
+def start_q(start_date="01-01-2016", stop_date=None, timeST="Y"):
 
     # defining the delta period between each rebalance date
     delta = relativedelta(months=3)
 
-    if validate_date(start_date) is False:
+    if type(start_date) == str:
 
         start_date = datetime.strptime(start_date, "%m-%d-%Y")
 
@@ -54,19 +54,14 @@ def start_q(start_date="01-01-2016", stop_date=None, timeST="Y", lag_adj=3600):
 
     for result in perdelta(start_date, stop_date, delta):
 
-        if timeST == "Y":
-
-            result = int(result.timestamp())
-            result = result + lag_adj
-
-        else:
+        if timeST != "Y":
 
             result = result.strftime("%m-%d-%Y")
 
         start_day_arr = np.append(start_day_arr, result)
 
     # set all timestamps at 12:00 AM UTC
-    start_day_arr = start_q_fix(start_day_arr)
+    start_day_arr = start_q_fix2(start_day_arr)
 
     return start_day_arr
 
@@ -75,6 +70,8 @@ def start_q(start_date="01-01-2016", stop_date=None, timeST="Y", lag_adj=3600):
 # same HH:MM:SS; specifically the functions change the given date
 # (timestamp format) into 12:00 AM UTC
 # the output could be an array with date in timestamp format != 12:00 AM UTC
+# with replace(tzinfo=timezone.utc).timestamp() this functions become un-useful
+# along with lags
 
 
 def start_q_fix(start_q_array):
@@ -90,6 +87,17 @@ def start_q_fix(start_q_array):
         fixed_array = np.append(fixed_array, date)
 
     return fixed_array
+
+
+# with this start_q_fix version, lag times are not necessary anymore.
+# Furthermore the starq_fix can be called only inside the start_q function
+
+
+def start_q_fix2(start_q_array):
+
+    ll = [int(x.replace(tzinfo=timezone.utc).timestamp()) for x in start_q_array]
+
+    return np.array(ll)
 
 
 # the function generates an array cointaing the first date of each quarter.
@@ -110,7 +118,7 @@ def next_start(start_date="01-01-2016", stop_date=None, timeST="Y"):
         stop_date = datetime.strptime(stop_date, "%m-%d-%Y")
 
     # creating the arrays containing the start and stop date of each quarter
-    start_quarter = start_q_fix(start_q(start_date, stop_date, timeST))
+    start_quarter = start_q(start_date, stop_date, timeST)
     stop_quarter = stop_q(start_quarter)
 
     next_start_date = int(stop_quarter[len(stop_quarter) - 1]) + day_in_sec
@@ -155,9 +163,7 @@ def stop_q(start_q_array):
 # the first meeting day is setting on default as '12-05-2015'
 
 
-def board_meeting_day(
-    start_date="12-21-2015", stop_date=None, delta=None, timeST="Y", lag_adj=3600
-):
+def board_meeting_day(start_date="12-21-2015", stop_date=None, delta=None, timeST="Y"):
 
     # defining the delta period between each board day
 
@@ -185,19 +191,14 @@ def board_meeting_day(
         # and if not substitute it
         result = previous_business_day(result)
 
-        if timeST == "Y":
-
-            result = int(result.timestamp())
-            result = result + lag_adj
-
-        else:
+        if timeST != "Y":
 
             result = result.strftime("%m-%d-%Y")
 
         board_day = np.append(board_day, result)
 
     # set all timestamps at 12:00 AM UTC
-    board_day = start_q_fix(board_day)
+    board_day = start_q_fix2(board_day)
 
     return board_day
 
@@ -207,13 +208,11 @@ def board_meeting_day(
 # function and presents the same default input
 
 
-def day_before_board(
-    start_date="12-21-2015", stop_date=None, delta=None, timeST="Y", lag_adj=3600
-):
+def day_before_board(start_date="12-21-2015", stop_date=None, delta=None, timeST="Y"):
 
     day_in_sec = 86400
     before_board_day = (
-        board_meeting_day(start_date, stop_date, delta, timeST, lag_adj) - day_in_sec
+        board_meeting_day(start_date, stop_date, delta, timeST) - day_in_sec
     )
 
     return before_board_day
@@ -306,23 +305,6 @@ def previous_business_day(date):
     return date
 
 
-# function that checks if "date_to_check" is a date
-# if positive returns 'True'
-
-
-def validate_date(date_to_check):
-
-    if isinstance(date_to_check, datetime) is True:
-
-        response = True
-
-    else:
-
-        response = False
-
-    return response
-
-
 # ###########################################################################
 
 # #################### FIRST LOGIC MATRIX ###################################
@@ -361,7 +343,6 @@ def perc_volumes_per_exchange(
     today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + hour_in_sec
     yesterday = today_TS - day_in_sec
     board_eve = np.append(board_eve, yesterday)
-    #
 
     # calling the function that yields the start and stop date couple
     rebalance_start = next_quarterly_period(start_date, end_date, initial_val=0)
@@ -469,7 +450,7 @@ def first_logic_matrix_reshape(
     time_column="N",
 ):
 
-    rebalance_start = start_q_fix(start_q())
+    rebalance_start = start_q()
     rebalance_stop = stop_q(rebalance_start)
 
     # calling the function that yields the start and stop date couple
@@ -956,7 +937,7 @@ def second_logic_matrix_reshape(
     time_column="N",
 ):
 
-    rebalance_start = start_q_fix(start_q())
+    rebalance_start = start_q()
 
     # calling the function that yields the start and stop date couple
     rebalance_start = next_quarterly_period(start_date, end_date, initial_val=0)
@@ -1051,7 +1032,7 @@ def daily_double_log_check(
     before_eve = board_date_eve - day_in_sec
 
     # retrieving the EWMA df from MongoDB
-    ewma_df = mongo.query_mongo2(db_name, coll_name)
+    ewma_df = mongo.query_mongo(db_name, coll_name)
     period_ewma = ewma_df.loc[
         ewma_df["Time"].between(last_reb_start, before_eve, inclusive=True)
     ]
@@ -1204,7 +1185,7 @@ def daily_quart_synt_matrix(
 ):
 
     # retrieving the EWMA df from MongoDB
-    price_tot = mongo.query_mongo2(db_name, coll_name)
+    price_tot = mongo.query_mongo(db_name, coll_name)
     before_start = last_reb_start - 86400
     before_eve = curr_board_eve - 86400
     period_price = price_tot.loc[
@@ -1444,7 +1425,7 @@ def new_divisor(
 ):
 
     # use the function to compute the initial divisor
-    old_divisor_df = mongo.query_mongo2(db_name, coll_name)
+    old_divisor_df = mongo.query_mongo(db_name, coll_name)
     old_divisor = old_divisor_df.loc[
         old_divisor_df.Time == old_reb_start, ["Divisor Value"]
     ]
