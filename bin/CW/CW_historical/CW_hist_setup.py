@@ -83,7 +83,7 @@ collection_volume_check = "volume_checked_data"
 
 # ################ fixing the "Pair Volume" information ###########
 
-tot_matrix = mongo.query_mongo2(db, collection_raw)
+tot_matrix = mongo.query_mongo(db, collection_raw)
 tot_matrix = tot_matrix.loc[tot_matrix.Time != 0]
 tot_matrix = tot_matrix.drop(columns=['Low', 'High', 'Open'])
 
@@ -132,7 +132,7 @@ print("This script took: {} seconds".format(float(end - start)))
 # ############## fixing historical series main part ##############
 start = time.time()
 
-tot_matrix = mongo.query_mongo2(db, collection_volume_check)
+tot_matrix = mongo.query_mongo(db, collection_volume_check)
 
 
 for Crypto in Crypto_Asset:
