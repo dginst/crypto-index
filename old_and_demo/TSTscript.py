@@ -92,7 +92,7 @@ import cryptoindex.data_download as data_download
 # df['Pair'] = df['Pair'].str.lower()
 # print(df)
 
-#df = df.to_dict(orient='records')
+# df = df.to_dict(orient='records')
 
 # print(df)
 
@@ -173,22 +173,20 @@ import cryptoindex.data_download as data_download
 # print(merged)
 # aaa = merged.loc[merged['letter'] != 'NaN']
 # print(aaa)
-a = '2020-04-21T20:00:06.410+00:00'
+a = "2020-04-21T20:00:06.410+00:00"
 print(type(a))
 hour = a[11:16]
 print(hour)
 # connecting to mongo in local
-connection = MongoClient('localhost', 27017)
+connection = MongoClient("localhost", 27017)
 # creating the database called index
-db = 'index'
+db = "index"
 
 # naming the existing collections as a variable
-coll = 'EXC_rawtest'
+coll = "EXC_rawtest"
 
-mat = mongo.query_mongo2(db, coll)
-mat['date'] = [str(el) for el in mat['date']]
-mat = mat[['Pair', 'Exchange',
-           'Close Price', 'Time',
-           'Crypto Volume', 'date']]
-mat['hour'] = mat['date'].str[11:16]
+mat = mongo.query_mongo(db, coll)
+mat["date"] = [str(el) for el in mat["date"]]
+mat = mat[["Pair", "Exchange", "Close Price", "Time", "Crypto Volume", "date"]]
+mat["hour"] = mat["date"].str[11:16]
 print(mat.head(10))

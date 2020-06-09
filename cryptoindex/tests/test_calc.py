@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 # third party import
 import numpy as np
+import pandas as pd
 
 # local import
 from cryptoindex import calc
@@ -23,16 +24,6 @@ def test_Bday():
     # is not Bday
     not_bday = "05-10-2020"
     assert not calc.is_business_day(not_bday)
-
-
-def test_date_validation():
-
-    # verificare
-    date = datetime(2020, 1, 1)
-    assert calc.validate_date(date)
-    # not datetime
-    date2 = "05-11-2020"
-    assert not calc.validate_date(date2)
 
 
 def test_previous_business_day():
@@ -61,7 +52,8 @@ def test_perdelta():
     check_range = ["01-01-2019", "04-01-2019", "07-01-2019", "10-01-2019"]
 
     test_range = calc.perdelta(start_date, stop_date)
-    # creating a list from perdelta func
+
+    # creating a list of strings from perdelta func
     test_range = [x.strftime("%m-%d-%Y") for x in test_range]
 
     assert test_range == check_range
@@ -209,26 +201,41 @@ def test_next_start():
     assert np.array_equal(st_date, st_gen)
 
     # checking if without declaring the second positional argument of the
-    # next_start function, the function is still working
-    start = datetime.strptime("01-01-2019", "%m-%d-%Y")
-    today = datetime.now().strftime("%m-%d-%Y")
-    today = datetime.strptime(today, "%m-%d-%Y")
-
-    day_in_sec = 86400
-    # converting the perdelta-generated array of dates tu utc-timestamp
-    start_quarter = calc.start_q_fix(calc.start_q(start, today))
-    stop_quarter = calc.stop_q(start_quarter)
-
-    next_start_date = int(stop_quarter[len(stop_quarter) - 1]) + day_in_sec
-
-    ts_date = np.append(start_quarter, next_start_date)
 
     start = "01-01-2019"
     ts_gen = calc.next_start(start)
+    true_stop = 1593561600
 
-    assert np.array_equal(ts_date, ts_gen)
+    assert true_stop == ts_gen[-1]
 
 
 # ###########################################################################
 
 # #################### FIRST LOGIC MATRIX ###################################
+
+data_folder = (
+    "C:\\Users\\mpich\\Desktop\\DGI\\crypto-index\\cryptoindex\\tests\\test_folder"
+)
+
+
+def test_perc_volume_per_exchange():
+
+    df = pd.read_json(
+        r"C:/Users/mpich/Desktop/DGI/crypto-index/cryptoindex/tests/test_folder/test_logic_matrix_one_20200608.json"
+    )
+
+    df.drop("_id", axis=1, inplace=True)
+
+    Exchanges = [
+        "coinbase-pro",
+        "poloniex",
+        "bitstamp",
+        "gemini",
+        "bittrex",
+        "kraken",
+        "bitflyer",
+    ]
+
+    first_logic = calc.first_logic_matrix()
+
+    assert df.equals(first_logic)

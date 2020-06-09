@@ -449,7 +449,7 @@ def CW_series_fix_missing(
         # defining the dictionary to use in querying MongoDB
         query_dict = {"Exchange": element, "Pair": ccy_pair}
         # query MongoDB and rerieve a DataFrame called "matrix"
-        matrix = mongo.query_mongo2(db, collection, query_dict)
+        matrix = mongo.query_mongo(db, collection, query_dict)
         matrix = matrix.drop(columns=["Exchange", "Pair", "Low", "High", "Open"])
 
         # checking if data frame is empty: if not then the crypto-fiat pair
@@ -764,7 +764,7 @@ def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST="N"):
         query = {"TIME_PERIOD": str(date_ECB[i])}
 
         # retrieving data from MongoDB 'index' and 'ecb_raw' collection
-        single_date_ex_matrix = mongo.query_mongo2(database, collection, query)
+        single_date_ex_matrix = mongo.query_mongo(database, collection, query)
 
         # check if rates exist in the specified date
         if Check_null(single_date_ex_matrix) is False:
@@ -1141,7 +1141,7 @@ def CW_series_fix_missing2(
     # query MongoDB and rerieve a DataFrame containing
     # all the data related to the specified crypto-fiat pair
     query_dict = {"Pair": crypto_fiat_pair}
-    matrix = mongo.query_mongo2(db, collection, query_dict)
+    matrix = mongo.query_mongo(db, collection, query_dict)
     matrix = matrix.drop(columns=["Pair"])
 
     # defining the list of exchanges that actually trade the
