@@ -70,6 +70,17 @@ db = connection.index
 # naming the existing collections as a variable
 collection_clean = db.cleandata
 collection_volume = db.volume_checked_data
+collection_CW_k = db.CW_keys
+## test ###
+db.test_setup.drop()
+db.test_clean.drop()
+db.test_keys.drop()
+db.test_setup.create_index([("id", -1)])
+db.test_clean.create_index([("id", -1)])
+db.test_keys.create_index([("id", -1)])
+coll_test = db.test_setup
+coll_t_clean = db.test_clean
+coll_k = db.test_keys
 
 # defining the database name and the collection name where to look for data
 database = "index"
@@ -181,7 +192,9 @@ for Crypto in Crypto_Asset:
             try:
 
                 data = matrix.to_dict(orient='records')
-                collection_volume.insert_many(data)
+                # collection_volume.insert_many(data)
+                ##
+                coll_test.insert_many(data)
 
             except TypeError:
                 pass
@@ -190,7 +203,10 @@ for Crypto in Crypto_Asset:
 # ########### DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
 
 collection_volume_check = "volume_checked_data"
-collection_logic_key = 'exchange_pair_key'
+##
+collection_volume_check = 'test_setup'
+##
+collection_logic_key = 'CW_keys'
 q_dict = {'Time': yesterday_TS}
 
 # downloading from MongoDB the matrix with the daily values and the
@@ -200,10 +216,13 @@ logic_key = mongo.query_mongo2(db, collection_logic_key)
 
 # creating the exchange-pair couples key for the daily matrix
 daily_matrix['key'] = daily_matrix['Exchange'] + '&' + daily_matrix['Pair']
+
 # ########## adding the dead series to the daily values ##################
 
 # selecting only the exchange-pair couples present in the historical series
 key_present = logic_key.loc[logic_key.logic_value == 1]
+print(key_present)
+print(key_present.shape)
 key_present = key_present.drop(columns=['logic_value'])
 # applying a left join between the prresent keys matrix and the daily
 # matrix, this operation returns a matrix containing all the keys in
@@ -260,7 +279,15 @@ if new_key.empty is False:
 
         # upload the dataframe on MongoDB collection "CW_cleandata"
         data = key_hist_df.to_dict(orient='records')
-        collection_clean.insert_many(data)
+        # collection_clean.insert_many(data)
+        coll_t_clean.insert_many(data)
+
+    # uploading the updated keys df on the CW_keys collection
+    new_k_logic = logic_key.to_dict(orient='records')
+    # collection_CW_k.insert_many(new_k_logic)
+    ##
+    coll_k.insert_many(new_k_logic)
+
 
 else:
     pass
@@ -312,5 +339,7 @@ for key_val in day_before_matrix['key']:
 
 # put the manipulated data on MongoDB
 merged.drop(columns=['key'])
+merged['Time'] = [str(d) for d in merged['Time']]
 data = merged.to_dict(orient='records')
-collection_clean.insert_many(data)
+# collection_clean.insert_many(data)
+coll_t_clean.insert_many(data)
