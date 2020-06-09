@@ -73,7 +73,7 @@ db.CW_cleandata.create_index([("id", -1)])
 collection_clean = db.CW_cleandata
 
 # creating the empty collection "volume_checked_data" within the database index
-Università degli Studi Milano - Bicocca
+db.volume_checked_data.create_index([("id", -1)])
 collection_volume = db.volume_checked_data
 
 # defining the database name and the collection name where to look for data
