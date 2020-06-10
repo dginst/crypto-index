@@ -30,7 +30,7 @@ import cryptoindex.data_download as data_download
 # x = c.loc[c['a']==10]
 # # print(x)
 # # print(x.empty)
-# # if x.empty == True:
+# # if x.empty is True:
 # #     print('yes')
 
 # start_period = '2020-01-02'

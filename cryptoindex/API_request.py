@@ -119,7 +119,7 @@ def Coinbase_API(Crypto, Fiat, Start_Date, End_Date=None, granularity="86400"):
     Crypto = Crypto.upper()
     Fiat = Fiat.upper()
 
-    if End_Date == None:
+    if End_Date is None:
         End_Date = datetime.now().strftime("%m-%d-%Y")
 
     date_object = date_gen_isoformat(Start_Date, End_Date, 49)
@@ -406,7 +406,7 @@ def bittrex_ticker(Crypto, Fiat, collection):
 
 def Poloniex_API(Start_Date, End_Date, Crypto, Fiat, period="86400"):
 
-    if End_Date == None:
+    if End_Date is None:
         End_Date = datetime.now().strftime("%m-%d-%Y")
 
     date_object = date_gen_timestamp(Start_Date, End_Date, 49)
@@ -653,7 +653,7 @@ def bitflyer_ticker(Crypto, Fiat, collection):
 
 def Gemini_API(Start_Date, End_Date, Crypto, Fiat, time_frame="1day"):
 
-    if End_Date == None:
+    if End_Date is None:
         End_Date = datetime.now().strftime("%m-%d-%Y")
 
     df = np.array([])

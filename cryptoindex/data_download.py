@@ -98,8 +98,7 @@ def ECB_rates_extractor(
     return Exchange_Rate_List
 
 
-##################################### CryptoWatch download function #################################
-
+# CRYPTOWATCH DOWNLOAD FUNCTION
 
 # function that retrieves data from CryptoWatch websites, download them and store them on Mongo DB
 # inputs are:
@@ -117,7 +116,6 @@ def CW_raw_to_mongo(
     periods="86400",
 ):
 
-    Crypto = currencypair[:3].upper()
     Pair = currencypair[3:].upper()
 
     # check date format
@@ -125,7 +123,7 @@ def CW_raw_to_mongo(
     start_date = datetime.strptime(start_date, "%m-%d-%Y")
 
     # set end_date = today if empty
-    if end_date == None:
+    if end_date is None:
 
         end_date = datetime.now().strftime("%m-%d-%Y")
 
@@ -238,77 +236,3 @@ def CW_raw_to_mongo(
         mongo_collection.insert_one(rawdata)
 
     return None
-
-
-#############################################################################################################
-
-####################################### DOWNLOAD FUNCTIONS NO MONGO ########################################
-
-# function that retrives data from th Cryptowatch websites and returns a Data Frame with the following
-# headers ['Time' ,'Open',	'High',	'Low',	'Close Price',Crypto+ " Volume" , Pair+" Volume"]
-# the exchange and currencypair inputs have to be unique value and NOT list
-# date range specified by start_date and end_date (end_date default is today())
-# the default frequency is daily (86400 seconds)
-# start_date ed end_date has to be inserted in MM-DD-YYYY format
-
-
-def CW_data_reader(
-    exchange, currencypair, start_date="01-01-2016", end_date=None, periods="86400"
-):
-
-    Crypto = currencypair[:3].upper()
-    Pair = currencypair[3:].upper()
-
-    # check date format
-    start_date = data_setup.date_reformat(start_date)
-    start_date = datetime.strptime(start_date, "%m-%d-%Y")
-
-    # set end_date = today if empty
-    if end_date == None:
-        end_date = datetime.now().strftime("%m-%d-%Y")
-    else:
-        end_date = data_setup.date_reformat(end_date, "-")
-    end_date = datetime.strptime(end_date, "%m-%d-%Y")
-
-    # transform date into timestamps
-    start_date = str(int(time.mktime(start_date.timetuple())))
-    end_date = str(int(time.mktime(end_date.timetuple())))
-
-    # API settings
-    entrypoint = "https://api.cryptowat.ch/markets/"
-    key = (
-        exchange
-        + "/"
-        + currencypair
-        + "/ohlc?periods="
-        + periods
-        + "&after="
-        + start_date
-        + "&before="
-        + end_date
-    )
-    request_url = entrypoint + key
-
-    # API call
-    response = requests.get(request_url)
-    response = response.json()
-    # header = ['Time', 'Open', 'High', 'Low', 'Close Price', Crypto + " Volume", Pair + " Volume"]
-    header = [
-        "Time",
-        "Open",
-        "High",
-        "Low",
-        "Close Price",
-        "Crypto Volume",
-        "Pair Volume",
-    ]
-    # do not show unuseful messages
-    pd.options.mode.chained_assignment = None
-
-    try:
-        Data_Frame = pd.DataFrame(response["result"]["86400"], columns=header)
-        Data_Frame = Data_Frame.drop(columns=["Open", "High", "Low"])
-    except:
-        Data_Frame = np.array([])
-
-    return Data_Frame
