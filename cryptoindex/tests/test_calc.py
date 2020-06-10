@@ -236,6 +236,6 @@ def test_perc_volume_per_exchange():
         "bitflyer",
     ]
 
-    first_logic = calc.first_logic_matrix()
+    first_logic = calc.first_logic_matrix(Exchanges)
 
     assert df.equals(first_logic)

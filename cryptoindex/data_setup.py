@@ -1,5 +1,5 @@
 # standard library import
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import time
 
 # third party import
@@ -25,27 +25,15 @@ from . import mongo_setup as mongo
 def timestamp_gen(start_date, end_date=None, EoD="Y"):
 
     start = datetime.strptime(start_date, "%m-%d-%Y")
-    start = int(time.mktime(start.timetuple()))
-
-    if (
-        start > 1585440000
-    ):  # TDB: make function more flexible, the ts is 29-03-2020 12:00 AM
-
-        add_on = 3600 * 2
-
-    else:
-
-        add_on = 3600
+    start = start.replace(tzinfo=timezone.utc).timestamp()
 
     if end_date is None:
 
         end_date = datetime.now().strftime("%m-%d-%Y")
 
     end_date = datetime.strptime(end_date, "%m-%d-%Y")
-    end = int(time.mktime(end_date.timetuple()))
-    end = end + add_on
+    end = end_date.replace(tzinfo=timezone.utc).timestamp()
 
-    start = start + add_on
     array = np.array([start])
     date = start
 

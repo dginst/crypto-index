@@ -3,10 +3,9 @@ import io
 import time
 from datetime import datetime
 
-import numpy as np
-
 # third party import
 import pandas as pd
+
 import requests
 from requests import get
 
