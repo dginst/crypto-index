@@ -90,16 +90,7 @@ db = connection.index
 collection_clean = db.cleandata
 collection_volume = db.volume_checked_data
 collection_CW_k = db.CW_keys
-## test ###
-db.test_setup.drop()
-db.test_clean.drop()
-db.test_keys.drop()
-db.test_setup.create_index([("id", -1)])
-db.test_clean.create_index([("id", -1)])
-db.test_keys.create_index([("id", -1)])
-coll_test = db.test_setup
-coll_t_clean = db.test_clean
-coll_k = db.test_keys
+
 
 # defining the database name and the collection name where to look for data
 database = "index"
@@ -118,7 +109,8 @@ Start_Period = "01-01-2016"
 
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
+today_TS = int(datetime.strptime(
+    today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
 yesterday_TS = today_TS - day_in_sec
 two_before_TS = yesterday_TS - day_in_sec
 
@@ -128,7 +120,7 @@ date_complete_int = data_setup.timestamp_gen(Start_Period)
 date_complete = [str(single_date) for single_date in date_complete_int]
 
 # searching only the last five days
-last_five_days = date_complete[(len(date_complete) - 5) : len(date_complete)]
+last_five_days = date_complete[(len(date_complete) - 5): len(date_complete)]
 
 # defining the MongoDB path where to look for the rates
 query = {"Exchange": "coinbase-pro", "Pair": "ethusd"}
@@ -138,7 +130,7 @@ matrix = mongo.query_mongo(database, collection_clean_check, query)
 
 # checking the time column
 date_list = np.array(matrix["Time"])
-last_five_days_mongo = date_list[(len(date_list) - 5) : len(date_list)]
+last_five_days_mongo = date_list[(len(date_list) - 5): len(date_list)]
 
 # finding the date to download as difference between complete array of date and
 # date now stored on MongoDB
@@ -165,7 +157,8 @@ if date_to_add != []:
         start_date = start_date.strftime("%m-%d-%Y")
         end_date = start_date
 
-    relative_reference_vector = data_setup.timestamp_gen(start_date, end_date, EoD="N")
+    relative_reference_vector = data_setup.timestamp_gen(
+        start_date, end_date, EoD="N")
 
     # creating a date array of support that allows to manage the one-day
     # missing data
@@ -205,15 +198,14 @@ for Crypto in Crypto_Asset:
             # checking if the matrix is not empty
             if matrix.shape[0] > 1:
 
-                matrix["Pair Volume"] = matrix["Close Price"] * matrix["Crypto Volume"]
+                matrix["Pair Volume"] = matrix["Close Price"] * \
+                    matrix["Crypto Volume"]
 
             # put the manipulated data on MongoDB
             try:
 
                 data = matrix.to_dict(orient="records")
-                # collection_volume.insert_many(data)
-                ##
-                coll_test.insert_many(data)
+                collection_volume.insert_many(data)
 
             except TypeError:
                 pass
@@ -222,9 +214,6 @@ for Crypto in Crypto_Asset:
 # ########### DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
 
 collection_volume_check = "volume_checked_data"
-##
-collection_volume_check = "test_setup"
-##
 collection_logic_key = "CW_keys"
 q_dict = {"Time": yesterday_TS}
 
@@ -240,8 +229,6 @@ daily_matrix["key"] = daily_matrix["Exchange"] + "&" + daily_matrix["Pair"]
 
 # selecting only the exchange-pair couples present in the historical series
 key_present = logic_key.loc[logic_key.logic_value == 1]
-print(key_present)
-print(key_present.shape)
 key_present = key_present.drop(columns=["logic_value"])
 # applying a left join between the prresent keys matrix and the daily
 # matrix, this operation returns a matrix containing all the keys in
@@ -268,6 +255,7 @@ if new_key.empty is False:
 
     print("Message: New exchange-pair couple(s) found.")
     new_key_list = new_key["key"]
+    print('new keys list')
     print(new_key_list)
 
     for key in new_key_list:
@@ -289,9 +277,12 @@ if new_key.empty is False:
         new_price = new_key.loc[new_key.key == key, "Close Price"]
         new_p_vol = new_key.loc[new_key.key == key, "Pair Volume"]
         new_c_vol = new_key.loc[new_key.key == key, "Crypto Volume"]
-        key_hist_df.loc[key_hist_df.Time == yesterday_TS, "Close Price"] = new_price
-        key_hist_df.loc[key_hist_df.Time == yesterday_TS, "Pair Volume"] = new_p_vol
-        key_hist_df.loc[key_hist_df.Time == yesterday_TS, "Crypto Volume"] = new_c_vol
+        key_hist_df.loc[key_hist_df.Time
+                        == yesterday_TS, "Close Price"] = new_price
+        key_hist_df.loc[key_hist_df.Time
+                        == yesterday_TS, "Pair Volume"] = new_p_vol
+        key_hist_df.loc[key_hist_df.Time
+                        == yesterday_TS, "Crypto Volume"] = new_c_vol
 
         # upload the dataframe on MongoDB collection "CW_cleandata"
         data = key_hist_df.to_dict(orient="records")
@@ -300,10 +291,7 @@ if new_key.empty is False:
 
     # uploading the updated keys df on the CW_keys collection
     new_k_logic = logic_key.to_dict(orient="records")
-    # collection_CW_k.insert_many(new_k_logic)
-    ##
-    coll_k.insert_many(new_k_logic)
-
+    collection_CW_k.insert_many(new_k_logic)
 
 else:
     pass
@@ -327,7 +315,7 @@ day_before_matrix["key"] = (
 for key_val in day_before_matrix["key"]:
 
     new_val = merged.loc[merged.key == key_val]
-    print(new_val)
+
     # if the new 'Close Price' referred to a certain key is 0 the script
     # check the previous day value: if is == 0 then pass, if is != 0
     # the values related to the selected key needs to be corrected
@@ -339,8 +327,8 @@ for key_val in day_before_matrix["key"]:
 
         if np.array(d_before_val["Close Price"]) != 0.0:
 
-            price_var = data_setup.daily_fix_missing(new_val, merged, day_before_matrix)
-
+            price_var = data_setup.daily_fix_missing(
+                new_val, merged, day_before_matrix)
             # applying the weighted variation to the day before 'Close Price'
             new_price = (1 + price_var) * d_before_val["Close Price"]
             # changing the 'Close Price' value using the new computed price
@@ -357,5 +345,4 @@ for key_val in day_before_matrix["key"]:
 merged.drop(columns=["key"])
 merged["Time"] = [str(d) for d in merged["Time"]]
 data = merged.to_dict(orient="records")
-# collection_clean.insert_many(data)
-coll_t_clean.insert_many(data)
+collection_clean.insert_many(data)

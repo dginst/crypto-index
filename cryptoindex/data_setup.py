@@ -1319,9 +1319,10 @@ def substitute_finder2(broken_array, reference_array, where_to_lookup, position)
 
 def daily_fix_missing(curr_df, tot_curr_df, tot_prev_df):
 
-    exchange = curr_df["Exchange"]
-    pair = curr_df["Pair"]
-
+    exchange = np.array(curr_df["Exchange"])
+    pair = np.array(curr_df["Pair"])
+    exchange = exchange[0]
+    pair = pair[0]
     # select a sub-df containing only the pair of interest of the previous
     # and current dataframes
     pair_prev_df = tot_prev_df.loc[tot_prev_df.Pair == pair]
