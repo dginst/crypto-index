@@ -33,34 +33,52 @@ import cryptoindex.mongo_setup as mongo
 start = time.time()
 # ################ initial settings #######################
 
-start_date = '01-01-2016'
+start_date = "01-01-2016"
 # end_date = '03-01-2020'
 
 # define today date as timestamp
-today = datetime.now().strftime('%Y-%m-%d')
-today_TS = int(datetime.strptime(today, '%Y-%m-%d').timestamp()) + 3600
+today = datetime.now().strftime("%Y-%m-%d")
+today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + 3600
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
 reference_date_vector = data_setup.timestamp_gen(start_date)
 # reference_date_vector = data_setup.timestamp_to_str(reference_date_vector)
 
-pair_array = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
+pair_array = ["gbp", "usd", "cad", "jpy", "eur", "usdt", "usdc"]
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
-Crypto_Asset = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
-                'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV'
-                ]
+Crypto_Asset = [
+    "BTC",
+    "ETH",
+    "XRP",
+    "LTC",
+    "BCH",
+    "EOS",
+    "ETC",
+    "ZEC",
+    "ADA",
+    "XLM",
+    "XMR",
+    "BSV",
+]
 # crypto complete ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
 # 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
-Exchanges = ['coinbase-pro', 'poloniex', 'bitstamp',
-             'gemini', 'bittrex', 'kraken', 'bitflyer']
+Exchanges = [
+    "coinbase-pro",
+    "poloniex",
+    "bitstamp",
+    "gemini",
+    "bittrex",
+    "kraken",
+    "bitflyer",
+]
 # exchange complete = [ 'coinbase-pro', 'poloniex',
 # 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
 # #################### setup MongoDB connection ################
 
 # connecting to mongo in local
-connection = MongoClient('localhost', 27017)
+connection = MongoClient("localhost", 27017)
 # creating the database called index
 db = connection.index
 
@@ -74,53 +92,49 @@ collection_clean = db.CW_cleandata
 
 # creating the empty collection "CW_volume_checked_data" within the database index
 db.CW_volume_checked_data.create_index([("id", -1)])
-collection_volume = db.CW_volume_checked_data
+collect_vol = db.CW_volume_checked_data
 
 # defining the database name and the collection name where to look for data
 db = "index"
 collection_raw = "CW_rawdata"
-collection_volume_check = "CW_volume_checked_data"
+collect_vol_chk = "CW_volume_checked_data"
 
 # ################ fixing the "Pair Volume" information ###########
 
 tot_matrix = mongo.query_mongo(db, collection_raw)
 tot_matrix = tot_matrix.loc[tot_matrix.Time != 0]
-tot_matrix = tot_matrix.drop(columns=['Low', 'High', 'Open'])
+tot_matrix = tot_matrix.drop(columns=["Low", "High", "Open"])
 
 for Crypto in Crypto_Asset:
 
-    currencypair_array = []
+    ccy_pair_array = []
 
     for i in pair_array:
 
-        currencypair_array.append(Crypto.lower() + i)
+        ccy_pair_array.append(Crypto.lower() + i)
 
     for exchange in Exchanges:
 
-        for cp in currencypair_array:
+        for cp in ccy_pair_array:
 
-            matrix = tot_matrix.loc[tot_matrix['Exchange'] == exchange]
-            matrix = matrix.loc[matrix['Pair'] == cp]
+            mat = tot_matrix.loc[tot_matrix["Exchange"] == exchange]
+            mat = mat.loc[mat["Pair"] == cp]
             # checking if the matrix is not empty
-            if matrix.shape[0] > 1:
+            if mat.shape[0] > 1:
 
-                if (exchange == 'bittrex' and cp == 'btcusdt'):
+                if exchange == "bittrex" and cp == "btcusdt":
 
-                    sub_vol = np.array(
-                        matrix.loc[matrix.Time == 1544486400, 'Crypto Volume'])
-                    matrix.loc[matrix.Time == 1544572800,
-                               'Crypto Volume'] = sub_vol
-                    matrix.loc[matrix.Time == 1544659200,
-                               'Crypto Volume'] = sub_vol
+                    sub_vol = np.array(mat.loc[mat.Time == 1544486400, "Crypto Volume"])
+                    mat.loc[mat.Time == 1544572800, "Crypto Volume"] = sub_vol
+                    mat.loc[mat.Time == 1544659200, "Crypto Volume"] = sub_vol
 
-                matrix['Pair Volume'] = matrix['Close Price'] * \
-                    matrix['Crypto Volume']
+                mat["Pair Volume"] = mat["Close Price"] * mat["Crypto Volume"]
 
             # put the manipulated data on MongoDB
             try:
 
-                data = matrix.to_dict(orient='records')
-                collection_volume.insert_many(data)
+                data = mat.to_dict(orient="records")
+                collect_vol.insert_many(data)
 
             except TypeError:
                 pass
@@ -132,66 +146,73 @@ print("This script took: {} seconds".format(float(end - start)))
 # ############## fixing historical series main part ##############
 start = time.time()
 
-tot_matrix = mongo.query_mongo(db, collection_volume_check)
+tot_matrix = mongo.query_mongo(db, collect_vol_chk)
 
 
 for Crypto in Crypto_Asset:
 
     print(Crypto)
-    currencypair_array = []
+    ccy_pair_array = []
 
     for i in pair_array:
 
-        currencypair_array.append(Crypto.lower() + i)
+        ccy_pair_array.append(Crypto.lower() + i)
 
     for exchange in Exchanges:
 
-        ex_matrix = tot_matrix.loc[tot_matrix['Exchange'] == exchange]
+        ex_matrix = tot_matrix.loc[tot_matrix["Exchange"] == exchange]
         print(exchange)
-        for cp in currencypair_array:
+        for cp in ccy_pair_array:
 
             print(cp)
             crypto = cp[:3]
             pair = cp[3:]
 
-            cp_matrix = ex_matrix.loc[ex_matrix['Pair'] == cp]
-            cp_matrix = cp_matrix.drop(columns=['Exchange', 'Pair'])
+            cp_matrix = ex_matrix.loc[ex_matrix["Pair"] == cp]
+            cp_matrix = cp_matrix.drop(columns=["Exchange", "Pair"])
             # checking if the matrix is not empty
             if cp_matrix.shape[0] > 1:
 
                 # check if the historical series start at the same date as
                 # the start date if not fill the dataframe with zero values
                 cp_matrix = data_setup.homogenize_series(
-                    cp_matrix, reference_date_vector)
+                    cp_matrix, reference_date_vector
+                )
 
                 # check if the series stopped at certain point in
                 # the past, if yes fill with zero
                 cp_matrix = data_setup.homogenize_dead_series(
-                    cp_matrix, reference_date_vector)
+                    cp_matrix, reference_date_vector
+                )
 
                 # checking if the matrix has missing data and if ever fixing it
                 if cp_matrix.shape[0] != reference_date_vector.size:
 
                     cp_matrix = data_setup.CW_series_fix_missing2(
-                        cp_matrix, exchange, cp, reference_date_vector,
-                        db, collection_volume_check)
+                        cp_matrix,
+                        exchange,
+                        cp,
+                        reference_date_vector,
+                        db,
+                        collect_vol_chk,
+                    )
 
                 # ######## part that transform the timestamped date into string
 
                 new_date = np.array([])
-                for element in cp_matrix['Time']:
+                for element in cp_matrix["Time"]:
 
                     element = str(element)
                     new_date = np.append(new_date, element)
 
-                cp_matrix['Time'] = new_date
+                cp_matrix["Time"] = new_date
                 # ############################################################
 
                 # add exchange and currency_pair column
-                cp_matrix['Exchange'] = exchange
-                cp_matrix['Pair'] = cp
+                cp_matrix["Exchange"] = exchange
+                cp_matrix["Pair"] = cp
                 # put the manipulated data on MongoDB
-                data = cp_matrix.to_dict(orient='records')
+                data = cp_matrix.to_dict(orient="records")
                 collection_clean.insert_many(data)
 
 # #######################################################################

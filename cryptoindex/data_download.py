@@ -12,7 +12,6 @@ from requests import get
 
 # local import
 from . import data_setup
-from . import mongo_setup as mongo
 
 # #################### ECB rates download function ###################
 
@@ -22,12 +21,12 @@ from . import mongo_setup as mongo
 # key_curr_vector expects a list of currency in International Currency Formatting (ex. USD, GBP, JPY, CAD,...)
 # the functions diplays the information better for a single day data retrival, however can works with multiple date
 # regarding the other default variables consult the ECB api web page
-# Start_Period has to be in YYYY-MM-DD format
+# start_period has to be in YYYY-MM-DD format
 
 
 def ECB_rates_extractor(
     key_curr_vector,
-    Start_Period,
+    start_period,
     End_Period=None,
     freq="D",
     curr_den="EUR",
@@ -36,11 +35,11 @@ def ECB_rates_extractor(
 ):
 
     # reforming the data into the correct format
-    Start_Period = data_setup.date_reformat(Start_Period, "-", "YYYY-MM-DD")
+    start_period = data_setup.date_reformat(start_period, "-", "YYYY-MM-DD")
 
     # set end_period = start_period if empty, so that is possible to perform daily download
     if End_Period is None:
-        End_Period = Start_Period
+        End_Period = start_period
     else:
         End_Period = data_setup.date_reformat(End_Period, "-", "YYYY-MM-DD")
 
@@ -48,7 +47,7 @@ def ECB_rates_extractor(
     entrypoint = "https://sdw-wsrest.ecb.europa.eu/service/"
     resource = "data"
     flow_ref = "EXR"
-    param = {"startPeriod": Start_Period, "endPeriod": End_Period}
+    param = {"startPeriod": start_period, "endPeriod": End_Period}
 
     Exchange_Rate_List = pd.DataFrame()
     # turning off a pandas warning about slicing of DF

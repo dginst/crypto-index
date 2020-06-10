@@ -14,7 +14,7 @@ import cryptoindex.mongo_setup as mongo
 # initial settings ############################################
 
 # set start_period (ever)
-Start_Period = "01-01-2016"
+start_period = "01-01-2016"
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
 
@@ -65,12 +65,12 @@ collection_raw = db.CW_rawdata
 # converted_data check ###########################################
 
 # defining the array containing all the date from start_period until today
-date_complete = data_setup.timestamp_gen(Start_Period)
+date_tot = data_setup.timestamp_gen(start_period)
 # converting the timestamp format date into string
-date_complete = [str(single_date) for single_date in date_complete]
+date_tot = [str(single_date) for single_date in date_tot]
 
 # searching only the last five days
-last_five_days = date_complete[(len(date_complete) - 5) : len(date_complete)]
+last_five_days = date_tot[(len(date_tot) - 5) : len(date_tot)]
 
 # defining the MongoDB path where to look for the rates
 database = "index"
@@ -113,13 +113,13 @@ if date_to_add != []:
 
     for Crypto in Crypto_Asset:
 
-        currencypair_array = []
+        ccy_pair_array = []
         for i in pair_array:
-            currencypair_array.append(Crypto.lower() + i)
+            ccy_pair_array.append(Crypto.lower() + i)
 
         for exchange in Exchanges:
 
-            for cp in currencypair_array:
+            for cp in ccy_pair_array:
 
                 crypto = cp[:3]
                 pair = cp[3:]

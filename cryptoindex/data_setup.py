@@ -742,10 +742,10 @@ def fix_zero_value(matrix):
 # start_Period and End_Period
 
 
-def ECB_setup(key_curr_vector, Start_Period, End_Period, timeST="N"):
+def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N"):
 
     # defining the array of date to be used
-    date = timestamp_gen(Start_Period, End_Period, EoD="N")
+    date = timestamp_gen(start_period, End_Period, EoD="N")
     date_ECB = timestamp_gen_legal_solar(date)
     # date = timestamp_convert(date_TS)
     # date = [datetime.strptime(x, '%Y-%m-%d') for x in date]

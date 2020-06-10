@@ -44,7 +44,7 @@ Exchanges = [
 
 hour_in_sec = 3600
 day_in_sec = 86400
-Start_Period = "01-01-2016"
+start_period = "01-01-2016"
 
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
@@ -53,9 +53,9 @@ y_TS = today_TS - day_in_sec
 two_before_TS = y_TS - day_in_sec
 
 # defining the array containing all the date from start_period until today
-date_complete_int = data_setup.timestamp_gen(Start_Period)
+date_complete_int = data_setup.timestamp_gen(start_period)
 # converting the timestamp format date into string
-date_complete = [str(single_date) for single_date in date_complete_int]
+date_tot = [str(single_date) for single_date in date_complete_int]
 
 # #################### setup mongo connection ##################
 
@@ -78,94 +78,90 @@ db = "index"
 coll_EXC_raw = "EXC_rawdata"
 q_dict = {"Time": y_TS}
 
-daily_matrix = mongo.query_mongo(db, coll_EXC_raw, q_dict)
-daily_matrix = daily_matrix[
+daily_mat = mongo.query_mongo(db, coll_EXC_raw, q_dict)
+daily_mat = daily_mat[
     ["Pair", "Exchange", "Close Price", "Time", "Crypto Volume", "date"]
 ]
 
 # creating a column containing the hour of extraction
-daily_matrix["hour"] = daily_matrix["date"].str[11:16]
+daily_mat["hour"] = daily_mat["date"].str[11:16]
 
-daily_matrix = daily_matrix.loc[daily_matrix.Time != 0]
+daily_mat = daily_mat.loc[daily_mat.Time != 0]
 
 # changing some features in "Pair" field in order to homogeneize
-daily_matrix["Pair"] = [
-    element.replace("USDT_BCHSV", "bsvusdt") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDT_BCHSV", "bsvusdt") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDC_BCHSV", "bsvusdc") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDC_BCHSV", "bsvusdc") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDT_BCHABC", "bchusdt") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDT_BCHABC", "bchusdt") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDC_BCHABC", "bchusdc") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDC_BCHABC", "bchusdc") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDC_LTC", "ltcusdc") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDC_LTC", "ltcusdc") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDT_LTC", "ltcusdt") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDT_LTC", "ltcusdt") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDC_XRP", "xrpusdc") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDC_XRP", "xrpusdc") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDT_XRP", "xrpusdt") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDT_XRP", "xrpusdt") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDC_ZEC", "zecusdc") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDC_ZEC", "zecusdc") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDT_ZEC", "zecusdt") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDT_ZEC", "zecusdt") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDC_EOS", "eosusdc") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDC_EOS", "eosusdc") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDT_EOS", "eosusdt") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDT_EOS", "eosusdt") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDC_ETC", "etcusdc") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDC_ETC", "etcusdc") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDT_ETC", "etcusdt") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDT_ETC", "etcusdt") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDC_STR", "xlmusdc") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDC_STR", "xlmusdc") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDT_STR", "xlmusdt") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDT_STR", "xlmusdt") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDC_BTC", "btcusdc") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDC_BTC", "btcusdc") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDT_BTC", "btcusdt") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDT_BTC", "btcusdt") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDC_ETH", "ethusdc") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDC_ETH", "ethusdc") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [
-    element.replace("USDT_ETH", "ethusdt") for element in daily_matrix["Pair"]
+daily_mat["Pair"] = [
+    element.replace("USDT_ETH", "ethusdt") for element in daily_mat["Pair"]
 ]
-daily_matrix["Pair"] = [element.lower() for element in daily_matrix["Pair"]]
-daily_matrix["Pair"] = [
-    element.replace("xbt", "btc") for element in daily_matrix["Pair"]
-]
+daily_mat["Pair"] = [element.lower() for element in daily_mat["Pair"]]
+daily_mat["Pair"] = [element.replace("xbt", "btc") for element in daily_mat["Pair"]]
 
-daily_matrix["Pair Volume"] = (
-    daily_matrix["Close Price"] * daily_matrix["Crypto Volume"]
-)
+daily_mat["Pair Volume"] = daily_mat["Close Price"] * daily_mat["Crypto Volume"]
 
 # ############################################################################
 # ################# EXTRACTION HOURS DEFINITION ##############################
 
 # creating 4 different df for each exctraction hour
-daily_matrix_00 = daily_matrix.loc[daily_matrix.hour == "00:00"]
-daily_matrix_12 = daily_matrix.loc[daily_matrix.hour == "12:00"]
-daily_matrix_16 = daily_matrix.loc[daily_matrix.hour == "16:00"]
-daily_matrix_20 = daily_matrix.loc[daily_matrix.hour == "20:00"]
+daily_matrix_00 = daily_mat.loc[daily_mat.hour == "00:00"]
+daily_matrix_12 = daily_mat.loc[daily_mat.hour == "12:00"]
+daily_matrix_16 = daily_mat.loc[daily_mat.hour == "16:00"]
+daily_matrix_20 = daily_mat.loc[daily_mat.hour == "20:00"]
 
 # creating the exchange-pair couples key for the daily matrix
 # for each above defined df
@@ -176,12 +172,12 @@ daily_matrix_20["key"] = daily_matrix_20["Exchange"] + "&" + daily_matrix_20["Pa
 
 # ########### DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
 
-collection_logic_key = "EXC_keys"
+collect_log_key = "EXC_keys"
 q_dict = {"Time": y_TS}
 
 # downloading from MongoDB the matrix with the daily values and the
 # matrix containing the exchange-pair logic values
-logic_key = mongo.query_mongo(db, collection_logic_key)
+logic_key = mongo.query_mongo(db, collect_log_key)
 
 # ########## adding the dead series to the daily values ##################
 
@@ -190,7 +186,7 @@ key_present = logic_key.loc[logic_key.logic_value == 1]
 key_present = key_present.drop(columns=["logic_value"])
 # applying a left join between the prresent keys matrix and the daily
 # matrix, this operation returns a matrix containing all the keys in
-# "key_present" and, if some keys are missing in "daily_matrix" put NaN
+# "key_present" and, if some keys are missing in "daily_mat" put NaN
 merged = pd.merge(key_present, daily_matrix_00, on="key", how="left")
 # assigning some columns values and substituting NaN with 0
 # in the "merged" df
@@ -238,7 +234,7 @@ key_absent.drop(columns=["logic_value"])
 
 # merging the two dataframe (left join) in order to find potential
 # new keys in the data of the day
-merg_absent = pd.merge(key_absent, daily_matrix, on="key", how="left")
+merg_absent = pd.merge(key_absent, daily_mat, on="key", how="left")
 merg_absent.fillna("NaN", inplace=True)
 new_key = merg_absent.loc[merg_absent["Close Price"] != "NaN"]
 
@@ -256,7 +252,7 @@ if new_key.empty is False:
         # create the historical series of the new couple(s)
         # composed by zeros
         splited_key = key.split("&")
-        key_hist_df = pd.DataFrame(date_complete, columns="Time")
+        key_hist_df = pd.DataFrame(date_tot, columns="Time")
         key_hist_df["Close Price"] = 0
         key_hist_df["Pair Volume"] = 0
         key_hist_df["Crypto Volume"] = 0
@@ -284,6 +280,7 @@ else:
 
 database = "index"
 coll_clean = "EXC_cleandata"
+q_dict = Dict[str, str]
 q_dict = {"Time": str(two_before_TS)}
 
 # downloading from MongoDB the matrix referring to the previuos day

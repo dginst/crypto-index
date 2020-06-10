@@ -14,7 +14,7 @@ The file allows to download from the European Central Bank Websites the exchange
 * 'USD','GBP', 'CAD' and 'JPY'
 
 Once downloaded, the code stores the retrieved data on MongoDB in the database "index" and collection "ecb_raw". 
-It is possible to change the period of downlaod modifying the "Start_Period"
+It is possible to change the period of downlaod modifying the "start_period"
 
 ### 2) Run ECB_hist_setup.py
 
@@ -24,7 +24,7 @@ Since the Crypto-Index express all of its values in USD, the code puts all the e
 * EUR/USD, CAD/USD, GBP/USD, JPY/USD
 
 The completed USD based historical series is saved back on MongoDb in the collection "ecb_clean".
-It is possible to change the period of downlaod modifying the "Start_Period"
+It is possible to change the period of downlaod modifying the "start_period"
 
 ### 3) Run CW_hist_download.py
 

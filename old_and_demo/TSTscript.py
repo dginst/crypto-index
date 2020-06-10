@@ -33,7 +33,7 @@ import cryptoindex.data_download as data_download
 # # if x.empty == True:
 # #     print('yes')
 
-# Start_Period = '2020-01-02'
+# start_period = '2020-01-02'
 # key_curr_vector = ['USD', 'GBP', 'CAD', 'JPY']
 # header = ['CURRENCY', 'CURRENCY_DENOM', 'OBS_VALUE', 'TIME_PERIOD']
 # function that downloads the exchange rates from the ECB web page and returns a matrix (pd.DataFrame) that
@@ -42,10 +42,10 @@ import cryptoindex.data_download as data_download
 # key_curr_vector expects a list of currency in International Currency Formatting (ex. USD, GBP, JPY, CAD,...)
 # the functions diplays the information better for a single day data retrival, however can works with multiple date
 # regarding the other default variables consult the ECB api web page
-# Start_Period has to be in YYYY-MM-DD format
+# start_period has to be in YYYY-MM-DD format
 
-# c =  data_download.ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None)
-# d = data_download.ECB_rates_extractor(key_curr_vector, Start_Period, End_Period = None)
+# c =  data_download.ECB_rates_extractor(key_curr_vector, start_period, End_Period = None)
+# d = data_download.ECB_rates_extractor(key_curr_vector, start_period, End_Period = None)
 # #c.reset_index(drop=True, inplace=True)
 # print(c)
 # e = np.array(c)

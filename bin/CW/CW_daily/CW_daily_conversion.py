@@ -263,11 +263,11 @@ collection_stable.insert_many(usdc_data)
 # ################# defining the time vector for the check ###############
 
 # defining the array containing all the date from start_period until today
-date_complete = data_setup.timestamp_gen(start_date)
+date_tot = data_setup.timestamp_gen(start_date)
 # converting the timestamp format date into string
-date_complete = [str(single_date) for single_date in date_complete]
+date_tot = [str(single_date) for single_date in date_tot]
 # searching only the last five days
-last_five_days = date_complete[(len(date_complete) - 5) : len(date_complete)]
+last_five_days = date_tot[(len(date_tot) - 5) : len(date_tot)]
 
 # ################# DAILY DATA CONVERSION MAIN PART ##################
 

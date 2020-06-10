@@ -46,6 +46,8 @@ import numpy as np
 import cryptoindex.data_setup as data_setup
 import cryptoindex.mongo_setup as mongo
 
+from typing import Dict
+
 
 # ############# INITIAL SETTINGS ################################
 
@@ -88,7 +90,7 @@ db = connection.index
 
 # naming the existing collections as a variable
 collection_clean = db.CW_cleandata
-collection_volume = db.CW_volume_checked_data
+collect_vol = db.CW_volume_checked_data
 collection_CW_k = db.CW_keys
 
 
@@ -96,7 +98,7 @@ collection_CW_k = db.CW_keys
 database = "index"
 collection_raw = "CW_rawdata"
 collection_clean_check = "CW_cleandata"
-collection_volume_check = "CW_volume_checked_data"
+collect_vol_chk = "CW_volume_checked_data"
 
 # ############################ missing days check #############################
 
@@ -105,7 +107,7 @@ collection_volume_check = "CW_volume_checked_data"
 
 hour_in_sec = 3600
 day_in_sec = 86400
-Start_Period = "01-01-2016"
+start_period = "01-01-2016"
 
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
@@ -115,12 +117,12 @@ y_TS = today_TS - day_in_sec
 two_before_TS = y_TS - day_in_sec
 
 # defining the array containing all the date from start_period until today
-date_complete_int = data_setup.timestamp_gen(Start_Period)
+date_complete_int = data_setup.timestamp_gen(start_period)
 # converting the timestamp format date into string
-date_complete = [str(single_date) for single_date in date_complete_int]
+date_tot = [str(single_date) for single_date in date_complete_int]
 
 # searching only the last five days
-last_five_days = date_complete[(len(date_complete) - 5) : len(date_complete)]
+last_five_days = date_tot[(len(date_tot) - 5) : len(date_tot)]
 
 # defining the MongoDB path where to look for the rates
 query = {"Exchange": "coinbase-pro", "Pair": "ethusd"}
@@ -172,36 +174,37 @@ if date_to_add != []:
 
 db = "index"
 collection_raw = "CW_rawdata"
+q_dict: Dict[str, int] = {}
 q_dict = {"Time": y_TS}
 
-daily_matrix = mongo.query_mongo(db, collection_raw, q_dict)
-daily_matrix = daily_matrix.loc[daily_matrix.Time != 0]
-daily_matrix = daily_matrix.drop(columns=["Low", "High", "Open"])
+daily_mat = mongo.query_mongo(db, collection_raw, q_dict)
+daily_mat = daily_mat.loc[daily_mat.Time != 0]
+daily_mat = daily_mat.drop(columns=["Low", "High", "Open"])
 
 for Crypto in Crypto_Asset:
 
-    currencypair_array = []
+    ccy_pair_array = []
 
     for i in pair_array:
 
-        currencypair_array.append(Crypto.lower() + i)
+        ccy_pair_array.append(Crypto.lower() + i)
 
     for exchange in Exchanges:
 
-        for cp in currencypair_array:
+        for cp in ccy_pair_array:
 
-            matrix = daily_matrix.loc[daily_matrix["Exchange"] == exchange]
-            matrix = matrix.loc[matrix["Pair"] == cp]
+            mat = daily_mat.loc[daily_mat["Exchange"] == exchange]
+            mat = mat.loc[mat["Pair"] == cp]
             # checking if the matrix is not empty
-            if matrix.shape[0] > 1:
+            if mat.shape[0] > 1:
 
-                matrix["Pair Volume"] = matrix["Close Price"] * matrix["Crypto Volume"]
+                mat["Pair Volume"] = mat["Close Price"] * mat["Crypto Volume"]
 
             # put the manipulated data on MongoDB
             try:
 
-                data = matrix.to_dict(orient="records")
-                collection_volume.insert_many(data)
+                data = mat.to_dict(orient="records")
+                collect_vol.insert_many(data)
 
             except TypeError:
                 pass
@@ -209,17 +212,17 @@ for Crypto in Crypto_Asset:
 # ############################################################################
 # ########### DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
 
-collection_volume_check = "CW_volume_checked_data"
-collection_logic_key = "CW_keys"
+collect_vol_chk = "CW_volume_checked_data"
+collect_log_key = "CW_keys"
 q_dict = {"Time": y_TS}
 
 # downloading from MongoDB the matrix with the daily values and the
 # matrix containing the exchange-pair logic values
-daily_matrix = mongo.query_mongo(db, collection_volume_check, q_dict)
-logic_key = mongo.query_mongo(db, collection_logic_key)
+daily_mat = mongo.query_mongo(db, collect_vol_chk, q_dict)
+logic_key = mongo.query_mongo(db, collect_log_key)
 
 # creating the exchange-pair couples key for the daily matrix
-daily_matrix["key"] = daily_matrix["Exchange"] + "&" + daily_matrix["Pair"]
+daily_mat["key"] = daily_mat["Exchange"] + "&" + daily_mat["Pair"]
 
 # ########## adding the dead series to the daily values ##################
 
@@ -228,8 +231,8 @@ key_present = logic_key.loc[logic_key.logic_value == 1]
 key_present = key_present.drop(columns=["logic_value"])
 # applying a left join between the prresent keys matrix and the daily
 # matrix, this operation returns a matrix containing all the keys in
-# "key_present" and, if some keys are missing in "daily_matrix" put NaN
-merged = pd.merge(key_present, daily_matrix, on="key", how="left")
+# "key_present" and, if some keys are missing in "daily_mat" put NaN
+merged = pd.merge(key_present, daily_mat, on="key", how="left")
 # assigning some columns values and substituting NaN with 0
 # in the "merged" df
 merged["Time"] = y_TS
@@ -243,7 +246,7 @@ merged.fillna(0, inplace=True)
 key_absent = logic_key.loc[logic_key.logic_value == 0]
 key_absent.drop(columns=["logic_value"])
 
-merg_absent = pd.merge(key_absent, daily_matrix, on="key", how="left")
+merg_absent = pd.merge(key_absent, daily_mat, on="key", how="left")
 merg_absent.fillna("NaN", inplace=True)
 new_key = merg_absent.loc[merg_absent["Close Price"] != "NaN"]
 
@@ -262,7 +265,7 @@ if new_key.empty is False:
         # create the historical series of the new couple(s)
         # composed by zeros
         splited_key = key.split("&")
-        key_hist_df = pd.DataFrame(date_complete, columns="Time")
+        key_hist_df = pd.DataFrame(date_tot, columns="Time")
         key_hist_df["Close Price"] = 0
         key_hist_df["Pair Volume"] = 0
         key_hist_df["Crypto Volume"] = 0
@@ -293,10 +296,12 @@ else:
 
 database = "index"
 collection_clean_check = "CW_cleandata"
-q_dict = {"Time": str(two_before_TS)}
+q_dict_time: Dict[str, str] = {}
+q_dict_time = {"Time": str(two_before_TS)}
+
 
 # downloading from MongoDB the matrix referring to the previuos day
-day_bfr_mat = mongo.query_mongo(db, collection_clean_check, q_dict)
+day_bfr_mat = mongo.query_mongo(db, collection_clean_check, q_dict_time)
 
 # add the "key" column
 day_bfr_mat["key"] = day_bfr_mat["Exchange"] + "&" + day_bfr_mat["Pair"]

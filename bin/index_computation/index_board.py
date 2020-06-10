@@ -82,7 +82,7 @@ db.crypto_price.create_index([("id", -1)])
 collection_price = db.crypto_price
 # collection for crytpo volume
 db.crypto_volume.create_index([("id", -1)])
-collection_volume = db.crypto_volume
+collect_vol = db.crypto_volume
 # collection for price returns
 db.crypto_price_return.create_index([("id", -1)])
 collection_price_ret = db.crypto_price_return
@@ -157,7 +157,7 @@ curr_board_eve = board_date_eve[len(board_date_eve) - 1]
 # defining the dictionary for the MongoDB query
 query_dict = {"Time": str(y_TS)}
 # retriving the needed information on MongoDB
-daily_matrix = mongo.query_mongo(db_name, coll_data, query_dict)
+daily_mat = mongo.query_mongo(db_name, coll_data, query_dict)
 
 # initialize the matrices that will contain the prices
 # and volumes of all the cryptoasset
@@ -170,14 +170,14 @@ for CryptoA in Crypto_Asset:
 
     print(CryptoA)
     # initialize useful matrices
-    currencypair_array = []
+    ccy_pair_array = []
     Exchange_Price = np.matrix([])
     Exchange_Volume = np.matrix([])
     Ex_PriceVol = np.matrix([])
 
     # create the crypto-fiat strings useful to download from CW
     for pair in pair_array:
-        currencypair_array.append(CryptoA.lower() + pair)
+        ccy_pair_array.append(CryptoA.lower() + pair)
 
     for exchange in Exchanges:
         print(exchange)
@@ -187,7 +187,7 @@ for CryptoA in Crypto_Asset:
         Ccy_Pair_Volume = np.matrix([])
         Ccy_Pair_Price = np.matrix([])
 
-        for cp in currencypair_array:
+        for cp in ccy_pair_array:
             print(cp)
 
             crypto = cp[:3]
@@ -206,8 +206,8 @@ for CryptoA in Crypto_Asset:
 
             # selecting the data referring to specific
             # exchange and crypto-fiat pair
-            matrix = daily_matrix.loc[
-                (daily_matrix["Exchange"] == exchange) & (daily_matrix["Pair"] == cp)
+            matrix = daily_mat.loc[
+                (daily_mat["Exchange"] == exchange) & (daily_mat["Pair"] == cp)
             ]
 
             if matrix.empty is False:
@@ -496,7 +496,7 @@ volume_up = Crypto_Asset_Volume[
     ]
 ]
 volume_up = volume_up.to_dict(orient="records")
-collection_volume.insert_many(volume_up)
+collect_vol.insert_many(volume_up)
 
 # put the daily return on MongoDB
 price_ret["Date"] = yesterday_human

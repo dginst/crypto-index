@@ -46,7 +46,7 @@ Exchanges = [
 
 hour_in_sec = 3600
 day_in_sec = 86400
-Start_Period = "01-01-2016"
+start_period = "01-01-2016"
 
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
@@ -55,9 +55,9 @@ y_TS = today_TS - day_in_sec
 two_before_TS = y_TS - day_in_sec
 
 # defining the array containing all the date from start_period until today
-date_complete_int = data_setup.timestamp_gen(Start_Period)
+date_complete_int = data_setup.timestamp_gen(start_period)
 # converting the timestamp format date into string
-date_complete = [str(single_date) for single_date in date_complete_int]
+date_tot = [str(single_date) for single_date in date_complete_int]
 
 # #################### setup mongo connection ##################
 
