@@ -87,8 +87,8 @@ connection = MongoClient("localhost", 27017)
 db = connection.index
 
 # naming the existing collections as a variable
-collection_clean = db.cleandata
-collection_volume = db.volume_checked_data
+collection_clean = db.CW_cleandata
+collection_volume = db.CW_volume_checked_data
 collection_CW_k = db.CW_keys
 
 
@@ -96,7 +96,7 @@ collection_CW_k = db.CW_keys
 database = "index"
 collection_raw = "CW_rawdata"
 collection_clean_check = "CW_cleandata"
-collection_volume_check = "volume_checked_data"
+collection_volume_check = "CW_volume_checked_data"
 
 # ############################ missing days check #############################
 
@@ -209,7 +209,7 @@ for Crypto in Crypto_Asset:
 # ############################################################################
 # ########### DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
 
-collection_volume_check = "volume_checked_data"
+collection_volume_check = "CW_volume_checked_data"
 collection_logic_key = "CW_keys"
 q_dict = {"Time": y_TS}
 

@@ -66,20 +66,20 @@ db = connection.index
 
 # drop the pre-existing collection (if there is one)
 db.CW_cleandata.drop()
-db.volume_checked_data.drop()
+db.CW_volume_checked_data.drop()
 
 # creating the empty collection "cleandata" within the database index
 db.CW_cleandata.create_index([("id", -1)])
 collection_clean = db.CW_cleandata
 
-# creating the empty collection "volume_checked_data" within the database index
-db.volume_checked_data.create_index([("id", -1)])
-collection_volume = db.volume_checked_data
+# creating the empty collection "CW_volume_checked_data" within the database index
+db.CW_volume_checked_data.create_index([("id", -1)])
+collection_volume = db.CW_volume_checked_data
 
 # defining the database name and the collection name where to look for data
 db = "index"
 collection_raw = "CW_rawdata"
-collection_volume_check = "volume_checked_data"
+collection_volume_check = "CW_volume_checked_data"
 
 # ################ fixing the "Pair Volume" information ###########
 
@@ -196,7 +196,7 @@ for Crypto in Crypto_Asset:
 
 # #######################################################################
 db = connection.index
-# db.volume_checked_data.drop()
+# db.CW_volume_checked_data.drop()
 
 end = time.time()
 
