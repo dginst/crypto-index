@@ -1,5 +1,6 @@
 # standard library import
 from datetime import datetime
+from typing import Dict
 
 # third party import
 from pymongo import MongoClient
@@ -48,7 +49,8 @@ start_period = "01-01-2016"
 
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
+today_TS = int(datetime.strptime(
+    today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
 y_TS = today_TS - day_in_sec
 two_before_TS = y_TS - day_in_sec
 
@@ -76,6 +78,7 @@ coll_CW_raw = "CW_rawdata"
 
 db = "index"
 coll_EXC_raw = "EXC_rawdata"
+q_dict: Dict[str, int] = {}
 q_dict = {"Time": y_TS}
 
 daily_mat = mongo.query_mongo(db, coll_EXC_raw, q_dict)
@@ -150,7 +153,8 @@ daily_mat["Pair"] = [
     element.replace("USDT_ETH", "ethusdt") for element in daily_mat["Pair"]
 ]
 daily_mat["Pair"] = [element.lower() for element in daily_mat["Pair"]]
-daily_mat["Pair"] = [element.replace("xbt", "btc") for element in daily_mat["Pair"]]
+daily_mat["Pair"] = [element.replace("xbt", "btc")
+                     for element in daily_mat["Pair"]]
 
 daily_mat["Pair Volume"] = daily_mat["Close Price"] * daily_mat["Crypto Volume"]
 
@@ -165,10 +169,14 @@ daily_matrix_20 = daily_mat.loc[daily_mat.hour == "20:00"]
 
 # creating the exchange-pair couples key for the daily matrix
 # for each above defined df
-daily_matrix_00["key"] = daily_matrix_00["Exchange"] + "&" + daily_matrix_00["Pair"]
-daily_matrix_12["key"] = daily_matrix_12["Exchange"] + "&" + daily_matrix_12["Pair"]
-daily_matrix_16["key"] = daily_matrix_16["Exchange"] + "&" + daily_matrix_16["Pair"]
-daily_matrix_20["key"] = daily_matrix_20["Exchange"] + "&" + daily_matrix_20["Pair"]
+daily_matrix_00["key"] = daily_matrix_00["Exchange"] + \
+    "&" + daily_matrix_00["Pair"]
+daily_matrix_12["key"] = daily_matrix_12["Exchange"] + \
+    "&" + daily_matrix_12["Pair"]
+daily_matrix_16["key"] = daily_matrix_16["Exchange"] + \
+    "&" + daily_matrix_16["Pair"]
+daily_matrix_20["key"] = daily_matrix_20["Exchange"] + \
+    "&" + daily_matrix_20["Pair"]
 
 # ########### DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
 
@@ -280,11 +288,11 @@ else:
 
 database = "index"
 coll_clean = "EXC_cleandata"
-q_dict = Dict[str, str]
-q_dict = {"Time": str(two_before_TS)}
+q_dict_str: Dict[str, str] = {}
+q_dict_str = {"Time": str(two_before_TS)}
 
 # downloading from MongoDB the matrix referring to the previuos day
-day_bfr_mat = mongo.query_mongo(db, coll_clean, q_dict)
+day_bfr_mat = mongo.query_mongo(db, coll_clean, q_dict_str)
 
 # add the "key" column
 day_bfr_mat["key"] = day_bfr_mat["Exchange"] + "&" + day_bfr_mat["Pair"]

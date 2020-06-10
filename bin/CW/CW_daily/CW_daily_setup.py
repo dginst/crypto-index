@@ -122,7 +122,7 @@ date_complete_int = data_setup.timestamp_gen(start_period)
 date_tot = [str(single_date) for single_date in date_complete_int]
 
 # searching only the last five days
-last_five_days = date_tot[(len(date_tot) - 5) : len(date_tot)]
+last_five_days = date_tot[(len(date_tot) - 5): len(date_tot)]
 
 # defining the MongoDB path where to look for the rates
 query = {"Exchange": "coinbase-pro", "Pair": "ethusd"}
@@ -132,7 +132,7 @@ matrix = mongo.query_mongo(database, collection_clean_check, query)
 
 # checking the time column
 date_list = np.array(matrix["Time"])
-last_five_days_mongo = date_list[(len(date_list) - 5) : len(date_list)]
+last_five_days_mongo = date_list[(len(date_list) - 5): len(date_list)]
 
 # finding the date to download as difference between complete array of date and
 # date now stored on MongoDB
