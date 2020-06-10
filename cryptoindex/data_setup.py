@@ -1317,7 +1317,7 @@ def substitute_finder2(broken_array, reference_array, where_to_lookup, position)
 # add descr
 
 
-def daily_fix_missing(curr_df, tot_curr_df, tot_prev_df):
+def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
 
     exchange = np.array(curr_df["Exchange"])
     pair = np.array(curr_df["Pair"])

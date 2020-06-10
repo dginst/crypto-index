@@ -36,8 +36,8 @@ start_date = "01-01-2016"
 # define today date as timestamp
 today = datetime.now().strftime("%Y-%m-%d")
 today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + 3600 * 2
-yesterday_TS = today_TS - 86400
-two_before_TS = yesterday_TS - 86400
+y_TS = today_TS - 86400
+two_before_TS = y_TS - 86400
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
@@ -98,7 +98,7 @@ collection = "CW_cleandata"
 # taking BTC/USD pair value related to the date of interest
 # ## should be add a try/except TypeError in order to manage
 # the potential missing of kraken btcusd ##############
-first_query = {"Pair": "btcusd", "Exchange": "kraken", "Time": str(yesterday_TS)}
+first_query = {"Pair": "btcusd", "Exchange": "kraken", "Time": str(y_TS)}
 first_call = mongo.query_mongo(database, collection, first_query)
 
 
@@ -111,7 +111,7 @@ Exchanges.remove("kraken")
 
 for exchange in Exchanges:
 
-    query = {"Pair": "btcusd", "Exchange": exchange, "Time": str(yesterday_TS)}
+    query = {"Pair": "btcusd", "Exchange": exchange, "Time": str(y_TS)}
     single_ex = mongo.query_mongo(database, collection, query)
 
     try:
@@ -140,15 +140,15 @@ average_df.fillna(0, inplace=True)
 # Poloniex has the entire historoical values from 01/01/2016
 
 # POLONIEX usdt/usd exchange rate
-query_usdt = {"Exchange": "poloniex", "Pair": "btcusdt", "Time": str(yesterday_TS)}
+query_usdt = {"Exchange": "poloniex", "Pair": "btcusdt", "Time": str(y_TS)}
 usdt_poloniex = mongo.query_mongo(database, collection, query_usdt)
 
 # KRAKEN usdt/usd exchange rate
-query_usdt = {"Exchange": "kraken", "Pair": "btcusdt", "Time": str(yesterday_TS)}
+query_usdt = {"Exchange": "kraken", "Pair": "btcusdt", "Time": str(y_TS)}
 usdt_kraken = mongo.query_mongo(database, collection, query_usdt)
 
 # BITTREX usdt/usd exchange rate
-query_usdt = {"Exchange": "bittrex", "Pair": "btcusdt", "Time": str(yesterday_TS)}
+query_usdt = {"Exchange": "bittrex", "Pair": "btcusdt", "Time": str(y_TS)}
 usdt_bittrex = mongo.query_mongo(database, collection, query_usdt)
 
 # computing the rate on each exchange
@@ -201,18 +201,18 @@ collection_stable.insert_many(usdt_data)
 # Poloniex has the entire historoical values from 01/01/2016
 
 # POLONIEX usdc/usd exchange rate
-query_usdc = {"Exchange": "poloniex", "Pair": "btcusdc", "Time": str(yesterday_TS)}
+query_usdc = {"Exchange": "poloniex", "Pair": "btcusdc", "Time": str(y_TS)}
 usdc_poloniex = mongo.query_mongo(database, collection, query_usdc)
 
 # KRAKEN usdc/usd exchange rate
-query_usdc = {"Exchange": "kraken", "Pair": "btcusdc", "Time": str(yesterday_TS)}
+query_usdc = {"Exchange": "kraken", "Pair": "btcusdc", "Time": str(y_TS)}
 usdc_kraken = mongo.query_mongo(database, collection, query_usdc)
 
 # COINBASE_PRO usdc exchange rate
 query_usdc_coinbase = {
     "Exchange": "coinbase-pro",
     "Pair": "btcusdc",
-    "Time": str(yesterday_TS),
+    "Time": str(y_TS),
 }
 usdc_coinbase = mongo.query_mongo(database, collection, query_usdc_coinbase)
 
@@ -278,9 +278,9 @@ collection_rates = "ecb_clean"
 collection_stable = "stable_coin_rates"
 
 # querying the data from mongo
-query_data = {"Time": str(yesterday_TS)}
-query_rate = {"Date": str(yesterday_TS)}
-query_stable = {"Time": str(yesterday_TS)}
+query_data = {"Time": str(y_TS)}
+query_rate = {"Date": str(y_TS)}
+query_stable = {"Time": str(y_TS)}
 matrix_rate = mongo.query_mongo(db, collection_rates, query_rate)
 matrix_rate = matrix_rate.rename({"Date": "Time"}, axis="columns")
 matrix_data = mongo.query_mongo(db, collection_data, query_data)
@@ -404,4 +404,3 @@ else:
         "Message: No new date to upload on on Mongo DB, the CW_final_data \
         collection on MongoDB is updated."
     )
-

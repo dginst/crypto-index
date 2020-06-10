@@ -109,10 +109,10 @@ Start_Period = "01-01-2016"
 
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(
-    today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
-yesterday_TS = today_TS - day_in_sec
-two_before_TS = yesterday_TS - day_in_sec
+temp = int(datetime.strptime(today, "%Y-%m-%d").timestamp())
+today_TS = temp + hour_in_sec * 2
+y_TS = today_TS - day_in_sec
+two_before_TS = y_TS - day_in_sec
 
 # defining the array containing all the date from start_period until today
 date_complete_int = data_setup.timestamp_gen(Start_Period)
@@ -120,7 +120,7 @@ date_complete_int = data_setup.timestamp_gen(Start_Period)
 date_complete = [str(single_date) for single_date in date_complete_int]
 
 # searching only the last five days
-last_five_days = date_complete[(len(date_complete) - 5): len(date_complete)]
+last_five_days = date_complete[(len(date_complete) - 5) : len(date_complete)]
 
 # defining the MongoDB path where to look for the rates
 query = {"Exchange": "coinbase-pro", "Pair": "ethusd"}
@@ -130,7 +130,7 @@ matrix = mongo.query_mongo(database, collection_clean_check, query)
 
 # checking the time column
 date_list = np.array(matrix["Time"])
-last_five_days_mongo = date_list[(len(date_list) - 5): len(date_list)]
+last_five_days_mongo = date_list[(len(date_list) - 5) : len(date_list)]
 
 # finding the date to download as difference between complete array of date and
 # date now stored on MongoDB
@@ -157,25 +157,22 @@ if date_to_add != []:
         start_date = start_date.strftime("%m-%d-%Y")
         end_date = start_date
 
-    relative_reference_vector = data_setup.timestamp_gen(
-        start_date, end_date, EoD="N")
+    rel_ref_vector = data_setup.timestamp_gen(start_date, end_date, EoD="N")
 
     # creating a date array of support that allows to manage the one-day
     # missing data
     if start_date == end_date:
 
-        day_before = int(relative_reference_vector[0]) - 86400
-        support_date_array = np.array([day_before])
-        support_date_array = np.append(
-            support_date_array, int(relative_reference_vector[0])
-        )
+        day_before = int(rel_ref_vector[0]) - 86400
+        sup_date_array = np.array([day_before])
+        sup_date_array = np.append(sup_date_array, int(rel_ref_vector[0]))
 
 
 # ################### fixing the "Pair Volume" information #################
 
 db = "index"
 collection_raw = "CW_rawdata"
-q_dict = {"Time": yesterday_TS}
+q_dict = {"Time": y_TS}
 
 daily_matrix = mongo.query_mongo(db, collection_raw, q_dict)
 daily_matrix = daily_matrix.loc[daily_matrix.Time != 0]
@@ -198,8 +195,7 @@ for Crypto in Crypto_Asset:
             # checking if the matrix is not empty
             if matrix.shape[0] > 1:
 
-                matrix["Pair Volume"] = matrix["Close Price"] * \
-                    matrix["Crypto Volume"]
+                matrix["Pair Volume"] = matrix["Close Price"] * matrix["Crypto Volume"]
 
             # put the manipulated data on MongoDB
             try:
@@ -215,7 +211,7 @@ for Crypto in Crypto_Asset:
 
 collection_volume_check = "volume_checked_data"
 collection_logic_key = "CW_keys"
-q_dict = {"Time": yesterday_TS}
+q_dict = {"Time": y_TS}
 
 # downloading from MongoDB the matrix with the daily values and the
 # matrix containing the exchange-pair logic values
@@ -236,7 +232,7 @@ key_present = key_present.drop(columns=["logic_value"])
 merged = pd.merge(key_present, daily_matrix, on="key", how="left")
 # assigning some columns values and substituting NaN with 0
 # in the "merged" df
-merged["Time"] = yesterday_TS
+merged["Time"] = y_TS
 split_val = merged["key"].str.split("&", expand=True)
 merged["Exchange"] = split_val[0]
 merged["Pair"] = split_val[1]
@@ -255,7 +251,7 @@ if new_key.empty is False:
 
     print("Message: New exchange-pair couple(s) found.")
     new_key_list = new_key["key"]
-    print('new keys list')
+    print("new keys list")
     print(new_key_list)
 
     for key in new_key_list:
@@ -277,12 +273,9 @@ if new_key.empty is False:
         new_price = new_key.loc[new_key.key == key, "Close Price"]
         new_p_vol = new_key.loc[new_key.key == key, "Pair Volume"]
         new_c_vol = new_key.loc[new_key.key == key, "Crypto Volume"]
-        key_hist_df.loc[key_hist_df.Time
-                        == yesterday_TS, "Close Price"] = new_price
-        key_hist_df.loc[key_hist_df.Time
-                        == yesterday_TS, "Pair Volume"] = new_p_vol
-        key_hist_df.loc[key_hist_df.Time
-                        == yesterday_TS, "Crypto Volume"] = new_c_vol
+        key_hist_df.loc[key_hist_df.Time == y_TS, "Close Price"] = new_price
+        key_hist_df.loc[key_hist_df.Time == y_TS, "Pair Volume"] = new_p_vol
+        key_hist_df.loc[key_hist_df.Time == y_TS, "Crypto Volume"] = new_c_vol
 
         # upload the dataframe on MongoDB collection "CW_cleandata"
         data = key_hist_df.to_dict(orient="records")
@@ -303,15 +296,13 @@ collection_clean_check = "CW_cleandata"
 q_dict = {"Time": str(two_before_TS)}
 
 # downloading from MongoDB the matrix referring to the previuos day
-day_before_matrix = mongo.query_mongo(db, collection_clean_check, q_dict)
+day_bfr_mat = mongo.query_mongo(db, collection_clean_check, q_dict)
 
 # add the "key" column
-day_before_matrix["key"] = (
-    day_before_matrix["Exchange"] + "&" + day_before_matrix["Pair"]
-)
+day_bfr_mat["key"] = day_bfr_mat["Exchange"] + "&" + day_bfr_mat["Pair"]
 
 # looping through all the daily keys looking for potential missing value
-for key_val in day_before_matrix["key"]:
+for key_val in day_bfr_mat["key"]:
 
     new_val = merged.loc[merged.key == key_val]
 
@@ -322,12 +313,11 @@ for key_val in day_before_matrix["key"]:
     # CHANGES THE VALUES. MIGHT BE WRONG #######################
     if np.array(new_val["Close Price"]) == 0.0:
 
-        d_before_val = day_before_matrix.loc[day_before_matrix.key == key_val]
+        d_before_val = day_bfr_mat.loc[day_bfr_mat.key == key_val]
 
         if np.array(d_before_val["Close Price"]) != 0.0:
 
-            price_var = data_setup.daily_fix_missing(
-                new_val, merged, day_before_matrix)
+            price_var = data_setup.daily_fix_miss(new_val, merged, day_bfr_mat)
             # applying the weighted variation to the day before 'Close Price'
             new_price = (1 + price_var) * d_before_val["Close Price"]
             # changing the 'Close Price' value using the new computed price

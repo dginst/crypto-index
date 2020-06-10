@@ -51,8 +51,8 @@ Start_Period = "01-01-2016"
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
 today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
-yesterday_TS = today_TS - day_in_sec
-two_before_TS = yesterday_TS - day_in_sec
+y_TS = today_TS - day_in_sec
+two_before_TS = y_TS - day_in_sec
 
 # defining the array containing all the date from start_period until today
 date_complete_int = data_setup.timestamp_gen(Start_Period)
@@ -79,9 +79,9 @@ collection_rates = "ecb_clean"
 collection_stable = "stable_coin_rates"
 
 # querying the data from mongo
-query_data = {"Time": str(yesterday_TS)}
-query_rate = {"Date": str(yesterday_TS)}
-query_stable = {"Time": str(yesterday_TS)}
+query_data = {"Time": str(y_TS)}
+query_rate = {"Date": str(y_TS)}
+query_stable = {"Time": str(y_TS)}
 matrix_rate = mongo.query_mongo(db, collection_rates, query_rate)
 matrix_rate = matrix_rate.rename({"Date": "Time"}, axis="columns")
 matrix_data = mongo.query_mongo(db, collection_data, query_data)

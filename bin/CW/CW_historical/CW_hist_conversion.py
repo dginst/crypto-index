@@ -41,7 +41,7 @@ day_in_sec = 86400
 # define today date as timestamp
 today = datetime.now().strftime("%Y-%m-%d")
 today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
-yesterday_TS = today_TS - day_in_sec
+y_TS = today_TS - day_in_sec
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
@@ -374,7 +374,7 @@ db_name = "index"
 collection_converted_data = "CW_converted_data"
 
 # retriving the needed information on MongoDB
-q_dict = {"Time": str(yesterday_TS)}
+q_dict = {"Time": str(y_TS)}
 matrix_last_day = mongo.query_mongo(db_name, collection_converted_data, q_dict)
 old_head = matrix_last_day.columns
 matrix_last_day["key"] = matrix_last_day["Exchange"] + "&" + matrix_last_day["Pair"]

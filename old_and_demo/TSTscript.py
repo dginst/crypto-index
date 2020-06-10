@@ -18,9 +18,9 @@ import cryptoindex.data_setup as data_setup
 import cryptoindex.data_download as data_download
 
 
-#     support_date_array = np.append(support_date_array, int(a[0]))
+#     sup_date_array = np.append(sup_date_array, int(a[0]))
 
-# print(support_date_array)
+# print(sup_date_array)
 # a = [1,2,3,4,5,6,7]
 # b=np.array(a)
 # z = ['a','b']
