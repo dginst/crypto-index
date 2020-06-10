@@ -286,8 +286,7 @@ if new_key.empty is False:
 
         # upload the dataframe on MongoDB collection "CW_cleandata"
         data = key_hist_df.to_dict(orient="records")
-        # collection_clean.insert_many(data)
-        coll_t_clean.insert_many(data)
+        collection_clean.insert_many(data)
 
     # uploading the updated keys df on the CW_keys collection
     new_k_logic = logic_key.to_dict(orient="records")
