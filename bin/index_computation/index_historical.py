@@ -68,6 +68,7 @@ db.index_EWMA_logic_checked.drop()
 db.index_divisor.drop()
 db.index_divisor_reshaped.drop()
 db.index_synth_matrix.drop()
+db.index_rel_synth_matrix.drop()
 
 # creating the needed empty collections
 
@@ -101,9 +102,12 @@ collection_divisor = db.index_divisor
 # collection for the reshaped divisor array
 db.index_divisor_reshaped.create_index([("id", -1)])
 collection_divisor_reshaped = db.index_divisor_reshaped
-# collection for the relative syntethic matrix
+# collection for the syntethic matrix
 db.index_synth_matrix.create_index([("id", -1)])
-collection_relative_synth = db.index_synth_matrix
+collection_synth = db.index_synth_matrix
+# collection for the relative syntethic matrix
+db.index_rel_synth_matrix.create_index([("id", -1)])
+collection_relative_synth = db.index_rel_synth_matrix
 # collection for index level base 1000
 db.index_level_1000.create_index([("id", -1)])
 collection_index_level_1000 = db.index_level_1000
@@ -410,7 +414,7 @@ weights_for_board = calc.quarter_weights(
 )
 
 
-# compute the syntethic matrix and the rekative syntethic matrix
+# compute the syntethic matrix and the relative syntethic matrix
 syntethic = calc.quarterly_synt_matrix(
     Crypto_Asset_Prices,
     weights_for_board,
@@ -648,6 +652,29 @@ double_EWMA_up = double_checked_EWMA[
 ]
 double_EWMA_up = double_EWMA_up.to_dict(orient="records")
 collection_EWMA_check.insert_many(double_EWMA_up)
+
+# put the synth matrix on MongoDB
+syntethic['Date'] = human_date
+syntethic_up = syntethic
+syntethic_up = syntethic_up[
+    [
+        "Date",
+        "BTC",
+        "ETH",
+        "XRP",
+        "LTC",
+        "BCH",
+        "EOS",
+        "ETC",
+        "ZEC",
+        "ADA",
+        "XLM",
+        "XMR",
+        "BSV",
+    ]
+]
+syntethic_up = syntethic_up.to_dict(orient="records")
+collection_synth.insert_many(syntethic_up)
 
 # put the relative synth matrix on MongoDB
 syntethic_relative_matrix["Date"] = human_date
