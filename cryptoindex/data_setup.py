@@ -1,6 +1,5 @@
 # standard library import
 from datetime import datetime, timedelta, timezone
-import time
 
 # third party import
 # from pymongo import MongoClient
@@ -52,37 +51,6 @@ def timestamp_gen(start_date, end_date=None, EoD="Y"):
     return array
 
 
-def timestamp_gen_legal_solar(TS_array):
-
-    legal_16 = (1459209600, 1477612800)
-    legal_17 = (1490572800, 1509062400)
-    legal_18 = (1522065600, 1540555200)
-    legal_19 = (1554120000, 1572004800)
-    legal_20 = (1585569600, 1603454400)
-
-    new_array = np.array([legal_16[0]])
-    for date in TS_array:
-
-        if (
-            legal_16[0] <= date <= legal_16[1]
-            or legal_17[0] <= date <= legal_17[1]
-            or legal_18[0] <= date <= legal_18[1]
-            or legal_19[0] <= date <= legal_19[1]
-            or legal_20[0] <= date <= legal_20[1]
-        ):
-
-            date = date - 3600
-            new_array = np.append(new_array, date)
-
-        else:
-
-            new_array = np.append(new_array, date)
-
-    new_array = new_array[1 : len(new_array)]
-
-    return new_array
-
-
 # function that converts the date array found using the above function into a
 # standard date array with the date format YYYY-MM-DD
 
@@ -96,27 +64,6 @@ def timestamp_convert(date_array):
         new_date = datetime.fromtimestamp(date)
         new_date = new_date.strftime("%Y-%m-%d")
         new_array = np.append(new_array, new_date)
-
-    return new_array
-
-
-# function takes as input an array and return the same array in string format
-
-
-def timestamp_to_str(date_array):
-
-    new_array = list()
-    for date in date_array:
-
-        new_date = str(date)
-
-        if new_array == []:
-
-            new_array = new_array.append(new_date)
-
-        else:
-
-            new_array = new_array.append(new_date)
 
     return new_array
 
@@ -167,57 +114,31 @@ def date_array_gen(start_date, end_date=None, timeST="Y", EoD="Y"):
 
     date_index = pd.date_range(start_date, end_date)
 
-    DateList = date_list(date_index, timeST)
+    datelist = date_list(date_index, timeST)
 
     if EoD == "Y":
-        DateList = DateList[: len(DateList) - 1]
+        datelist = datelist[: len(datelist) - 1]
 
-    return DateList
-
-
-# given a start date and a period (number of days) the function returns an
-# array containing the "period" date going back from the start date (default)
-# or starting from the start date (direction='forward') the output can be both
-# in timestamp since epoch (default) or in date MM/DD/YYYY (timeST='N')
-
-
-def period_array(start_date, period, direction="backward", timeST="Y"):
-
-    start_date = date_reformat(start_date, "-")
-
-    if direction == "backward":
-        end_date = datetime.strptime(start_date, "%m-%d-%Y") - timedelta(days=period)
-        date_index = pd.date_range(end_date, start_date)
-
-    else:
-        end_date = datetime.strptime(start_date, "%m-%d-%Y") + timedelta(days=period)
-        date_index = pd.date_range(start_date, end_date)
-
-    DateList = date_list(date_index, timeST)
-
-    return DateList
+    return datelist
 
 
 # function that returns a list containing date in timestamp format
 
 
-def date_list(date_index, timeST="Y", lag_adj=3600):
+def date_list(date_index, timeST="Y"):
 
-    DateList = []
+    datelist = []
 
     for date in date_index:
-        val = int(time.mktime(date.timetuple()))
-        val = val + lag_adj
-        DateList.append(val)
+        val = int(date.replace(tzinfo=timezone.utc).timestamp())
+        datelist.append(val)
 
-    NoStamp = []
     if timeST == "N":
-        for string in DateList:
-            value = int(string)
-            NoStamp.append(datetime.utcfromtimestamp(value).strftime("%Y-%m-%d"))
+
+        NoStamp = [datetime.utcfromtimestamp(x).strftime("%Y-%m-%d") for x in datelist]
         return NoStamp
     else:
-        return DateList
+        return datelist
 
 
 # function that reforms the inserted date according to the choosen separator
@@ -733,8 +654,8 @@ def fix_zero_value(matrix):
 def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N"):
 
     # defining the array of date to be used
-    date = timestamp_gen(start_period, End_Period, EoD="N")
-    date_ECB = timestamp_gen_legal_solar(date)
+
+    date_ECB = timestamp_gen(start_period, End_Period, EoD="Y")
     # date = timestamp_convert(date_TS)
     # date = [datetime.strptime(x, '%Y-%m-%d') for x in date]
 
@@ -745,7 +666,7 @@ def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N"):
     # ECB website and append the result in the returning matrix
     Exchange_Matrix = np.array([])
 
-    for i, single_date in enumerate(date):
+    for i, single_date in enumerate(date_ECB):
 
         database = "index"
         collection = "ecb_raw"
