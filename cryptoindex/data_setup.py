@@ -25,14 +25,14 @@ from . import mongo_setup as mongo
 def timestamp_gen(start_date, end_date=None, EoD="Y"):
 
     start = datetime.strptime(start_date, "%m-%d-%Y")
-    start = start.replace(tzinfo=timezone.utc).timestamp()
+    start = int(start.replace(tzinfo=timezone.utc).timestamp())
 
     if end_date is None:
 
         end_date = datetime.now().strftime("%m-%d-%Y")
 
     end_date = datetime.strptime(end_date, "%m-%d-%Y")
-    end = end_date.replace(tzinfo=timezone.utc).timestamp()
+    end = int(end_date.replace(tzinfo=timezone.utc).timestamp())
 
     array = np.array([start])
     date = start
@@ -127,7 +127,7 @@ def timestamp_to_str(date_array):
 
 def timestamp_to_human(ts_array, date_format="%Y-%m-%d"):
 
-    human_date = [datetime.fromtimestamp(int(date)) for date in ts_array]
+    human_date = [datetime.fromtimestamp(int(float(date))) for date in ts_array]
     human_date = [date.strftime(date_format) for date in human_date]
 
     return human_date
