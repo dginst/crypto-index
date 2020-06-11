@@ -3,8 +3,6 @@
 import pandas as pd
 from pymongo import MongoClient
 
-pd.set_option("display.max_rows", None, "display.max_columns", None)
-
 # connecting to mongo in local
 connection = MongoClient("localhost", 27017)
 # creating the database called index
