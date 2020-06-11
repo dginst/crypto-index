@@ -1,7 +1,7 @@
 # standard library import
 import io
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 # third party import
 import pandas as pd
@@ -76,10 +76,8 @@ def ECB_rates_extractor(
         # transform date from datetime to string
         date_to_string = Main_Data_Frame["TIME_PERIOD"].to_string(index=False).strip()
         # transform date into unix timestamp and add 3600 sec in order to uniform the date at 12:00 am
-        date_timestamp = (
-            int(time.mktime(datetime.strptime(date_to_string, "%Y-%m-%d").timetuple()))
-            + 3600
-        )
+        date_to_string = datetime.strptime(date_to_string, "%Y-%m-%d")
+        date_timestamp = int(date_to_string.replace(tzinfo=timezone.utc).timestamp())
         date_timestamp = str(date_timestamp)
         # reassigning the timestamp date to the dataframe
         Main_Data_Frame["TIME_PERIOD"] = date_timestamp
