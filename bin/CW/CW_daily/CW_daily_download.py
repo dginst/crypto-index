@@ -21,20 +21,19 @@ today = datetime.now().strftime("%Y-%m-%d")
 # pair arrat without USD (no need of conversion)
 pair_array = ["usd", "gbp", "eur", "cad", "jpy", "usdt", "usdc"]
 # pair complete = ['usd', 'gbp', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
-
 Crypto_Asset = [
-    "ETH",
     "BTC",
+    "ETH",
+    "XRP",
     "LTC",
     "BCH",
-    "XRP",
-    "XLM",
-    "ADA",
-    "ZEC",
-    "XMR",
     "EOS",
-    "BSV",
     "ETC",
+    "ZEC",
+    "ADA",
+    "XLM",
+    "XMR",
+    "BSV",
 ]
 # ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA',
 # 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
@@ -70,7 +69,7 @@ date_tot = data_setup.timestamp_gen(start_period)
 date_tot = [str(single_date) for single_date in date_tot]
 
 # searching only the last five days
-last_five_days = date_tot[(len(date_tot) - 5) : len(date_tot)]
+last_five_days = date_tot[(len(date_tot) - 5):len(date_tot)]
 
 # defining the MongoDB path where to look for the rates
 database = "index"
@@ -82,8 +81,9 @@ matrix = mongo.query_mongo(database, collection, query)
 
 # checking the time column
 date_list = np.array(matrix["Time"])
-last_five_days_mongo = date_list[(len(date_list) - 5) : len(date_list)]
-last_five_days_mongo = [str(single_date) for single_date in last_five_days_mongo]
+last_five_days_mongo = date_list[(len(date_list) - 5): len(date_list)]
+last_five_days_mongo = [str(single_date)
+                        for single_date in last_five_days_mongo]
 
 # finding the date to download as difference between
 # complete array of date and date now stored on MongoDB

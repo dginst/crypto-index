@@ -39,18 +39,18 @@ reference_date_vector = data_setup.timestamp_gen(start_date)
 pair_array = ["gbp", "usd", "eur", "cad", "jpy", "usdt", "usdc"]
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
 Crypto_Asset = [
-    "ETH",
     "BTC",
+    "ETH",
+    "XRP",
     "LTC",
     "BCH",
-    "XRP",
-    "XLM",
-    "ADA",
-    "ZEC",
-    "XMR",
     "EOS",
-    "BSV",
     "ETC",
+    "ZEC",
+    "ADA",
+    "XLM",
+    "XMR",
+    "BSV",
 ]
 # crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM',
 #  'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
