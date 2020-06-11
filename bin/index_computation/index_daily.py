@@ -363,10 +363,6 @@ Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns=time_header)
 Crypto_Asset_Volume["Time"] = str(y_TS)
 # adding the Time column to the price ret df
 price_ret["Time"] = str(y_TS)
-print(two_before_price)
-print(Crypto_Asset_Prices)
-print(price_ret)
-
 
 # computing the Exponential Weighted Moving Average of the day
 hist_volume = mongo.query_mongo(db_name, coll_volume)
@@ -391,7 +387,7 @@ daily_ewma_first_check = np.array(daily_ewma) * np.array(current_logic_one)
 daily_ewma_double_check = daily_ewma_first_check * np.array(current_logic_two)
 daily_ewma_double_check = pd.DataFrame(
     daily_ewma_double_check, columns=Crypto_Asset)
-print(daily_ewma_double_check)
+
 # downloading from mongoDB the current weights
 weights = mongo.query_mongo(db_name, coll_weights)
 
@@ -403,20 +399,17 @@ yesterday_synt_matrix = yesterday_synt_matrix.drop(columns=['Date'])
 daily_return = np.array(price_ret.loc[:, Crypto_Asset])
 new_synt = (1 + daily_return) * np.array(yesterday_synt_matrix)
 daily_synt = pd.DataFrame(new_synt, columns=Crypto_Asset)
-print(daily_synt)
 
 # compute the daily relative syntethic matrix
-daily_rel = daily_synt
-daily_rel['sum'] = daily_rel.sum(axis=1)
-daily_rel = daily_rel / daily_rel['sum']
-daily_rel = daily_rel.drop(columns=['sum'])
-print(daily_rel)
+daily_tot = np.array(daily_synt.sum(axis=1))
+
+daily_rel = np.array(daily_synt) / daily_tot
+daily_rel = pd.DataFrame(daily_rel, columns=Crypto_Asset)
 
 # daily index value computation
 current_divisor = mongo.query_mongo(
     db_name, coll_divisor_res, {"Date": two_before_human[0]}
 )
-print(current_divisor)
 curr_div_val = np.array(current_divisor["Divisor Value"])
 index_numerator = np.array(Crypto_Asset_Prices[Crypto_Asset]) * np.array(
     daily_rel
@@ -425,17 +418,16 @@ numerator_sum = index_numerator.sum(axis=1)
 num = pd.DataFrame(numerator_sum)
 daily_index_value = np.array(num) / curr_div_val
 raw_index_df = pd.DataFrame(daily_index_value, columns=["Index Value"])
-print(raw_index_df)
+
 # retrieving from mongoDB the yesterday value of the raw index
 yesterday_raw_index = mongo.query_mongo(
     db_name, coll_raw_index, {"Date": two_before_human[0]}
 )
 yesterday_raw_index = yesterday_raw_index.drop(columns=["Date", "Time"])
-print(yesterday_raw_index)
 raw_curr = yesterday_raw_index.append(raw_index_df)
 variation = raw_curr.pct_change()
 variation = np.array(variation.iloc[1])
-print(variation)
+
 # retrieving from mongoDB the yesterday value of the raw index
 yesterday_1000_index = mongo.query_mongo(
     db_name, coll_1000_index, {"Date": two_before_human[0]}
@@ -443,7 +435,6 @@ yesterday_1000_index = mongo.query_mongo(
 daily_index_1000 = np.array(
     yesterday_1000_index["Index Value"]) * (1 + variation)
 daily_index_1000_df = pd.DataFrame(daily_index_1000, columns=["Index Value"])
-print(daily_index_1000_df)
 
 # ############ MONGO DB UPLOADS ############################################
 # creating the array with human readable Date

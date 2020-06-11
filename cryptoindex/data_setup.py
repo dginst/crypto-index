@@ -51,6 +51,40 @@ def timestamp_gen(start_date, end_date=None, EoD="Y"):
     return array
 
 
+<<<<<<< HEAD
+=======
+def timestamp_gen_legal_solar(TS_array):
+
+    legal_16 = (1459209600, 1477612800)
+    legal_17 = (1490572800, 1509062400)
+    legal_18 = (1522065600, 1540555200)
+    legal_19 = (1554120000, 1572004800)
+    legal_20 = (1585569600, 1603454400)
+
+    new_array = np.array([legal_16[0]])
+    for date in TS_array:
+
+        if (
+            legal_16[0] <= date <= legal_16[1]
+            or legal_17[0] <= date <= legal_17[1]
+            or legal_18[0] <= date <= legal_18[1]
+            or legal_19[0] <= date <= legal_19[1]
+            or legal_20[0] <= date <= legal_20[1]
+        ):
+
+            date = date - 3600
+            new_array = np.append(new_array, date)
+
+        else:
+
+            new_array = np.append(new_array, date)
+
+    new_array = new_array[1: len(new_array)]
+
+    return new_array
+
+
+>>>>>>> 68b4068c77b8461da713cb5095fb3e35720b8934
 # function that converts the date array found using the above function into a
 # standard date array with the date format YYYY-MM-DD
 
@@ -119,7 +153,28 @@ def date_array_gen(start_date, end_date=None, timeST="Y", EoD="Y"):
     if EoD == "Y":
         datelist = datelist[: len(datelist) - 1]
 
+<<<<<<< HEAD
     return datelist
+=======
+
+def period_array(start_date, period, direction="backward", timeST="Y"):
+
+    start_date = date_reformat(start_date, "-")
+
+    if direction == "backward":
+        end_date = datetime.strptime(
+            start_date, "%m-%d-%Y") - timedelta(days=period)
+        date_index = pd.date_range(end_date, start_date)
+
+    else:
+        end_date = datetime.strptime(
+            start_date, "%m-%d-%Y") + timedelta(days=period)
+        date_index = pd.date_range(start_date, end_date)
+
+    DateList = date_list(date_index, timeST)
+
+    return DateList
+>>>>>>> 68b4068c77b8461da713cb5095fb3e35720b8934
 
 
 # function that returns a list containing date in timestamp format
@@ -134,8 +189,15 @@ def date_list(date_index, timeST="Y"):
         datelist.append(val)
 
     if timeST == "N":
+<<<<<<< HEAD
 
         NoStamp = [datetime.utcfromtimestamp(x).strftime("%Y-%m-%d") for x in datelist]
+=======
+        for string in DateList:
+            value = int(string)
+            NoStamp.append(datetime.utcfromtimestamp(
+                value).strftime("%Y-%m-%d"))
+>>>>>>> 68b4068c77b8461da713cb5095fb3e35720b8934
         return NoStamp
     else:
         return datelist
@@ -263,7 +325,8 @@ def homogenize_dead_series(series_to_check, reference_date_array_TS, days_to_che
         len(reference_date_array_TS) - 1 - days_to_check
     ]
     test_matrix = series_to_check.loc[
-        series_to_check.Time.between(first_check_day, last_day, inclusive=True), header
+        series_to_check.Time.between(
+            first_check_day, last_day, inclusive=True), header
     ]
 
     if test_matrix.empty is True:
@@ -275,7 +338,8 @@ def homogenize_dead_series(series_to_check, reference_date_array_TS, days_to_che
         first_missing_date = int(last_date) + 86400
         last_missing_date = last_day
 
-        missing_date_array = timestamp_vector(first_missing_date, last_missing_date)
+        missing_date_array = timestamp_vector(
+            first_missing_date, last_missing_date)
 
         # new_series = pd.DataFrame(missing_date_array, columns = ['Time'])
         header.remove("Time")
@@ -359,7 +423,8 @@ def CW_series_fix_missing(
         query_dict = {"Exchange": element, "Pair": ccy_pair}
         # query MongoDB and rerieve a DataFrame called "matrix"
         matrix = mongo.query_mongo(db, collection, query_dict)
-        matrix = matrix.drop(columns=["Exchange", "Pair", "Low", "High", "Open"])
+        matrix = matrix.drop(
+            columns=["Exchange", "Pair", "Low", "High", "Open"])
 
         # checking if data frame is empty: if not then the crypto-fiat pair
         # exists in the exchange then add to the count variable
@@ -391,7 +456,8 @@ def CW_series_fix_missing(
 
             else:
 
-                fixing_price = np.column_stack((fixing_price, variations_price[:, 1]))
+                fixing_price = np.column_stack(
+                    (fixing_price, variations_price[:, 1]))
                 fixing_cry_vol = np.column_stack(
                     (fixing_cry_vol, variations_cry_vol[:, 1])
                 )
@@ -473,7 +539,8 @@ def CW_series_fix_missing(
     # prices, weightes variations of volume both crypto and pair
     try:
         variation_matrix = np.column_stack(
-            (variation_time, weighted_var_price, weighted_cry_vol, weighted_pair_vol)
+            (variation_time, weighted_var_price,
+             weighted_cry_vol, weighted_pair_vol)
         )
         variation_matrix = np.nan_to_num(variation_matrix)
 
@@ -481,7 +548,8 @@ def CW_series_fix_missing(
 
             # find previuos value and multiply the variation in order to obtain
             # the new values to insert
-            prev_vals = broken_matrix[broken_matrix["Time"] == row - 86400].iloc[:, 1:4]
+            prev_vals = broken_matrix[broken_matrix["Time"]
+                                      == row - 86400].iloc[:, 1:4]
             if prev_vals.empty is True:
                 prev_vals = np.zeros((1, 3))
 
@@ -524,7 +592,8 @@ def CW_series_fix_missing(
             values_to_insert = np.array(
                 broken_matrix.loc[broken_matrix.Time == day][header]
             )
-            fixed_matrix.loc[fixed_matrix.Time == day, header] = values_to_insert
+            fixed_matrix.loc[fixed_matrix.Time
+                             == day, header] = values_to_insert
 
         int_date = np.array([])
 
@@ -568,7 +637,8 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
                 where_to_lookup[where_to_lookup["Time"] == element][position]
             )
             yesterday_value = float(
-                where_to_lookup[where_to_lookup["Time"] == element - 86400][position]
+                where_to_lookup[where_to_lookup["Time"]
+                                == element - 86400][position]
             )
             numerator = today_value - yesterday_value
             variation = np.divide(
@@ -579,7 +649,8 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
             )
             # consider crytpo vol
             volume = float(
-                where_to_lookup[where_to_lookup["Time"] == element]["Pair Volume"]
+                where_to_lookup[where_to_lookup["Time"]
+                                == element]["Pair Volume"]
             )
             variation = variation * volume
             variations.append(variation)
@@ -614,7 +685,8 @@ def fix_zero_value(matrix):
 
     for date in matrix["Time"]:
 
-        value_to_check = np.array(matrix.loc[matrix.Time == date, "Crypto Volume"])
+        value_to_check = np.array(
+            matrix.loc[matrix.Time == date, "Crypto Volume"])
         price_check = np.array(matrix.loc[matrix.Time == date, "Close Price"])
 
         if val_sum != 0 and int(value_to_check) == 0:
@@ -622,12 +694,14 @@ def fix_zero_value(matrix):
             if int(price_check) == 0:
 
                 previous_price = np.array(
-                    matrix.loc[matrix.Time == str(int(date) - 86400), "Close Price"]
+                    matrix.loc[matrix.Time == str(
+                        int(date) - 86400), "Close Price"]
                 )
                 matrix.loc[matrix.Time == date, "Close Price"] = previous_price
 
             previous_c_vol = np.array(
-                matrix.loc[matrix.Time == str(int(date) - 86400), "Crypto Volume"]
+                matrix.loc[matrix.Time == str(
+                    int(date) - 86400), "Crypto Volume"]
             )
             previous_p_vol = np.array(
                 matrix.loc[matrix.Time == str(int(date) - 86400), "Pair Volume"]
@@ -811,7 +885,8 @@ def ECB_daily_setup(key_curr_vector, timeST="N"):
         # creating the array with rate values USD based
         rate_arr = single_date_ex_matrix["USD based rate"]
         rate_arr = np.where(
-            rate_arr == 1.000000, 1 / single_date_ex_matrix["OBS_VALUE"][0], rate_arr
+            rate_arr == 1.000000, 1
+            / single_date_ex_matrix["OBS_VALUE"][0], rate_arr
         )
 
         # stacking the array together
@@ -845,7 +920,8 @@ def ECB_daily_setup(key_curr_vector, timeST="N"):
         # creating the array with rate values USD based
         rate_arr = single_date_ex_matrix["USD based rate"]
         rate_arr = np.where(
-            rate_arr == 1.000000, 1 / single_date_ex_matrix["OBS_VALUE"][0], rate_arr
+            rate_arr == 1.000000, 1
+            / single_date_ex_matrix["OBS_VALUE"][0], rate_arr
         )
 
         # stack the array together
@@ -913,8 +989,10 @@ def CW_data_setup(CW_matrix, currency):
 
             rate = single_date_rate["Rate"]
 
-            CW_matrix["Close Price"][i] = float(CW_matrix["Close Price"][i] / rate)
-            CW_matrix["Pair Volume"][i] = float(CW_matrix["Pair Volume"][i] / rate)
+            CW_matrix["Close Price"][i] = float(
+                CW_matrix["Close Price"][i] / rate)
+            CW_matrix["Pair Volume"][i] = float(
+                CW_matrix["Pair Volume"][i] / rate)
 
     else:
 
@@ -1085,8 +1163,10 @@ def CW_series_fix_missing2(
 
         else:
 
-            fixing_price = np.column_stack((fixing_price, variations_price[:, 1]))
-            fixing_cry_vol = np.column_stack((fixing_cry_vol, variations_cry_vol[:, 1]))
+            fixing_price = np.column_stack(
+                (fixing_price, variations_price[:, 1]))
+            fixing_cry_vol = np.column_stack(
+                (fixing_cry_vol, variations_cry_vol[:, 1]))
             fixing_pair_vol = np.column_stack(
                 (fixing_pair_vol, variations_pair_vol[:, 1])
             )
@@ -1113,11 +1193,14 @@ def CW_series_fix_missing2(
     fixing_pair_vol_df["missing date"] = missing_item_time
 
     # computing weighted variations for each element
-    fixing_price_df["weighted"] = fixing_price_df["sum"] / fixing_volume_df["sum"]
+    fixing_price_df["weighted"] = fixing_price_df["sum"] / \
+        fixing_volume_df["sum"]
     fixing_price_df.fillna(0, inplace=True)
-    fixing_cry_vol_df["weighted"] = fixing_cry_vol_df["sum"] / fixing_volume_df["sum"]
+    fixing_cry_vol_df["weighted"] = fixing_cry_vol_df["sum"] / \
+        fixing_volume_df["sum"]
     fixing_cry_vol_df.fillna(0, inplace=True)
-    fixing_pair_vol_df["weighted"] = fixing_pair_vol_df["sum"] / fixing_volume_df["sum"]
+    fixing_pair_vol_df["weighted"] = fixing_pair_vol_df["sum"] / \
+        fixing_volume_df["sum"]
     fixing_pair_vol_df.fillna(0, inplace=True)
 
     # merging a column dataframe containing the reference array
@@ -1136,7 +1219,8 @@ def CW_series_fix_missing2(
         prev_val = merged.loc[merged.Time == int(element) - 86400]
 
         price_var = float(
-            fixing_price_df.loc[fixing_price_df["missing date"] == element, "weighted"]
+            fixing_price_df.loc[fixing_price_df["missing date"]
+                                == element, "weighted"]
         )
         crypto_vol_var = float(
             fixing_cry_vol_df.loc[
@@ -1189,7 +1273,8 @@ def substitute_finder2(broken_array, reference_array, where_to_lookup, position)
             )
 
             yesterday_value = float(
-                where_to_lookup[where_to_lookup["Time"] == element - 86400][position]
+                where_to_lookup[where_to_lookup["Time"]
+                                == element - 86400][position]
             )
 
             numerator = today_value - yesterday_value
@@ -1201,7 +1286,8 @@ def substitute_finder2(broken_array, reference_array, where_to_lookup, position)
             )
             # consider crytpo vol
             volume = float(
-                where_to_lookup[where_to_lookup["Time"] == element]["Pair Volume"]
+                where_to_lookup[where_to_lookup["Time"]
+                                == element]["Pair Volume"]
             )
             variation = variation * volume
             variations = np.append(variations, variation)
@@ -1263,6 +1349,7 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
             fixing_p_vol = np.column_stack((fixing_p_vol, volume))
 
     # defining the dataframes containing the variations of price and volume
+
     fixing_price_df = pd.DataFrame(fixing_price)
     fixing_p_vol_df = pd.DataFrame(fixing_p_vol)
 
@@ -1271,7 +1358,8 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
     fixing_p_vol_df["sum"] = fixing_p_vol_df.sum(axis=1)
 
     # computing weighted variation
-    fixing_price_df["weighted"] = fixing_price_df["sum"] / fixing_p_vol_df["sum"]
+    fixing_price_df["weighted"] = fixing_price_df["sum"] / \
+        fixing_p_vol_df["sum"]
     fixing_price_df.fillna(0, inplace=True)
 
     price_var = float(fixing_price_df["weighted"])

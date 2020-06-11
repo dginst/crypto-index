@@ -36,6 +36,7 @@
 
 # standard library import
 from datetime import datetime
+from typing import Dict
 
 # third party import
 from pymongo import MongoClient
@@ -45,8 +46,6 @@ import numpy as np
 # local import
 import cryptoindex.data_setup as data_setup
 import cryptoindex.mongo_setup as mongo
-
-from typing import Dict
 
 
 # ############# INITIAL SETTINGS ################################
@@ -310,7 +309,7 @@ day_bfr_mat["key"] = day_bfr_mat["Exchange"] + "&" + day_bfr_mat["Pair"]
 for key_val in day_bfr_mat["key"]:
 
     new_val = merged.loc[merged.key == key_val]
-
+    print(new_val)
     # if the new 'Close Price' referred to a certain key is 0 the script
     # check the previous day value: if is == 0 then pass, if is != 0
     # the values related to the selected key needs to be corrected
