@@ -36,13 +36,12 @@ collection_ECB_raw = db.ecb_raw
 
 # defining the array containing all the date from start_period until today
 date_tot = data_setup.timestamp_gen(start_period)
-# defining the array considering legal/solar hours
-date_tot = data_setup.timestamp_gen_legal_solar(date_tot)
+
 # converting the timestamp format date into string
 date_tot = [str(single_date) for single_date in date_tot]
 
 # searching only the last five days
-last_five_days = date_tot[(len(date_tot) - 5) : len(date_tot)]
+last_five_days = date_tot[(len(date_tot) - 5): len(date_tot)]
 
 # defining the MongoDB path where to look for the rates
 database = "index"
@@ -54,7 +53,7 @@ matrix = mongo.query_mongo(database, collection, query)
 
 # checking the time column
 date_list = np.array(matrix["TIME_PERIOD"])
-last_five_days_mongo = date_list[(len(date_list) - 5) : len(date_list)]
+last_five_days_mongo = date_list[(len(date_list) - 5): len(date_list)]
 
 # finding the date to download as difference between complete array of date and
 # date now stored on MongoDB
@@ -62,7 +61,8 @@ date_to_download = data_setup.Diff(last_five_days, last_five_days_mongo)
 
 # converting the timestamp into YYYY-MM-DD in order to perform
 # the download from the ECB website
-date_to_download = [datetime.fromtimestamp(int(date)) for date in date_to_download]
+date_to_download = [datetime.fromtimestamp(
+    int(date)) for date in date_to_download]
 date_to_download = [date.strftime("%Y-%m-%d") for date in date_to_download]
 
 # ECB rates raw data download ###################################
@@ -85,7 +85,8 @@ for single_date in date_to_download:
 
     else:
 
-        Exchange_Rate_List = Exchange_Rate_List.append(single_date_ex_matrix, sort=True)
+        Exchange_Rate_List = Exchange_Rate_List.append(
+            single_date_ex_matrix, sort=True)
 
 # upload the raw data to MongoDB ############################
 
