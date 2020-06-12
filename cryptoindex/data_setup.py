@@ -76,49 +76,6 @@ def timestamp_vector(start, stop, lag=86400):
     return array
 
 
-# function that generate an array of date starting from start_date to end_date
-# if not specified end_date = today()
-# default format is in second since the epoch (timeST = 'Y'), type timeST='N'
-# for date in format YY-mm-dd function considers End of Day price series so,
-# if not otherwise specified, the returned array of date will be from start
-# to today - 1 write all date in MM/DD/YYYY format
-
-
-def date_array_gen(start_date, end_date=None, timeST="Y", EoD="Y"):
-
-    # set end_date = today if empty
-    if end_date is None:
-        end_date = datetime.now().strftime("%m-%d-%Y")
-
-    date_index = pd.date_range(start_date, end_date)
-
-    datelist = date_list(date_index, timeST)
-
-    if EoD == "Y":
-        datelist = datelist[: len(datelist) - 1]
-
-    return datelist
-
-
-# function that returns a list containing date in timestamp format
-
-
-def date_list(date_index, timeST="Y"):
-
-    datelist = []
-
-    for date in date_index:
-        val = int(date.replace(tzinfo=timezone.utc).timestamp())
-        datelist.append(val)
-
-    if timeST == "N":
-
-        NoStamp = [datetime.utcfromtimestamp(x).strftime("%Y-%m-%d") for x in datelist]
-        return NoStamp
-    else:
-        return datelist
-
-
 # function that reforms the inserted date according to the choosen separator
 # function takes as input date with "/" seprator and without separator for
 # both the YY ans YYYY format; works on default with MM-DD_YYYY format and
