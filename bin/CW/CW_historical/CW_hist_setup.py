@@ -24,6 +24,7 @@ from datetime import datetime
 
 # third party import
 import numpy as np
+import pandas as pd
 from pymongo import MongoClient
 
 # local import
@@ -104,6 +105,29 @@ collect_vol_chk = "CW_volume_checked_data"
 tot_matrix = mongo.query_mongo(db, collection_raw)
 tot_matrix = tot_matrix.loc[tot_matrix.Time != 0]
 tot_matrix = tot_matrix.drop(columns=["Low", "High", "Open"])
+# tot_matrix['str_t'] = [str(t) for t in tot_matrix['Time']]
+tot_matrix['key'] = tot_matrix['Exchange'] + '&' + \
+    tot_matrix['Pair']
+# correct the "Crypto Volume" information for the date 2017-04-28 and
+# 2017-04-29 using the previous day value
+m_27_04 = tot_matrix.loc[tot_matrix.Time
+                         == 1493251200, ['key', 'Crypto Volume']]
+
+m_28_04 = tot_matrix.loc[tot_matrix.Time == 1493337600]
+m_29_04 = tot_matrix.loc[tot_matrix.Time == 1493424000]
+for k in m_27_04['key']:
+
+    prev_vol = np.array(m_27_04.loc[m_27_04.key == k, "Crypto Volume"])
+    m_28_04.loc[m_28_04.key == k, "Crypto Volume"] = prev_vol
+    m_29_04.loc[m_29_04.key == k, "Crypto Volume"] = prev_vol
+
+tot_matrix = tot_matrix.loc[tot_matrix.Time != 1493337600]
+tot_matrix = tot_matrix.loc[tot_matrix.Time != 1493424000]
+
+tot_matrix = tot_matrix.append(m_28_04)
+tot_matrix = tot_matrix.append(m_29_04)
+
+tot_matrix = tot_matrix.drop(columns=['key'])
 
 for Crypto in Crypto_Asset:
 
@@ -124,7 +148,8 @@ for Crypto in Crypto_Asset:
 
                 if exchange == "bittrex" and cp == "btcusdt":
 
-                    sub_vol = np.array(mat.loc[mat.Time == 1544486400, "Crypto Volume"])
+                    sub_vol = np.array(
+                        mat.loc[mat.Time == 1544486400, "Crypto Volume"])
                     mat.loc[mat.Time == 1544572800, "Crypto Volume"] = sub_vol
                     mat.loc[mat.Time == 1544659200, "Crypto Volume"] = sub_vol
 

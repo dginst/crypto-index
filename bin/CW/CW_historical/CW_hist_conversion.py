@@ -40,7 +40,8 @@ hour_in_sec = 3600
 day_in_sec = 86400
 # define today date as timestamp
 today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
+today_TS = int(datetime.strptime(
+    today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
 y_TS = today_TS - day_in_sec
 
 # define the variable containing all the date from start_date to today.
@@ -187,7 +188,8 @@ total_weights = (
     + usdt_poloniex["Pair Volume"]
 )
 
-usdt_rates = (kraken_weighted + bittrex_weighted + poloniex_weighted) / total_weights
+usdt_rates = (kraken_weighted + bittrex_weighted
+              + poloniex_weighted) / total_weights
 
 usdt_rates = 1 / usdt_rates
 
@@ -204,6 +206,10 @@ usdt_rates["Currency"] = [
 ]
 usdt_rates["Time"] = first_call["Time"]
 usdt_rates["Standard Date"] = data_setup.timestamp_to_human(first_call["Time"])
+
+# correcting the date 2016-10-02 using the previous day rate
+prev_rate = np.array(usdt_rates.loc[usdt_rates.Time == '1475280000', "Rate"])
+usdt_rates.loc[usdt_rates.Time == '1475366400', "Rate"] = prev_rate
 
 # USDT mongoDB upload
 usdt_data = usdt_rates.to_dict(orient="records")
@@ -247,7 +253,8 @@ total_weights = (
     + usdc_poloniex["Pair Volume"]
 )
 
-usdc_rates = (kraken_weighted + coinbase_weighted + poloniex_weighted) / total_weights
+usdc_rates = (kraken_weighted + coinbase_weighted
+              + poloniex_weighted) / total_weights
 usdc_rates = 1 / usdc_rates
 
 # tranforming the data structure into a dataframe
@@ -292,7 +299,8 @@ matrix_rate_stable = mongo.query_mongo(db, collection_stable)
 # creating a column containing the fiat currency
 matrix_rate["fiat"] = [x[:3].lower() for x in matrix_rate["Currency"]]
 matrix_data["fiat"] = [x[3:].lower() for x in matrix_data["Pair"]]
-matrix_rate_stable["fiat"] = [x[:4].lower() for x in matrix_rate_stable["Currency"]]
+matrix_rate_stable["fiat"] = [x[:4].lower()
+                              for x in matrix_rate_stable["Currency"]]
 
 # ############ creating a USD subset which will not be converted #########
 
@@ -335,15 +343,18 @@ stablecoin = ["usdc", "usdt"]
 stablecoin_matrix = matrix_data.loc[matrix_data["fiat"].isin(stablecoin)]
 
 # merging the dataset on 'Time' and 'fiat' column
-stable_merged = pd.merge(stablecoin_matrix, matrix_rate_stable, on=["Time", "fiat"])
+stable_merged = pd.merge(
+    stablecoin_matrix, matrix_rate_stable, on=["Time", "fiat"])
 
 # converting the prices in usd
-stable_merged["Close Price"] = stable_merged["Close Price"] / stable_merged["Rate"]
+stable_merged["Close Price"] = stable_merged["Close Price"] / \
+    stable_merged["Rate"]
 stable_merged["Close Price"] = stable_merged["Close Price"].replace(
     [np.inf, -np.inf], np.nan
 )
 stable_merged["Close Price"].fillna(0, inplace=True)
-stable_merged["Pair Volume"] = stable_merged["Pair Volume"] / stable_merged["Rate"]
+stable_merged["Pair Volume"] = stable_merged["Pair Volume"] / \
+    stable_merged["Rate"]
 stable_merged["Pair Volume"] = stable_merged["Pair Volume"].replace(
     [np.inf, -np.inf], np.nan
 )
@@ -377,7 +388,8 @@ collection_converted_data = "CW_converted_data"
 q_dict = {"Time": str(y_TS)}
 matrix_last_day = mongo.query_mongo(db_name, collection_converted_data, q_dict)
 old_head = matrix_last_day.columns
-matrix_last_day["key"] = matrix_last_day["Exchange"] + "&" + matrix_last_day["Pair"]
+matrix_last_day["key"] = matrix_last_day["Exchange"] + \
+    "&" + matrix_last_day["Pair"]
 matrix_last_day["logic"] = 1
 matrix_last_day = matrix_last_day.drop(columns=old_head)
 
