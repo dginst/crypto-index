@@ -133,7 +133,7 @@ end_date = datetime.now().strftime("%m-%d-%Y")
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
-reference_date_vector = data_setup.timestamp_gen(start_date, end_date)
+reference_date_vector = data_setup.date_gen(start_date, end_date)
 
 # define all the useful arrays containing the rebalance
 # start date, stop date, board meeting date
@@ -654,7 +654,7 @@ double_EWMA_up = double_EWMA_up.to_dict(orient="records")
 collection_EWMA_check.insert_many(double_EWMA_up)
 
 # put the synth matrix on MongoDB
-syntethic['Date'] = human_date
+syntethic["Date"] = human_date
 syntethic_up = syntethic
 syntethic_up = syntethic_up[
     [

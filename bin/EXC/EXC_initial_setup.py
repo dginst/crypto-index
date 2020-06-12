@@ -22,7 +22,7 @@ start_period = "04-17-2020"
 today = datetime.now().strftime("%Y-%m-%d")
 
 # creating the timestamp array at 12:00 AM
-date_array = data_setup.timestamp_gen(start_period)
+date_array = data_setup.date_gen(start_period)
 date_array_str = [str(el) for el in date_array]
 
 # pair arrat without USD (no need of conversion)

@@ -45,7 +45,7 @@ y_TS = today_TS - day_in_sec
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
-reference_date_vector = data_setup.timestamp_gen(start_date)
+reference_date_vector = data_setup.date_gen(start_date)
 
 # pair arrat without USD (no need of conversion)
 pair_array = ["usd", "gbp", "eur", "cad", "jpy", "usdt", "usdc"]

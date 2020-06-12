@@ -116,12 +116,12 @@ y_TS = today_TS - day_in_sec
 two_before_TS = y_TS - day_in_sec
 
 # defining the array containing all the date from start_period until today
-date_complete_int = data_setup.timestamp_gen(start_period)
+date_complete_int = data_setup.date_gen(start_period)
 # converting the timestamp format date into string
 date_tot = [str(single_date) for single_date in date_complete_int]
 
 # searching only the last five days
-last_five_days = date_tot[(len(date_tot) - 5): len(date_tot)]
+last_five_days = date_tot[(len(date_tot) - 5) : len(date_tot)]
 
 # defining the MongoDB path where to look for the rates
 query = {"Exchange": "coinbase-pro", "Pair": "ethusd"}
@@ -131,7 +131,7 @@ matrix = mongo.query_mongo(database, collection_clean_check, query)
 
 # checking the time column
 date_list = np.array(matrix["Time"])
-last_five_days_mongo = date_list[(len(date_list) - 5): len(date_list)]
+last_five_days_mongo = date_list[(len(date_list) - 5) : len(date_list)]
 
 # finding the date to download as difference between complete array of date and
 # date now stored on MongoDB
@@ -158,7 +158,7 @@ if date_to_add != []:
         start_date = start_date.strftime("%m-%d-%Y")
         end_date = start_date
 
-    rel_ref_vector = data_setup.timestamp_gen(start_date, end_date, EoD="N")
+    rel_ref_vector = data_setup.date_gen(start_date, end_date, EoD="N")
 
     # creating a date array of support that allows to manage the one-day
     # missing data

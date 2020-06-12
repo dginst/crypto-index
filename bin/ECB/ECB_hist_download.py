@@ -40,7 +40,8 @@ collection_ECB_raw = db.ecb_raw
 # ####################### ECB rates raw data download #########################
 
 # create an array of date containing the list of date to download
-date = data_setup.date_array_gen(start_period, End_Period, timeST="N", EoD="N")
+
+date = data_setup.date_gen(start_period, End_Period, timeST="N", clss="list", EoD="N")
 
 Exchange_Rate_List = pd.DataFrame()
 

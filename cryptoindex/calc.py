@@ -1220,7 +1220,7 @@ def daily_quart_synt_matrix(
     # adding Time Column
     human_start = data_setup.timestamp_to_human(last_reb_start, date_format="%m-%d-%y")
     human_curr = data_setup.timestamp_to_human(curr_board_eve, date_format="%m-%d-%y")
-    period_date_list = data_setup.timestamp_gen(human_start, human_curr, EoD="N")
+    period_date_list = data_setup.date_gen(human_start, human_curr, EoD="N")
     price_return["Time"] = period_date_list
 
     #

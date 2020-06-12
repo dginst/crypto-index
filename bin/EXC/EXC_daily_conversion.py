@@ -55,7 +55,7 @@ y_TS = today_TS - day_in_sec
 two_before_TS = y_TS - day_in_sec
 
 # defining the array containing all the date from start_period until today
-date_complete_int = data_setup.timestamp_gen(start_period)
+date_complete_int = data_setup.date_gen(start_period)
 # converting the timestamp format date into string
 date_tot = [str(single_date) for single_date in date_complete_int]
 

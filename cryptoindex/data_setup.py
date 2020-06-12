@@ -21,34 +21,33 @@ from . import mongo_setup as mongo
 # the returned array of date will be from start to today - 1 (EoD = 'Y')
 
 
-def timestamp_gen(start_date, end_date=None, EoD="Y"):
-
-    start = datetime.strptime(start_date, "%m-%d-%Y")
-    start = int(start.replace(tzinfo=timezone.utc).timestamp())
+def date_gen(start_date, end_date=None, timeST="Y", clss="array", EoD="Y"):
 
     if end_date is None:
 
         end_date = datetime.now().strftime("%m-%d-%Y")
 
-    end_date = datetime.strptime(end_date, "%m-%d-%Y")
-    end = int(end_date.replace(tzinfo=timezone.utc).timestamp())
+    date_index = pd.date_range(start_date, end_date)
 
-    array = np.array([start])
-    date = start
+    if timeST == "Y":
 
-    while date < end:
-        date = date + 86400
-        array = np.append(array, date)
-
-    if EoD == "Y":
-
-        array = array[: len(array) - 1]
+        date_ll = [
+            int(date.replace(tzinfo=timezone.utc).timestamp()) for date in date_index
+        ]
 
     else:
 
-        pass
+        date_ll = [datetime.strftime(date, "%m-%d-%Y") for date in date_index]
 
-    return array
+    if clss == "array":
+
+        date_ll = np.array(date_ll)
+
+    if EoD == "Y":
+
+        date_ll = date_ll[: len(date_ll) - 1]
+
+    return date_ll
 
 
 def timestamp_to_human(ts_array, date_format="%Y-%m-%d"):
@@ -75,49 +74,6 @@ def timestamp_vector(start, stop, lag=86400):
         single_date = single_date + lag
 
     return array
-
-
-# function that generate an array of date starting from start_date to end_date
-# if not specified end_date = today()
-# default format is in second since the epoch (timeST = 'Y'), type timeST='N'
-# for date in format YY-mm-dd function considers End of Day price series so,
-# if not otherwise specified, the returned array of date will be from start
-# to today - 1 write all date in MM/DD/YYYY format
-
-
-def date_array_gen(start_date, end_date=None, timeST="Y", EoD="Y"):
-
-    # set end_date = today if empty
-    if end_date is None:
-        end_date = datetime.now().strftime("%m-%d-%Y")
-
-    date_index = pd.date_range(start_date, end_date)
-
-    datelist = date_list(date_index, timeST)
-
-    if EoD == "Y":
-        datelist = datelist[: len(datelist) - 1]
-
-    return datelist
-
-
-# function that returns a list containing date in timestamp format
-
-
-def date_list(date_index, timeST="Y"):
-
-    datelist = []
-
-    for date in date_index:
-        val = int(date.replace(tzinfo=timezone.utc).timestamp())
-        datelist.append(val)
-
-    if timeST == "N":
-
-        NoStamp = [datetime.utcfromtimestamp(x).strftime("%Y-%m-%d") for x in datelist]
-        return NoStamp
-    else:
-        return datelist
 
 
 # function that reforms the inserted date according to the choosen separator
@@ -305,7 +261,7 @@ def CW_series_fix_missing(
         end_date = datetime.now().strftime("%m-%d-%Y")
 
     # creating the reference date array from start date to end date
-    reference_array = timestamp_gen(start_date, end_date)
+    reference_array = date_gen(start_date, end_date)
     # select just the date on broken_matrix
     broken_array = broken_matrix["Time"]
     ccy_pair = cryptocurrency.lower() + pair.lower()
@@ -634,7 +590,7 @@ def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N"):
 
     # defining the array of date to be used
 
-    date_ECB = timestamp_gen(start_period, End_Period, EoD="Y")
+    date_ECB = date_gen(start_period, End_Period, EoD="Y")
     # date = timestamp_convert(date_TS)
     # date = [datetime.strptime(x, '%Y-%m-%d') for x in date]
 
@@ -745,7 +701,7 @@ def ECB_daily_setup(key_curr_vector, timeST="N"):
     # defining the array of date to be used
     today = datetime.now().strftime("%m-%d-%Y")
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%m-%d-%Y")
-    date = date_array_gen(yesterday, today, timeST="N", EoD="N")
+    date = date_gen(yesterday, today, timeST="N", clss="list", EoD="N")
     date = [datetime.strptime(x, "%Y-%m-%d") for x in date]
 
     # defining the headers of the returning data frame

@@ -49,13 +49,12 @@ start_period = "01-01-2016"
 
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(
-    today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
+today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
 y_TS = today_TS - day_in_sec
 two_before_TS = y_TS - day_in_sec
 
 # defining the array containing all the date from start_period until today
-date_complete_int = data_setup.timestamp_gen(start_period)
+date_complete_int = data_setup.date_gen(start_period)
 # converting the timestamp format date into string
 date_tot = [str(single_date) for single_date in date_complete_int]
 
@@ -153,8 +152,7 @@ daily_mat["Pair"] = [
     element.replace("USDT_ETH", "ethusdt") for element in daily_mat["Pair"]
 ]
 daily_mat["Pair"] = [element.lower() for element in daily_mat["Pair"]]
-daily_mat["Pair"] = [element.replace("xbt", "btc")
-                     for element in daily_mat["Pair"]]
+daily_mat["Pair"] = [element.replace("xbt", "btc") for element in daily_mat["Pair"]]
 
 daily_mat["Pair Volume"] = daily_mat["Close Price"] * daily_mat["Crypto Volume"]
 
@@ -169,14 +167,10 @@ daily_matrix_20 = daily_mat.loc[daily_mat.hour == "20:00"]
 
 # creating the exchange-pair couples key for the daily matrix
 # for each above defined df
-daily_matrix_00["key"] = daily_matrix_00["Exchange"] + \
-    "&" + daily_matrix_00["Pair"]
-daily_matrix_12["key"] = daily_matrix_12["Exchange"] + \
-    "&" + daily_matrix_12["Pair"]
-daily_matrix_16["key"] = daily_matrix_16["Exchange"] + \
-    "&" + daily_matrix_16["Pair"]
-daily_matrix_20["key"] = daily_matrix_20["Exchange"] + \
-    "&" + daily_matrix_20["Pair"]
+daily_matrix_00["key"] = daily_matrix_00["Exchange"] + "&" + daily_matrix_00["Pair"]
+daily_matrix_12["key"] = daily_matrix_12["Exchange"] + "&" + daily_matrix_12["Pair"]
+daily_matrix_16["key"] = daily_matrix_16["Exchange"] + "&" + daily_matrix_16["Pair"]
+daily_matrix_20["key"] = daily_matrix_20["Exchange"] + "&" + daily_matrix_20["Pair"]
 
 # ########### DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
 

@@ -35,9 +35,9 @@ collection_ECB_raw = db.ecb_raw
 # ecb_raw collection check ###########################################
 
 # defining the array containing all the date from start_period until today
-date_tot = data_setup.timestamp_gen(start_period)
+date_tot = data_setup.date_gen(start_period)
 # defining the array considering legal/solar hours
-date_tot = data_setup.timestamp_gen_legal_solar(date_tot)
+date_tot = data_setup.date_gen_legal_solar(date_tot)
 # converting the timestamp format date into string
 date_tot = [str(single_date) for single_date in date_tot]
 

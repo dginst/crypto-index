@@ -65,8 +65,8 @@ import cryptoindex.data_download as data_download
 # # print(c[0])
 # for row in c:
 #     print(row[0])
-# a = data_setup.timestamp_gen('02-15-2016', '11-15-2016')
-# b = data_setup.timestamp_gen_legal_solar(a)
+# a = data_setup.date_gen('02-15-2016', '11-15-2016')
+# b = data_setup.date_gen_legal_solar(a)
 # print(a==b)
 # print(b)
 # print(len(a))
@@ -115,7 +115,7 @@ import cryptoindex.data_download as data_download
 
 ####
 
-# arr = data_setup.timestamp_gen('04-17-2020')
+# arr = data_setup.date_gen('04-17-2020')
 # arr = [str(el) for el in arr]
 # v = list(arr)
 

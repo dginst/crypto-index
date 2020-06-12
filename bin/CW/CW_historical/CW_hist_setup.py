@@ -42,7 +42,7 @@ today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + 3600
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
-reference_date_vector = data_setup.timestamp_gen(start_date)
+reference_date_vector = data_setup.date_gen(start_date)
 # reference_date_vector = data_setup.timestamp_to_str(reference_date_vector)
 
 pair_array = ["gbp", "usd", "cad", "jpy", "eur", "usdt", "usdc"]

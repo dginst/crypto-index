@@ -131,7 +131,7 @@ two_before_human = data_setup.timestamp_to_human([two_before_TS])
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
-reference_date_vector = data_setup.timestamp_gen(start_date)
+reference_date_vector = data_setup.date_gen(start_date)
 
 # define all the useful arrays containing the rebalance start
 # date, stop date, board meeting date
@@ -400,7 +400,7 @@ double_checked_ewma = calc.daily_double_log_check(
 # adding the Time columns to the double checked ewma
 human_start = data_setup.timestamp_to_human(last_reb_start, date_format="%m-%d-%y")
 human_curr = data_setup.timestamp_to_human(curr_board_eve, date_format="%m-%d-%y")
-period_date_list = data_setup.timestamp_gen(human_start, human_curr, EoD="N")
+period_date_list = data_setup.date_gen(human_start, human_curr, EoD="N")
 double_checked_ewma["Time"] = period_date_list
 
 # computing the new weights that will be used starting from the

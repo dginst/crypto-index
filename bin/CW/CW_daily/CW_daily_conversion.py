@@ -41,7 +41,7 @@ two_before_TS = y_TS - 86400
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
-reference_date_vector = data_setup.timestamp_gen(start_date)
+reference_date_vector = data_setup.date_gen(start_date)
 
 # pair arrat without USD (no need of conversion)
 pair_array = ["usd", "gbp", "eur", "cad", "jpy", "usdt", "usdc"]
@@ -263,7 +263,7 @@ collection_stable.insert_many(usdc_data)
 # ################# defining the time vector for the check ###############
 
 # defining the array containing all the date from start_period until today
-date_tot = data_setup.timestamp_gen(start_date)
+date_tot = data_setup.date_gen(start_date)
 # converting the timestamp format date into string
 date_tot = [str(single_date) for single_date in date_tot]
 # searching only the last five days

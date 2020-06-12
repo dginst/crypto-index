@@ -131,7 +131,7 @@ two_before_human = data_setup.timestamp_to_human([two_before_TS])
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
-reference_date_vector = data_setup.timestamp_gen(start_date)
+reference_date_vector = data_setup.date_gen(start_date)
 
 # define all the useful arrays containing the rebalance start
 # date, stop date, board meeting date
