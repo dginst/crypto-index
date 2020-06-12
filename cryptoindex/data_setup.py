@@ -76,6 +76,49 @@ def timestamp_vector(start, stop, lag=86400):
     return array
 
 
+# function that generate an array of date starting from start_date to end_date
+# if not specified end_date = today()
+# default format is in second since the epoch (timeST = 'Y'), type timeST='N'
+# for date in format YY-mm-dd function considers End of Day price series so,
+# if not otherwise specified, the returned array of date will be from start
+# to today - 1 write all date in MM/DD/YYYY format
+
+
+def date_array_gen(start_date, end_date=None, timeST="Y", EoD="Y"):
+
+    # set end_date = today if empty
+    if end_date is None:
+        end_date = datetime.now().strftime("%m-%d-%Y")
+
+    date_index = pd.date_range(start_date, end_date)
+
+    datelist = date_list(date_index, timeST)
+
+    if EoD == "Y":
+        datelist = datelist[: len(datelist) - 1]
+
+    return datelist
+
+
+# function that returns a list containing date in timestamp format
+
+
+def date_list(date_index, timeST="Y"):
+
+    datelist = []
+
+    for date in date_index:
+        val = int(date.replace(tzinfo=timezone.utc).timestamp())
+        datelist.append(val)
+
+    if timeST == "N":
+
+        NoStamp = [datetime.utcfromtimestamp(x).strftime("%Y-%m-%d") for x in datelist]
+        return NoStamp
+    else:
+        return datelist
+
+
 # function that reforms the inserted date according to the choosen separator
 # function takes as input date with "/" seprator and without separator for
 # both the YY ans YYYY format; works on default with MM-DD_YYYY format and
@@ -1167,6 +1210,7 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
     pair = np.array(curr_df["Pair"])
     exchange = exchange[0]
     pair = pair[0]
+
     # select a sub-df containing only the pair of interest of the previous
     # and current dataframes
     pair_prev_df = tot_prev_df.loc[tot_prev_df.Pair == pair]
@@ -1176,41 +1220,46 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
     exc_with_pair = list(pair_prev_df["Exchange"].unique())
     exc_with_pair.remove(exchange)
 
-    fixing_price = np.array([])
-    fixing_p_vol = np.array([])
+    if exc_with_pair == []:
 
-    for el in exc_with_pair:
+        price_var = 0
 
-        # find a subdataframe related with the single exchange of the loop
-        ex_pair_prev_df = pair_prev_df.loc[pair_prev_df.Exchange == el]
-        ex_pair_curr_df = pair_curr_df.loc[pair_curr_df.Exchange == el]
+    else:
 
-        weight_var, volume = daily_sub_finder(ex_pair_curr_df, ex_pair_prev_df)
+        fixing_price = np.array([])
+        fixing_p_vol = np.array([])
 
-        if fixing_price.size == 0:
+        for el in exc_with_pair:
 
-            fixing_price = weight_var
-            fixing_p_vol = volume
+            # find a subdataframe related with the single exchange of the loop
+            ex_pair_prev_df = pair_prev_df.loc[pair_prev_df.Exchange == el]
+            ex_pair_curr_df = pair_curr_df.loc[pair_curr_df.Exchange == el]
 
-        else:
+            weight_var, volume = daily_sub_finder(ex_pair_curr_df, ex_pair_prev_df)
 
-            fixing_price = np.column_stack((fixing_price, weight_var))
-            fixing_p_vol = np.column_stack((fixing_p_vol, volume))
+            if fixing_price.size == 0:
 
-    # defining the dataframes containing the variations of price and volume
+                fixing_price = weight_var
+                fixing_p_vol = volume
 
-    fixing_price_df = pd.DataFrame(fixing_price)
-    fixing_p_vol_df = pd.DataFrame(fixing_p_vol)
+            else:
 
-    # compute row sum
-    fixing_price_df["sum"] = fixing_price_df.sum(axis=1)
-    fixing_p_vol_df["sum"] = fixing_p_vol_df.sum(axis=1)
+                fixing_price = np.column_stack((fixing_price, weight_var))
+                fixing_p_vol = np.column_stack((fixing_p_vol, volume))
 
-    # computing weighted variation
-    fixing_price_df["weighted"] = fixing_price_df["sum"] / fixing_p_vol_df["sum"]
-    fixing_price_df.fillna(0, inplace=True)
+        # defining the dataframes containing the variations of price and volume
 
-    price_var = float(fixing_price_df["weighted"])
+        fixing_price_df = pd.DataFrame(fixing_price)
+        fixing_p_vol_df = pd.DataFrame(fixing_p_vol)
+
+        # compute row sum
+        fixing_price_df["sum"] = fixing_price_df.sum(axis=1)
+        fixing_p_vol_df["sum"] = fixing_p_vol_df.sum(axis=1)
+
+        # computing weighted variation
+        fixing_price_df["weighted"] = fixing_price_df["sum"] / fixing_p_vol_df["sum"]
+        fixing_price_df.fillna(0, inplace=True)
+        price_var = float(fixing_price_df["weighted"])
 
     return price_var
 

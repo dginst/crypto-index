@@ -99,6 +99,11 @@ collection_raw = "CW_rawdata"
 collection_clean_check = "CW_cleandata"
 collect_vol_chk = "CW_volume_checked_data"
 
+##
+
+myquery = {'Time': 1591833600}
+collect_vol.delete_many(myquery)
+##
 # ############################ missing days check #############################
 
 # this section allows to check if CW_clean data contains the new values of the
@@ -309,7 +314,6 @@ day_bfr_mat["key"] = day_bfr_mat["Exchange"] + "&" + day_bfr_mat["Pair"]
 for key_val in day_bfr_mat["key"]:
 
     new_val = merged.loc[merged.key == key_val]
-    print(new_val)
     # if the new 'Close Price' referred to a certain key is 0 the script
     # check the previous day value: if is == 0 then pass, if is != 0
     # the values related to the selected key needs to be corrected
@@ -320,6 +324,9 @@ for key_val in day_bfr_mat["key"]:
         d_before_val = day_bfr_mat.loc[day_bfr_mat.key == key_val]
 
         if np.array(d_before_val["Close Price"]) != 0.0:
+
+            print(new_val)
+            print(d_before_val)
 
             price_var = data_setup.daily_fix_miss(new_val, merged, day_bfr_mat)
             # applying the weighted variation to the day before 'Close Price'
