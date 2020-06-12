@@ -28,9 +28,6 @@ start_date = "01-01-2016"
 # set end_date as today, otherwise comment and choose an end_date
 end_date = datetime.now().strftime("%m-%d-%Y")
 
-# define today date as timestamp
-today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + 3600
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC

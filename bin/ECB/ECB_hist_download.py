@@ -43,6 +43,8 @@ collection_ECB_raw = db.ecb_raw
 
 date = data_setup.date_gen(start_period, End_Period, timeST="N", clss="list", EoD="N")
 
+date = [datetime.strptime(day, "%m-%d-%Y").strftime("%Y-%m-%d") for day in date]
+
 Exchange_Rate_List = pd.DataFrame()
 
 for i, single_date in enumerate(date):

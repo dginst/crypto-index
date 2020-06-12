@@ -76,42 +76,6 @@ def timestamp_vector(start, stop, lag=86400):
     return array
 
 
-# function that reforms the inserted date according to the choosen separator
-# function takes as input date with "/" seprator and without separator for
-# both the YY ans YYYY format; works on default with MM-DD_YYYY format and
-# if different has to be specified ('YYYY-DD-MM' or 'YYYY-MM-DD')
-
-
-def date_reformat(date_to_check, separator="-", order="MM-DD-YYYY"):
-    if "/" in date_to_check and len(date_to_check) == 10:
-        return_date = date_to_check.replace("/", separator)
-    elif "/" in date_to_check and len(date_to_check) == 8:
-        return_date = date_to_check.replace("/", separator)
-    elif "/" not in date_to_check and (
-        len(date_to_check) == 8 or len(date_to_check) == 6
-    ):
-        if order == "YYYY-DD-MM" or order == "YYYY-MM-DD":
-            return_date = (
-                date_to_check[:4]
-                + separator
-                + date_to_check[4:6]
-                + separator
-                + date_to_check[6:]
-            )
-        else:
-            return_date = (
-                date_to_check[:2]
-                + separator
-                + date_to_check[2:4]
-                + separator
-                + date_to_check[4:]
-            )
-    else:
-        return_date = date_to_check
-
-    return return_date
-
-
 # DATA FIXING FUNCTIONS
 
 

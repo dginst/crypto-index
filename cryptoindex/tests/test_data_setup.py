@@ -75,4 +75,4 @@ def test_timestamp_vector():
     assert np.array_equal(ts_date, date)
 
 
-#def test_date_array_gen():
+

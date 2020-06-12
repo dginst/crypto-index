@@ -33,14 +33,9 @@ def ECB_rates_extractor(
     series_var="A",
 ):
 
-    # reforming the data into the correct format
-    start_period = data_setup.date_reformat(start_period, "-", "YYYY-MM-DD")
-
     # set end_period = start_period if empty, so that is possible to perform daily download
     if End_Period is None:
         End_Period = start_period
-    else:
-        End_Period = data_setup.date_reformat(End_Period, "-", "YYYY-MM-DD")
 
     # API settings
     entrypoint = "https://sdw-wsrest.ecb.europa.eu/service/"
@@ -115,18 +110,12 @@ def CW_raw_to_mongo(
 
     Pair = currencypair[3:].upper()
 
-    # check date format
-    start_date = data_setup.date_reformat(start_date)
     start_date = datetime.strptime(start_date, "%m-%d-%Y")
 
     # set end_date = today if empty
     if end_date is None:
 
         end_date = datetime.now().strftime("%m-%d-%Y")
-
-    else:
-
-        end_date = data_setup.date_reformat(end_date, "-")
 
     end_date = datetime.strptime(end_date, "%m-%d-%Y")
     # transform date into timestamps
