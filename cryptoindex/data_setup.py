@@ -124,22 +124,6 @@ def Diff(list_1, list_2):
     return list(set(list_1) - set(list_2))
 
 
-# function that checks if a item(array, matrix, string,...) is null
-
-
-def Check_null(item):
-
-    try:
-
-        return len(item) == 0
-
-    except TypeError:
-
-        pass
-
-    return False
-
-
 # function that aims to homogenize the crypto-fiat series downloaded from
 # CryptoWatch substituting the first n missing values of the series with 0
 # values doing that the Dataframe related on all the crypto-fiat series would
@@ -611,7 +595,7 @@ def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N"):
         single_date_ex_matrix = mongo.query_mongo(database, collection, query)
 
         # check if rates exist in the specified date
-        if Check_null(single_date_ex_matrix) is False:
+        if len(single_date_ex_matrix) != 0:
 
             # find the USD/EUR rates useful for conversions
             cambio_USD_EUR = float(
@@ -720,7 +704,7 @@ def ECB_daily_setup(key_curr_vector, timeST="N"):
     single_date_ex_matrix = mongo.query_mongo(database, collection, query)
 
     # check if rates exist in the specified date
-    if Check_null(single_date_ex_matrix) is False:
+    if len(single_date_ex_matrix) != 0:
 
         # find the USD/EUR rates useful for conversions
         cambio_USD_EUR = float(
