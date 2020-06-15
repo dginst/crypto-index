@@ -1,6 +1,6 @@
 # third party packages
-
 import pandas as pd
+
 from pymongo import MongoClient
 
 # connecting to mongo in local

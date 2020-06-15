@@ -31,3 +31,22 @@ def test_query_mongo():
     df_mongo = query_mongo(database, collection)
 
     assert df_test.equals(df_mongo)
+
+    query_dict = {"A": {"$gt": 0}}
+
+    df_mongo = query_mongo(database, collection, query_dict)
+
+    assert df_test.equals(df_mongo)
+
+    query_dict = {"A": {"$gt": 111110}}
+    ll = []
+
+    df_mongo = query_mongo(database, collection, query_dict)
+
+    assert ll == df_mongo
+
+    collection = "tes"
+
+    df_mongo = query_mongo(database, collection)
+
+    assert ll == df_mongo

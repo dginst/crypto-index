@@ -15,7 +15,7 @@ from cryptoindex import calc
 # ######################## DATE SETTINGS FUNCTIONS ##########################
 
 
-def test_Bday():
+def test_is_business_day():
 
     # is Bday
     bday = "05-11-2020"
