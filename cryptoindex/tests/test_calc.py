@@ -59,23 +59,6 @@ def test_perdelta():
     assert test_range == check_range
 
 
-def test_start_q_fix():
-
-    str_date = ["01-01-2019", "04-01-2019", "07-01-2019", "10-01-2019"]
-
-    # str_date in epoch timestamp
-    ts_date = np.array([1.5463008e09, 1.5540696e09, 1.5619320e09, 1.5698808e09])
-
-    # coverting string in datetime and then in epoch timestamp.
-    ts_array = np.array(
-        [int(datetime.strptime(x, "%m-%d-%Y").timestamp()) for x in str_date]
-    )
-
-    ts_gen = calc.start_q_fix(ts_array)
-
-    assert np.array_equal(ts_date, ts_gen)
-
-
 def test_start_q():
 
     # str_date = ['01-01-2019', '04-01-2019', '07-01-2019', '10-01-2019']
@@ -213,29 +196,29 @@ def test_next_start():
 
 # #################### FIRST LOGIC MATRIX ###################################
 
-data_folder = (
-    "C:\\Users\\mpich\\Desktop\\DGI\\crypto-index\\cryptoindex\\tests\\test_folder"
-)
+# data_folder = (
+#     "C:\\Users\\mpich\\Desktop\\DGI\\crypto-index\\cryptoindex\\tests\\test_folder"
+# )
 
 
-def test_perc_volume_per_exchange():
+# def test_perc_volume_per_exchange():
 
-    df = pd.read_json(
-        r"C:/Users/mpich/Desktop/DGI/crypto-index/cryptoindex/tests/test_folder/test_logic_matrix_one_20200608.json"
-    )
+#     df = pd.read_json(
+#         r"C:/Users/mpich/Desktop/DGI/crypto-index/cryptoindex/tests/test_folder/test_logic_matrix_one_20200608.json"
+#     )
 
-    df.drop("_id", axis=1, inplace=True)
+#     df.drop("_id", axis=1, inplace=True)
 
-    Exchanges = [
-        "coinbase-pro",
-        "poloniex",
-        "bitstamp",
-        "gemini",
-        "bittrex",
-        "kraken",
-        "bitflyer",
-    ]
+#     Exchanges = [
+#         "coinbase-pro",
+#         "poloniex",
+#         "bitstamp",
+#         "gemini",
+#         "bittrex",
+#         "kraken",
+#         "bitflyer",
+#     ]
 
-    first_logic = calc.first_logic_matrix(Exchanges)
+#     first_logic = calc.first_logic_matrix(Exchanges)
 
-    assert df.equals(first_logic)
+#     assert df.equals(first_logic)

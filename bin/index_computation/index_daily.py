@@ -1,5 +1,5 @@
 # standard library import
-from datetime import datetime
+from datetime import datetime, timezone
 
 # third party import
 from pymongo import MongoClient
@@ -118,7 +118,8 @@ start_date = "01-01-2016"
 
 # define today in various format
 today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + 3600 + 3600
+today = datetime.strptime(today, "%Y-%m-%d")
+today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
 y_TS = today_TS - 86400
 two_before_TS = y_TS - 86400
 today_human = data_setup.timestamp_to_human([today_TS])
@@ -132,7 +133,6 @@ reference_date_vector = data_setup.date_gen(start_date)
 # define all the useful arrays containing the rebalance start
 # date, stop date, board meeting date
 rebalance_start_date = calc.start_q("01-01-2016")
-rebalance_start_date = calc.start_q_fix(rebalance_start_date)
 rebalance_stop_date = calc.stop_q(rebalance_start_date)
 board_date = calc.board_meeting_day()
 board_date_eve = calc.day_before_board()
