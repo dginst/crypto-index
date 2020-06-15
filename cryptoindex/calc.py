@@ -66,17 +66,6 @@ def start_q(
     return start_day_arr
 
 
-# with this start_q_fix version, lag times are not necessary anymore.
-# Furthermore the starq_fix can be called only inside the start_q function
-
-
-def start_q_fix2(start_q_array):
-
-    ll = [int(x.replace(tzinfo=timezone.utc).timestamp()) for x in start_q_array]
-
-    return np.array(ll)
-
-
 # the function generates an array cointaing the first date of each quarter.
 # it starts counting from the start_date (01-01-2016) to first future start
 # rebalance date and returns a list of date in timestamp format
@@ -156,22 +145,20 @@ def board_meeting_day(
 
         stop_date = datetime.strptime(stop_date, "%m-%d-%Y")
 
-    board_day = np.array([])
+    date_range = perdelta(start_date, stop_date, delta)
 
-    for result in perdelta(start_date, stop_date, delta):
+    if timeST == "Y":
 
-        # checks if the date generated is a business day
-        # and if not substitute it
-        result = previous_business_day(result)
+        board_day = [
+            int(previous_business_day(x).replace(tzinfo=timezone.utc).timestamp())
+            for x in date_range
+        ]
 
-        if timeST != "Y":
+    else:
 
-            result = result.strftime("%m-%d-%Y")
+        board_day = [previous_business_day(x).strftime("%m-%d-%Y") for x in date_range]
 
-        board_day = np.append(board_day, result)
-
-    # set all timestamps at 12:00 AM UTC
-    board_day = start_q_fix2(board_day)
+    board_day = np.array(board_day)
 
     return board_day
 
