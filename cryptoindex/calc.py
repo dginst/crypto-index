@@ -163,7 +163,7 @@ def board_meeting_day(
     return board_day
 
 
-# the function returns an arraycontaining the days before each board meeting
+# the function returns an array containing the days before each board meeting
 # no input is required, the function uses the above "board_day_meeting()"
 # function and presents the same default input
 
@@ -217,8 +217,6 @@ def next_quarterly_period(
     start_date="01-01-2016", stop_date=None, timeST="Y", initial_val=1
 ):
 
-    # if start_date.isnumeric() is True:
-
     if type(start_date) == str:
         start_date = datetime.strptime(start_date, "%m-%d-%Y")
 
@@ -233,7 +231,8 @@ def next_quarterly_period(
 
     # defining the current date and the past last stop_date
     today = datetime.now().strftime("%Y-%m-%d")
-    today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + 3600
+    today = datetime.strptime(stop_date, "%m-%d-%Y")
+    today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
     last_stop = int(stop_quarter[len(stop_quarter) - 1])
 
     if last_stop > today_TS:
