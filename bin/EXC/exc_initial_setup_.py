@@ -9,14 +9,12 @@ import numpy as np
 
 # local import
 import cryptoindex.data_setup as data_setup
-import cryptoindex.data_download as data_download
 import cryptoindex.mongo_setup as mongo
 
 
 # ########################## initial settings #################################
 
-# set start_period # aggiungere lo start, deve coincidere con la data di inzio
-#  dei ticker
+# set start_period that has to correspond to the first day of exc data history
 start_period = "04-17-2020"
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
@@ -97,7 +95,8 @@ collection_raw = "EXC_test"
 all_data = mongo.query_mongo(database, collection_raw)
 
 # defining the columns on interest
-head = ["Pair", "Exchange", "Time", "Close Price", "Crypto Volume", "Pair Volume"]
+head = ["Pair", "Exchange", "Time",
+        "Close Price", "Crypto Volume", "Pair Volume"]
 
 # keeping only the columns of interest among all the
 # information in rawdata
@@ -172,7 +171,8 @@ all_data["Pair"] = [
     element.replace("USDT_ETH", "ethusdt") for element in all_data["Pair"]
 ]
 all_data["Pair"] = [element.lower() for element in all_data["Pair"]]
-all_data["Pair"] = [element.replace("xbt", "btc") for element in all_data["Pair"]]
+all_data["Pair"] = [element.replace("xbt", "btc")
+                    for element in all_data["Pair"]]
 
 
 # selecting the crypto-fiat pairs used in the index computation
@@ -204,12 +204,14 @@ matrix_rate = matrix_rate.rename({"Date": "Time"}, axis="columns")
 matrix_rate = matrix_rate.loc[matrix_rate.Time.isin(date_array)]
 matrix_data = mongo.query_mongo(db, collection_data)
 matrix_rate_stable = mongo.query_mongo(db, collection_stable)
-matrix_rate_stable = matrix_rate_stable.loc[matrix_rate_stable.Time.isin(date_array)]
+matrix_rate_stable = matrix_rate_stable.loc[matrix_rate_stable.Time.isin(
+    date_array)]
 
 # creating a column containing the fiat currency
 matrix_rate["fiat"] = [x[:3].lower() for x in matrix_rate["Currency"]]
 matrix_data["fiat"] = [x[3:].lower() for x in matrix_data["Pair"]]
-matrix_rate_stable["fiat"] = [x[:4].lower() for x in matrix_rate_stable["Currency"]]
+matrix_rate_stable["fiat"] = [x[:4].lower()
+                              for x in matrix_rate_stable["Currency"]]
 
 # ############ creating a USD subset which will not be converted #########
 
@@ -252,15 +254,18 @@ stablecoin = ["usdc", "usdt"]
 stablecoin_matrix = matrix_data.loc[matrix_data["fiat"].isin(stablecoin)]
 
 # merging the dataset on 'Time' and 'fiat' column
-stable_merged = pd.merge(stablecoin_matrix, matrix_rate_stable, on=["Time", "fiat"])
+stable_merged = pd.merge(
+    stablecoin_matrix, matrix_rate_stable, on=["Time", "fiat"])
 
 # converting the prices in usd
-stable_merged["Close Price"] = stable_merged["Close Price"] / stable_merged["Rate"]
+stable_merged["Close Price"] = stable_merged["Close Price"] / \
+    stable_merged["Rate"]
 stable_merged["Close Price"] = stable_merged["Close Price"].replace(
     [np.inf, -np.inf], np.nan
 )
 stable_merged["Close Price"].fillna(0, inplace=True)
-stable_merged["Pair Volume"] = stable_merged["Pair Volume"] / stable_merged["Rate"]
+stable_merged["Pair Volume"] = stable_merged["Pair Volume"] / \
+    stable_merged["Rate"]
 stable_merged["Pair Volume"] = stable_merged["Pair Volume"].replace(
     [np.inf, -np.inf], np.nan
 )
