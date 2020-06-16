@@ -90,12 +90,11 @@ def coinbase_ticker(Crypto, Fiat, collection):
         collection.insert_one(rawdata)
 
         a = "Everything is fine"
-        print(a)
 
         return a, Pair
 
-    except:
-        b = "Some problems occurred"
+    except KeyError:
+        b = "This key doesn't exist"
         print(b)
 
         return b
@@ -165,10 +164,16 @@ def kraken_ticker(Crypto, Fiat, collection):
 
         collection.insert_one(rawdata)
 
-    except:
-        print("none_kraken")
+        a = "Everything is fine"
 
-        return
+        return a, Pair
+
+    except KeyError:
+
+        b = "This key doesn't exist"
+        print(b)
+
+        return b
 
 
 #####################################################################################################
