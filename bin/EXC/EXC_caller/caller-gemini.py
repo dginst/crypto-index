@@ -5,7 +5,7 @@ from pymongo import MongoClient
 
 start = time.time()
 
-connection = MongoClient('localhost', 27017)
+connection = MongoClient("localhost", 27017)
 # creating the database called index
 db = connection.index
 db.rawdata.create_index([("id", -1)])
@@ -16,8 +16,8 @@ exc_raw_collection = db.EXC_rawdata
 
 # gemini
 
-assets3 = ['BTC', 'ETH', 'LTC', 'BCH', 'ZEC']
-fiat2 = ['USD']
+assets3 = ["BTC", "ETH", "LTC", "BCH", "ZEC"]
+fiat2 = ["USD"]
 
 for Crypto in assets3:
     for Fiat in fiat2:
@@ -26,4 +26,4 @@ for Crypto in assets3:
 
 gemini = time.time()
 
-print("This script took: {} seconds".format(float(gemini-start)))
+print("This script took: {} seconds".format(float(gemini - start)))

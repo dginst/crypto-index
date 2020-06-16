@@ -5,7 +5,7 @@ from pymongo import MongoClient
 
 start = time.time()
 
-connection = MongoClient('localhost', 27017)
+connection = MongoClient("localhost", 27017)
 # creating the database called index
 db = connection.index
 db.rawdata.create_index([("id", -1)])
@@ -16,8 +16,8 @@ exc_raw_collection = db.EXC_rawdata
 
 # itbit
 
-assets1 = ['BTC', 'ETH']
-fiat1 = ['EUR', 'USD']
+assets1 = ["BTC", "ETH"]
+fiat1 = ["EUR", "USD"]
 
 for Crypto in assets1:
     for Fiat in fiat1:
@@ -27,4 +27,4 @@ for Crypto in assets1:
 itbit = time.time()
 
 
-print("This script took: {} seconds".format(float(itbit-start)))
+print("This script took: {} seconds".format(float(itbit - start)))
