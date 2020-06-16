@@ -16,8 +16,15 @@ import cryptoindex.mongo_setup as mongo
 
 # set start_period that has to correspond to the first day of exc data history
 start_period = "04-17-2020"
+
+hour_in_sec = 3600
+day_in_sec = 86400
+
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
+today_TS = int(datetime.strptime(
+    today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
+y_TS = today_TS - day_in_sec
 
 # creating the timestamp array at 12:00 AM
 date_array = data_setup.date_gen(start_period)
@@ -106,7 +113,11 @@ all_data = all_data.loc[:, head]
 # all_data['Time'] = [str(element - 86400) for element in all_data['Time']] ## tolto 1 d
 all_data["Time"] = [str(element) for element in all_data["Time"]]  # tolto 1 d
 
+# creating a column containing the hour of extraction
+# all_data["hour"] = all_data["date"].str[11:16]
+
 # selecting the date corresponding to 12:00 AM
+# all_data = all_data.loc[all_data.hour == "00:00"]
 all_data = all_data.loc[all_data["Time"].isin(date_array_str)]
 
 # changing some features in "Pair" field
@@ -182,9 +193,57 @@ all_data = all_data.loc[all_data["Pair"].isin(cryptofiat_array)]
 all_data = all_data.loc[all_data["Exchange"].isin(Exchanges)]
 
 # correcting the "Pair Volume" field
+all_data["Crypto Volume"] = [float(v) for v in all_data["Crypto Volume"]]
+all_data["Close Price"] = [float(p) for p in all_data["Close Price"]]
 all_data["Pair Volume"] = all_data["Crypto Volume"] * all_data["Close Price"]
 
+# ########## DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
+db = "index"
+collect_log_key = "EXC_keys"
+q_dict = {"Time": y_TS}
+
+# downloading from MongoDB the matrix containing the exchange-pair logic values
+logic_key = mongo.query_mongo(db, collect_log_key)
+
+# creating the exchange-pair couples key for the daily matrix
+all_data["key"] = all_data["Exchange"] + "&" + all_data["Pair"]
+
+# ########## adding the dead series to the daily values ##################
+
+# selecting only the exchange-pair couples present in the historical series
+key_present = logic_key.loc[logic_key.logic_value == 1]
+key_present = key_present.drop(columns=["logic_value"])
+
+# selecting the last day of the EXC "historical" series
+last_day = all_data.loc[all_data.Time == str(y_TS)]
+
+# applying a left join between the prresent keys matrix and the last_day
+# matrix, this operation returns a matrix containing all the keys in
+# "key_present" and, if some keys are missing in "all_data" put NaN
+merged = pd.merge(key_present, last_day, on="key", how="left")
+
+# selecting only the absent keys
+merg_absent = merged.loc[merged["Close Price"].isnull()]
+
+header = ["Pair", "Exchange", "Time",
+          "Close Price", "Crypto Volume",
+          "Pair Volume", "key"]
+
+# create the historical series for each selected element
+for k in merg_absent["key"]:
+
+    mat_to_add = pd.DataFrame(columns=header)
+    mat_to_add["Time"] = date_array_str
+    split_val = k.split("&")
+    mat_to_add["Exchange"] = split_val[0]
+    mat_to_add["Pair"] = split_val[1]
+    mat_to_add["Close Price"] = 0.0
+    mat_to_add["Crypto Volume"] = 0.0
+    mat_to_add["Pair Volume"] = 0.0
+    all_data = all_data.append(mat_to_add)
+
 # uploading the cleaned data on MongoDB in the collection EXC_cleandata
+all_data = all_data.drop(columns=["key"])
 data = all_data.to_dict(orient="records")
 collection_clean.insert_many(data)
 

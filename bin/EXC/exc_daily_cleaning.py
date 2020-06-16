@@ -5,6 +5,7 @@ from typing import Dict
 # third party import
 from pymongo import MongoClient
 import pandas as pd
+import numpy as np
 
 # local import
 import cryptoindex.data_setup as data_setup
@@ -49,10 +50,11 @@ start_period = "01-01-2016"
 
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
+today_TS = int(datetime.strptime(
+    today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
 y_TS = today_TS - day_in_sec
 two_before_TS = y_TS - day_in_sec
-
+print(y_TS)
 # defining the array containing all the date from start_period until today
 date_complete_int = data_setup.date_gen(start_period)
 # converting the timestamp format date into string
@@ -77,15 +79,20 @@ coll_CW_raw = "CW_rawdata"
 
 db = "index"
 coll_EXC_raw = "EXC_rawdata"
-q_dict: Dict[str, int] = {}
-q_dict = {"Time": y_TS}
+coll_EXC_raw = "EXC_test"
+q_dict: Dict[str, str] = {}
+q_dict = {"Time": str(y_TS)}
 
 daily_mat = mongo.query_mongo(db, coll_EXC_raw, q_dict)
 daily_mat = daily_mat[
     ["Pair", "Exchange", "Close Price", "Time", "Crypto Volume", "date"]
 ]
 
+# selecting the exchange used in the index computation
+daily_mat = daily_mat.loc[daily_mat["Exchange"].isin(Exchanges)]
+
 # creating a column containing the hour of extraction
+daily_mat["date"] = [str(d) for d in daily_mat["date"]]
 daily_mat["hour"] = daily_mat["date"].str[11:16]
 
 daily_mat = daily_mat.loc[daily_mat.Time != 0]
@@ -152,8 +159,11 @@ daily_mat["Pair"] = [
     element.replace("USDT_ETH", "ethusdt") for element in daily_mat["Pair"]
 ]
 daily_mat["Pair"] = [element.lower() for element in daily_mat["Pair"]]
-daily_mat["Pair"] = [element.replace("xbt", "btc") for element in daily_mat["Pair"]]
+daily_mat["Pair"] = [element.replace("xbt", "btc")
+                     for element in daily_mat["Pair"]]
 
+daily_mat["Crypto Volume"] = [float(v) for v in daily_mat["Crypto Volume"]]
+daily_mat["Close Price"] = [float(p) for p in daily_mat["Close Price"]]
 daily_mat["Pair Volume"] = daily_mat["Close Price"] * daily_mat["Crypto Volume"]
 
 # ############################################################################
@@ -167,15 +177,20 @@ daily_matrix_20 = daily_mat.loc[daily_mat.hour == "20:00"]
 
 # creating the exchange-pair couples key for the daily matrix
 # for each above defined df
-daily_matrix_00["key"] = daily_matrix_00["Exchange"] + "&" + daily_matrix_00["Pair"]
-daily_matrix_12["key"] = daily_matrix_12["Exchange"] + "&" + daily_matrix_12["Pair"]
-daily_matrix_16["key"] = daily_matrix_16["Exchange"] + "&" + daily_matrix_16["Pair"]
-daily_matrix_20["key"] = daily_matrix_20["Exchange"] + "&" + daily_matrix_20["Pair"]
+daily_matrix_00["key"] = daily_matrix_00["Exchange"] + \
+    "&" + daily_matrix_00["Pair"]
+daily_matrix_12["key"] = daily_matrix_12["Exchange"] + \
+    "&" + daily_matrix_12["Pair"]
+daily_matrix_16["key"] = daily_matrix_16["Exchange"] + \
+    "&" + daily_matrix_16["Pair"]
+daily_matrix_20["key"] = daily_matrix_20["Exchange"] + \
+    "&" + daily_matrix_20["Pair"]
 
 # ########### DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
 
 collect_log_key = "EXC_keys"
-q_dict = {"Time": y_TS}
+# q_dict: Dict[str, int] = {}
+# q_dict = {"Time": y_TS}
 
 # downloading from MongoDB the matrix with the daily values and the
 # matrix containing the exchange-pair logic values
@@ -199,16 +214,16 @@ merged["Pair"] = split_val[1]
 
 # define a df containing only the NaN value, so the keys
 # that are not present in daily_matrix_00
-merged_check = merged
-merged_check.fillna("NaN", inplace=True)
-check_key = merged_check.loc[merged_check["Close Price"] == "NaN", "key"]
+check_key = merged.loc[merged["Close Price"].isnull(), "key"]
+
 # join the dataframes that contains the keys not present in daily_matrix_00
 # and the daily_matrix_12
 check_12 = pd.merge(check_key, daily_matrix_12, on="key", how="left")
-check_12.fillna("NaN", inplace=True)
+
 # isolate the potential non-NaN resulting from the join, the df would
 # contain the keys present in the extraction hour 12:00
-present_12 = check_12.loc[check_12["Close Price"] != "NaN"]
+present_12 = check_12.loc[check_12["Close Price"].notnull()]
+# present_12 = check_12.loc[check_12["Close Price"] != "NaN"]
 
 # if the "present_12" df is not empty, then substitute the values for each
 # keys in the "merged" df, otherwise pass
@@ -227,7 +242,7 @@ else:
 
 # giving 0 to all the remainig values
 merged.fillna(0, inplace=True)
-
+print(merged)
 # ########## checking potential new exchange-pair couple ##################
 
 # define a subset of keys that has not been present in the past
@@ -236,7 +251,7 @@ key_absent.drop(columns=["logic_value"])
 
 # merging the two dataframe (left join) in order to find potential
 # new keys in the data of the day
-merg_absent = pd.merge(key_absent, daily_mat, on="key", how="left")
+merg_absent = pd.merge(key_absent, daily_matrix_00, on="key", how="left")
 merg_absent.fillna("NaN", inplace=True)
 new_key = merg_absent.loc[merg_absent["Close Price"] != "NaN"]
 
@@ -295,17 +310,16 @@ day_bfr_mat["key"] = day_bfr_mat["Exchange"] + "&" + day_bfr_mat["Pair"]
 for key_val in day_bfr_mat["key"]:
 
     new_val = merged.loc[merged.key == key_val]
-
     # if the new 'Close Price' referred to a certain key is 0 the script
     # check the previous day value: if is == 0 then pass, if is != 0
     # the values related to the selected key needs to be corrected
     # ###### IF A EXC-PAIR DIES AT A CERTAIN POINT, THE SCRIPT
     # CHANGES THE VALUES. MIGHT BE WRONG #######################
-    if new_val["Close Price"] == 0:
+    if np.array(new_val["Close Price"]) == 0.0:
 
         d_before_val = day_bfr_mat.loc[day_bfr_mat.key == key_val]
 
-        if d_before_val["Close Price"] != 0:
+        if np.array(d_before_val["Close Price"]) != 0.0:
 
             price_var = data_setup.daily_fix_miss(new_val, merged, day_bfr_mat)
 
@@ -322,6 +336,8 @@ for key_val in day_bfr_mat["key"]:
 
 
 # put the manipulated data on MongoDB
-merged.drop(columns=["key"])
+merged = merged.drop(columns=["key", "date", "hour"])
+merged['Time'] = [str(t) for t in merged['Time']]
+print(merged)
 data = merged.to_dict(orient="records")
 collection_clean.insert_many(data)
