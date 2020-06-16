@@ -1,8 +1,5 @@
 from cryptoindex import API_request as api
-
-from datetime import datetime
 from pymongo import MongoClient
-
 
 connection = MongoClient("localhost", 27017)
 # creating the database called index
@@ -54,6 +51,99 @@ def test_kraken_ticker():
     check, pair = api.kraken_ticker(Crypto, Fiat, t_api)
 
     assert check == "Everything is fine", pair == "XBTUSDT"
-    
 
-def test_
+
+def test_bittrex_ticker():
+
+    Crypto = "BTC"
+    Fiat = "USD"
+
+    check, pair = api.bittrex_ticker(Crypto, Fiat, t_api)
+
+    assert check == "Everything is fine", pair == "BTCUSD"
+
+    Crypto = "BT"
+
+    check = api.bittrex_ticker(Crypto, Fiat, t_api)
+
+    assert check == "Nonetype object"
+
+
+def test_poloniex_ticker():
+
+    Crypto = "BTC"
+    Fiat = "USDT"
+
+    check, pair = api.poloniex_ticker(Crypto, Fiat, t_api)
+
+    assert check == "Everything is fine", pair == "BTCUSD"
+
+    Crypto = "BT"
+
+    check = api.poloniex_ticker(Crypto, Fiat, t_api)
+
+    assert check == "This key doesn't exist"
+
+
+def test_itbit_ticker():
+
+    Crypto = "BTC"
+    Fiat = "USD"
+
+    check, pair = api.itbit_ticker(Crypto, Fiat, t_api)
+
+    assert check == "Everything is fine", pair == "BTCUSD"
+
+    Crypto = "BT"
+
+    check = api.itbit_ticker(Crypto, Fiat, t_api)
+
+    assert check == "This key doesn't exist"
+
+
+def test_bitflyer_ticker():
+
+    Crypto = "BTC"
+    Fiat = "USD"
+
+    check, pair = api.bitflyer_ticker(Crypto, Fiat, t_api)
+
+    assert check == "Everything is fine", pair == "BTCUSD"
+
+    Crypto = "BT"
+
+    check = api.bitflyer_ticker(Crypto, Fiat, t_api)
+
+    assert check == "This key doesn't exist"
+
+
+def test_gemini_ticker():
+
+    Crypto = "BTC"
+    Fiat = "USD"
+
+    check, pair = api.gemini_ticker(Crypto, Fiat, t_api)
+
+    assert check == "Everything is fine", pair == "BTCUSD"
+
+    Crypto = "BT"
+
+    check = api.gemini_ticker(Crypto, Fiat, t_api)
+
+    assert check == "This key doesn't exist"
+
+
+def test_bitstamp_ticker():
+
+    Crypto = "BTC"
+    Fiat = "USD"
+
+    check, pair = api.bitstamp_ticker(Crypto, Fiat, t_api)
+
+    assert check == "Everything is fine", pair == "BTCUSD"
+
+    Crypto = "BT"
+
+    check = api.bitstamp_ticker(Crypto, Fiat, t_api)
+
+    assert check == "No value in response"

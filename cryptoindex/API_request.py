@@ -1,8 +1,5 @@
-from datetime import datetime, timedelta, timezone
-from time import sleep
-
-import numpy as np
-import pandas as pd
+import json
+from datetime import datetime, timezone
 
 import requests
 from pymongo import MongoClient
@@ -89,20 +86,18 @@ def coinbase_ticker(Crypto, Fiat, collection):
 
         collection.insert_one(rawdata)
 
-        a = "Everything is fine"
+        mssg = "Everything is fine"
 
-        return a, Pair
+        return mssg, Pair
 
     except KeyError:
-        b = "This key doesn't exist"
-        print(b)
+        err = "This key doesn't exist"
+        print(err)
 
-        return b
+        return err
 
 
-#####################################################################################################
-################################      KRAKEN    #####################################################
-#####################################################################################################
+# KAREN
 
 # The REST API OHLC endpoint only provides a limited amount of historical data, specifically
 # 720 data points of the requested interval.
@@ -164,21 +159,19 @@ def kraken_ticker(Crypto, Fiat, collection):
 
         collection.insert_one(rawdata)
 
-        a = "Everything is fine"
+        mssg = "Everything is fine"
 
-        return a, Pair
+        return mssg, Pair
 
     except KeyError:
 
-        b = "This key doesn't exist"
-        print(b)
+        err = "This key doesn't exist"
+        print(err)
 
-        return b
+        return err
 
 
-#####################################################################################################
-################################     BITTREX    #####################################################
-#####################################################################################################
+# BITTREX
 
 # https://bittrex.github.io/api/v3 api actually not working for historical data
 
@@ -229,13 +222,27 @@ def bittrex_ticker(Crypto, Fiat, collection):
 
         collection.insert_one(rawdata)
 
-    except:
-        print("none_bittrex")
+        mssg = "Everything is fine"
 
-    return
+        return mssg, Pair
+
+    except KeyError:
+
+        err = "This key doesn't exist"
+        print(err)
+
+        return err
+
+    except TypeError:
+
+        err = "Nonetype object"
+
+        print(err)
+
+        return err
 
 
-###################################################### poloniex_ticker
+# poloniex_ticker
 
 
 def poloniex_ticker(Crypto, Fiat, collection):
@@ -282,15 +289,21 @@ def poloniex_ticker(Crypto, Fiat, collection):
 
         collection.insert_one(rawdata)
 
-    except:
-        print("none_poloniex")
+        mssg = "Everything is fine"
+
+        return mssg, Pair
+
+    except KeyError:
+
+        err = "This key doesn't exist"
+        print(err)
+
+        return err
 
     return
 
 
-#####################################################################################################
-################################      ITBIT     #####################################################
-#####################################################################################################
+# ITBIT
 
 # https://www.itbit.com/api api actually not working for historical data
 
@@ -349,16 +362,19 @@ def itbit_ticker(Crypto, Fiat, collection):
 
         collection.insert_one(rawdata)
 
-    except:
+        mssg = "Everything is fine"
 
-        print("none_itbit")
+        return mssg, Pair
 
-    return
+    except KeyError:
+
+        err = "This key doesn't exist"
+        print(err)
+
+        return err
 
 
-#####################################################################################################
-################################    BITFLYER    #####################################################
-#####################################################################################################
+# BITFLYER
 
 # https://lightning.bitflyer.com/docs?lang=en api actually not working for historical data
 
@@ -408,15 +424,20 @@ def bitflyer_ticker(Crypto, Fiat, collection):
         }
 
         collection.insert_one(rawdata)
-    except:
-        print("none bitflyer")
 
-    return
+        mssg = "Everything is fine"
+
+        return mssg, Pair
+
+    except KeyError:
+
+        err = "This key doesn't exist"
+        print(err)
+
+        return err
 
 
-#####################################################################################################
-################################     GEMINI     #####################################################
-#####################################################################################################
+# GEMINI
 
 
 def gemini_ticker(Crypto, Fiat, collection):
@@ -458,19 +479,22 @@ def gemini_ticker(Crypto, Fiat, collection):
         }
 
         collection.insert_one(rawdata)
-    except:
-        print("none_gemini")
 
-    return
+        mssg = "Everything is fine"
 
-    # bitstamp_df = pd.DataFrame(response, columns=header)
-    # bitstamp_df = bitstamp_df.drop(columns = ['open', 'high', 'low', 'vwap', 'volume usd'])
+        return mssg, Pair
 
-    #####################################################################################################
-    ################################    BITSTAMP    #####################################################
-    #####################################################################################################
+    except KeyError:
 
-    # https://www.bitstamp.net/api/ api actually not working for historical data
+        err = "This key doesn't exist"
+        print(err)
+
+        return err
+
+
+# BITSTAMP
+
+# https://www.bitstamp.net/api/ api actually not working for historical data
 
 
 def bitstamp_ticker(Crypto, Fiat, collection):
@@ -518,7 +542,20 @@ def bitstamp_ticker(Crypto, Fiat, collection):
 
         collection.insert_one(rawdata)
 
-    except:
-        print("none_bitstamp")
+        mssg = "Everything is fine"
 
-    return
+        return mssg, Pair
+
+    except KeyError:
+
+        err = "This key doesn't exist"
+        print(err)
+
+        return err
+
+    except json.decoder.JSONDecodeError:
+
+        err = "No value in response"
+        print(err)
+
+        return err

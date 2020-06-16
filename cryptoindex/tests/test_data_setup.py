@@ -45,7 +45,6 @@ def test_date_gen():
     assert date[0] == start_date
 
 
-
 def test_timestamp_to_human():
 
     # date in format yyyy-mm-dd
@@ -56,7 +55,7 @@ def test_timestamp_to_human():
     date = timestamp_to_human(ts_array)
 
     assert date == check_list
-    
+
 
 def test_timestamp_vector():
 
@@ -73,6 +72,3 @@ def test_timestamp_vector():
     date = timestamp_vector(start_date, stop_date)
 
     assert np.array_equal(ts_date, date)
-
-
-
