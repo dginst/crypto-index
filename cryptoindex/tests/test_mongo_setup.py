@@ -2,6 +2,7 @@
 import pandas as pd
 from pymongo import MongoClient
 
+from os import path 
 # internal import
 from cryptoindex.mongo_setup import query_mongo
 
@@ -9,17 +10,13 @@ from cryptoindex.mongo_setup import query_mongo
 connection = MongoClient("localhost", 27017)
 db = connection.index
 
-data_folder = (
-    "C:\\Users\\mpich\\Desktop\\DGI\\crypto-index\\cryptoindex\\tests\\test_folder"
-)
-
+filename = "mongo_test.json"
+data_folder = path.join(path.dirname(__file__), "test_folder", filename )
 
 def test_query_mongo():
 
     # uploading test json file
-    df_test = pd.read_json(
-        r"C:/Users/mpich/Desktop/DGI/crypto-index/cryptoindex/tests/test_folder/mongo_test.json"
-    )
+    df_test = pd.read_json(data_folder)
 
     df_test.drop("_id", axis=1, inplace=True)
 
