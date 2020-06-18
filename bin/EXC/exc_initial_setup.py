@@ -110,8 +110,7 @@ head = ["Pair", "Exchange", "Time",
 all_data = all_data.loc[:, head]
 
 # changing the "Time" values format from integer to string
-# all_data['Time'] = [str(element - 86400) for element in all_data['Time']] ## tolto 1 d
-all_data["Time"] = [str(element) for element in all_data["Time"]]  # tolto 1 d
+all_data["Time"] = [str(element) for element in all_data["Time"]]
 
 # creating a column containing the hour of extraction
 # all_data["hour"] = all_data["date"].str[11:16]
@@ -260,14 +259,15 @@ collection_stable = "stable_coin_rates"
 # querying the data from mongo
 matrix_rate = mongo.query_mongo(db, collection_rates)
 matrix_rate = matrix_rate.rename({"Date": "Time"}, axis="columns")
-matrix_rate = matrix_rate.loc[matrix_rate.Time.isin(date_array)]
+matrix_rate = matrix_rate.loc[matrix_rate.Time.isin(date_array_str)]
 matrix_data = mongo.query_mongo(db, collection_data)
 matrix_rate_stable = mongo.query_mongo(db, collection_stable)
 matrix_rate_stable = matrix_rate_stable.loc[matrix_rate_stable.Time.isin(
-    date_array)]
+    date_array_str)]
 
 # creating a column containing the fiat currency
 matrix_rate["fiat"] = [x[:3].lower() for x in matrix_rate["Currency"]]
+
 matrix_data["fiat"] = [x[3:].lower() for x in matrix_data["Pair"]]
 matrix_rate_stable["fiat"] = [x[:4].lower()
                               for x in matrix_rate_stable["Currency"]]

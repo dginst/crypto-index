@@ -1,5 +1,4 @@
 # standard library import
-import time
 from datetime import datetime
 
 # third party import
@@ -50,7 +49,8 @@ start_period = "01-01-2016"
 
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
+today_TS = int(datetime.strptime(
+    today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
 y_TS = today_TS - day_in_sec
 two_before_TS = y_TS - day_in_sec
 
@@ -85,12 +85,14 @@ query_stable = {"Time": str(y_TS)}
 matrix_rate = mongo.query_mongo(db, collection_rates, query_rate)
 matrix_rate = matrix_rate.rename({"Date": "Time"}, axis="columns")
 matrix_data = mongo.query_mongo(db, collection_data, query_data)
+print(matrix_data)
 matrix_rate_stable = mongo.query_mongo(db, collection_stable, query_stable)
 
 # creating a column containing the fiat currency
 matrix_rate["fiat"] = [x[:3].lower() for x in matrix_rate["Currency"]]
 matrix_data["fiat"] = [x[3:].lower() for x in matrix_data["Pair"]]
-matrix_rate_stable["fiat"] = [x[:4].lower() for x in matrix_rate_stable["Currency"]]
+matrix_rate_stable["fiat"] = [x[:4].lower()
+                              for x in matrix_rate_stable["Currency"]]
 
 # ############ creating a USD subset which will not be converted #########
 
@@ -132,15 +134,18 @@ stablecoin = ["usdc", "usdt"]
 stablecoin_matrix = matrix_data.loc[matrix_data["fiat"].isin(stablecoin)]
 
 # merging the dataset on 'Time' and 'fiat' column
-stable_merged = pd.merge(stablecoin_matrix, matrix_rate_stable, on=["Time", "fiat"])
+stable_merged = pd.merge(
+    stablecoin_matrix, matrix_rate_stable, on=["Time", "fiat"])
 
 # converting the prices in usd
-stable_merged["Close Price"] = stable_merged["Close Price"] / stable_merged["Rate"]
+stable_merged["Close Price"] = stable_merged["Close Price"] / \
+    stable_merged["Rate"]
 stable_merged["Close Price"] = stable_merged["Close Price"].replace(
     [np.inf, -np.inf], np.nan
 )
 stable_merged["Close Price"].fillna(0, inplace=True)
-stable_merged["Pair Volume"] = stable_merged["Pair Volume"] / stable_merged["Rate"]
+stable_merged["Pair Volume"] = stable_merged["Pair Volume"] / \
+    stable_merged["Rate"]
 stable_merged["Pair Volume"] = stable_merged["Pair Volume"].replace(
     [np.inf, -np.inf], np.nan
 )
@@ -155,5 +160,6 @@ stable_merged = stable_merged[
 converted_data = conv_merged
 converted_data = converted_data.append(stable_merged)
 converted_data = converted_data.append(usd_matrix)
+print(converted_data)
 data = converted_data.to_dict(orient="records")
 collection_final.insert_many(data)
