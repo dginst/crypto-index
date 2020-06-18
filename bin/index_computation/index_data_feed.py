@@ -1,59 +1,34 @@
 # standard library import
-import time
-import json
-import os.path
-from pathlib import Path
 from datetime import datetime
-from datetime import *
-import time
-import requests
-from requests import get
 
 # third party import
 from pymongo import MongoClient
-import pandas as pd
-import numpy as np
 
 # local import
 import cryptoindex.data_setup as data_setup
-import cryptoindex.data_download as data_download
 import cryptoindex.mongo_setup as mongo
 
-####################################### initial settings ############################################
 
-start_date = "01-01-2016"
-CW_stop_date = "04-17-2020"
+# ############# INITIAL SETTINGS ################################
 
-# define today date as timestamp
-today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + 3600
-
-# define the variable containing all the date from start_date to today.
-# the date are displayed as timestamp and each day refers to 12:00 am UTC
-reference_date_vector = data_setup.date_gen(start_date)
-
-# define the array containing the date where the index uses CW feed data
-CW_date_vector = data_setup.date_gen(start_date, CW_stop_date)
-CW_date_vector = [str(date) for date in CW_date_vector]
-
-# pair arrat without USD (no need of conversion)
-pair_array = ["usd", "gbp", "eur", "cad", "jpy", "usdt", "usdc"]
-# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur']
+pair_array = ["gbp", "usd", "cad", "jpy", "eur", "usdt", "usdc"]
+# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
 Crypto_Asset = [
-    "ETH",
     "BTC",
+    "ETH",
+    "XRP",
     "LTC",
     "BCH",
-    "XRP",
-    "XLM",
-    "ADA",
-    "ZEC",
-    "XMR",
     "EOS",
-    "BSV",
     "ETC",
+    "ZEC",
+    "ADA",
+    "XLM",
+    "XMR",
+    "BSV",
 ]
-# crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA', 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
+# crypto complete [ 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
+# 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
 Exchanges = [
     "coinbase-pro",
     "poloniex",
@@ -63,9 +38,27 @@ Exchanges = [
     "kraken",
     "bitflyer",
 ]
-# exchange complete = ['coinbase-pro', 'poloniex', 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
+# exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp',
+# 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
-####################################### setup MongoDB connection ###################################
+start_date = "01-01-2016"
+EXC_start_date = "04-17-2020"
+
+hour_in_sec = 3600
+day_in_sec = 86400
+
+
+# set today
+today = datetime.now().strftime("%Y-%m-%d")
+today_TS = int(datetime.strptime(
+    today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
+
+
+# define the array containing the date where the index uses CW feed data
+CW_date_arr = data_setup.date_gen(start_date, EXC_start_date)
+CW_date_str = [str(date) for date in CW_date_arr]
+
+# ######################## setup MongoDB connection ###########################
 
 # connecting to mongo in local
 connection = MongoClient("localhost", 27017)
@@ -79,33 +72,27 @@ db.index_data_feed.drop()
 db.index_data_feed.create_index([("id", -1)])
 collection_feed = db.index_data_feed
 
+# ############################## CW and EXC series union ###################
+
 # defining the database name and the collection name
 database = "index"
 collection_CW = "CW_final_data"
 collection_EXC = "EXC_final_data"
 
-############################## data conversion main part ##################################
-
+# downloading the EXC series from MongoDB
 EXC_series = mongo.query_mongo(database, collection_EXC)
+EXC_series = EXC_series[
+    ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]]
 
-print("EXC done")
+# downloading the CW series from MongoDB and selecting only the date
+# from 2016-01-01 to 2020-04-17
+CW_series = mongo.query_mongo(database, collection_CW)
+CW_sub_series = CW_series.loc[CW_series.Time.isin(CW_date_str)]
+CW_sub_series = CW_sub_series[
+    ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]]
 
-for date in CW_date_vector:
-
-    print(date)
-    query = {"Time": str(date)}
-    single_date_matrix = mongo.query_mongo(database, collection_CW, query)
-
-    if date == CW_date_vector[0]:
-
-        matrix = single_date_matrix
-
-    else:
-
-        matrix = matrix.append(single_date_matrix)
-
-data_feed = matrix.append(EXC_series, sort=True)
-
+# creting an unique dataframe containing the two different data source
+data_feed = CW_sub_series.append(EXC_series, sort=True)
 
 # put the converted data on MongoDB
 data = data_feed.to_dict(orient="records")
