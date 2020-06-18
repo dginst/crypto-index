@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 
 # third party import
 import numpy as np
-import pandas as pd
 
 # local import
 from cryptoindex import calc

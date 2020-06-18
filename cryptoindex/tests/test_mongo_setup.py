@@ -1,8 +1,9 @@
 # third party packages
+from os import path
+
 import pandas as pd
 from pymongo import MongoClient
 
-from os import path 
 # internal import
 from cryptoindex.mongo_setup import query_mongo
 
@@ -12,6 +13,7 @@ db = connection.index
 
 filename = "mongo_test.json"
 data_folder = path.join(path.dirname(__file__), "test_folder", filename)
+
 
 def test_query_mongo():
 
