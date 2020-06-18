@@ -10,7 +10,7 @@ import requests
 from requests import get
 
 # local import
-from . import data_setup
+
 
 # #################### ECB rates download function ###################
 
@@ -142,32 +142,6 @@ def CW_raw_to_mongo(
 
     try:
 
-        if len(response["result"]["86400"]) == 0:
-
-            Exchange = exchange
-            Pair = currencypair
-            Time = 0
-            Open = 0
-            High = 0
-            Low = 0
-            Close_Price = 0
-            Crypto_Volume = 0
-            Pair_Volume = 0
-
-            rawdata = {
-                "Exchange": Exchange,
-                "Pair": Pair,
-                "Time": Time,
-                "Low": Low,
-                "High": High,
-                "Open": Open,
-                "Close Price": Close_Price,
-                "Crypto Volume": Crypto_Volume,
-                "Pair Volume": Pair_Volume,
-            }
-
-            mongo_collection.insert_one(rawdata)
-
         for i in range(len(response["result"]["86400"])):
 
             r = response["result"]["86400"]
@@ -195,7 +169,7 @@ def CW_raw_to_mongo(
 
             mongo_collection.insert_one(rawdata)
 
-    except:
+    except KeyError:
 
         r = response
         Exchange = exchange

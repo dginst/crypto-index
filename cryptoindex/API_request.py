@@ -91,6 +91,7 @@ def coinbase_ticker(Crypto, Fiat, collection):
         return mssg, Pair
 
     except KeyError:
+
         err = "This key doesn't exist"
         print(err)
 
@@ -194,7 +195,7 @@ def bittrex_ticker(Crypto, Fiat, collection):
         exchange = "bittrex"
         time = today_ts()
         date = datetime.now()
-        ticker_time = r["TimeStamp"]
+        ticker_time = r['Timestamp']
         price = r["Last"]
         volume = r["Volume"]
         basevolume = r["BaseVolume"]
