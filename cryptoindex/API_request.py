@@ -184,6 +184,7 @@ def bittrex_ticker(Crypto, Fiat, collection):
     entrypoint = "https://api.bittrex.com/api/v1.1/public/getmarketsummary?market="
     key = fiat + "-" + asset
     request_url = entrypoint + key
+    print(request_url)
 
     response = requests.get(request_url)
 
@@ -195,7 +196,7 @@ def bittrex_ticker(Crypto, Fiat, collection):
         exchange = "bittrex"
         time = today_ts()
         date = datetime.now()
-        ticker_time = r['Timestamp']
+        ticker_time = r['TimeStamp']
         price = r["Last"]
         volume = r["Volume"]
         basevolume = r["BaseVolume"]
