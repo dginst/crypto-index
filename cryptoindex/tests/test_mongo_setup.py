@@ -11,7 +11,7 @@ connection = MongoClient("localhost", 27017)
 db = connection.index
 
 filename = "mongo_test.json"
-data_folder = path.join(path.dirname(__file__), "test_folder", filename )
+data_folder = path.join(path.dirname(__file__), "test_folder", filename)
 
 def test_query_mongo():
 
