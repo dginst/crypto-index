@@ -20,12 +20,14 @@ def test_query_mongo():
     # uploading test json file
     df_test = pd.read_json(data_folder)
 
-    df_test.drop("_id", axis=1, inplace=True)
+    df_test = df_test.drop(columns=["_id"])
+
+    #df_test.drop("_id", axis=1, inplace=True)
 
     # querying the collection from db
 
     database = "index"
-    collection = "test"
+    collection = "test_api_request"
 
     df_mongo = query_mongo(database, collection)
 
