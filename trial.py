@@ -3,6 +3,7 @@ import numpy as np
 
 from datetime import datetime, timezone
 
+from os import path
 # third party import
 import pandas as pd
 
@@ -13,14 +14,8 @@ import pandas as pd
 # date = timestamp_to_human(ts_array)
 # print(date)
 
-start_period = "2015-12-31"
-stop_period = "2016-01-15"
+filename = "mongo_test.json"
+data_folder = path.join(path.dirname(__file__), "test_folder", filename )
 
-ciao = date_index = pd.date_range(start_period, stop_period)
+print(data_folder)
 
-print(ciao)
-
-End_Period = datetime.now().strftime("%Y-%m-%d")
-
-End_Period = datetime.strptime(End_Period, "%Y-%m-%d").strftime("%m-%d-%Y")
-print(End_Period)
