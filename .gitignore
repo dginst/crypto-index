@@ -6,7 +6,7 @@ test_main.py
 
 
 # downloaded and output files
-*.json
+
 *.csv
 
 # Byte-compiled / optimized / DLL files
