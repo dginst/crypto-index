@@ -1,4 +1,4 @@
-from cryptoindex import API_request as api
+from cryptoindex import api_req as api
 from pymongo import MongoClient
 
 connection = MongoClient("localhost", 27017)

@@ -4,19 +4,6 @@ from datetime import datetime, timezone
 import requests
 from pymongo import MongoClient
 
-# this file cointains all the API calls for each pricing source. Every script call the api,
-# downloads the data and stores them in mongoDB.
-
-connection = MongoClient("localhost", 27017)
-# creating the database called index
-db = connection.index
-db.rawdata.create_index([("id", -1)])
-# creating the empty collection rawdata within the database index
-exc_raw_collection = db.EXC_rawdata
-
-
-# create the daily timestamp at midnigh UTC
-
 
 def today_ts():
 
