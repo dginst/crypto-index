@@ -13,9 +13,9 @@ def test_coinbase_ticker():
     Crypto = "BTC"
     Fiat = "USD"
 
-    check, pair = api.coinbase_ticker(Crypto, Fiat, t_api)
+    pair = api.coinbase_ticker(Crypto, Fiat, t_api)
 
-    assert check == "Everything is fine", pair == "BTCUSD"
+    assert pair == "BTCUSD"
 
     # asserting if with a wrong value raise the right error
     Crypto = "BT"
@@ -30,13 +30,13 @@ def test_kraken_ticker():
     Crypto = "BTC"
     Fiat = "USD"
 
-    check, pair = api.kraken_ticker(Crypto, Fiat, t_api)
+    pair = api.kraken_ticker(Crypto, Fiat, t_api)
 
     # when the btc asset is passed as argument
     # the function automatically convert it into xbt
     # to make the call for cerain pair it should be added
     # a x before the asset and z before de fiat
-    assert check == "Everything is fine", pair == "XXBTCZUSD"
+    assert pair == "XBTUSD"
 
     Crypto = "Dollar"
 
@@ -47,9 +47,9 @@ def test_kraken_ticker():
     Crypto = "BTC"
     Fiat = "USDT"
 
-    check, pair = api.kraken_ticker(Crypto, Fiat, t_api)
+    pair = api.kraken_ticker(Crypto, Fiat, t_api)
 
-    assert check == "Everything is fine", pair == "XBTUSDT"
+    assert pair == "XBTUSDT"
 
 
 def test_bittrex_ticker():
@@ -57,9 +57,9 @@ def test_bittrex_ticker():
     Crypto = "BTC"
     Fiat = "USD"
 
-    check, pair = api.bittrex_ticker(Crypto, Fiat, t_api)
+    pair = api.bittrex_ticker(Crypto, Fiat, t_api)
 
-    assert check == "Everything is fine", pair == "BTCUSD"
+    assert pair == "BTCUSD"
 
     Crypto = "BT"
 
@@ -73,9 +73,9 @@ def test_poloniex_ticker():
     Crypto = "BTC"
     Fiat = "USDT"
 
-    check, pair = api.poloniex_ticker(Crypto, Fiat, t_api)
+    pair = api.poloniex_ticker(Crypto, Fiat, t_api)
 
-    assert check == "Everything is fine", pair == "BTCUSD"
+    assert pair == "USDT_BTC"
 
     Crypto = "BT"
 
@@ -89,9 +89,9 @@ def test_itbit_ticker():
     Crypto = "BTC"
     Fiat = "USD"
 
-    check, pair = api.itbit_ticker(Crypto, Fiat, t_api)
+    pair = api.itbit_ticker(Crypto, Fiat, t_api)
 
-    assert check == "Everything is fine", pair == "BTCUSD"
+    assert pair == "BTCUSD"
 
     Crypto = "BT"
 
@@ -105,9 +105,9 @@ def test_bitflyer_ticker():
     Crypto = "BTC"
     Fiat = "USD"
 
-    check, pair = api.bitflyer_ticker(Crypto, Fiat, t_api)
+    pair = api.bitflyer_ticker(Crypto, Fiat, t_api)
 
-    assert check == "Everything is fine", pair == "BTCUSD"
+    assert pair == "BTCUSD"
 
     Crypto = "BT"
 
@@ -121,9 +121,9 @@ def test_gemini_ticker():
     Crypto = "BTC"
     Fiat = "USD"
 
-    check, pair = api.gemini_ticker(Crypto, Fiat, t_api)
+    pair = api.gemini_ticker(Crypto, Fiat, t_api)
 
-    assert check == "Everything is fine", pair == "BTCUSD"
+    assert pair == "BTCUSD"
 
     Crypto = "BT"
 
@@ -137,9 +137,9 @@ def test_bitstamp_ticker():
     Crypto = "BTC"
     Fiat = "USD"
 
-    check, pair = api.bitstamp_ticker(Crypto, Fiat, t_api)
+    pair = api.bitstamp_ticker(Crypto, Fiat, t_api)
 
-    assert check == "Everything is fine", pair == "BTCUSD"
+    assert pair == "BTCUSD"
 
     Crypto = "BT"
 
