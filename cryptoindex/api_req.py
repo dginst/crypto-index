@@ -2,7 +2,6 @@ import json
 from datetime import datetime, timezone
 
 import requests
-from pymongo import MongoClient
 
 
 def today_ts():
@@ -14,9 +13,8 @@ def today_ts():
     return str(today_TS)
 
 
-# ############################################################################
-# ############################### COINBASE - PRO #############################
-# ############################################################################
+# COINBASE-PRO
+
 
 # REST API request for coinbase-pro exchange.
 # It requires:
@@ -25,8 +23,6 @@ def today_ts():
 # end date = ISO 8601
 # granularity = in seconds. Ex 86400 = 1 day
 # this api gives back 300 responses max for each request.
-
-# ----------------------------------------------------------------------------
 
 
 def coinbase_ticker(Crypto, Fiat, collection):
@@ -44,8 +40,8 @@ def coinbase_ticker(Crypto, Fiat, collection):
     try:
 
         r = response
-        Pair = asset + fiat
-        print(Pair)
+        pair = asset + fiat
+        print(pair)
         exchange = "coinbase-pro"
         time = today_ts()
         date = datetime.now()
@@ -58,7 +54,7 @@ def coinbase_ticker(Crypto, Fiat, collection):
         traded_id = r["trade_id"]
 
         rawdata = {
-            "Pair": Pair,
+            "Pair": pair,
             "Exchange": exchange,
             "Time": time,
             "date": date,
@@ -73,9 +69,7 @@ def coinbase_ticker(Crypto, Fiat, collection):
 
         collection.insert_one(rawdata)
 
-        mssg = "Everything is fine"
-
-        return mssg, Pair
+        return pair
 
     except KeyError:
 
@@ -107,15 +101,12 @@ def kraken_ticker(Crypto, Fiat, collection):
     key = asset + fiat
     # print(key)
     request_url = entrypoint + key
-    print(request_url)
     response = requests.get(request_url)
-
     response = response.json()
-    print(response)
     try:
         asset = asset.upper()
         fiat = fiat.upper()
-        Pair = "X" + asset + "Z" + fiat
+        pair = "X" + asset + "Z" + fiat
         exchange = "kraken"
         if (
             fiat == "USDT"
@@ -127,17 +118,17 @@ def kraken_ticker(Crypto, Fiat, collection):
             or (asset == "XRP" and fiat == "GBP")
             or (asset == "LTC" and fiat == "GBP")
         ):
-            Pair = asset + fiat
-        r = response["result"][Pair]
-        Pair = asset + fiat
-        print(Pair)
+            pair = asset + fiat
+        r = response["result"][pair]
+        pair = asset + fiat
+        print(pair)
         time = today_ts()
         date = datetime.now()
         price = r["c"][0]
         crypto_volume = r["v"][1]
 
         rawdata = {
-            "Pair": Pair,
+            "Pair": pair,
             "Exchange": exchange,
             "Time": time,
             "date": date,
@@ -147,11 +138,9 @@ def kraken_ticker(Crypto, Fiat, collection):
 
         collection.insert_one(rawdata)
 
-        mssg = "Everything is fine"
+        return pair
 
-        return mssg, Pair
-
-    except KeyError:
+    except :
 
         err = "This key doesn't exist"
         print(err)
@@ -179,7 +168,7 @@ def bittrex_ticker(Crypto, Fiat, collection):
 
     try:
         r = response["result"][0]
-        Pair = asset.upper() + fiat.upper()
+        pair = asset.upper() + fiat.upper()
         exchange = "bittrex"
         time = today_ts()
         date = datetime.now()
@@ -194,7 +183,7 @@ def bittrex_ticker(Crypto, Fiat, collection):
         prevday = r["PrevDay"]
 
         rawdata = {
-            "Pair": Pair,
+            "Pair": pair,
             "Exchange": exchange,
             "Time": time,
             "date": date,
@@ -211,9 +200,7 @@ def bittrex_ticker(Crypto, Fiat, collection):
 
         collection.insert_one(rawdata)
 
-        mssg = "Everything is fine"
-
-        return mssg, Pair
+        return pair
 
     except KeyError:
 
@@ -238,14 +225,14 @@ def poloniex_ticker(Crypto, Fiat, collection):
 
     asset = Crypto.upper()
     stbc = Fiat.upper()
-    Pair = stbc + "_" + asset
+    pair = stbc + "_" + asset
     entrypoint = "https://poloniex.com/public?command=returnTicker"
     request_url = entrypoint
     response = requests.get(request_url)
     response = response.json()
 
     try:
-        response_short = response[Pair]
+        response_short = response[pair]
         r = response_short
         time = today_ts()
         date = datetime.now()
@@ -261,7 +248,7 @@ def poloniex_ticker(Crypto, Fiat, collection):
         low24hr = r["low24hr"]
 
         rawdata = {
-            "Pair": Pair,
+            "Pair": pair,
             "Exchange": exchange,
             "Time": time,
             "date": date,
@@ -278,9 +265,7 @@ def poloniex_ticker(Crypto, Fiat, collection):
 
         collection.insert_one(rawdata)
 
-        mssg = "Everything is fine"
-
-        return mssg, Pair
+        return pair
 
     except KeyError:
 
@@ -317,7 +302,7 @@ def itbit_ticker(Crypto, Fiat, collection):
 
     try:
         r = response
-        Pair = asset + fiat
+        pair = asset + fiat
         exchange = "itbit"
         time = today_ts()
         date = datetime.now()
@@ -333,7 +318,7 @@ def itbit_ticker(Crypto, Fiat, collection):
         vwap24h = r["vwap24h"]
 
         rawdata = {
-            "Pair": Pair,
+            "Pair": pair,
             "Exchange": exchange,
             "Time": time,
             "date": date,
@@ -351,9 +336,7 @@ def itbit_ticker(Crypto, Fiat, collection):
 
         collection.insert_one(rawdata)
 
-        mssg = "Everything is fine"
-
-        return mssg, Pair
+        return pair
 
     except KeyError:
 
@@ -382,7 +365,7 @@ def bitflyer_ticker(Crypto, Fiat, collection):
     try:
 
         r = response
-        Pair = asset + fiat
+        pair = asset + fiat
         exchange = "bitflyer"
         time = today_ts()
         date = datetime.now()
@@ -397,7 +380,7 @@ def bitflyer_ticker(Crypto, Fiat, collection):
         total_bid_depth = r["total_bid_depth"]
 
         rawdata = {
-            "Pair": Pair,
+            "Pair": pair,
             "Exchange": exchange,
             "Time": time,
             "date": date,
@@ -414,9 +397,7 @@ def bitflyer_ticker(Crypto, Fiat, collection):
 
         collection.insert_one(rawdata)
 
-        mssg = "Everything is fine"
-
-        return mssg, Pair
+        return pair
 
     except KeyError:
 
@@ -444,7 +425,7 @@ def gemini_ticker(Crypto, Fiat, collection):
         asset = asset.upper()
         fiat = fiat.upper()
         r = response
-        Pair = asset + fiat
+        pair = asset + fiat
         exchange = "gemini"
         time = today_ts()
         date = datetime.now()
@@ -456,7 +437,7 @@ def gemini_ticker(Crypto, Fiat, collection):
         ask = r["ask"]
 
         rawdata = {
-            "Pair": Pair,
+            "Pair": pair,
             "Exchange": exchange,
             "Time": time,
             "date": date,
@@ -469,9 +450,7 @@ def gemini_ticker(Crypto, Fiat, collection):
 
         collection.insert_one(rawdata)
 
-        mssg = "Everything is fine"
-
-        return mssg, Pair
+        return pair
 
     except KeyError:
 
@@ -499,7 +478,7 @@ def bitstamp_ticker(Crypto, Fiat, collection):
     try:
         response = response.json()
         r = response
-        Pair = asset.upper() + fiat.upper()
+        pair = asset.upper() + fiat.upper()
         exchange = "bistamp"
         time = today_ts()
         date = datetime.now()
@@ -514,7 +493,7 @@ def bitstamp_ticker(Crypto, Fiat, collection):
         Open = r["open"]
 
         rawdata = {
-            "Pair": Pair,
+            "Pair": pair,
             "Exchange": exchange,
             "Time": time,
             "date": date,
@@ -531,9 +510,7 @@ def bitstamp_ticker(Crypto, Fiat, collection):
 
         collection.insert_one(rawdata)
 
-        mssg = "Everything is fine"
-
-        return mssg, Pair
+        return pair
 
     except KeyError:
 
