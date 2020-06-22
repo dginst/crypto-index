@@ -69,49 +69,34 @@ coll_1000_index = "index_level_1000"
 # creating some the empty collections within the database index
 
 # collection for index weights
-db.index_weights.create_index([("id", -1)])
 collection_weights = db.index_weights
 # collection for index level base 1000
-db.index_level_1000.create_index([("id", -1)])
 collection_index_level = db.index_level_1000
 # collection for index level raw
-db.index_raw_level.create_index([("id", -1)])
 collection_index_level = db.index_level_raw
 # collection for crypto prices
-db.crypto_price.create_index([("id", -1)])
 collection_price = db.crypto_price
 # collection for crytpo volume
-db.crypto_volume.create_index([("id", -1)])
 collect_vol = db.crypto_volume
 # collection for price returns
-db.crypto_price_return.create_index([("id", -1)])
 collection_price_ret = db.crypto_price_return
 # collection for EWMA
-db.index_EWMA.create_index([("id", -1)])
 collection_EWMA = db.index_EWMA
 # collection for first logic matrix
-db.index_logic_matrix_one.create_index([("id", -1)])
 collection_logic_one = db.index_logic_matrix_one
 # collection for second logic matrix
-db.index_logic_matrix_two.create_index([("id", -1)])
 collection_logic_two = db.index_logic_matrix_two
 # collection for EWMA double checked with both logic matrix
-db.index_EWMA_logic_checked.create_index([("id", -1)])
 collection_EWMA_check = db.index_EWMA_logic_checked
 # collection for the divisor array
-db.index_divisor.create_index([("id", -1)])
 collection_divisor = db.index_divisor
 # collection for the reshaped divisor array
-db.index_divisor_reshaped.create_index([("id", -1)])
 collection_divisor_reshaped = db.index_divisor_reshaped
 # collection for the relative syntethic matrix
-db.index_synth_matrix.create_index([("id", -1)])
 collection_relative_synth = db.index_synth_matrix
 # collection for index level raw
-db.index_raw_level.create_index([("id", -1)])
 collection_index_raw = db.index_level_raw
 # collection for index level base 1000
-db.index_level_1000.create_index([("id", -1)])
 collection_index_1000 = db.index_level_1000
 
 # ################ DATE SETTINGS ########################
@@ -120,8 +105,8 @@ collection_index_1000 = db.index_level_1000
 start_date = "01-01-2016"
 
 # define today in various format
-today = datetime.now().strftime("%Y-%m-%d")
-today = datetime.strptime(today, "%Y-%m-%d")
+today_str = datetime.now().strftime("%Y-%m-%d")
+today = datetime.strptime(today_str, "%Y-%m-%d")
 today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
 y_TS = today_TS - 86400
 two_before_TS = y_TS - 86400
@@ -147,10 +132,13 @@ next_rebalance_date = calc.next_start()
 quarterly_date = calc.quarterly_period()
 
 # defining time variables
-last_reb_start = rebalance_start_date[len(rebalance_start_date) - 1]
-next_reb_stop = rebalance_stop_date[len(rebalance_stop_date) - 1]
-curr_board_eve = board_date_eve[len(board_date_eve) - 1]
+last_reb_start = str(int(rebalance_start_date[len(rebalance_start_date) - 1]))
+next_reb_stop = str(int(rebalance_stop_date[len(rebalance_stop_date) - 1]))
+curr_board_eve = str(int(board_date_eve[len(board_date_eve) - 1]))
 
+print(last_reb_start)
+print(next_reb_stop)
+print(curr_board_eve)
 # ####################### MAIN PART #################################
 # downloading the daily value from MongoDB and put it into a dataframe
 
@@ -235,7 +223,8 @@ for CryptoA in Crypto_Asset:
 
             PxV = Ccy_Pair_PriceVolume.sum(axis=1)
             V = Ccy_Pair_Volume.sum(axis=1)
-            Ccy_Pair_Price = np.divide(PxV, V, out=np.zeros_like(V), where=V != 0.0)
+            Ccy_Pair_Price = np.divide(
+                PxV, V, out=np.zeros_like(V), where=V != 0.0)
 
             # computing the total volume of the exchange
             Ccy_Pair_Volume = Ccy_Pair_Volume.sum(axis=1)
@@ -285,14 +274,17 @@ for CryptoA in Crypto_Asset:
 
             if Ccy_Pair_Volume.size != 0:
 
-                Exchange_Price = np.column_stack((Exchange_Price, Ccy_Pair_Price))
-                Exchange_Volume = np.column_stack((Exchange_Volume, Ccy_Pair_Volume))
+                Exchange_Price = np.column_stack(
+                    (Exchange_Price, Ccy_Pair_Price))
+                Exchange_Volume = np.column_stack(
+                    (Exchange_Volume, Ccy_Pair_Volume))
                 Ex_PriceVol = np.column_stack((Ex_PriceVol, Ccy_Pair_PxV))
 
             else:
 
                 Exchange_Price = np.column_stack((Exchange_Price, np.zeros(1)))
-                Exchange_Volume = np.column_stack((Exchange_Volume, np.zeros(1)))
+                Exchange_Volume = np.column_stack(
+                    (Exchange_Volume, np.zeros(1)))
                 Ex_PriceVol = np.column_stack((Ex_PriceVol, np.zeros(1)))
 
     # dataframes that contain volume and price of a single crytpo
@@ -302,21 +294,22 @@ for CryptoA in Crypto_Asset:
     Exchange_Price_DF = pd.DataFrame(Exchange_Price, columns=Exchanges)
 
     # adding "Time" column to both Exchanges dataframe
-    Exchange_Vol_DF["Time"] = str(today_TS)
-    Exchange_Price_DF["Time"] = str(today_TS)
+    Exchange_Vol_DF["Time"] = int(y_TS)
+    Exchange_Price_DF["Time"] = int(y_TS)
 
     # ########### logic matrix one: single exchange value ###############
 
     # for each CryptoAsset compute the first logic array
     first_logic_array = calc.daily_first_logic(
-        Exchange_Vol_DF, Exchanges, last_reb_start, next_reb_stop, curr_board_eve
+        Exchange_Vol_DF, Exchanges, CryptoA, last_reb_start,
+        next_reb_stop, curr_board_eve
     )
-
     # put the logic array into the logic matrix
     if logic_matrix_one.size == 0:
-        logic_matrix_one = first_logic_array
+        logic_matrix_one = np.array(first_logic_array)
     else:
-        logic_matrix_one = np.column_stack((logic_matrix_one, first_logic_array))
+        logic_matrix_one = np.column_stack(
+            (logic_matrix_one, first_logic_array))
 
     # ##################################################################
 
@@ -351,15 +344,21 @@ for CryptoA in Crypto_Asset:
 
     else:
 
-        Crypto_Asset_Prices = np.column_stack((Crypto_Asset_Prices, Exchange_Price))
-        Crypto_Asset_Volume = np.column_stack((Crypto_Asset_Volume, Exchange_Volume))
+        Crypto_Asset_Prices = np.column_stack(
+            (Crypto_Asset_Prices, Exchange_Price))
+        Crypto_Asset_Volume = np.column_stack(
+            (Crypto_Asset_Volume, Exchange_Volume))
 
+print(logic_matrix_one)
 # turn prices and volumes into pandas dataframe
 Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns=Crypto_Asset)
 Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns=Crypto_Asset)
 
+print(Crypto_Asset_Prices)
+
 # compute the price return of the day
-two_before_price = mongo.query_mongo(db_name, coll_price, {"Time": two_before_TS})
+two_before_price = mongo.query_mongo(
+    db_name, coll_price, {"Time": two_before_TS})
 two_before_price = two_before_price.drop(columns=["Time", "Date"])
 return_df = two_before_price.append(Crypto_Asset_Prices)
 price_ret = return_df.pct_change()
@@ -373,17 +372,21 @@ Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns=time_header)
 Crypto_Asset_Volume["Time"] = str(y_TS)
 price_ret["Time"] = str(y_TS)
 
+print(price_ret)
+
 # turn the first logic row into a dataframe and add the 'Time' column
 # the first logic row will be used for the next quarter weights computation
 first_logic_row = pd.DataFrame(logic_matrix_one, columns=Crypto_Asset)
 first_logic_row["Time"] = next_reb_stop
+
+print(first_logic_row)
 
 # computing the Exponential Weighted Moving Average of the day
 hist_volume = mongo.query_mongo(db_name, coll_volume)
 hist_volume = hist_volume.drop(columns=["Date"])
 hist_volume = hist_volume.append(Crypto_Asset_Volume)
 daily_ewma = calc.daily_ewma_crypto_volume(hist_volume, Crypto_Asset)
-
+print(daily_ewma)
 # computing the new second logic row that is used to compute the
 # weights relative to the next rebalance period
 ewma_fraction = calc.daily_ewma_fraction(
@@ -398,8 +401,10 @@ double_checked_ewma = calc.daily_double_log_check(
 )
 
 # adding the Time columns to the double checked ewma
-human_start = data_setup.timestamp_to_human(last_reb_start, date_format="%m-%d-%y")
-human_curr = data_setup.timestamp_to_human(curr_board_eve, date_format="%m-%d-%y")
+human_start = data_setup.timestamp_to_human(
+    last_reb_start, date_format="%m-%d-%y")
+human_curr = data_setup.timestamp_to_human(
+    curr_board_eve, date_format="%m-%d-%y")
 period_date_list = data_setup.date_gen(human_start, human_curr, EoD="N")
 double_checked_ewma["Time"] = period_date_list
 
@@ -445,7 +450,8 @@ variation = np.array(variation.iloc[1])
 yesterday_1000_index = mongo.query_mongo(
     db_name, coll_1000_index, {"Date": two_before_human[0]}
 )
-daily_index_1000 = np.array(yesterday_1000_index["Index Value"]) * (1 + variation)
+daily_index_1000 = np.array(
+    yesterday_1000_index["Index Value"]) * (1 + variation)
 daily_index_1000_df = pd.DataFrame(daily_index_1000, columns=["Index Value"])
 print(daily_index_1000_df)
 

@@ -24,7 +24,6 @@ from datetime import datetime
 
 # third party import
 import numpy as np
-import pandas as pd
 from pymongo import MongoClient
 
 # local import

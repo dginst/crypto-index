@@ -57,6 +57,7 @@ collection_converted_data = "CW_final_data"
 # drop the pre-existing collection (if there is one)
 db.crypto_price.drop()
 db.crypto_volume.drop()
+db.all_exc_volume.drop()
 db.crypto_price_return.drop()
 db.index_weights.drop()
 db.index_level_1000.drop()
@@ -81,6 +82,9 @@ collect_vol = db.crypto_volume
 # collection for price returns
 db.crypto_price_return.create_index([("id", -1)])
 collection_price_ret = db.crypto_price_return
+# collection for exchanges volume
+db.all_exc_volume.create_index([("id", -1)])
+collect_exc_vol = db.all_exc_volume
 # collection for EWMA
 db.index_EWMA.create_index([("id", -1)])
 collection_EWMA = db.index_EWMA
@@ -121,8 +125,8 @@ collection_index_level_raw = db.index_level_raw
 start_date = "01-01-2016"
 
 # define today date as timestamp
-today = datetime.now().strftime("%Y-%m-%d")
-today = datetime.strptime(today, "%Y-%m-%d")
+today_str = datetime.now().strftime("%Y-%m-%d")
+today = datetime.strptime(today_str, "%Y-%m-%d")
 today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
 y_TS = today_TS - 86400
 
@@ -143,7 +147,13 @@ board_date = calc.board_meeting_day()
 board_date_eve = calc.day_before_board()
 next_rebalance_date = calc.next_start()
 
+# defining time variables
+last_reb_start = str(int(rebalance_start_date[len(rebalance_start_date) - 1]))
+next_reb_stop = str(int(rebalance_stop_date[len(rebalance_stop_date) - 1]))
+curr_board_eve = str(int(board_date_eve[len(board_date_eve) - 1]))
 
+print(next_reb_stop)
+print(curr_board_eve)
 # call the function that creates a object containing the
 # couple of quarterly start-stop date
 quarterly_date = calc.quarterly_period()
@@ -157,6 +167,19 @@ Crypto_Asset_Prices = np.matrix([])
 Crypto_Asset_Volume = np.matrix([])
 # initialize the matrix that will contain the complete first logic matrix
 logic_matrix_one = np.matrix([])
+# initialize the matrix that contain the volumes per Exchange
+exc_head = [
+    "coinbase-pro",
+    "poloniex",
+    "bitstamp",
+    "gemini",
+    "bittrex",
+    "kraken",
+    "bitflyer",
+]
+exc_head.append("Time")
+exc_head.append("Crypto")
+exc_vol_tot = pd.DataFrame(columns=exc_head)
 
 for CryptoA in Crypto_Asset:
 
@@ -197,7 +220,8 @@ for CryptoA in Crypto_Asset:
             # defining the dictionary for the MongoDB query
             query_dict = {"Exchange": exchange, "Pair": cp}
             # retriving the needed information on MongoDB
-            matrix = mongo.query_mongo(db_name, collection_converted_data, query_dict)
+            matrix = mongo.query_mongo(
+                db_name, collection_converted_data, query_dict)
 
             try:
 
@@ -240,7 +264,8 @@ for CryptoA in Crypto_Asset:
 
             PxV = Ccy_Pair_PriceVolume.sum(axis=1)
             V = Ccy_Pair_Volume.sum(axis=1)
-            Ccy_Pair_Price = np.divide(PxV, V, out=np.zeros_like(V), where=V != 0.0)
+            Ccy_Pair_Price = np.divide(
+                PxV, V, out=np.zeros_like(V), where=V != 0.0)
 
             # computing the total volume of the exchange
             Ccy_Pair_Volume = Ccy_Pair_Volume.sum(axis=1)
@@ -292,8 +317,10 @@ for CryptoA in Crypto_Asset:
 
             if Ccy_Pair_Volume.size != 0:
 
-                Exchange_Price = np.column_stack((Exchange_Price, Ccy_Pair_Price))
-                Exchange_Volume = np.column_stack((Exchange_Volume, Ccy_Pair_Volume))
+                Exchange_Price = np.column_stack(
+                    (Exchange_Price, Ccy_Pair_Price))
+                Exchange_Volume = np.column_stack(
+                    (Exchange_Volume, Ccy_Pair_Volume))
                 Ex_PriceVol = np.column_stack((Ex_PriceVol, Ccy_Pair_PxV))
 
             else:
@@ -318,6 +345,9 @@ for CryptoA in Crypto_Asset:
     Exchange_Vol_DF["Time"] = reference_date_vector
     Exchange_Price_DF["Time"] = reference_date_vector
 
+    exc_vol_p = Exchange_Vol_DF
+    exc_vol_p["Crypto"] = CryptoA
+    exc_vol_tot = exc_vol_tot.append(exc_vol_p)
     # for each CryptoAsset compute the first logic array
     first_logic_array = calc.first_logic_matrix(Exchange_Vol_DF, Exchanges)
 
@@ -325,7 +355,8 @@ for CryptoA in Crypto_Asset:
     if logic_matrix_one.size == 0:
         logic_matrix_one = first_logic_array
     else:
-        logic_matrix_one = np.column_stack((logic_matrix_one, first_logic_array))
+        logic_matrix_one = np.column_stack(
+            (logic_matrix_one, first_logic_array))
 
     try:
         # computing the volume weighted average price of the single
@@ -352,9 +383,12 @@ for CryptoA in Crypto_Asset:
         Crypto_Asset_Prices = Exchange_Price
         Crypto_Asset_Volume = Exchange_Volume
     else:
-        Crypto_Asset_Prices = np.column_stack((Crypto_Asset_Prices, Exchange_Price))
-        Crypto_Asset_Volume = np.column_stack((Crypto_Asset_Volume, Exchange_Volume))
+        Crypto_Asset_Prices = np.column_stack(
+            (Crypto_Asset_Prices, Exchange_Price))
+        Crypto_Asset_Volume = np.column_stack(
+            (Crypto_Asset_Volume, Exchange_Volume))
 
+print(exc_vol_tot)
 # turn prices and volumes into pandas dataframe
 Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns=Crypto_Asset)
 Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns=Crypto_Asset)
@@ -377,8 +411,8 @@ price_ret["Time"] = reference_date_vector
 # because it refers to a period that has not been yet calculated
 # (and will be this way until today == new quarter start_date)
 first_logic_matrix = pd.DataFrame(logic_matrix_one, columns=Crypto_Asset)
-first_logic_matrix["Time"] = rebalance_stop_date[0 : len(rebalance_stop_date)]
-
+first_logic_matrix["Time"] = rebalance_stop_date[0: len(rebalance_stop_date)]
+print(first_logic_matrix)
 
 # computing the Exponential Moving Weighted Average of the selected period
 ewma_df = calc.ewma_crypto_volume(
@@ -422,11 +456,13 @@ syntethic = calc.quarterly_synt_matrix(
     Crypto_Asset,
 )
 
-syntethic_relative_matrix = calc.relative_syntethic_matrix(syntethic, Crypto_Asset)
+syntethic_relative_matrix = calc.relative_syntethic_matrix(
+    syntethic, Crypto_Asset)
 
 # changing the "Time" column of the second logic matrix
 # using the rebalance date
-second_logic_matrix["Time"] = next_rebalance_date[: len(next_rebalance_date) - 1]
+second_logic_matrix["Time"] = next_rebalance_date[: len(
+    next_rebalance_date) - 1]
 
 if y_TS == rebalance_start_date[len(rebalance_start_date) - 1]:
 
@@ -437,8 +473,14 @@ print(second_logic_matrix)
 # changing the "Time" column of the weights in order to
 # display the quarter start date of each row
 weights_for_period = weights_for_board
-# weights_for_period['Time'] = next_rebalance_date[1:]
-weights_for_period["Time"] = rebalance_start_date[1:]
+if y_TS >= int(curr_board_eve) and y_TS <= int(next_reb_stop):
+
+    weights_for_period['Time'] = next_rebalance_date[1:]
+
+else:
+
+    weights_for_period["Time"] = rebalance_start_date[1:]
+
 print(weights_for_period)
 
 divisor_array = calc.divisor_adjustment(
@@ -509,6 +551,10 @@ volume_up = Crypto_Asset_Volume[
 ]
 volume_up = volume_up.to_dict(orient="records")
 collect_vol.insert_many(volume_up)
+
+# put the exchange volumes on MongoDB
+exc_vol_up = exc_vol_tot.to_dict(orient="records")
+collect_exc_vol.insert_many(exc_vol_up)
 
 # put the "price_ret" dataframe on MongoDB
 price_ret["Date"] = human_date

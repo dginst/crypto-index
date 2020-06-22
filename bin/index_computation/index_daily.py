@@ -117,8 +117,8 @@ collection_index_1000 = db.index_level_1000
 start_date = "01-01-2016"
 
 # define today in various format
-today = datetime.now().strftime("%Y-%m-%d")
-today = datetime.strptime(today, "%Y-%m-%d")
+today_str = datetime.now().strftime("%Y-%m-%d")
+today = datetime.strptime(today_str, "%Y-%m-%d")
 today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
 y_TS = today_TS - 86400
 two_before_TS = y_TS - 86400
@@ -233,7 +233,8 @@ for CryptoA in Crypto_Asset:
 
             PxV = Ccy_Pair_PriceVolume.sum(axis=1)
             V = Ccy_Pair_Volume.sum(axis=1)
-            Ccy_Pair_Price = np.divide(PxV, V, out=np.zeros_like(V), where=V != 0.0)
+            Ccy_Pair_Price = np.divide(
+                PxV, V, out=np.zeros_like(V), where=V != 0.0)
 
             # computing the total volume of the exchange
             Ccy_Pair_Volume = Ccy_Pair_Volume.sum(axis=1)
@@ -283,14 +284,17 @@ for CryptoA in Crypto_Asset:
 
             if Ccy_Pair_Volume.size != 0:
 
-                Exchange_Price = np.column_stack((Exchange_Price, Ccy_Pair_Price))
-                Exchange_Volume = np.column_stack((Exchange_Volume, Ccy_Pair_Volume))
+                Exchange_Price = np.column_stack(
+                    (Exchange_Price, Ccy_Pair_Price))
+                Exchange_Volume = np.column_stack(
+                    (Exchange_Volume, Ccy_Pair_Volume))
                 Ex_PriceVol = np.column_stack((Ex_PriceVol, Ccy_Pair_PxV))
 
             else:
 
                 Exchange_Price = np.column_stack((Exchange_Price, np.zeros(1)))
-                Exchange_Volume = np.column_stack((Exchange_Volume, np.zeros(1)))
+                Exchange_Volume = np.column_stack(
+                    (Exchange_Volume, np.zeros(1)))
                 Ex_PriceVol = np.column_stack((Ex_PriceVol, np.zeros(1)))
 
     # dataframes that contain volume and price of a single crytpo
@@ -334,15 +338,18 @@ for CryptoA in Crypto_Asset:
 
     else:
 
-        Crypto_Asset_Prices = np.column_stack((Crypto_Asset_Prices, Exchange_Price))
-        Crypto_Asset_Volume = np.column_stack((Crypto_Asset_Volume, Exchange_Volume))
+        Crypto_Asset_Prices = np.column_stack(
+            (Crypto_Asset_Prices, Exchange_Price))
+        Crypto_Asset_Volume = np.column_stack(
+            (Crypto_Asset_Volume, Exchange_Volume))
 
 # turn prices and volumes into pandas dataframe
 Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns=Crypto_Asset)
 Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns=Crypto_Asset)
 
 # compute the price return of the day
-two_before_price = mongo.query_mongo(db_name, coll_price, {"Time": two_before_TS})
+two_before_price = mongo.query_mongo(
+    db_name, coll_price, {"Time": two_before_TS})
 two_before_price = two_before_price.drop(columns=["Time", "Date"])
 return_df = two_before_price.append(Crypto_Asset_Prices)
 price_ret = return_df.pct_change()
@@ -378,7 +385,8 @@ current_logic_two = current_logic_two.drop(columns=["Date", "Time"])
 # computing the ewma checked with both the first and second logic matrices
 daily_ewma_first_check = np.array(daily_ewma) * np.array(current_logic_one)
 daily_ewma_double_check = daily_ewma_first_check * np.array(current_logic_two)
-daily_ewma_double_check = pd.DataFrame(daily_ewma_double_check, columns=Crypto_Asset)
+daily_ewma_double_check = pd.DataFrame(
+    daily_ewma_double_check, columns=Crypto_Asset)
 
 # downloading from mongoDB the current weights
 weights = mongo.query_mongo(db_name, coll_weights)
@@ -403,7 +411,8 @@ current_divisor = mongo.query_mongo(
     db_name, coll_divisor_res, {"Date": two_before_human[0]}
 )
 curr_div_val = np.array(current_divisor["Divisor Value"])
-index_numerator = np.array(Crypto_Asset_Prices[Crypto_Asset]) * np.array(daily_rel)
+index_numerator = np.array(
+    Crypto_Asset_Prices[Crypto_Asset]) * np.array(daily_rel)
 numerator_sum = index_numerator.sum(axis=1)
 num = pd.DataFrame(numerator_sum)
 daily_index_value = np.array(num) / curr_div_val
@@ -422,7 +431,8 @@ variation = np.array(variation.iloc[1])
 yesterday_1000_index = mongo.query_mongo(
     db_name, coll_1000_index, {"Date": two_before_human[0]}
 )
-daily_index_1000 = np.array(yesterday_1000_index["Index Value"]) * (1 + variation)
+daily_index_1000 = np.array(
+    yesterday_1000_index["Index Value"]) * (1 + variation)
 daily_index_1000_df = pd.DataFrame(daily_index_1000, columns=["Index Value"])
 
 # ############ MONGO DB UPLOADS ############################################
