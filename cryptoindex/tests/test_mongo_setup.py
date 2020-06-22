@@ -1,6 +1,5 @@
 # third party packages
 from os import path
-import json
 import pandas as pd
 from pymongo import MongoClient
 from bson.json_util import loads
