@@ -833,22 +833,23 @@ def daily_ewma_fraction(
 ):
 
     day_in_sec = 86400
-    before_eve = board_date_eve - day_in_sec
+    before_eve = int(board_date_eve) - day_in_sec
 
     # retrieving the EWMA df from MongoDB
     ewma_df = mongo.query_mongo(db_name, coll_name)
     period_ewma = ewma_df.loc[
-        ewma_df["Time"].between(last_reb_start, before_eve, inclusive=True)
+        ewma_df["Time"].between(int(last_reb_start),
+                                int(before_eve), inclusive=True)
     ]
+
     period_ewma = period_ewma.drop(columns=["Time", "Date"])
     # adding the daily ewma row
     period_ewma = period_ewma.append(ewma_row)
-
     # reshaping the logic row
     log_head = first_logic_row.columns
     if "Time" in log_head:
 
-        first_logic_row.drop(columns="Time")
+        first_logic_row = first_logic_row.drop(columns="Time")
 
     crypto_list = period_ewma.columns
     logic_res = np.zeros_like(np.array(period_ewma))
@@ -856,7 +857,7 @@ def daily_ewma_fraction(
     logic_res.loc[:, :] = np.array(first_logic_row)
 
     # multiplying the EWMA and the reshaped logic row
-    ewma_logic = period_ewma * logic_res
+    ewma_logic = period_ewma * logic_res.values
 
     # sum the interval ewma and then find the percentage of
     # each crypto in term of ewma
@@ -864,9 +865,11 @@ def daily_ewma_fraction(
     percentage_row = np.array(row_sum) / np.array(row_sum.sum())
 
     # transforming into df
-    ewma_volume_fraction = pd.DataFrame(percentage_row, columns=crypto_list)
+    percentage_row_df = pd.DataFrame(percentage_row)
+    percentage_row_df_T = percentage_row_df.T
+    percentage_row_df_T.columns = crypto_list
 
-    return ewma_volume_fraction
+    return percentage_row_df_T
 
 
 # This function creates a matrix of 1 and 0, depending wheter the
@@ -1021,12 +1024,13 @@ def daily_double_log_check(
 ):
 
     day_in_sec = 86400
-    before_eve = board_date_eve - day_in_sec
+    before_eve = int(board_date_eve) - day_in_sec
 
     # retrieving the EWMA df from MongoDB
     ewma_df = mongo.query_mongo(db_name, coll_name)
     period_ewma = ewma_df.loc[
-        ewma_df["Time"].between(last_reb_start, before_eve, inclusive=True)
+        ewma_df["Time"].between(int(last_reb_start),
+                                int(before_eve), inclusive=True)
     ]
     period_ewma = period_ewma.drop(columns=["Time", "Date"])
     # adding the daily ewma row
@@ -1041,17 +1045,21 @@ def daily_double_log_check(
 
     crypto_list = period_ewma.columns
     logic_res = np.zeros_like(np.array(period_ewma))
-    logic_res = pd.DataFrame(logic_res, columns=crypto_list)
-    first_res = logic_res
-    second_res = logic_res
-    first_res.loc[:, :] = np.array(first_logic_row)
-    second_res.loc[:, :] = np.array(second_logic_row)
-
+    first_res = pd.DataFrame(logic_res, columns=crypto_list)
+    second_res = pd.DataFrame(logic_res, columns=crypto_list)
+    f_l_array = np.array(first_logic_row)
+    s_l_array = np.array(second_logic_row)
+    first_res.loc[:, :] = f_l_array
+    second_res.loc[:,:] = s_l_array
+    print(first_logic_row)
+    print(second_logic_row)
+    print(first_res)
+    print(second_res)
     # first logic check
-    ewma_one = period_ewma * first_res
+    ewma_one = period_ewma * first_res.values
 
     # second logic check
-    ewma_two = ewma_one * second_res
+    ewma_two = ewma_one * second_res.values
 
     return ewma_two
 

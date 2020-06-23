@@ -61,7 +61,8 @@ coll_price = "crypto_price"
 coll_volume = "crypto_volume"
 coll_divisor = "index_divisor"
 coll_weights = "index_weights"
-coll_rel_synt = "index_synth_matrix"
+coll_rel_synt = "index_rel_synth_matrix"
+coll_synt = "index_synth_matrix"
 coll_divisor_res = "index_divisor_reshaped"
 coll_raw_index = "index_level_raw"
 coll_1000_index = "index_level_1000"
@@ -92,8 +93,10 @@ collection_EWMA_check = db.index_EWMA_logic_checked
 collection_divisor = db.index_divisor
 # collection for the reshaped divisor array
 collection_divisor_reshaped = db.index_divisor_reshaped
+# collection for the syntethic matrix
+collection_synth = db.index_synth_matrix
 # collection for the relative syntethic matrix
-collection_relative_synth = db.index_synth_matrix
+collection_relative_synth = db.index_rel_synth_matrix
 # collection for index level raw
 collection_index_raw = db.index_level_raw
 # collection for index level base 1000
@@ -168,7 +171,7 @@ for CryptoA in Crypto_Asset:
         ccy_pair_array.append(CryptoA.lower() + pair)
 
     for exchange in Exchanges:
-        print(exchange)
+
         # initialize the matrices that will contain the data related
         # to all currencypair for the single exchange
         Ccy_Pair_PriceVolume = np.matrix([])
@@ -176,7 +179,6 @@ for CryptoA in Crypto_Asset:
         Ccy_Pair_Price = np.matrix([])
 
         for cp in ccy_pair_array:
-            print(cp)
 
             crypto = cp[:3]
             fiat_curr = cp[3:]
@@ -304,6 +306,7 @@ for CryptoA in Crypto_Asset:
         Exchange_Vol_DF, Exchanges, CryptoA, last_reb_start,
         next_reb_stop, curr_board_eve
     )
+
     # put the logic array into the logic matrix
     if logic_matrix_one.size == 0:
         logic_matrix_one = np.array(first_logic_array)
@@ -349,12 +352,11 @@ for CryptoA in Crypto_Asset:
         Crypto_Asset_Volume = np.column_stack(
             (Crypto_Asset_Volume, Exchange_Volume))
 
-print(logic_matrix_one)
+
 # turn prices and volumes into pandas dataframe
 Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns=Crypto_Asset)
 Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns=Crypto_Asset)
 
-print(Crypto_Asset_Prices)
 
 # compute the price return of the day
 two_before_price = mongo.query_mongo(
@@ -372,27 +374,22 @@ Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns=time_header)
 Crypto_Asset_Volume["Time"] = str(y_TS)
 price_ret["Time"] = str(y_TS)
 
-print(price_ret)
-
 # turn the first logic row into a dataframe and add the 'Time' column
 # the first logic row will be used for the next quarter weights computation
 first_logic_row = pd.DataFrame(logic_matrix_one, columns=Crypto_Asset)
 first_logic_row["Time"] = next_reb_stop
-
-print(first_logic_row)
 
 # computing the Exponential Weighted Moving Average of the day
 hist_volume = mongo.query_mongo(db_name, coll_volume)
 hist_volume = hist_volume.drop(columns=["Date"])
 hist_volume = hist_volume.append(Crypto_Asset_Volume)
 daily_ewma = calc.daily_ewma_crypto_volume(hist_volume, Crypto_Asset)
-print(daily_ewma)
+
 # computing the new second logic row that is used to compute the
 # weights relative to the next rebalance period
 ewma_fraction = calc.daily_ewma_fraction(
     daily_ewma, first_logic_row, last_reb_start, curr_board_eve
 )
-
 second_logic_row = (ewma_fraction >= 0.02) * 1
 
 # computing the ewma double checked with first and second logic daily values
@@ -402,36 +399,45 @@ double_checked_ewma = calc.daily_double_log_check(
 
 # adding the Time columns to the double checked ewma
 human_start = data_setup.timestamp_to_human(
-    last_reb_start, date_format="%m-%d-%y")
+    [last_reb_start], date_format="%m-%d-%y")
 human_curr = data_setup.timestamp_to_human(
-    curr_board_eve, date_format="%m-%d-%y")
-period_date_list = data_setup.date_gen(human_start, human_curr, EoD="N")
-double_checked_ewma["Time"] = period_date_list
+    [curr_board_eve], date_format="%m-%d-%y")
 
+period_date_list = data_setup.date_gen(human_start[0], human_curr[0], EoD="N")
+
+double_checked_ewma["Time"] = period_date_list
+print(double_checked_ewma)
 # computing the new weights that will be used starting from the
 # next rebalance date
 weights_for_board = calc.quarter_weights(
-    double_checked_ewma, [curr_board_eve], Crypto_Asset
+    double_checked_ewma, [int(curr_board_eve)], Crypto_Asset
 )
 
+print(weights_for_board)
 
-# compute the relative syntethic matrix of the day
-yesterday_rel_matrix = mongo.query_mongo(
-    db_name, coll_rel_synt, {"Date": two_before_human[0]}
+# compute the daily syntethic matrix
+yesterday_synt_matrix = mongo.query_mongo(
+    db_name, coll_synt, {"Date": two_before_human[0]}
 )
-yesterday_rel_matrix = yesterday_rel_matrix.drop(columns=["Date"])
+yesterday_synt_matrix = yesterday_synt_matrix.drop(columns=["Date"])
 daily_return = np.array(price_ret.loc[:, Crypto_Asset])
-daily_rel_matrix = (1 + daily_return) * np.array(yesterday_rel_matrix)
-daily_rel_matrix = pd.DataFrame(daily_rel_matrix, columns=Crypto_Asset)
+new_synt = (1 + daily_return) * np.array(yesterday_synt_matrix)
+daily_synt = pd.DataFrame(new_synt, columns=Crypto_Asset)
+print(daily_synt)
+# compute the daily relative syntethic matrix
+
+daily_tot = np.array(daily_synt.sum(axis=1))
+daily_rel = np.array(daily_synt) / daily_tot
+daily_rel = pd.DataFrame(daily_rel, columns=Crypto_Asset)
+print(daily_rel)
 
 # daily index value computation
 current_divisor = mongo.query_mongo(
     db_name, coll_divisor_res, {"Date": two_before_human[0]}
 )
 curr_div_val = np.array(current_divisor["Divisor Value"])
-index_numerator = np.array(Crypto_Asset_Prices[Crypto_Asset]) * np.array(
-    daily_rel_matrix
-)
+index_numerator = np.array(
+    Crypto_Asset_Prices[Crypto_Asset]) * np.array(daily_rel)
 numerator_sum = index_numerator.sum(axis=1)
 num = pd.DataFrame(numerator_sum)
 daily_index_value = np.array(num) / curr_div_val
@@ -453,174 +459,173 @@ yesterday_1000_index = mongo.query_mongo(
 daily_index_1000 = np.array(
     yesterday_1000_index["Index Value"]) * (1 + variation)
 daily_index_1000_df = pd.DataFrame(daily_index_1000, columns=["Index Value"])
+
 print(daily_index_1000_df)
-
-
 # ############ MONGO DB UPLOADS ############################################
 
-# put the daily crypto prices on MongoDB
-Crypto_Asset_Prices["Date"] = yesterday_human
-price_up = Crypto_Asset_Prices[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
-price_up = price_up.to_dict(orient="records")
-collection_price.insert_many(price_up)
+# # put the daily crypto prices on MongoDB
+# Crypto_Asset_Prices["Date"] = yesterday_human
+# price_up = Crypto_Asset_Prices[
+#     [
+#         "Date",
+#         "Time",
+#         "BTC",
+#         "ETH",
+#         "XRP",
+#         "LTC",
+#         "BCH",
+#         "EOS",
+#         "ETC",
+#         "ZEC",
+#         "ADA",
+#         "XLM",
+#         "XMR",
+#         "BSV",
+#     ]
+# ]
+# price_up = price_up.to_dict(orient="records")
+# collection_price.insert_many(price_up)
 
-# put the daily crypto volumes on MongoDB
-Crypto_Asset_Volume["Date"] = yesterday_human
-volume_up = Crypto_Asset_Volume[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
-volume_up = volume_up.to_dict(orient="records")
-collect_vol.insert_many(volume_up)
+# # put the daily crypto volumes on MongoDB
+# Crypto_Asset_Volume["Date"] = yesterday_human
+# volume_up = Crypto_Asset_Volume[
+#     [
+#         "Date",
+#         "Time",
+#         "BTC",
+#         "ETH",
+#         "XRP",
+#         "LTC",
+#         "BCH",
+#         "EOS",
+#         "ETC",
+#         "ZEC",
+#         "ADA",
+#         "XLM",
+#         "XMR",
+#         "BSV",
+#     ]
+# ]
+# volume_up = volume_up.to_dict(orient="records")
+# collect_vol.insert_many(volume_up)
 
-# put the daily return on MongoDB
-price_ret["Date"] = yesterday_human
-price_ret_up = price_ret[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
-price_ret_up = price_ret_up.to_dict(orient="records")
-collection_price_ret.insert_many(price_ret_up)
+# # put the daily return on MongoDB
+# price_ret["Date"] = yesterday_human
+# price_ret_up = price_ret[
+#     [
+#         "Date",
+#         "Time",
+#         "BTC",
+#         "ETH",
+#         "XRP",
+#         "LTC",
+#         "BCH",
+#         "EOS",
+#         "ETC",
+#         "ZEC",
+#         "ADA",
+#         "XLM",
+#         "XMR",
+#         "BSV",
+#     ]
+# ]
+# price_ret_up = price_ret_up.to_dict(orient="records")
+# collection_price_ret.insert_many(price_ret_up)
 
-# put the new logic row on MongoDB
+# # put the new logic row on MongoDB
 
-# put the new second row on MongoDB
+# # put the new second row on MongoDB
 
-# put the EWMA dataframe on MongoDB
-daily_ewma["Date"] = yesterday_human
-daily_ewma["Time"] = str(today_TS)
-ewma_df_up = daily_ewma[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
-ewma_df_up = ewma_df_up.to_dict(orient="records")
-collection_EWMA.insert_many(ewma_df_up)
+# # put the EWMA dataframe on MongoDB
+# daily_ewma["Date"] = yesterday_human
+# daily_ewma["Time"] = str(today_TS)
+# ewma_df_up = daily_ewma[
+#     [
+#         "Date",
+#         "Time",
+#         "BTC",
+#         "ETH",
+#         "XRP",
+#         "LTC",
+#         "BCH",
+#         "EOS",
+#         "ETC",
+#         "ZEC",
+#         "ADA",
+#         "XLM",
+#         "XMR",
+#         "BSV",
+#     ]
+# ]
+# ewma_df_up = ewma_df_up.to_dict(orient="records")
+# collection_EWMA.insert_many(ewma_df_up)
 
-# put the double checked EWMA on MongoDB
-daily_ewma_double_check["Date"] = yesterday_human
-daily_ewma_double_check["Time"] = str(today_TS)
-double_EWMA_up = daily_ewma_double_check[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
-double_EWMA_up = double_EWMA_up.to_dict(orient="records")
-collection_EWMA_check.insert_many(double_EWMA_up)
+# # put the double checked EWMA on MongoDB
+# daily_ewma_double_check["Date"] = yesterday_human
+# daily_ewma_double_check["Time"] = str(today_TS)
+# double_EWMA_up = daily_ewma_double_check[
+#     [
+#         "Date",
+#         "Time",
+#         "BTC",
+#         "ETH",
+#         "XRP",
+#         "LTC",
+#         "BCH",
+#         "EOS",
+#         "ETC",
+#         "ZEC",
+#         "ADA",
+#         "XLM",
+#         "XMR",
+#         "BSV",
+#     ]
+# ]
+# double_EWMA_up = double_EWMA_up.to_dict(orient="records")
+# collection_EWMA_check.insert_many(double_EWMA_up)
 
-# put the relative synth matrix on MongoDB
-daily_synt_rel["Date"] = yesterday_human
-daily_synt_rel["Time"] = str(today_TS)
-synth_up = daily_synt_rel[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
-synth_up = synth_up.to_dict(orient="records")
-collection_relative_synth.insert_many(synth_up)
+# # put the relative synth matrix on MongoDB
+# daily_synt_rel["Date"] = yesterday_human
+# daily_synt_rel["Time"] = str(today_TS)
+# synth_up = daily_synt_rel[
+#     [
+#         "Date",
+#         "Time",
+#         "BTC",
+#         "ETH",
+#         "XRP",
+#         "LTC",
+#         "BCH",
+#         "EOS",
+#         "ETC",
+#         "ZEC",
+#         "ADA",
+#         "XLM",
+#         "XMR",
+#         "BSV",
+#     ]
+# ]
+# synth_up = synth_up.to_dict(orient="records")
+# collection_relative_synth.insert_many(synth_up)
 
 
-# uploading the collection of the reshaped divisor
-current_divisor = new_divisor_df["Divisor Value"]
-current_divisor["Date"] = yesterday_human
-current_divisor["Time"] = y_TS
-div_res_up = current_divisor.to_dict(orient="records")
-collection_divisor_reshaped.insert_many(div_res_up)
+# # uploading the collection of the reshaped divisor
+# current_divisor = new_divisor_df["Divisor Value"]
+# current_divisor["Date"] = yesterday_human
+# current_divisor["Time"] = y_TS
+# div_res_up = current_divisor.to_dict(orient="records")
+# collection_divisor_reshaped.insert_many(div_res_up)
 
-# put the index level raw on MongoDB
-raw_index_df["Date"] = yesterday_human
-raw_index_df["Time"] = y_TS
-raw_index_val_up = raw_index_df[["Date", "Time", "Index Value"]]
-raw_index_val_up = raw_index_val_up.to_dict(orient="records")
-collection_index_raw.insert_many(raw_index_val_up)
+# # put the index level raw on MongoDB
+# raw_index_df["Date"] = yesterday_human
+# raw_index_df["Time"] = y_TS
+# raw_index_val_up = raw_index_df[["Date", "Time", "Index Value"]]
+# raw_index_val_up = raw_index_val_up.to_dict(orient="records")
+# collection_index_raw.insert_many(raw_index_val_up)
 
-# put the index level 1000 on MongoDB
-daily_index_1000_df["Date"] = yesterday_human
-daily_index_1000_df["Time"] = y_TS
-index_val_up = daily_index_1000_df[["Date", "Time", "Index Value"]]
-index_val_up = index_val_up.to_dict(orient="records")
-collection_index_1000.insert_many(index_val_up)
+# # put the index level 1000 on MongoDB
+# daily_index_1000_df["Date"] = yesterday_human
+# daily_index_1000_df["Time"] = y_TS
+# index_val_up = daily_index_1000_df[["Date", "Time", "Index Value"]]
+# index_val_up = index_val_up.to_dict(orient="records")
+# collection_index_1000.insert_many(index_val_up)
