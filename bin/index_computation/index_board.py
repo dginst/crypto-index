@@ -383,28 +383,28 @@ first_logic_row["Time"] = next_reb_stop
 hist_volume = mongo.query_mongo(db_name, coll_volume)
 hist_volume = hist_volume.drop(columns=["Date"])
 hist_volume = hist_volume.append(Crypto_Asset_Volume)
-daily_ewma = calc.daily_ewma_crypto_volume(hist_volume, Crypto_Asset)
+daily_ewma = calc.daily_ewma_crypto_volume(
+    hist_volume, Crypto_Asset, curr_board_eve)
 
+print(daily_ewma)
 # computing the new second logic row that is used to compute the
 # weights relative to the next rebalance period
 ewma_fraction = calc.daily_ewma_fraction(
     daily_ewma, first_logic_row, last_reb_start, curr_board_eve
 )
+print(ewma_fraction)
 second_logic_row = (ewma_fraction >= 0.02) * 1
 
 # computing the ewma double checked with first and second logic daily values
 double_checked_ewma = calc.daily_double_log_check(
     first_logic_row, second_logic_row, daily_ewma, last_reb_start, curr_board_eve
 )
-
 # adding the Time columns to the double checked ewma
 human_start = data_setup.timestamp_to_human(
     [last_reb_start], date_format="%m-%d-%y")
 human_curr = data_setup.timestamp_to_human(
     [curr_board_eve], date_format="%m-%d-%y")
-
 period_date_list = data_setup.date_gen(human_start[0], human_curr[0], EoD="N")
-
 double_checked_ewma["Time"] = period_date_list
 print(double_checked_ewma)
 # computing the new weights that will be used starting from the
@@ -419,7 +419,7 @@ print(weights_for_board)
 yesterday_synt_matrix = mongo.query_mongo(
     db_name, coll_synt, {"Date": two_before_human[0]}
 )
-yesterday_synt_matrix = yesterday_synt_matrix.drop(columns=["Date"])
+yesterday_synt_matrix = yesterday_synt_matrix.drop(columns=["Date", "Time"])
 daily_return = np.array(price_ret.loc[:, Crypto_Asset])
 new_synt = (1 + daily_return) * np.array(yesterday_synt_matrix)
 daily_synt = pd.DataFrame(new_synt, columns=Crypto_Asset)

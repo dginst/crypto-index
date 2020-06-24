@@ -657,12 +657,19 @@ def ewma_crypto_volume(
 
 
 def daily_ewma_crypto_volume(
-    Crypto_Volume_Matrix, Crypto_list, moving_average_period=90
+    Crypto_Volume_Matrix, Crypto_list, stop=None, moving_average_period=90
 ):
 
     smoothing_array = smoothing_factor()
-    last_row = Crypto_Volume_Matrix.tail(1)
-    stop = int(last_row["Time"])
+    if stop is None:
+
+        last_row = Crypto_Volume_Matrix.tail(1)
+        stop = int(last_row["Time"])
+
+    else:
+
+        stop = int(stop)
+
     start = stop - (86400 * 89)
 
     Crypto_Volume_Matrix["Time"] = pd.to_numeric(Crypto_Volume_Matrix["Time"])
@@ -673,8 +680,10 @@ def daily_ewma_crypto_volume(
     ]
     period_average = np.array(
         (period_volume * smoothing_array[:, None]).sum(axis=0))
-    period_average = period_average.reshape(1, -1)
-    ewma_DF = pd.DataFrame(period_average, columns=Crypto_list)
+
+    period_avg_df = pd.DataFrame(period_average)
+    ewma_DF = period_avg_df.T
+    ewma_DF.columns = Crypto_list
 
     return ewma_DF
 
@@ -1044,17 +1053,17 @@ def daily_double_log_check(
         first_logic_row = first_logic_row.drop(columns="Time")
 
     crypto_list = period_ewma.columns
-    logic_res = np.zeros_like(np.array(period_ewma))
-    first_res = pd.DataFrame(logic_res, columns=crypto_list)
-    second_res = pd.DataFrame(logic_res, columns=crypto_list)
+
+    first_res = pd.DataFrame(np.zeros_like(
+        np.array(period_ewma)), columns=crypto_list)
+    second_res = pd.DataFrame(np.zeros_like(
+        np.array(period_ewma)), columns=crypto_list)
+
     f_l_array = np.array(first_logic_row)
     s_l_array = np.array(second_logic_row)
     first_res.loc[:, :] = f_l_array
-    second_res.loc[:,:] = s_l_array
-    print(first_logic_row)
-    print(second_logic_row)
-    print(first_res)
-    print(second_res)
+    second_res.loc[:, :] = s_l_array
+
     # first logic check
     ewma_one = period_ewma * first_res.values
 
@@ -1088,6 +1097,8 @@ def quarter_weights(ewma_double_logic_checked, date, Crypto_list):
                 ewma_double_logic_checked.Time == day, Crypto_list
             ]
         )
+        print('row')
+        print(row)
         total_row = row.sum()
         weighted_row = row / total_row
 
