@@ -511,7 +511,7 @@ collect_vol.insert_many(volume_up)
 
 # put the EWMA dataframe on MongoDB
 daily_ewma["Date"] = yesterday_human
-daily_ewma["Time"] = str(today_TS)
+daily_ewma["Time"] = today_TS
 ewma_df_up = daily_ewma[
     [
         "Date",
@@ -535,7 +535,7 @@ collection_EWMA.insert_many(ewma_df_up)
 
 # put the double checked EWMA on MongoDB
 daily_ewma_double_check["Date"] = yesterday_human
-daily_ewma_double_check["Time"] = str(today_TS)
+daily_ewma_double_check["Time"] = today_TS
 double_EWMA_up = daily_ewma_double_check[
     [
         "Date",
@@ -559,7 +559,7 @@ collection_EWMA_check.insert_many(double_EWMA_up)
 
 # put the synth matrix on MongoDB
 daily_synt["Date"] = yesterday_human
-daily_synt["Time"] = str(today_TS)
+daily_synt["Time"] = today_TS
 d_synth_up = daily_synt[
     [
         "Date",
@@ -583,7 +583,7 @@ collection_synth.insert_many(d_synth_up)
 
 # put the relative synth matrix on MongoDB
 daily_rel["Date"] = yesterday_human
-daily_rel["Time"] = str(today_TS)
+daily_rel["Time"] = today_TS
 synth_up = daily_rel[
     [
         "Date",

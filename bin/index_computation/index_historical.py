@@ -700,10 +700,12 @@ collection_EWMA_check.insert_many(double_EWMA_up)
 
 # put the synth matrix on MongoDB
 syntethic["Date"] = human_date
+syntethic["Time"] = reference_date_vector
 syntethic_up = syntethic
 syntethic_up = syntethic_up[
     [
         "Date",
+        "Time",
         "BTC",
         "ETH",
         "XRP",
@@ -723,10 +725,12 @@ collection_synth.insert_many(syntethic_up)
 
 # put the relative synth matrix on MongoDB
 syntethic_relative_matrix["Date"] = human_date
+syntethic_relative_matrix["Time"] = reference_date_vector
 synth_up = syntethic_relative_matrix
 synth_up = synth_up[
     [
         "Date",
+        "Time",
         "BTC",
         "ETH",
         "XRP",
