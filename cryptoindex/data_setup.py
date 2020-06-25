@@ -146,7 +146,8 @@ def homogenize_dead_series(series_to_check, reference_date_array_TS, days_to_che
         len(reference_date_array_TS) - 1 - days_to_check
     ]
     test_matrix = series_to_check.loc[
-        series_to_check.Time.between(first_check_day, last_day, inclusive=True), header
+        series_to_check.Time.between(
+            first_check_day, last_day, inclusive=True), header
     ]
 
     if test_matrix.empty is True:
@@ -158,7 +159,8 @@ def homogenize_dead_series(series_to_check, reference_date_array_TS, days_to_che
         first_missing_date = int(last_date) + 86400
         last_missing_date = last_day
 
-        missing_date_array = timestamp_vector(first_missing_date, last_missing_date)
+        missing_date_array = timestamp_vector(
+            first_missing_date, last_missing_date)
 
         # new_series = pd.DataFrame(missing_date_array, columns = ['Time'])
         header.remove("Time")
@@ -242,7 +244,8 @@ def CW_series_fix_missing(
         query_dict = {"Exchange": element, "Pair": ccy_pair}
         # query MongoDB and rerieve a DataFrame called "matrix"
         matrix = mongo.query_mongo(db, collection, query_dict)
-        matrix = matrix.drop(columns=["Exchange", "Pair", "Low", "High", "Open"])
+        matrix = matrix.drop(
+            columns=["Exchange", "Pair", "Low", "High", "Open"])
 
         # checking if data frame is empty: if not then the crypto-fiat pair
         # exists in the exchange then add to the count variable
@@ -274,7 +277,8 @@ def CW_series_fix_missing(
 
             else:
 
-                fixing_price = np.column_stack((fixing_price, variations_price[:, 1]))
+                fixing_price = np.column_stack(
+                    (fixing_price, variations_price[:, 1]))
                 fixing_cry_vol = np.column_stack(
                     (fixing_cry_vol, variations_cry_vol[:, 1])
                 )
@@ -356,7 +360,8 @@ def CW_series_fix_missing(
     # prices, weightes variations of volume both crypto and pair
     try:
         variation_matrix = np.column_stack(
-            (variation_time, weighted_var_price, weighted_cry_vol, weighted_pair_vol)
+            (variation_time, weighted_var_price,
+             weighted_cry_vol, weighted_pair_vol)
         )
         variation_matrix = np.nan_to_num(variation_matrix)
 
@@ -364,7 +369,8 @@ def CW_series_fix_missing(
 
             # find previuos value and multiply the variation in order to obtain
             # the new values to insert
-            prev_vals = broken_matrix[broken_matrix["Time"] == row - 86400].iloc[:, 1:4]
+            prev_vals = broken_matrix[broken_matrix["Time"]
+                                      == row - 86400].iloc[:, 1:4]
             if prev_vals.empty is True:
                 prev_vals = np.zeros((1, 3))
 
@@ -407,7 +413,8 @@ def CW_series_fix_missing(
             values_to_insert = np.array(
                 broken_matrix.loc[broken_matrix.Time == day][header]
             )
-            fixed_matrix.loc[fixed_matrix.Time == day, header] = values_to_insert
+            fixed_matrix.loc[fixed_matrix.Time
+                             == day, header] = values_to_insert
 
         int_date = np.array([])
 
@@ -451,7 +458,8 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
                 where_to_lookup[where_to_lookup["Time"] == element][position]
             )
             yesterday_value = float(
-                where_to_lookup[where_to_lookup["Time"] == element - 86400][position]
+                where_to_lookup[where_to_lookup["Time"]
+                                == element - 86400][position]
             )
             numerator = today_value - yesterday_value
             variation = np.divide(
@@ -462,7 +470,8 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
             )
             # consider crytpo vol
             volume = float(
-                where_to_lookup[where_to_lookup["Time"] == element]["Pair Volume"]
+                where_to_lookup[where_to_lookup["Time"]
+                                == element]["Pair Volume"]
             )
             variation = variation * volume
             variations.append(variation)
@@ -497,7 +506,8 @@ def fix_zero_value(matrix):
 
     for date in matrix["Time"]:
 
-        value_to_check = np.array(matrix.loc[matrix.Time == date, "Crypto Volume"])
+        value_to_check = np.array(
+            matrix.loc[matrix.Time == date, "Crypto Volume"])
         price_check = np.array(matrix.loc[matrix.Time == date, "Close Price"])
 
         if val_sum != 0 and int(value_to_check) == 0:
@@ -505,12 +515,14 @@ def fix_zero_value(matrix):
             if int(price_check) == 0:
 
                 previous_price = np.array(
-                    matrix.loc[matrix.Time == str(int(date) - 86400), "Close Price"]
+                    matrix.loc[matrix.Time == str(
+                        int(date) - 86400), "Close Price"]
                 )
                 matrix.loc[matrix.Time == date, "Close Price"] = previous_price
 
             previous_c_vol = np.array(
-                matrix.loc[matrix.Time == str(int(date) - 86400), "Crypto Volume"]
+                matrix.loc[matrix.Time == str(
+                    int(date) - 86400), "Crypto Volume"]
             )
             previous_p_vol = np.array(
                 matrix.loc[matrix.Time == str(int(date) - 86400), "Pair Volume"]
@@ -644,112 +656,86 @@ def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N"):
 # interest
 
 
-def ECB_daily_setup(key_curr_vector, timeST="N"):
+def ECB_daily_setup(key_curr_vector):
 
     # defining the array of date to be used
-    today = datetime.now().strftime("%m-%d-%Y")
-    yesterday = (datetime.now() - timedelta(days=1)).strftime("%m-%d-%Y")
-    date = date_gen(yesterday, today, timeST="N", clss="list", EoD="N")
-    date = [datetime.strptime(x, "%Y-%m-%d") for x in date]
+
+    day_in_sec = 86400
+
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.strptime(today_str, "%Y-%m-%d")
+
+    # timestamp date
+    today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+    y_TS = today_TS - day_in_sec
+    two_before_TS = y_TS - day_in_sec
+
+    # human format date
+    yest_h = timestamp_to_human([y_TS])
 
     # defining the headers of the returning data frame
-    header = ["Date", "Currency", "Rate"]
-
-    # for each date in "date" array the funcion retrieves data from ECB website
-    # and append the result in the returning matrix
-    Exchange_Matrix = np.array([])
+    header = ["Currency", "Rate"]
 
     # defining the MongoDB path where to look for the rates
-    database = "index"
-    collection = "ecb_raw"
-    query = {"TIME_PERIOD": date[1]}
+    db = "index"
+    raw_coll = "ecb_raw"
+    clean_coll = "ecb_clean"
 
     # retrieving data from MongoDB 'index' and 'ecb_raw' collection
-    single_date_ex_matrix = mongo.query_mongo(database, collection, query)
+    ecb_raw_mat = mongo.query_mongo(db, raw_coll)
 
-    # check if rates exist in the specified date
-    if len(single_date_ex_matrix) != 0:
+    # searching into the df only the values referred to yesterday
+    y_ecb_raw = ecb_raw_mat.loc[ecb_raw_mat.TIME_PERIOD == str(y_TS)]
+
+    if y_ecb_raw.empty is False:
 
         # find the USD/EUR rates useful for conversions
-        cambio_USD_EUR = float(
+        exc_USD_EUR = float(
             np.array(
-                single_date_ex_matrix.loc[
-                    single_date_ex_matrix.CURRENCY == "USD", "OBS_VALUE"
+                y_ecb_raw.loc[
+                    y_ecb_raw.CURRENCY == "USD", "OBS_VALUE"
                 ]
             )
         )
 
         # add a column to DF with the USD based rates
-        single_date_ex_matrix["USD based rate"] = (
-            single_date_ex_matrix["OBS_VALUE"]
-        ) / cambio_USD_EUR
-
-        # creat date array
-        date_arr = np.full(len(key_curr_vector), date[1])
+        usd_based = y_ecb_raw["OBS_VALUE"] / exc_USD_EUR
+        y_ecb_raw["USD based rate"] = usd_based
 
         # creating the array with 'XXX/USD' format
-        curr_arr = single_date_ex_matrix["CURRENCY"] + "/USD"
+        curr_arr = y_ecb_raw["CURRENCY"] + "/USD"
         curr_arr = np.where(curr_arr == "USD/USD", "EUR/USD", curr_arr)
 
         # creating the array with rate values USD based
-        rate_arr = single_date_ex_matrix["USD based rate"]
+        rate_arr = y_ecb_raw["USD based rate"]
+        exc_EUR_USD = float(y_ecb_raw.loc[y_ecb_raw.CURRENCY
+                                          == "USD", "OBS_VALUE"])
         rate_arr = np.where(
-            rate_arr == 1.000000, 1 / single_date_ex_matrix["OBS_VALUE"][0], rate_arr
+            rate_arr == 1.000000,
+            1 / exc_EUR_USD,
+            rate_arr
         )
 
         # stacking the array together
-        array = np.column_stack((date_arr, curr_arr, rate_arr))
+        array = np.column_stack((curr_arr, rate_arr))
 
-        # filling the return matrix
-        if Exchange_Matrix.size == 0:
+        # converting into dataframe
+        df = pd.DataFrame(array, columns=header)
+        df["Date"] = str(y_TS)
+        df["Standard Date"] = yest_h[0]
+        exc_ecb = df[["Date", "Standard Date", "Currency", "Rate"]]
 
-            Exchange_Matrix = array
-
-        else:
-
-            Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
-
-    # if the query returns an empty matrix, function will takes values of the
-    # last useful day
     else:
 
-        # set the MongoDB query to yestarday
-        query = {"TIME_PERIOD": date[0]}
+        query = {"Date": str(two_before_TS)}
+        prev_clean = mongo.query_mongo(db, clean_coll, query)
 
-        # retrieving data from MongoDB 'index' and 'ecb_raw' collection
-        single_date_ex_matrix = mongo.query_mongo(database, collection, query)
+        # changing "Date" and "Standard Date" from two day before to yesterday
+        prev_clean["Date"] = str(y_TS)
+        prev_clean["Standard Date"] = yest_h[0]
+        exc_ecb = prev_clean[["Date", "Standard Date", "Currency", "Rate"]]
 
-        date_arr = np.full(len(key_curr_vector), date[1])
-
-        # creating the array with 'XXX/USD' format
-        curr_arr = single_date_ex_matrix["CURRENCY"] + "/USD"
-        curr_arr = np.where(curr_arr == "USD/USD", "EUR/USD", curr_arr)
-
-        # creating the array with rate values USD based
-        rate_arr = single_date_ex_matrix["USD based rate"]
-        rate_arr = np.where(
-            rate_arr == 1.000000, 1 / single_date_ex_matrix["OBS_VALUE"][0], rate_arr
-        )
-
-        # stack the array together
-        array = np.column_stack((date_arr, curr_arr, rate_arr))
-
-        if Exchange_Matrix.size == 0:
-
-            Exchange_Matrix = array
-
-        else:
-
-            Exchange_Matrix = np.row_stack((Exchange_Matrix, array))
-
-    if timeST != "N":
-
-        for j, element in enumerate(Exchange_Matrix[:, 0]):
-
-            to_date = datetime.strptime(element, "%Y-%m-%d")
-            time_stamp = datetime.timestamp(to_date) + 3600
-            Exchange_Matrix[j, 0] = int(time_stamp)
-    return pd.DataFrame(Exchange_Matrix, columns=header)
+    return exc_ecb
 
 
 # #############################################################################
@@ -823,8 +809,10 @@ def CW_series_fix_missing2(
 
         else:
 
-            fixing_price = np.column_stack((fixing_price, variations_price[:, 1]))
-            fixing_cry_vol = np.column_stack((fixing_cry_vol, variations_cry_vol[:, 1]))
+            fixing_price = np.column_stack(
+                (fixing_price, variations_price[:, 1]))
+            fixing_cry_vol = np.column_stack(
+                (fixing_cry_vol, variations_cry_vol[:, 1]))
             fixing_pair_vol = np.column_stack(
                 (fixing_pair_vol, variations_pair_vol[:, 1])
             )
@@ -851,11 +839,14 @@ def CW_series_fix_missing2(
     fixing_pair_vol_df["missing date"] = missing_item_time
 
     # computing weighted variations for each element
-    fixing_price_df["weighted"] = fixing_price_df["sum"] / fixing_volume_df["sum"]
+    fixing_price_df["weighted"] = fixing_price_df["sum"] / \
+        fixing_volume_df["sum"]
     fixing_price_df.fillna(0, inplace=True)
-    fixing_cry_vol_df["weighted"] = fixing_cry_vol_df["sum"] / fixing_volume_df["sum"]
+    fixing_cry_vol_df["weighted"] = fixing_cry_vol_df["sum"] / \
+        fixing_volume_df["sum"]
     fixing_cry_vol_df.fillna(0, inplace=True)
-    fixing_pair_vol_df["weighted"] = fixing_pair_vol_df["sum"] / fixing_volume_df["sum"]
+    fixing_pair_vol_df["weighted"] = fixing_pair_vol_df["sum"] / \
+        fixing_volume_df["sum"]
     fixing_pair_vol_df.fillna(0, inplace=True)
 
     # merging a column dataframe containing the reference array
@@ -874,7 +865,8 @@ def CW_series_fix_missing2(
         prev_val = merged.loc[merged.Time == int(element) - 86400]
 
         price_var = float(
-            fixing_price_df.loc[fixing_price_df["missing date"] == element, "weighted"]
+            fixing_price_df.loc[fixing_price_df["missing date"]
+                                == element, "weighted"]
         )
         crypto_vol_var = float(
             fixing_cry_vol_df.loc[
@@ -927,7 +919,8 @@ def substitute_finder2(broken_array, reference_array, where_to_lookup, position)
             )
 
             yesterday_value = float(
-                where_to_lookup[where_to_lookup["Time"] == element - 86400][position]
+                where_to_lookup[where_to_lookup["Time"]
+                                == element - 86400][position]
             )
 
             numerator = today_value - yesterday_value
@@ -939,7 +932,8 @@ def substitute_finder2(broken_array, reference_array, where_to_lookup, position)
             )
             # consider crytpo vol
             volume = float(
-                where_to_lookup[where_to_lookup["Time"] == element]["Pair Volume"]
+                where_to_lookup[where_to_lookup["Time"]
+                                == element]["Pair Volume"]
             )
             variation = variation * volume
             variations = np.append(variations, variation)
@@ -995,7 +989,8 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
             ex_pair_prev_df = pair_prev_df.loc[pair_prev_df.Exchange == el]
             ex_pair_curr_df = pair_curr_df.loc[pair_curr_df.Exchange == el]
 
-            weight_var, volume = daily_sub_finder(ex_pair_curr_df, ex_pair_prev_df)
+            weight_var, volume = daily_sub_finder(
+                ex_pair_curr_df, ex_pair_prev_df)
 
             if fixing_price.size == 0:
 
@@ -1017,7 +1012,8 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
         fixing_p_vol_df["sum"] = fixing_p_vol_df.sum(axis=1)
 
         # computing weighted variation
-        fixing_price_df["weighted"] = fixing_price_df["sum"] / fixing_p_vol_df["sum"]
+        fixing_price_df["weighted"] = fixing_price_df["sum"] / \
+            fixing_p_vol_df["sum"]
         fixing_price_df.fillna(0, inplace=True)
         price_var = float(fixing_price_df["weighted"])
 
