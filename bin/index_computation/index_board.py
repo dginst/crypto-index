@@ -67,7 +67,7 @@ coll_divisor_res = "index_divisor_reshaped"
 coll_raw_index = "index_level_raw"
 coll_1000_index = "index_level_1000"
 
-# creating some the empty collections within the database index
+# connecting to the collections of "index" db
 
 # collection for index weights
 collection_weights = db.index_weights

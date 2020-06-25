@@ -1343,7 +1343,7 @@ def divisor_adjustment(
     )
     divisor_array = np.array(old_divisor)
 
-    start_quarter = start_q()
+    # start_quarter = start_q()
     next_start_quarter = next_start()
 
     try:
@@ -1439,15 +1439,27 @@ def new_divisor(
     second_logic_matrix,
     Crypto_list,
     old_reb_start,
-    new_reb_start,
+    new_reb_start=None,
     db_name="index",
     coll_name="index_divisor",
 ):
 
+    if new_reb_start is None:
+
+        day_in_sec = 86400
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.strptime(today_str, "%Y-%m-%d")
+        today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+        new_reb_start = today_TS - day_in_sec
+
+    else:
+
+        new_reb_start = int(new_reb_start)
+
     # use the function to compute the initial divisor
     old_divisor_df = mongo.query_mongo(db_name, coll_name)
     old_divisor = old_divisor_df.loc[
-        old_divisor_df.Time == old_reb_start, ["Divisor Value"]
+        old_divisor_df.Time == int(old_reb_start), ["Divisor Value"]
     ]
 
     old_divisor = np.array(old_divisor)
@@ -1484,6 +1496,8 @@ def new_divisor(
 
         new_divisor = (numer.sum() / denom.sum()) * old_divisor
 
+    print(new_divisor)
+    print(new_reb_start)
     new_divisor_mat = np.column_stack((new_reb_start, new_divisor))
     header = ["Time", "Divisor Value"]
     divisor_df = pd.DataFrame(new_divisor_mat, columns=header)
