@@ -215,7 +215,7 @@ for Crypto in Crypto_Asset:
                 # checking if the matrix has missing data and if ever fixing it
                 if cp_matrix.shape[0] != reference_date_vector.size:
 
-                    cp_matrix = CW_series_fix_missing2(
+                    cp_matrix = data_setup.CW_series_fix_missing(
                         cp_matrix,
                         exchange,
                         cp,
