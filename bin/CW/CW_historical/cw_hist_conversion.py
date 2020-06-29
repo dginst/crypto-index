@@ -36,7 +36,6 @@ start = time.time()
 # ################## initial settings #####################################
 
 start_date = "01-01-2016"
-hour_in_sec = 3600
 day_in_sec = 86400
 # define today date as timestamp
 today_str = datetime.now().strftime("%Y-%m-%d")
@@ -466,13 +465,12 @@ for Crypto in Crypto_Asset:
         for cp in pair_list:
 
             cp_matrix = ex_matrix.loc[ex_matrix.Pair == cp]
-
             # checking if the matrix is not empty
             try:
 
                 if cp_matrix.shape[0] > 1:
                     print(cp)
-                    print(cp_matrix.Time)
+                    print(cp_matrix.Exchange)
                     print('ciao')
                     
                     cp_matrix = data_setup.fix_zero_value(cp_matrix)
