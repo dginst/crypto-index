@@ -129,7 +129,7 @@ tot_matrix = tot_matrix.loc[tot_matrix.Time != 1493424000]
 
 tot_matrix = tot_matrix.append(m_28_04)
 tot_matrix = tot_matrix.append(m_29_04)
-
+tot_matrix = tot_matrix.sort_values(by=['Time'])
 tot_matrix = tot_matrix.drop(columns=['key'])
 
 for Crypto in Crypto_Asset:
