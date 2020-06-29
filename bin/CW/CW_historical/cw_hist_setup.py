@@ -20,7 +20,7 @@
 
 # standard library import
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 # third party import
 import numpy as np
@@ -40,8 +40,9 @@ start_date = "01-01-2016"
 # end_date = '03-01-2020'
 
 # define today date as timestamp
-today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + 3600
+today_str = datetime.now().strftime("%Y-%m-%d")
+today = datetime.strptime(today_str, "%Y-%m-%d")
+today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC

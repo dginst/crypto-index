@@ -465,14 +465,15 @@ for Crypto in Crypto_Asset:
 
         for cp in pair_list:
 
-            print(cp)
             cp_matrix = ex_matrix.loc[ex_matrix.Pair == cp]
 
             # checking if the matrix is not empty
             try:
 
                 if cp_matrix.shape[0] > 1:
-
+                    print(cp)
+                    print('ciao')
+                
                     cp_matrix = data_setup.fix_zero_value(cp_matrix)
 
                     final_matrix = final_matrix.append(cp_matrix)
