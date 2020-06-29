@@ -29,7 +29,7 @@ from pymongo import MongoClient
 # local import
 # import cryptoindex.data_setup as data_setup
 # import cryptoindex.mongo_setup as mongo
-from cryptoindex.data_setup import (CW_series_fix_missing2, date_gen,
+from cryptoindex.data_setup import (CW_series_fix_missing, date_gen,
                                     homogenize_dead_series, homogenize_series)
 from cryptoindex.mongo_setup import query_mongo
 
@@ -215,7 +215,7 @@ for Crypto in Crypto_Asset:
                 # checking if the matrix has missing data and if ever fixing it
                 if cp_matrix.shape[0] != reference_date_vector.size:
 
-                    cp_matrix = data_setup.CW_series_fix_missing(
+                    cp_matrix = CW_series_fix_missing(
                         cp_matrix,
                         exchange,
                         cp,
