@@ -27,8 +27,11 @@ import numpy as np
 from pymongo import MongoClient
 
 # local import
-import cryptoindex.data_setup as data_setup
-import cryptoindex.mongo_setup as mongo
+# import cryptoindex.data_setup as data_setup
+# import cryptoindex.mongo_setup as mongo
+from cryptoindex.data_setup import (CW_series_fix_missing2, date_gen,
+                                    homogenize_dead_series, homogenize_series)
+from cryptoindex.mongo_setup import query_mongo
 
 start = time.time()
 # ################ initial settings #######################
@@ -42,7 +45,7 @@ today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + 3600
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
-reference_date_vector = data_setup.date_gen(start_date)
+reference_date_vector = date_gen(start_date)
 # reference_date_vector = data_setup.timestamp_to_str(reference_date_vector)
 
 pair_array = ["gbp", "usd", "cad", "jpy", "eur", "usdt", "usdc"]
@@ -101,7 +104,7 @@ collect_vol_chk = "CW_volume_checked_data"
 
 # ################ fixing the "Pair Volume" information ###########
 
-tot_matrix = mongo.query_mongo(db, collection_raw)
+tot_matrix = query_mongo(db, collection_raw)
 tot_matrix = tot_matrix.loc[tot_matrix.Time != 0]
 tot_matrix = tot_matrix.drop(columns=["Low", "High", "Open"])
 # tot_matrix['str_t'] = [str(t) for t in tot_matrix['Time']]
@@ -170,7 +173,7 @@ print("This script took: {} seconds".format(float(end - start)))
 # ############## fixing historical series main part ##############
 start = time.time()
 
-tot_matrix = mongo.query_mongo(db, collect_vol_chk)
+tot_matrix = query_mongo(db, collect_vol_chk)
 
 
 for Crypto in Crypto_Asset:
@@ -199,20 +202,20 @@ for Crypto in Crypto_Asset:
 
                 # check if the historical series start at the same date as
                 # the start date if not fill the dataframe with zero values
-                cp_matrix = data_setup.homogenize_series(
+                cp_matrix = homogenize_series(
                     cp_matrix, reference_date_vector
                 )
 
                 # check if the series stopped at certain point in
                 # the past, if yes fill with zero
-                cp_matrix = data_setup.homogenize_dead_series(
+                cp_matrix = homogenize_dead_series(
                     cp_matrix, reference_date_vector
                 )
 
                 # checking if the matrix has missing data and if ever fixing it
                 if cp_matrix.shape[0] != reference_date_vector.size:
 
-                    cp_matrix = data_setup.CW_series_fix_missing2(
+                    cp_matrix = CW_series_fix_missing2(
                         cp_matrix,
                         exchange,
                         cp,
