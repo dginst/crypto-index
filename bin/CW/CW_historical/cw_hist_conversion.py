@@ -472,8 +472,9 @@ for Crypto in Crypto_Asset:
 
                 if cp_matrix.shape[0] > 1:
                     print(cp)
+                    print(cp_matrix.Time)
                     print('ciao')
-                
+                    
                     cp_matrix = data_setup.fix_zero_value(cp_matrix)
 
                     final_matrix = final_matrix.append(cp_matrix)
