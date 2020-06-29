@@ -183,71 +183,6 @@ def homogenize_dead_series(series_to_check, reference_date_array_TS, days_to_che
     return complete_series
 
 
-# given a matrix (where_to_lookup), a date reference array and, broken date
-# array with missing date function returns two matrices:
-# the first one is about the "position" information and can be "Close Price",
-# "Crypto Volume" or "Pair Volume" where the first column contains the list of
-# date that broken array misses and the second column contains the variations
-# of the "position" info between T and T-1 the second one contains the volume
-# variations as seconda column and date as first
-
-
-def substitute_finder(broken_array, reference_array, where_to_lookup, position):
-
-    # find the elements of ref array not included in broken array (the one to
-    # check)
-    missing_item = Diff(reference_array, broken_array)
-    missing_item.sort()
-    variations = []
-    volumes = []
-    for element in missing_item:
-        # for each missing element try to find it in where to look up, if
-        # KeyError occurred meaning the searched item is not found, then append zero
-        try:
-
-            # today_alt = where_to_lookup[where_to_lookup["Time"] ==
-            # element][position]
-            today_value = float(
-                where_to_lookup[where_to_lookup["Time"] == element][position]
-            )
-            yesterday_value = float(
-                where_to_lookup[where_to_lookup["Time"]
-                                == element - 86400][position]
-            )
-            numerator = today_value - yesterday_value
-            variation = np.divide(
-                numerator,
-                yesterday_value,
-                out=np.zeros_like(numerator),
-                where=numerator != 0.0,
-            )
-            # consider crytpo vol
-            volume = float(
-                where_to_lookup[where_to_lookup["Time"]
-                                == element]["Pair Volume"]
-            )
-            variation = variation * volume
-            variations.append(variation)
-            volumes.append(volume)
-
-        except KeyError:
-
-            variations.append(0)
-            volumes.append(0)
-
-        except TypeError:
-
-            variations.append(0)
-            volumes.append(0)
-
-    volumes = np.array(volumes)
-    variations = np.array(variations)
-    variation_matrix = np.column_stack((missing_item, variations))
-    volume_matrix = np.column_stack((missing_item, volumes))
-
-    return variation_matrix, volume_matrix
-
-
 # the function allows to fix potential zero values founded in "Crypto Volume"
 # and "Pair Volume" it takes the Volume values of the previuos day and
 # substitue it into the days with 0-values
@@ -541,13 +476,13 @@ def CW_series_fix_missing(
         ex_matrix = matrix.loc[matrix.Exchange == element]
 
         # find variation of price and volume for the selected exchange
-        variations_price, volumes = substitute_finder2(
+        variations_price, volumes = substitute_finder(
             broken_array, reference_array, ex_matrix, "Close Price"
         )
-        variations_cry_vol, volumes = substitute_finder2(
+        variations_cry_vol, volumes = substitute_finder(
             broken_array, reference_array, ex_matrix, "Crypto Volume"
         )
-        variations_pair_vol, volumes = substitute_finder2(
+        variations_pair_vol, volumes = substitute_finder(
             broken_array, reference_array, ex_matrix, "Pair Volume"
         )
 
@@ -652,7 +587,7 @@ def CW_series_fix_missing(
 # variations as seconda column and date as first
 
 
-def substitute_finder2(broken_array, reference_array, where_to_lookup, position):
+def substitute_finder(broken_array, reference_array, where_to_lookup, position):
 
     # find the elements of ref array not included in
     # broken array (the one to check)
