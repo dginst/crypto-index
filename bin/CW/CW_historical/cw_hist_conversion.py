@@ -20,7 +20,7 @@
 
 # standard library import
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 # third party import
 from pymongo import MongoClient
@@ -39,10 +39,11 @@ start_date = "01-01-2016"
 hour_in_sec = 3600
 day_in_sec = 86400
 # define today date as timestamp
-today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(
-    today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
-y_TS = today_TS - day_in_sec
+today_str = datetime.now().strftime("%Y-%m-%d")
+today = datetime.strptime(today_str, "%Y-%m-%d")
+today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+y_TS = today_TS - 86400
+
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
