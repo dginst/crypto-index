@@ -206,6 +206,7 @@ def fix_zero_value(matrix):
                     matrix.loc[matrix.Time == str(
                         int(date) - 86400), "Close Price"]
                 )
+                print(previous_price)
                 matrix.loc[matrix.Time == date, "Close Price"] = previous_price
 
             previous_c_vol = np.array(
