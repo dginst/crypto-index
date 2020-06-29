@@ -119,8 +119,8 @@ def CW_raw_to_mongo(
 
     end_date = datetime.strptime(end_date, "%m-%d-%Y")
     # transform date into timestamps
-    start_date = str(int(time.mktime(start_date.timetuple())))
-    end_date = str(int(time.mktime(end_date.timetuple())))
+    start_date = str(int(start_date.replace(tzinfo=timezone.utc).timestamp()))
+    end_date = str(int(end_date.replace(tzinfo=timezone.utc).timestamp()))
     # API settings
     entrypoint = "https://api.cryptowat.ch/markets/"
     key = (
