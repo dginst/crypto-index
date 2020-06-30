@@ -365,10 +365,13 @@ stable_merged = stable_merged[
     ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]
 ]
 
+
 # reunite the dataframes and put data on MongoDB
 converted_data = conv_merged
 converted_data = converted_data.append(stable_merged)
 converted_data = converted_data.append(usd_matrix)
+
+converted_data = converted_data.sort_values(by=["Time"])
 
 data = converted_data.to_dict(orient="records")
 collection_converted.insert_many(data)
