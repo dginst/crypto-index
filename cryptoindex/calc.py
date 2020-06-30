@@ -116,7 +116,9 @@ def stop_q(start_q_array):
     last_start = start_q_array[start_q_array.size - 1]
     last_stop = datetime.fromtimestamp(last_start)
     last_stop = last_stop + delta
-    last_stop = int(last_stop.timestamp()) - 86400
+    last_stop = int(last_stop.replace(
+        tzinfo=timezone.utc).timestamp()) - day_in_sec
+
     stop_q_array = np.append(stop_q_array, last_stop)
 
     return stop_q_array
@@ -302,9 +304,11 @@ def perc_volumes_per_exchange(
 
     day_in_sec = 86400
     hour_in_sec = 3600
-    today = datetime.now().strftime("%Y-%m-%d")
-    today_TS = int(datetime.strptime(
-        today, "%Y-%m-%d").timestamp()) + hour_in_sec
+
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.strptime(today_str, "%Y-%m-%d")
+    today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+
     yesterday = today_TS - day_in_sec
     board_eve = np.append(board_eve, yesterday)
 
@@ -468,10 +472,10 @@ def daily_perc_volumes(
 ):
 
     # day_in_sec = 86400
-    hour_in_sec = 3600
-    today = datetime.now().strftime("%Y-%m-%d")
-    today_TS = int(datetime.strptime(
-        today, "%Y-%m-%d").timestamp()) + hour_in_sec
+    # hour_in_sec = 3600
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.strptime(today_str, "%Y-%m-%d")
+    today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
     # yesterday = today_TS - day_in_sec
 
     if curr_board_eve is None:
@@ -755,8 +759,9 @@ def ewma_period_fraction(
     board_eve_array = day_before_board()
 
     ##
-    today = datetime.now().strftime("%Y-%m-%d")
-    today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + 3600
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.strptime(today_str, "%Y-%m-%d")
+    today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
     yesterday = today_TS - 86400
     board_eve_array = np.append(board_eve_array, yesterday)
     ##
