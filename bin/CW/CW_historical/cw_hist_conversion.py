@@ -383,6 +383,8 @@ print("This script took: {} seconds".format(float(end - start)))
 # #####################################################################
 # ############### LOGIC MATRIX OF KEYS ################################
 
+start = time.time()
+
 # define database name and collection name
 db_name = "index"
 collection_converted_data = "CW_converted_data"
@@ -430,6 +432,10 @@ data = key_df.to_dict(orient="records")
 collection_CW_key.insert_many(data)
 collection_EXC_key.insert_many(data)
 
+end = time.time()
+
+print("This script took: {} seconds".format(float(end - start)))
+
 # ################ ZERO VOLUMES VALUE FILLING #####################
 
 # define database name and collection name
@@ -438,6 +444,7 @@ collection_converted_data = "CW_converted_data"
 
 # retriving the needed information on MongoDB
 matrix = mongo.query_mongo(db_name, collection_converted_data)
+print("query done")
 matrix["Crypto"] = matrix["Pair"].str[:3]
 head = [
     "Time",
@@ -475,7 +482,7 @@ for Crypto in Crypto_Asset:
                     print(cp)
                     print(cp_matrix.Exchange)
                     print('ciao')
-                    
+
                     cp_matrix = data_setup.fix_zero_value(cp_matrix)
 
                     final_matrix = final_matrix.append(cp_matrix)
