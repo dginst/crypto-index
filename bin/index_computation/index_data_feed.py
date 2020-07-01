@@ -49,9 +49,9 @@ day_in_sec = 86400
 
 
 # set today
-today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(
-    today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
+today_str = datetime.now().strftime("%Y-%m-%d")
+today = datetime.strptime(today_str, "%Y-%m-%d")
+today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
 
 
 # define the array containing the date where the index uses CW feed data

@@ -293,6 +293,7 @@ collection_stable = "stable_coin_rates"
 # querying the data from mongo
 matrix_rate = mongo.query_mongo(db, collection_rates)
 matrix_rate = matrix_rate.rename({"Date": "Time"}, axis="columns")
+matrix_rate = matrix_rate.loc[matrix_rate.Time != "1451520000"]
 matrix_data = mongo.query_mongo(db, collection_data)
 matrix_rate_stable = mongo.query_mongo(db, collection_stable)
 

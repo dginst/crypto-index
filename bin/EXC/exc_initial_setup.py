@@ -21,9 +21,9 @@ hour_in_sec = 3600
 day_in_sec = 86400
 
 # set today
-today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(
-    today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
+today_str = datetime.now().strftime("%Y-%m-%d")
+today = datetime.strptime(today_str, "%Y-%m-%d")
+today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
 y_TS = today_TS - day_in_sec
 
 # creating the timestamp array at 12:00 AM

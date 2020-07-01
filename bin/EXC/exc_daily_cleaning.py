@@ -49,9 +49,9 @@ day_in_sec = 86400
 start_period = "01-01-2016"
 
 # set today
-today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(
-    today, "%Y-%m-%d").timestamp()) + hour_in_sec * 2
+today_str = datetime.now().strftime("%Y-%m-%d")
+today = datetime.strptime(today_str, "%Y-%m-%d")
+today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
 y_TS = today_TS - day_in_sec
 two_before_TS = y_TS - day_in_sec
 print(y_TS)

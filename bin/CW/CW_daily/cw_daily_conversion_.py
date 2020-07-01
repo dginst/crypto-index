@@ -34,8 +34,9 @@ import cryptoindex.mongo_setup as mongo
 start_date = "01-01-2016"
 
 # define today date as timestamp
-today = datetime.now().strftime("%Y-%m-%d")
-today_TS = int(datetime.strptime(today, "%Y-%m-%d").timestamp()) + 3600 * 2
+today_str = datetime.now().strftime("%Y-%m-%d")
+today = datetime.strptime(today_str, "%Y-%m-%d")
+today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
 y_TS = today_TS - 86400
 two_before_TS = y_TS - 86400
 
@@ -172,7 +173,8 @@ total_weights = (
     + usdt_poloniex["Pair Volume"]
 )
 
-usdt_rates = (kraken_weighted + bittrex_weighted + poloniex_weighted) / total_weights
+usdt_rates = (kraken_weighted + bittrex_weighted
+              + poloniex_weighted) / total_weights
 
 usdt_rates = 1 / usdt_rates
 
@@ -237,7 +239,8 @@ total_weights = (
     + usdc_poloniex["Pair Volume"]
 )
 
-usdc_rates = (kraken_weighted + coinbase_weighted + poloniex_weighted) / total_weights
+usdc_rates = (kraken_weighted + coinbase_weighted
+              + poloniex_weighted) / total_weights
 usdc_rates = 1 / usdc_rates
 
 # tranforming the data structure into a dataframe
@@ -267,7 +270,7 @@ date_tot = data_setup.date_gen(start_date)
 # converting the timestamp format date into string
 date_tot = [str(single_date) for single_date in date_tot]
 # searching only the last five days
-last_five_days = date_tot[(len(date_tot) - 5) : len(date_tot)]
+last_five_days = date_tot[(len(date_tot) - 5): len(date_tot)]
 
 # ################# DAILY DATA CONVERSION MAIN PART ##################
 
@@ -289,7 +292,8 @@ matrix_rate_stable = mongo.query_mongo(db, collection_stable, query_stable)
 # creating a column containing the fiat currency
 matrix_rate["fiat"] = [x[:3].lower() for x in matrix_rate["Currency"]]
 matrix_data["fiat"] = [x[3:].lower() for x in matrix_data["Pair"]]
-matrix_rate_stable["fiat"] = [x[:4].lower() for x in matrix_rate_stable["Currency"]]
+matrix_rate_stable["fiat"] = [x[:4].lower()
+                              for x in matrix_rate_stable["Currency"]]
 
 # ############ creating a USD subset which will not be converted #########
 
@@ -331,15 +335,18 @@ stablecoin = ["usdc", "usdt"]
 stablecoin_matrix = matrix_data.loc[matrix_data["fiat"].isin(stablecoin)]
 
 # merging the dataset on 'Time' and 'fiat' column
-stable_merged = pd.merge(stablecoin_matrix, matrix_rate_stable, on=["Time", "fiat"])
+stable_merged = pd.merge(
+    stablecoin_matrix, matrix_rate_stable, on=["Time", "fiat"])
 
 # converting the prices in usd
-stable_merged["Close Price"] = stable_merged["Close Price"] / stable_merged["Rate"]
+stable_merged["Close Price"] = stable_merged["Close Price"] / \
+    stable_merged["Rate"]
 stable_merged["Close Price"] = stable_merged["Close Price"].replace(
     [np.inf, -np.inf], np.nan
 )
 stable_merged["Close Price"].fillna(0, inplace=True)
-stable_merged["Pair Volume"] = stable_merged["Pair Volume"] / stable_merged["Rate"]
+stable_merged["Pair Volume"] = stable_merged["Pair Volume"] / \
+    stable_merged["Rate"]
 stable_merged["Pair Volume"] = stable_merged["Pair Volume"].replace(
     [np.inf, -np.inf], np.nan
 )
@@ -375,7 +382,7 @@ matrix = mongo.query_mongo(database, collection_final, query_dict)
 
 # checking the time column
 date_list = np.array(matrix["Time"])
-last_five_days_mongo = date_list[(len(date_list) - 5) : len(date_list)]
+last_five_days_mongo = date_list[(len(date_list) - 5): len(date_list)]
 
 # finding the date to download as difference between complete array of date and
 # date now stored on MongoDB
