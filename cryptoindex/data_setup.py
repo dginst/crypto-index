@@ -332,7 +332,7 @@ def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N"):
         for j, element in enumerate(Exchange_Matrix[:, 0]):
 
             to_date = datetime.strptime(element, "%Y-%m-%d")
-            today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+            today_TS = int(to_date.replace(tzinfo=timezone.utc).timestamp())
 
             Exchange_Matrix[j, 0] = time_stamp
 
@@ -471,6 +471,9 @@ def CW_series_fix_missing(
     # defining the list of exchanges that actually trade the
     # specified crypto-fiat pair
     exc_with_pair = list(matrix["Exchange"].unique())
+    #
+    if exchange == "kraken" and crypto_fiat_pair == "btcusd":
+        print(exc_with_pair)
 
     for element in exc_with_pair:
 
@@ -549,7 +552,7 @@ def CW_series_fix_missing(
     # print(merged.loc[merged['Time'].isin(missing_item_time)])
     merged.fillna(0, inplace=True)
     # print(merged.head(10))
-    # print(merged.loc[merged['Time'].isin(missing_item_time)])
+    print(merged.loc[merged['Time'].isin(missing_item_time)])
 
     for element in missing_item_time:
 
@@ -566,15 +569,25 @@ def CW_series_fix_missing(
         )
         # crypto_pair_var = float(fixing_pair_vol_df.loc[fixing_pair_vol_df['missing date'] ==
         #                                                element, 'weighted'])
-        merged.loc[merged.Time == element, "Close Price"] = float(
-            prev_val["Close Price"]
-        ) * (1 + price_var)
-        new_price = float(merged.loc[merged.Time == element, "Close Price"])
-        merged.loc[merged.Time == element, "Crypto Volume"] = float(
-            prev_val["Crypto Volume"]
-        ) * (1 + crypto_vol_var)
-        new_vol = float(merged.loc[merged.Time == element, "Crypto Volume"])
-        merged.loc[merged.Time == element, "Pair Volume"] = new_price * new_vol
+
+        if int(element) == 1451606400:
+
+            merged.loc[merged.Time == element, "Close Price"] = 0.0
+            merged.loc[merged.Time == element, "Crypto Volume"] = 0.0
+            merged.loc[merged.Time == element, "Pair Volume"] = 0.0
+
+        else:
+
+            merged.loc[merged.Time == element, "Close Price"] = float(
+                prev_val["Close Price"]
+            ) * (1 + price_var)
+            new_price = float(merged.loc[merged.Time == element, "Close Price"])
+            merged.loc[merged.Time == element, "Crypto Volume"] = float(
+                prev_val["Crypto Volume"]
+            ) * (1 + crypto_vol_var)
+            new_vol = float(merged.loc[merged.Time == element, "Crypto Volume"])
+            merged.loc[merged.Time == element,
+                       "Pair Volume"] = new_price * new_vol
 
     # print(merged.loc[merged['Time'].isin(missing_item_time)])
 

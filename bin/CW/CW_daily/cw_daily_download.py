@@ -70,7 +70,7 @@ date_tot = [str(single_date) for single_date in date_tot]
 
 # searching only the last five days
 last_five_days = date_tot[(len(date_tot) - 5) : len(date_tot)]
-
+print(last_five_days)
 # defining the MongoDB path where to look for the rates
 database = "index"
 collection = "CW_rawdata"
@@ -83,7 +83,7 @@ matrix = mongo.query_mongo(database, collection, query)
 date_list = np.array(matrix["Time"])
 last_five_days_mongo = date_list[(len(date_list) - 5) : len(date_list)]
 last_five_days_mongo = [str(single_date) for single_date in last_five_days_mongo]
-
+print(last_five_days_mongo)
 # finding the date to download as difference between
 # complete array of date and date now stored on MongoDB
 date_to_add = data_setup.Diff(last_five_days, last_five_days_mongo)
