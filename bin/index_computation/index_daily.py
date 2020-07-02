@@ -69,46 +69,32 @@ coll_1000_index = "index_level_1000"
 # creating some the empty collections within the database index
 
 # collection for index weights
-db.index_weights.create_index([("id", -1)])
 collection_weights = db.index_weights
 # collection for crypto prices
-db.crypto_price.create_index([("id", -1)])
 collection_price = db.crypto_price
 # collection for crytpo volume
-db.crypto_volume.create_index([("id", -1)])
 collect_vol = db.crypto_volume
 # collection for price returns
-db.crypto_price_return.create_index([("id", -1)])
 collection_price_ret = db.crypto_price_return
 # collection for EWMA
-db.index_EWMA.create_index([("id", -1)])
 collection_EWMA = db.index_EWMA
 # collection for first logic matrix
-db.index_logic_matrix_one.create_index([("id", -1)])
 collection_logic_one = db.index_logic_matrix_one
 # collection for second logic matrix
-db.index_logic_matrix_two.create_index([("id", -1)])
 collection_logic_two = db.index_logic_matrix_two
 # collection for EWMA double checked with both logic matrix
-db.index_EWMA_logic_checked.create_index([("id", -1)])
 collection_EWMA_check = db.index_EWMA_logic_checked
 # collection for the divisor array
-db.index_divisor.create_index([("id", -1)])
 collection_divisor = db.index_divisor
 # collection for the reshaped divisor array
-db.index_divisor_reshaped.create_index([("id", -1)])
 collection_divisor_reshaped = db.index_divisor_reshaped
 # collection for the syntethic matrix
-db.index_synth_matrix.create_index([("id", -1)])
 collection_synth = db.index_synth_matrix
 # collection for the relative syntethic matrix
-db.index_rel_synth_matrix.create_index([("id", -1)])
 collection_relative_synth = db.index_rel_synth_matrix
 # collection for index level raw
-db.index_raw_level.create_index([("id", -1)])
 collection_index_raw = db.index_level_raw
 # collection for index level base 1000
-db.index_level_1000.create_index([("id", -1)])
 collection_index_1000 = db.index_level_1000
 
 # ################ DATE SETTINGS ########################
