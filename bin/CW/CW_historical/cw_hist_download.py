@@ -66,7 +66,7 @@ Exchanges = [
 # ################# setup MongoDB connection #####################
 
 # connecting to mongo in local
-connection = MongoClient("localhost", 27017)
+# connection = MongoClient("localhost", 27017)
 # creating the database called index
 db = connection.index
 
@@ -74,7 +74,7 @@ db = connection.index
 db.CW_rawdata.drop()
 
 # creating the empty collection rawdata within the database index
-db.rawdata.create_index([("id", -1)])
+# db.rawdata.create_index([("id", -1)])
 collection_raw = db.CW_rawdata
 
 # ################# downloading and storing part ################
