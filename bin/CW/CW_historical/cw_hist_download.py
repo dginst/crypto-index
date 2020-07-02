@@ -66,7 +66,7 @@ Exchanges = [
 # ################# setup MongoDB connection #####################
 
 # connecting to mongo in local
-# connection = MongoClient("localhost", 27017)
+connection = MongoClient("localhost", 27017)
 # creating the database called index
 db = connection.index
 
