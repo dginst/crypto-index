@@ -17,7 +17,7 @@
 
 # standard library import
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 # third party import
 from pymongo import MongoClient
