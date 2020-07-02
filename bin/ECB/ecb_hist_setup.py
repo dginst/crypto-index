@@ -39,7 +39,7 @@ db = connection.index
 db.ecb_clean.drop()
 
 # creating the empty collection rawdata within the database index
-db.ecb_clean.create_index([("id", -1)])
+# db.ecb_clean.create_index([("id", -1)])
 collection_ECB_clean = db.ecb_clean
 
 # ECB rates manipulation ###################################
