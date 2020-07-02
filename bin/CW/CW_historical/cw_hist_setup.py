@@ -91,11 +91,11 @@ db.CW_cleandata.drop()
 db.CW_volume_checked_data.drop()
 
 # creating the empty collection "cleandata" within the database index
-#db.CW_cleandata.create_index([("id", -1)])
+# db.CW_cleandata.create_index([("id", -1)])
 collection_clean = db.CW_cleandata
 
 # creating the empty collection "CW_volume_checked_data" within the database index
-#db.CW_volume_checked_data.create_index([("id", -1)])
+# db.CW_volume_checked_data.create_index([("id", -1)])
 collect_vol = db.CW_volume_checked_data
 
 # defining the database name and the collection name where to look for data
