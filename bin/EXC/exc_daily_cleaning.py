@@ -1,5 +1,5 @@
 # standard library import
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict
 
 # third party import
