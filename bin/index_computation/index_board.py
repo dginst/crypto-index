@@ -135,8 +135,9 @@ next_rebalance_date = calc.next_start()
 quarterly_date = calc.quarterly_period()
 
 # defining time variables
-last_reb_start = str(int(rebalance_start_date[len(rebalance_start_date) - 1]))
-next_reb_stop = str(int(rebalance_stop_date[len(rebalance_stop_date) - 1]))
+curr_reb_start = str(int(rebalance_start_date[len(rebalance_start_date) - 1]))
+last_reb_start = str(int(rebalance_start_date[len(rebalance_start_date) - 2]))
+next_reb_stop = str(int(rebalance_stop_date[len(rebalance_stop_date) - 2]))
 curr_board_eve = str(int(board_date_eve[len(board_date_eve) - 1]))
 
 print(last_reb_start)
