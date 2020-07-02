@@ -444,8 +444,15 @@ db_name = "index"
 collection_converted_data = "CW_converted_data"
 
 # retriving the needed information on MongoDB
-matrix = mongo.query_mongo(db_name, collection_converted_data)
+matrix = mongo.query_mongo2(db_name, collection_converted_data)
 print("query done")
+
+matrix = pd.DataFrame(list(matrix))
+
+print('dataframe done')
+
+matrix = matrix.drop(columns="_id")
+
 matrix["Crypto"] = matrix["Pair"].str[:3]
 head = [
     "Time",

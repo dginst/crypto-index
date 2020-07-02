@@ -40,3 +40,14 @@ def query_mongo(database, collection, query_dict=None):
             df = []
 
     return df
+
+def query_mongo2(database, collection):
+
+    # defining the variable that allows to work with MongoDB
+    db = connection[database]
+    coll = db[collection]
+
+    call = coll.find()
+
+    return call
+    
