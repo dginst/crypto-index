@@ -146,10 +146,12 @@ rebalance_stop_date = calc.stop_q(rebalance_start_date)
 board_date = calc.board_meeting_day()
 board_date_eve = calc.day_before_board()
 next_rebalance_date = calc.next_start()
-
+print(rebalance_start_date)
+print(next_rebalance_date)
 # defining time variables
 last_reb_start = str(int(rebalance_start_date[len(rebalance_start_date) - 1]))
 next_reb_stop = str(int(rebalance_stop_date[len(rebalance_stop_date) - 1]))
+last_reb_stop = str(int(rebalance_stop_date[len(rebalance_stop_date) - 2]))
 curr_board_eve = str(int(board_date_eve[len(board_date_eve) - 1]))
 
 print(next_reb_stop)
@@ -427,7 +429,7 @@ second_logic_matrix = calc.second_logic_matrix(
     reference_date_vector,
     time_column="Y",
 )
-
+print(second_logic_matrix)
 # computing the ewma checked with both the first and second logic matrices
 double_checked_EWMA = calc.ewma_second_logic_check(
     first_logic_matrix,
@@ -473,7 +475,8 @@ print(second_logic_matrix)
 # changing the "Time" column of the weights in order to
 # display the quarter start date of each row
 weights_for_period = weights_for_board
-if y_TS >= int(curr_board_eve) and y_TS <= int(next_reb_stop):
+print(weights_for_period)
+if y_TS >= int(curr_board_eve) and y_TS <= int(last_reb_stop):
 
     weights_for_period['Time'] = next_rebalance_date[1:]
 
