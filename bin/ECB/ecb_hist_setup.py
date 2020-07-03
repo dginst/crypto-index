@@ -39,7 +39,7 @@ db = connection.index
 db.ecb_clean.drop()
 
 # creating the empty collection rawdata within the database index
-# db.ecb_clean.create_index([("id", -1)])
+db.ecb_clean.create_index([("id", -1)])
 collection_ECB_clean = db.ecb_clean
 
 # ECB rates manipulation ###################################
@@ -47,7 +47,8 @@ collection_ECB_clean = db.ecb_clean
 # makes the raw data clean through the ECB_setup function
 try:
 
-    mongo_clean = data_setup.ECB_setup(key_curr_vector, start_period, End_Period)
+    mongo_clean = data_setup.ECB_setup(
+        key_curr_vector, start_period, End_Period)
 
 except UnboundLocalError:
 

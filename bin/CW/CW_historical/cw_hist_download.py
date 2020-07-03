@@ -74,7 +74,7 @@ db = connection.index
 db.CW_rawdata.drop()
 
 # creating the empty collection rawdata within the database index
-# db.rawdata.create_index([("id", -1)])
+db.rawdata.create_index([("id", -1)])
 collection_raw = db.CW_rawdata
 
 # ################# downloading and storing part ################

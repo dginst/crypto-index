@@ -94,11 +94,11 @@ db.CW_keys.drop()
 db.EXC_keys.drop()
 
 # creating the empty collection cleandata within the database index
-# db.CW_final_data.create_index([("id", -1)])
-# db.CW_converted_data.create_index([("id", -1)])
-# db.stable_coin_rates.create_index([("id", -1)])
-# db.CW_keys.create_index([("id", -1)])
-# db.EXC_keys.create_index([("id", -1)])
+db.CW_final_data.create_index([("id", -1)])
+db.CW_converted_data.create_index([("id", -1)])
+db.stable_coin_rates.create_index([("id", -1)])
+db.CW_keys.create_index([("id", -1)])
+db.EXC_keys.create_index([("id", -1)])
 collection_stable = db.stable_coin_rates
 collection_final_data = db.CW_final_data
 collection_converted = db.CW_converted_data
