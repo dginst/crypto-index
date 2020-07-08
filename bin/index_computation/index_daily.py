@@ -381,7 +381,7 @@ weights = mongo.query_mongo(db_name, coll_weights)
 yesterday_synt_matrix = mongo.query_mongo(
     db_name, coll_synt, {"Date": two_before_human[0]}
 )
-yesterday_synt_matrix = yesterday_synt_matrix.drop(columns=["Date"])
+yesterday_synt_matrix = yesterday_synt_matrix.drop(columns=["Date", "Time"])
 daily_return = np.array(price_ret.loc[:, Crypto_Asset])
 new_synt = (1 + daily_return) * np.array(yesterday_synt_matrix)
 daily_synt = pd.DataFrame(new_synt, columns=Crypto_Asset)
