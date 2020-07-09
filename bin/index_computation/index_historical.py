@@ -124,7 +124,7 @@ collection_index_level_raw = db.index_level_raw
 # define the start date as MM-DD-YYYY
 start_date = "01-01-2016"
 
-# define today date as timestamp
+# define today and yesterady date as timestamp
 today_str = datetime.now().strftime("%Y-%m-%d")
 today = datetime.strptime(today_str, "%Y-%m-%d")
 today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
@@ -132,10 +132,8 @@ y_TS = today_TS - 86400
 
 # define end date as as MM-DD-YYYY
 end_date = datetime.now().strftime("%m-%d-%Y")
-# or
-# end_date =
 
-# define the variable containing all the date from start_date to today.
+# define the variable containing all the date from start_date to yesterday.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
 reference_date_vector = data_setup.date_gen(start_date, end_date)
 
@@ -147,19 +145,24 @@ board_date = calc.board_meeting_day()
 board_date_eve = calc.day_before_board()
 next_rebalance_date = calc.next_start()
 print(rebalance_start_date)
+print(rebalance_stop_date)
 print(next_rebalance_date)
+print(board_date_eve)
 # defining time variables
 last_reb_start = str(int(rebalance_start_date[len(rebalance_start_date) - 1]))
 next_reb_stop = str(int(rebalance_stop_date[len(rebalance_stop_date) - 1]))
 last_reb_stop = str(int(rebalance_stop_date[len(rebalance_stop_date) - 2]))
 curr_board_eve = str(int(board_date_eve[len(board_date_eve) - 1]))
-
+print(last_reb_start)
 print(next_reb_stop)
 print(curr_board_eve)
 # call the function that creates a object containing the
 # couple of quarterly start-stop date
 quarterly_date = calc.quarterly_period()
-
+next_quarterly_date = calc.next_quarterly_period(initial_val=0)
+for i, j in next_quarterly_date:
+    print(i)
+    print(j)
 # #################### MAIN PART ###############################
 
 
@@ -197,7 +200,7 @@ for CryptoA in Crypto_Asset:
         ccy_pair_array.append(CryptoA.lower() + pair)
 
     for exchange in Exchanges:
-        print(exchange)
+        # print(exchange)
         # initialize the matrices that will contain the data related to all
         # currencypair for the single exchange
         Ccy_Pair_PriceVolume = np.matrix([])
@@ -205,7 +208,6 @@ for CryptoA in Crypto_Asset:
         Ccy_Pair_Price = np.matrix([])
 
         for cp in ccy_pair_array:
-            print(cp)
 
             crypto = cp[:3]
             fiat_curr = cp[3:]
@@ -390,7 +392,7 @@ for CryptoA in Crypto_Asset:
         Crypto_Asset_Volume = np.column_stack(
             (Crypto_Asset_Volume, Exchange_Volume))
 
-print(exc_vol_tot)
+# print(exc_vol_tot)
 # turn prices and volumes into pandas dataframe
 Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns=Crypto_Asset)
 Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns=Crypto_Asset)
@@ -413,7 +415,8 @@ price_ret["Time"] = reference_date_vector
 # because it refers to a period that has not been yet calculated
 # (and will be this way until today == new quarter start_date)
 first_logic_matrix = pd.DataFrame(logic_matrix_one, columns=Crypto_Asset)
-first_logic_matrix["Time"] = rebalance_stop_date[0: len(rebalance_stop_date)]
+
+first_logic_matrix["Time"] = next_rebalance_date[1: len(next_rebalance_date)]
 print(first_logic_matrix)
 
 # computing the Exponential Moving Weighted Average of the selected period
@@ -437,7 +440,7 @@ double_checked_EWMA = calc.ewma_second_logic_check(
     ewma_df,
     reference_date_vector,
     Crypto_Asset,
-    time_column="Y",
+    time_column="Y"
 )
 
 # computing the Weights that each CryptoAsset should have
@@ -448,6 +451,7 @@ weights_for_board = calc.quarter_weights(
     double_checked_EWMA, board_date_eve[1:], Crypto_Asset
 )
 
+print(weights_for_board)
 
 # compute the syntethic matrix and the relative syntethic matrix
 syntethic = calc.quarterly_synt_matrix(
@@ -463,8 +467,8 @@ syntethic_relative_matrix = calc.relative_syntethic_matrix(
 
 # changing the "Time" column of the second logic matrix
 # using the rebalance date
-second_logic_matrix["Time"] = next_rebalance_date[: len(
-    next_rebalance_date) - 1]
+second_logic_matrix["Time"] = next_rebalance_date[1: len(
+    next_rebalance_date)]
 
 if y_TS == rebalance_start_date[len(rebalance_start_date) - 1]:
 
