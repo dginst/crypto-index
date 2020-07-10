@@ -94,7 +94,7 @@ def test_stop_q():
     # dates in epoch timestamp of the dates:
     # respectively:  03-31-2019', '06-30-2019', '09-30-2019', '12-31-2019'
     # (mm:dd:yyyy format)
-    ts_stopdates = np.array([1.5539904e09, 1.5618528e09, 1.5698016e09, 1.5777540e09])
+    ts_stopdates = np.array([1.5539904e09, 1.5618528e09, 1.5698016e09, 1577750400])
 
     stop_date = calc.stop_q(ts_dates)
 
@@ -160,7 +160,7 @@ def test_next_quarterly_peiod():
     check_range = [
         (1554076800, 1561852800),
         (1561939200, 1569801600),
-        (1569888000, 1577754000),
+        (1569888000, 1577750400),
     ]
 
     test_range = calc.next_quarterly_period(start_date, stop_date)
@@ -200,7 +200,7 @@ def test_next_start():
     stop_date = "01-01-2020"
 
     st_date = np.array(
-        [1.5463008e09, 1.5540768e09, 1.5619392e09, 1.5698880e09, 1.5778404e09]
+        [1.5463008e09, 1.5540768e09, 1.5619392e09, 1.5698880e09, 1577836800]
     )
     st_gen = calc.next_start(start_date, stop_date)
 
@@ -210,7 +210,7 @@ def test_next_start():
 
     start = "01-01-2019"
     ts_gen = calc.next_start(start)
-    true_stop = 1593561600
+    true_stop = 1601510400
 
     assert true_stop == ts_gen[-1]
 

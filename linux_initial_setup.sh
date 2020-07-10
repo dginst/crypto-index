@@ -5,7 +5,7 @@ sudo apt install python3-pip
 
 #Package Download
 
-pip3 install --user pandas requests pymongo
+pip3 install --user pandas requests pymongo pytest . 
 
 #Install MongoDB
 

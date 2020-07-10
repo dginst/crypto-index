@@ -114,7 +114,8 @@ def stop_q(start_q_array):
 
     delta = relativedelta(months=3)
     last_start = start_q_array[start_q_array.size - 1]
-    last_stop = datetime.fromtimestamp(last_start)
+    last_stop = datetime.utcfromtimestamp(last_start)
+    print(last_stop)
     last_stop = last_stop + delta
     last_stop = int(last_stop.replace(
         tzinfo=timezone.utc).timestamp()) - day_in_sec
