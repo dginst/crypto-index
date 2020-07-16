@@ -207,3 +207,49 @@ def mongo_coll_drop(operation):
         db.EXC_cleandata.drop()
 
     return None
+
+
+def df_reorder(df_to_reorder, column_set):
+
+    if column_set == "complete":
+
+        reordered_df = df_to_reorder[
+            [
+                "Date",
+                "Time",
+                "BTC",
+                "ETH",
+                "XRP",
+                "LTC",
+                "BCH",
+                "EOS",
+                "ETC",
+                "ZEC",
+                "ADA",
+                "XLM",
+                "XMR",
+                "BSV",
+            ]
+        ]
+
+    elif column_set == "divisor":
+
+        reordered_df = df_to_reorder[
+            [
+                "Date",
+                "Time",
+                "Divisor Value"
+            ]
+        ]
+
+    elif column_set == "index":
+
+        reordered_df = df_to_reorder[
+            [
+                "Date",
+                "Time",
+                "Index Value"
+            ]
+        ]
+
+    return reordered_df

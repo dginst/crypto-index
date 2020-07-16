@@ -10,8 +10,10 @@ import pandas as pd
 import cryptoindex.mongo_setup as mongo
 import cryptoindex.data_setup as data_setup
 import cryptoindex.calc as calc
-from cryptoindex.mongo_setup import mongo_coll, mongo_coll_drop, mongo_indexing
-from cryptoindex.config import START_DATE, MONGO_DICT, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME
+from cryptoindex.mongo_setup import (
+    mongo_coll, mongo_coll_drop, mongo_indexing)
+from cryptoindex.config import (
+    START_DATE, MONGO_DICT, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME)
 
 # ############# INITIAL SETTINGS ################################
 
@@ -431,47 +433,13 @@ human_date = data_setup.timestamp_to_human(reference_date_vector)
 
 # put the "Crypto_Asset_Prices" dataframe on MongoDB
 Crypto_Asset_Prices["Date"] = human_date
-price_up = Crypto_Asset_Prices[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
+price_up = mongo.df_reorder(Crypto_Asset_Prices, column_set="complete")
 price_up = price_up.to_dict(orient="records")
 collection_dict_upload.get("collection_price").insert_many(price_up)
 
 # put the "Crypto_Asset_Volumes" dataframe on MongoDB
 Crypto_Asset_Volume["Date"] = human_date
-volume_up = Crypto_Asset_Volume[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
+volume_up = mongo.df_reorder(Crypto_Asset_Volume, column_set="complete")
 volume_up = volume_up.to_dict(orient="records")
 collection_dict_upload.get("collection_volume").insert_many(volume_up)
 
@@ -481,143 +449,41 @@ collection_dict_upload.get("collection_all_exc_vol").insert_many(exc_vol_up)
 
 # put the "price_ret" dataframe on MongoDB
 price_ret["Date"] = human_date
-price_ret_up = price_ret[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
+price_ret_up = mongo.df_reorder(price_ret, column_set="complete")
 price_ret_up = price_ret_up.to_dict(orient="records")
 collection_dict_upload.get("collection_price_ret").insert_many(price_ret_up)
 
 # put the "weights" dataframe on MongoDB
 weight_human_date = data_setup.timestamp_to_human(weights_for_board["Time"])
 weights_for_board["Date"] = weight_human_date
-weights_for_board = weights_for_board[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
+weights_for_board = mongo.df_reorder(weights_for_board, column_set="complete")
 up_weights = weights_for_board.to_dict(orient="records")
 collection_dict_upload.get("collection_weights").insert_many(up_weights)
 
 # put the first logic matrix on MongoDB
 first_date = data_setup.timestamp_to_human(first_logic_matrix["Time"])
 first_logic_matrix["Date"] = first_date
-first_up = first_logic_matrix[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
+first_up = mongo.df_reorder(first_logic_matrix, column_set="complete")
 first_up = first_up.to_dict(orient="records")
 collection_dict_upload.get("collection_logic_one").insert_many(first_up)
 
 # put the second logic matrix on MongoDB
 second_date = data_setup.timestamp_to_human(second_logic_matrix["Time"])
 second_logic_matrix["Date"] = second_date
-second_up = second_logic_matrix[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
+second_up = mongo.df_reorder(second_logic_matrix, column_set="complete")
 second_up = second_up.to_dict(orient="records")
 collection_dict_upload.get("collection_logic_two").insert_many(second_up)
 
 # put the EWMA dataframe on MongoDB
 ewma_df["Date"] = human_date
 ewma_df["Time"] = reference_date_vector
-ewma_df_up = ewma_df[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
+ewma_df_up = mongo.df_reorder(ewma_df, column_set="complete")
 ewma_df_up = ewma_df_up.to_dict(orient="records")
 collection_dict_upload.get("collection_EWMA").insert_many(ewma_df_up)
 
 # put the double checked EWMA on MongoDB
 double_checked_EWMA["Date"] = human_date
-double_EWMA_up = double_checked_EWMA[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
+double_EWMA_up = mongo.df_reorder(double_checked_EWMA, column_set="complete")
 double_EWMA_up = double_EWMA_up.to_dict(orient="records")
 collection_dict_upload.get("collection_EWMA_check").insert_many(double_EWMA_up)
 
@@ -625,24 +491,7 @@ collection_dict_upload.get("collection_EWMA_check").insert_many(double_EWMA_up)
 syntethic["Date"] = human_date
 syntethic["Time"] = reference_date_vector
 syntethic_up = syntethic
-syntethic_up = syntethic_up[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
+syntethic_up = mongo.df_reorder(syntethic_up, column_set="complete")
 syntethic_up = syntethic_up.to_dict(orient="records")
 collection_dict_upload.get("collection_synth").insert_many(syntethic_up)
 
@@ -650,31 +499,14 @@ collection_dict_upload.get("collection_synth").insert_many(syntethic_up)
 syntethic_relative_matrix["Date"] = human_date
 syntethic_relative_matrix["Time"] = reference_date_vector
 synth_up = syntethic_relative_matrix
-synth_up = synth_up[
-    [
-        "Date",
-        "Time",
-        "BTC",
-        "ETH",
-        "XRP",
-        "LTC",
-        "BCH",
-        "EOS",
-        "ETC",
-        "ZEC",
-        "ADA",
-        "XLM",
-        "XMR",
-        "BSV",
-    ]
-]
+synth_up = mongo.df_reorder(synth_up, column_set="complete")
 synth_up = synth_up.to_dict(orient="records")
 collection_dict_upload.get("collection_relative_synth").insert_many(synth_up)
 
 # put the divisor array on MongoDB
 divisor_date = data_setup.timestamp_to_human(divisor_array["Time"])
 divisor_array["Date"] = divisor_date
-divisor_up = divisor_array[["Date", "Time", "Divisor Value"]]
+divisor_up = mongo.df_reorder(divisor_array, column_set="divisor")
 divisor_up = divisor_up.to_dict(orient="records")
 collection_dict_upload.get(
     "collection_divisor").insert_many(divisor_up)
@@ -682,7 +514,7 @@ collection_dict_upload.get(
 # put the reshaped divisor array on MongoDB
 reshaped_divisor_date = data_setup.timestamp_to_human(reshaped_divisor["Time"])
 reshaped_divisor["Date"] = reshaped_divisor_date
-reshaped_divisor_up = reshaped_divisor[["Date", "Time", "Divisor Value"]]
+reshaped_divisor_up = mongo.df_reorder(reshaped_divisor, column_set="divisor")
 reshaped_divisor_up = reshaped_divisor_up.to_dict(orient="records")
 collection_dict_upload.get(
     "collection_divisor_reshaped").insert_many(reshaped_divisor_up)
@@ -690,7 +522,7 @@ collection_dict_upload.get(
 # put the index level 1000 on MongoDB
 index_1000_base["Date"] = human_date
 index_1000_base["Time"] = reference_date_vector
-index_val_up = index_1000_base[["Date", "Time", "Index Value"]]
+index_val_up = mongo.df_reorder(index_1000_base, column_set="index")
 index_val_up = index_val_up.to_dict(orient="records")
 collection_dict_upload.get(
     "collection_index_level_1000").insert_many(index_val_up)
@@ -698,7 +530,7 @@ collection_dict_upload.get(
 # put the index level raw on MongoDB
 index_values["Date"] = human_date
 index_values["Time"] = reference_date_vector
-index_val_up = index_values[["Date", "Time", "Index Value"]]
+index_val_up = mongo.df_reorder(index_values, column_set="index")
 index_val_up = index_val_up.to_dict(orient="records")
 collection_dict_upload.get(
     "collection_index_level_raw").insert_many(index_val_up)
