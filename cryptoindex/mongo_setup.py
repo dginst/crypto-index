@@ -131,7 +131,7 @@ def mongo_coll():
         "collection_data_feed": db.index_data_feed,
         "collection_all_exc_vol": db.all_exc_volume,
         "collection_price": db.crypto_price,
-        "collect_volume": db.crypto_volume,
+        "collection_volume": db.crypto_volume,
         "collection_price_ret": db.crypto_price_return,
         "collection_EWMA": db.index_EWMA,
         "collection_logic_one": db.index_logic_matrix_one,

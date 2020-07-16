@@ -1,7 +1,7 @@
 # standard library import
 from datetime import datetime, timezone
 
-# third party import
+# third party import<<<<
 from pymongo import MongoClient
 import numpy as np
 import pandas as pd
@@ -477,7 +477,7 @@ collection_dict_upload.get("collection_volume").insert_many(volume_up)
 
 # put the exchange volumes on MongoDB
 exc_vol_up = exc_vol_tot.to_dict(orient="records")
-collection_dict_upload.get("all_exc_volume").insert_many(exc_vol_up)
+collection_dict_upload.get("collection_all_exc_vol").insert_many(exc_vol_up)
 
 # put the "price_ret" dataframe on MongoDB
 price_ret["Date"] = human_date
