@@ -252,6 +252,19 @@ def df_reorder(df_to_reorder, column_set):
             ]
         ]
 
+    elif column_set == "conversion":
+
+        reordered_df = df_to_reorder[
+            [
+                "Time",
+                "Close Price",
+                "Crypto Volume",
+                "Pair Volume",
+                "Exchange",
+                "Pair"
+            ]
+        ]
+
     return reordered_df
 
 
