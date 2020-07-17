@@ -11,7 +11,7 @@ import cryptoindex.mongo_setup as mongo
 import cryptoindex.data_setup as data_setup
 import cryptoindex.calc as calc
 from cryptoindex.mongo_setup import (
-    mongo_coll, mongo_coll_drop, mongo_indexing)
+    mongo_coll, mongo_coll_drop, mongo_indexing, mongo_upload)
 from cryptoindex.config import (
     START_DATE, MONGO_DICT, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME)
 
@@ -433,9 +433,11 @@ human_date = data_setup.timestamp_to_human(reference_date_vector)
 
 # put the "Crypto_Asset_Prices" dataframe on MongoDB
 Crypto_Asset_Prices["Date"] = human_date
-price_up = mongo.df_reorder(Crypto_Asset_Prices, column_set="complete")
-price_up = price_up.to_dict(orient="records")
-collection_dict_upload.get("collection_price").insert_many(price_up)
+mongo_upload(Crypto_Asset_Prices, "collection_price",
+             reorder="Y", column_set_val="complete")
+# price_up = mongo.df_reorder(Crypto_Asset_Prices, column_set="complete")
+# price_up = price_up.to_dict(orient="records")
+# collection_dict_upload.get("collection_price").insert_many(price_up)
 
 # put the "Crypto_Asset_Volumes" dataframe on MongoDB
 Crypto_Asset_Volume["Date"] = human_date

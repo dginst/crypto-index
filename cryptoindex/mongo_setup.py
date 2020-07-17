@@ -253,3 +253,18 @@ def df_reorder(df_to_reorder, column_set):
         ]
 
     return reordered_df
+
+
+def mongo_upload(data_to_upload, where_to_upload, reorder="N", column_set_val=None):
+
+    collection_dict = mongo_coll()
+
+    if reorder == "Y":
+
+        data_to_upload = df_reorder(
+            data_to_upload, column_set=column_set_val)
+
+    data_to_dict = data_to_upload.to_dict(orient="records")
+    collection_dict.get(where_to_upload).insert_many(data_to_dict)
+
+    return None

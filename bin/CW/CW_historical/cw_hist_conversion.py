@@ -30,6 +30,10 @@ import numpy as np
 # local import
 import cryptoindex.data_setup as data_setup
 import cryptoindex.mongo_setup as mongo
+from cryptoindex.mongo_setup import (
+    mongo_coll, mongo_coll_drop, mongo_indexing, mongo_upload)
+from cryptoindex.config import (
+    START_DATE, MONGO_DICT, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME)
 
 start = time.time()
 
@@ -81,41 +85,32 @@ Exchanges = [
 
 # ################ setup MongoDB connection ################
 
-# connecting to mongo in local
-connection = MongoClient("localhost", 27017)
-# creating the database called index
-db = connection.index
+# # connecting to mongo in local
+# connection = MongoClient("localhost", 27017)
+# # creating the database called index
+# db = connection.index
 
-# drop the pre-existing collection (if there is one)
-db.CW_converted_data.drop()
-db.CW_final_data.drop()
-db.stable_coin_rates.drop()
-db.CW_keys.drop()
-db.EXC_keys.drop()
+# drop the pre-existing collection
+mongo_coll_drop("cw_hist_conv")
 
 # creating the empty collection cleandata within the database index
-db.CW_final_data.create_index([("id", -1)])
-db.CW_converted_data.create_index([("id", -1)])
-db.stable_coin_rates.create_index([("id", -1)])
-db.CW_keys.create_index([("id", -1)])
-db.EXC_keys.create_index([("id", -1)])
-collection_stable = db.stable_coin_rates
-collection_final_data = db.CW_final_data
-collection_converted = db.CW_converted_data
-collection_CW_key = db.CW_keys
-collection_EXC_key = db.EXC_keys
+mongo_indexing()
+
+# collection_stable = db.stable_coin_rates
+# collection_final_data = db.CW_final_data
+# collection_converted = db.CW_converted_data
+# collection_CW_key = db.CW_keys
+# collection_EXC_key = db.EXC_keys
 
 # ########## USDC/USD and USDT/USD computation #####################
 
 start = time.time()
 
-# MongoDB index and collection names definition
-database = "index"
-collection = "CW_cleandata"
 
 # taking BTC/USD pair historical
 first_query = {"Pair": "btcusd", "Exchange": "kraken"}
-first_call = mongo.query_mongo(database, collection, first_query)
+first_call = mongo.query_mongo(
+    DB_NAME, MONGO_DICT.get("coll_cw_clean"), first_query)
 price_df = first_call[["Close Price"]]
 volume_df = first_call[["Pair Volume"]]
 price_df = price_df.rename(columns={"Close Price": "kraken"})
@@ -125,7 +120,8 @@ Exchanges.remove("kraken")
 for exchange in Exchanges:
 
     query = {"Pair": "btcusd", "Exchange": exchange}
-    single_ex = mongo.query_mongo(database, collection, query)
+    single_ex = mongo.query_mongo(
+        DB_NAME, MONGO_DICT.get("coll_cw_clean"), query)
 
     try:
         single_price = single_ex["Close Price"]
@@ -157,15 +153,18 @@ average_df.fillna(0, inplace=True)
 
 # POLONIEX usdt/usd exchange rate
 query_usdt = {"Exchange": "poloniex", "Pair": "btcusdt"}
-usdt_poloniex = mongo.query_mongo(database, collection, query_usdt)
+usdt_poloniex = mongo.query_mongo(
+    DB_NAME, MONGO_DICT.get("coll_cw_clean"), query_usdt)
 
 # KRAKEN usdt/usd exchange rate
 query_usdt = {"Exchange": "kraken", "Pair": "btcusdt"}
-usdt_kraken = mongo.query_mongo(database, collection, query_usdt)
+usdt_kraken = mongo.query_mongo(
+    DB_NAME, MONGO_DICT.get("coll_cw_clean"), query_usdt)
 
 # BITTREX usdt/usd exchange rate
 query_usdt = {"Exchange": "bittrex", "Pair": "btcusdt"}
-usdt_bittrex = mongo.query_mongo(database, collection, query_usdt)
+usdt_bittrex = mongo.query_mongo(
+    DB_NAME, MONGO_DICT.get("coll_cw_clean"), query_usdt)
 
 # computing the rate on each exchange
 usdt_kraken["rate"] = usdt_kraken["Close Price"] / average_df["average usd"]
@@ -212,8 +211,10 @@ prev_rate = np.array(usdt_rates.loc[usdt_rates.Time == '1475280000', "Rate"])
 usdt_rates.loc[usdt_rates.Time == '1475366400', "Rate"] = prev_rate
 
 # USDT mongoDB upload
-usdt_data = usdt_rates.to_dict(orient="records")
-collection_stable.insert_many(usdt_data)
+mongo_upload(usdt_rates, "collection_stable_rate")
+
+# usdt_data = usdt_rates.to_dict(orient="records")
+# collection_stable.insert_many(usdt_data)
 
 
 # ############# USDC exchange rates computation ############
@@ -222,15 +223,18 @@ collection_stable.insert_many(usdt_data)
 
 # POLONIEX usdc/usd exchange rate
 query_usdc = {"Exchange": "poloniex", "Pair": "btcusdc"}
-usdc_poloniex = mongo.query_mongo(database, collection, query_usdc)
+usdc_poloniex = mongo.query_mongo(
+    DB_NAME, MONGO_DICT.get("coll_cw_clean"), query_usdc)
 
 # KRAKEN usdc/usd exchange rate
 query_usdc = {"Exchange": "kraken", "Pair": "btcusdc"}
-usdc_kraken = mongo.query_mongo(database, collection, query_usdc)
+usdc_kraken = mongo.query_mongo(
+    DB_NAME, MONGO_DICT.get("coll_cw_clean"), query_usdc)
 
 # COINBASE_PRO usdc exchange rate
 query_usdc_coinbase = {"Exchange": "coinbase-pro", "Pair": "btcusdc"}
-usdc_coinbase = mongo.query_mongo(database, collection, query_usdc_coinbase)
+usdc_coinbase = mongo.query_mongo(
+    DB_NAME, MONGO_DICT.get("coll_cw_clean"), query_usdc_coinbase)
 
 # computing the rate on each exchange
 usdc_poloniex["rate"] = usdc_poloniex["Close Price"] / average_df["average usd"]
@@ -272,8 +276,9 @@ usdc_rates["Time"] = first_call["Time"]
 usdc_rates["Standard Date"] = data_setup.timestamp_to_human(first_call["Time"])
 
 # USDC mongoDB upload
-usdc_data = usdc_rates.to_dict(orient="records")
-collection_stable.insert_many(usdc_data)
+mongo_upload(usdc_rates, "collection_stable_rate")
+# usdc_data = usdc_rates.to_dict(orient="records")
+# collection_stable.insert_many(usdc_data)
 
 end = time.time()
 
@@ -284,18 +289,14 @@ print("This script took: {} seconds".format(float(end - start)))
 # ################# DATA CONVERSION MAIN PART ##################
 
 start = time.time()
-# defining the database name and the collection name
-db = "index"
-collection_data = "CW_cleandata"
-collection_rates = "ecb_clean"
-collection_stable = "stable_coin_rates"
 
 # querying the data from mongo
-matrix_rate = mongo.query_mongo(db, collection_rates)
+matrix_rate = mongo.query_mongo(DB_NAME, MONGO_DICT.get("coll_ecb_clean"))
 matrix_rate = matrix_rate.rename({"Date": "Time"}, axis="columns")
 matrix_rate = matrix_rate.loc[matrix_rate.Time != "1451520000"]
-matrix_data = mongo.query_mongo(db, collection_data)
-matrix_rate_stable = mongo.query_mongo(db, collection_stable)
+matrix_data = mongo.query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_clean"))
+matrix_rate_stable = mongo.query_mongo(
+    DB_NAME, MONGO_DICT.get("coll_stable_rate"))
 
 # creating a column containing the fiat currency
 matrix_rate["fiat"] = [x[:3].lower() for x in matrix_rate["Currency"]]
@@ -374,8 +375,9 @@ converted_data = converted_data.append(usd_matrix)
 
 converted_data = converted_data.sort_values(by=["Time"])
 
-data = converted_data.to_dict(orient="records")
-collection_converted.insert_many(data)
+mongo_upload(converted_data, "collection_cw_converted")
+# data = converted_data.to_dict(orient="records")
+# collection_converted.insert_many(data)
 
 end = time.time()
 
@@ -386,13 +388,10 @@ print("This script took: {} seconds".format(float(end - start)))
 
 start = time.time()
 
-# define database name and collection name
-db_name = "index"
-collection_converted_data = "CW_converted_data"
-
 # retriving the needed information on MongoDB
 q_dict = {"Time": str(y_TS)}
-matrix_last_day = mongo.query_mongo(db_name, collection_converted_data, q_dict)
+matrix_last_day = mongo.query_mongo(
+    DB_NAME, MONGO_DICT.get("coll_cw_conv"), q_dict)
 old_head = matrix_last_day.columns
 matrix_last_day["key"] = matrix_last_day["Exchange"] + \
     "&" + matrix_last_day["Pair"]
@@ -400,17 +399,9 @@ matrix_last_day["logic"] = 1
 matrix_last_day = matrix_last_day.drop(columns=old_head)
 
 # creating the list containing all the possible exchange-pair key
-Exchanges = [
-    "coinbase-pro",
-    "poloniex",
-    "bitstamp",
-    "gemini",
-    "bittrex",
-    "kraken",
-    "bitflyer",
-]
+
 all_key = []
-for exc in Exchanges:
+for exc in EXCHANGES:
 
     for cry in Crypto_Asset:
 
@@ -429,9 +420,11 @@ merged.fillna(0, inplace=True)
 
 key_df["logic_value"] = merged["logic"]
 
-data = key_df.to_dict(orient="records")
-collection_CW_key.insert_many(data)
-collection_EXC_key.insert_many(data)
+mongo_upload(key_df, "collection_CW_key")
+mongo_upload(key_df, "collection_EXC_key")
+# data = key_df.to_dict(orient="records")
+# collection_CW_key.insert_many(data)
+# collection_EXC_key.insert_many(data)
 
 end = time.time()
 
@@ -444,12 +437,9 @@ db_name = "index"
 collection_converted_data = "CW_converted_data"
 
 # retriving the needed information on MongoDB
-matrix = mongo.query_mongo2(db_name, collection_converted_data)
-print("query done")
+matrix = mongo.query_mongo2(DB_NAME, MONGO_DICT.get("coll_cw_conv"))
 
 matrix = pd.DataFrame(list(matrix))
-
-print('dataframe done')
 
 matrix = matrix.drop(columns="_id")
 
@@ -465,7 +455,7 @@ head = [
 ]
 final_matrix = pd.DataFrame(columns=head)
 
-for Crypto in Crypto_Asset:
+for Crypto in CRYPTO_ASSET:
 
     cry_matrix = matrix.loc[matrix.Crypto == Crypto.lower()]
     print(Crypto)
@@ -499,8 +489,9 @@ for Crypto in Crypto_Asset:
                 pass
 
 # put the manipulated data on MongoDB
-data = final_matrix.to_dict(orient="records")
-collection_final_data.insert_many(data)
+mongo_upload(final_matrix, "collection_cw_final_data")
+# data = final_matrix.to_dict(orient="records")
+# collection_final_data.insert_many(data)
 
 end = time.time()
 
