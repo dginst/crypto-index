@@ -51,7 +51,7 @@ db = connection.index
 
 # define database name and collection name
 db_name = "index"
-collection_converted_data = "CW_final_data"
+collection_converted_data = "index_data_feed"
 # collection_converted_data = "CW_converted_data"
 
 # drop the pre-existing collection (if there is one)
