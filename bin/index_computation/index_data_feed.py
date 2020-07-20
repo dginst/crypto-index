@@ -93,7 +93,8 @@ CW_sub_series = CW_sub_series[
 
 # creting an unique dataframe containing the two different data source
 data_feed = CW_sub_series.append(EXC_series, sort=True)
-
+data_feed = data_feed[
+    ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]]
 # put the converted data on MongoDB
 data = data_feed.to_dict(orient="records")
 collection_feed.insert_many(data)
