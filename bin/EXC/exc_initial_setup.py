@@ -96,7 +96,7 @@ collection_CW_raw = "CW_rawdata"
 # ################### creation of EXC_cleandata collection ##################
 
 database = "index"
-collection_raw = "EXC_test"
+collection_raw = "EXC_rawdata"
 
 # querying all raw data from EXC_rawdata
 all_data = mongo.query_mongo(database, collection_raw)
