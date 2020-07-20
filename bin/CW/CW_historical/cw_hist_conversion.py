@@ -30,7 +30,7 @@ import numpy as np
 import cryptoindex.data_setup as data_setup
 import cryptoindex.mongo_setup as mongo
 from cryptoindex.mongo_setup import (
-    mongo_coll, mongo_coll_drop, mongo_indexing, mongo_upload, df_reorder)
+    mongo_coll_drop, mongo_indexing, mongo_upload, df_reorder)
 from cryptoindex.config import (
     START_DATE, MONGO_DICT, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME)
 

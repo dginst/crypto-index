@@ -344,11 +344,11 @@ price_ret = price_ret.iloc[[1]]
 time_header = ["Time"]
 time_header.extend(Crypto_Asset)
 Crypto_Asset_Prices = pd.DataFrame(Crypto_Asset_Prices, columns=time_header)
-Crypto_Asset_Prices["Time"] = str(y_TS)
+Crypto_Asset_Prices["Time"] = int(y_TS)
 Crypto_Asset_Volume = pd.DataFrame(Crypto_Asset_Volume, columns=time_header)
-Crypto_Asset_Volume["Time"] = str(y_TS)
+Crypto_Asset_Volume["Time"] = int(y_TS)
 # adding the Time column to the price ret df
-price_ret["Time"] = str(y_TS)
+price_ret["Time"] = int(y_TS)
 
 # computing the Exponential Weighted Moving Average of the day
 hist_volume = mongo.query_mongo(db_name, coll_volume)

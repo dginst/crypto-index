@@ -62,3 +62,6 @@ MONGO_DICT = {
     "coll_raw_index": "index_level_raw",
     "coll_1000_index": "index_level_1000"
 }
+
+
+CRYPTO_DF_COL =
