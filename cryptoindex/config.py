@@ -64,4 +64,4 @@ MONGO_DICT = {
 }
 
 
-CRYPTO_DF_COL =
+#CRYPTO_DF_COL =
