@@ -486,7 +486,7 @@ def daily_perc_volumes(
 ):
 
     # day_in_sec = 86400
-    # hour_in_sec = 3600
+    # 
     today_str = datetime.now().strftime("%Y-%m-%d")
     today = datetime.strptime(today_str, "%Y-%m-%d")
     today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())

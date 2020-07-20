@@ -109,7 +109,7 @@ collect_vol.delete_many(myquery)
 # this section allows to check if CW_clean data contains the new values of the
 # day, the check is based on a 5-days period and allows
 
-hour_in_sec = 3600
+
 day_in_sec = 86400
 start_period = "01-01-2016"
 

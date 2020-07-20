@@ -44,7 +44,7 @@ Exchanges = [
 # exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp',
 # 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
-hour_in_sec = 3600
+
 day_in_sec = 86400
 start_period = "01-01-2016"
 

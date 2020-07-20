@@ -17,7 +17,7 @@ import cryptoindex.mongo_setup as mongo
 # set start_period that has to correspond to the first day of exc data history
 start_period = "04-17-2020"
 
-hour_in_sec = 3600
+
 day_in_sec = 86400
 
 # set today

@@ -44,7 +44,7 @@ Exchanges = [
 start_date = "01-01-2016"
 EXC_start_date = "04-17-2020"
 
-hour_in_sec = 3600
+
 day_in_sec = 86400
 
 
