@@ -1,14 +1,14 @@
 from crontab import CronTab
 
 
-bitflyer_path = 'python3 /home/ubuntu/crypto-index/caller-bitflyer.py & '
-bitstamp_path = 'python3 /home/ubuntu/crypto-index/caller-bitstamp.py & '
-bittrex_path = 'python3 /home/ubuntu/crypto-index/caller-bittrex.py & '
-coinbase_path = 'python3 /home/ubuntu/crypto-index/caller-coinbase.py & '
-gemini_path = 'python3 /home/ubuntu/crypto-index/caller-gemini.py & '
-itbit_path = 'python3 /home/ubuntu/crypto-index/caller-itbit.py & '
-kraken_path = 'python3 /home/ubuntu/crypto-index/caller-kraken.py & '
-poloniex_path = 'python3 /home/ubuntu/crypto-index/caller-poloniex.py'
+bitflyer_path = 'python3 /home/ubuntu/crypto-index/bin/EXC/EXC_caller/caller-bitflyer.py & '
+bitstamp_path = 'python3 /home/ubuntu/crypto-index/bin/EXC/EXC_caller/caller-bitstamp.py & '
+bittrex_path = 'python3 /home/ubuntu/crypto-index/bin/EXC/EXC_caller/caller-bittrex.py & '
+coinbase_path = 'python3 /home/ubuntu/crypto-index/bin/EXC/EXC_caller/caller-coinbase.py & '
+gemini_path = 'python3 /home/ubuntu/crypto-index/bin/EXC/EXC_caller/caller-gemini.py & '
+itbit_path = 'python3 /home/ubuntu/crypto-index/bin/EXC/EXC_caller/caller-itbit.py & '
+kraken_path = 'python3 /home/ubuntu/crypto-index/bin/EXC/EXC_caller/caller-kraken.py & '
+poloniex_path = 'python3 /home/ubuntu/crypto-index/bin/EXC/EXC_caller/caller-poloniex.py'
 
 cron = CronTab(user='ubuntu')
 
