@@ -24,7 +24,6 @@ from datetime import datetime, timezone
 
 # third party import
 import numpy as np
-from pymongo import MongoClient
 
 # local import
 # import cryptoindex.data_setup as data_setup
@@ -32,80 +31,38 @@ from pymongo import MongoClient
 from cryptoindex.data_setup import (CW_series_fix_missing, date_gen,
                                     homogenize_dead_series, homogenize_series)
 from cryptoindex.mongo_setup import query_mongo
+from cryptoindex.mongo_setup import (
+    mongo_coll, mongo_coll_drop, mongo_indexing, mongo_upload)
+from cryptoindex.config import (
+    START_DATE, DAY_IN_SEC, MONGO_DICT,
+    PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME)
 
 start = time.time()
 # ################ initial settings #######################
 
-start_date = "01-01-2016"
-# end_date = '03-01-2020'
 
 # define today date as timestamp
 today_str = datetime.now().strftime("%Y-%m-%d")
 today = datetime.strptime(today_str, "%Y-%m-%d")
 today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+y_TS = today_TS - DAY_IN_SEC
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
-reference_date_vector = date_gen(start_date)
-# reference_date_vector = data_setup.timestamp_to_str(reference_date_vector)
+reference_date_vector = date_gen(START_DATE)
 
-pair_array = ["gbp", "usd", "cad", "jpy", "eur", "usdt", "usdc"]
-# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
-Crypto_Asset = [
-    "BTC",
-    "ETH",
-    "XRP",
-    "LTC",
-    "BCH",
-    "EOS",
-    "ETC",
-    "ZEC",
-    "ADA",
-    "XLM",
-    "XMR",
-    "BSV",
-]
-# crypto complete ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
-# 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
-Exchanges = [
-    "coinbase-pro",
-    "poloniex",
-    "bitstamp",
-    "gemini",
-    "bittrex",
-    "kraken",
-    "bitflyer",
-]
-# exchange complete = [ 'coinbase-pro', 'poloniex',
-# 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
 # #################### setup MongoDB connection ################
 
-# connecting to mongo in local
-connection = MongoClient("localhost", 27017)
-# creating the database called index
-db = connection.index
+mongo_coll_drop("cw_hist_s")
 
-# drop the pre-existing collection (if there is one)
-db.CW_cleandata.drop()
-db.CW_volume_checked_data.drop()
+mongo_indexing()
 
-# creating the empty collection "cleandata" within the database index
-db.CW_cleandata.create_index([("id", -1)])
-collection_clean = db.CW_cleandata
-
-# creating the empty collection "CW_volume_checked_data" within the database index
-db.CW_volume_checked_data.create_index([("id", -1)])
-collect_vol = db.CW_volume_checked_data
-
-# defining the database name and the collection name where to look for data
-db = "index"
-collection_raw = "CW_rawdata"
-collect_vol_chk = "CW_volume_checked_data"
+collection_dict_upload = mongo_coll()
 
 # ################ fixing the "Pair Volume" information ###########
 
-tot_matrix = query_mongo(db, collection_raw)
+tot_matrix = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_raw"))
 tot_matrix = tot_matrix.loc[tot_matrix.Time != 0]
 tot_matrix = tot_matrix.drop(columns=["Low", "High", "Open"])
 # tot_matrix['str_t'] = [str(t) for t in tot_matrix['Time']]
@@ -132,15 +89,15 @@ tot_matrix = tot_matrix.append(m_29_04)
 tot_matrix = tot_matrix.sort_values(by=['Time'])
 tot_matrix = tot_matrix.drop(columns=['key'])
 
-for Crypto in Crypto_Asset:
+for Crypto in CRYPTO_ASSET:
 
     ccy_pair_array = []
 
-    for i in pair_array:
+    for i in PAIR_ARRAY:
 
         ccy_pair_array.append(Crypto.lower() + i)
 
-    for exchange in Exchanges:
+    for exchange in EXCHANGES:
 
         for cp in ccy_pair_array:
 
@@ -161,8 +118,7 @@ for Crypto in Crypto_Asset:
             # put the manipulated data on MongoDB
             try:
 
-                data = mat.to_dict(orient="records")
-                collect_vol.insert_many(data)
+                mongo_upload(mat, "collection_cw_vol_check")
 
             except TypeError:
                 pass
@@ -174,19 +130,19 @@ print("This script took: {} seconds".format(float(end - start)))
 # ############## fixing historical series main part ##############
 start = time.time()
 
-tot_matrix = query_mongo(db, collect_vol_chk)
+tot_matrix = query_mongo(DB_NAME, MONGO_DICT.get("coll_vol_chk"))
 
 
-for Crypto in Crypto_Asset:
+for Crypto in CRYPTO_ASSET:
 
     print(Crypto)
     ccy_pair_array = []
 
-    for i in pair_array:
+    for i in PAIR_ARRAY:
 
         ccy_pair_array.append(Crypto.lower() + i)
 
-    for exchange in Exchanges:
+    for exchange in EXCHANGES:
 
         ex_matrix = tot_matrix.loc[tot_matrix["Exchange"] == exchange]
         print(exchange)
@@ -222,8 +178,8 @@ for Crypto in Crypto_Asset:
                         exchange,
                         cp,
                         reference_date_vector,
-                        db,
-                        collect_vol_chk,
+                        DB_NAME,
+                        MONGO_DICT.get("coll_vol_chk"),
                     )
 
                 # ######## part that transform the timestamped date into string
@@ -241,12 +197,10 @@ for Crypto in Crypto_Asset:
                 cp_matrix["Exchange"] = exchange
                 cp_matrix["Pair"] = cp
                 # put the manipulated data on MongoDB
-                data = cp_matrix.to_dict(orient="records")
-                collection_clean.insert_many(data)
+                mongo_upload(cp_matrix, "collection_cw_clean")
+
 
 # #######################################################################
-db = connection.index
-# db.CW_volume_checked_data.drop()
 
 end = time.time()
 

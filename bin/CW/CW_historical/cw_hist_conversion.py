@@ -30,20 +30,19 @@ import numpy as np
 import cryptoindex.data_setup as data_setup
 import cryptoindex.mongo_setup as mongo
 from cryptoindex.mongo_setup import (
-    mongo_coll_drop, mongo_indexing, mongo_upload, df_reorder)
+    mongo_coll_drop, mongo_coll, mongo_indexing, mongo_upload, df_reorder)
 from cryptoindex.config import (
-    START_DATE, MONGO_DICT, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME)
+    START_DATE, DAY_IN_SEC, MONGO_DICT, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME)
 
 start = time.time()
 
 # ################## initial settings #####################################
 
-day_in_sec = 86400
 # define today date as timestamp
 today_str = datetime.now().strftime("%Y-%m-%d")
 today = datetime.strptime(today_str, "%Y-%m-%d")
 today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
-y_TS = today_TS - 86400
+y_TS = today_TS - DAY_IN_SEC
 
 
 # define the variable containing all the date from start_date to today.
@@ -59,6 +58,8 @@ mongo_coll_drop("cw_hist_conv")
 # creating the empty collection cleandata within the database index
 mongo_indexing()
 
+collection_dict_upload = mongo_coll()
+
 # ########## USDC/USD and USDT/USD computation #####################
 
 start = time.time()
@@ -69,6 +70,8 @@ Exchanges = EXCHANGES
 first_query = {"Pair": "btcusd", "Exchange": "kraken"}
 first_call = mongo.query_mongo(
     DB_NAME, MONGO_DICT.get("coll_cw_clean"), first_query)
+# isolating some values in single variables
+time_arr = first_call[["Time"]]
 price_df = first_call[["Close Price"]]
 volume_df = first_call[["Pair Volume"]]
 price_df = price_df.rename(columns={"Close Price": "kraken"})
@@ -162,8 +165,15 @@ usdt_rates["Currency"] = [
     str(x).replace("0.0", "USDT/USD") for x in usdt_rates["Currency"]
 ]
 usdt_rates["Time"] = first_call["Time"]
-usdt_rates["Standard Date"] = data_setup.timestamp_to_human(first_call["Time"])
 
+usdt_rates.fillna("NaN", inplace=True)
+
+index_to_remove = usdt_rates[usdt_rates.Time == "NaN"].index
+
+usdt_rates = usdt_rates.drop(index_to_remove)
+print(usdt_rates)
+usdt_rates["Standard Date"] = data_setup.timestamp_to_human(first_call["Time"])
+print(usdt_rates)
 # correcting the date 2016-10-02 using the previous day rate
 prev_rate = np.array(usdt_rates.loc[usdt_rates.Time == '1475280000', "Rate"])
 usdt_rates.loc[usdt_rates.Time == '1475366400', "Rate"] = prev_rate

@@ -13,7 +13,7 @@ import cryptoindex.calc as calc
 from cryptoindex.mongo_setup import (
     mongo_coll, mongo_coll_drop, mongo_indexing, mongo_upload)
 from cryptoindex.config import (
-    START_DATE, MONGO_DICT, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME)
+    START_DATE, MONGO_DICT, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME, DAY_IN_SEC)
 
 # ############# INITIAL SETTINGS ################################
 
@@ -46,7 +46,7 @@ start_date = START_DATE
 today_str = datetime.now().strftime("%Y-%m-%d")
 today = datetime.strptime(today_str, "%Y-%m-%d")
 today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
-y_TS = today_TS - 86400
+y_TS = today_TS - DAY_IN_SEC
 
 # define end date as as MM-DD-YYYY
 end_date = datetime.now().strftime("%m-%d-%Y")

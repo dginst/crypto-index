@@ -1,5 +1,5 @@
 # standard library import
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 # third party import
 # from pymongo import MongoClient
@@ -197,7 +197,8 @@ def fix_zero_value(matrix):
         value_to_check = np.array(
             matrix.loc[matrix.Time == date, "Crypto Volume"])
         price_check = np.array(matrix.loc[matrix.Time == date, "Close Price"])
-
+        print(value_to_check)
+        print(matrix.loc[matrix.Time == date])
         if val_sum != 0 and int(value_to_check) == 0:
 
             if int(price_check) == 0:

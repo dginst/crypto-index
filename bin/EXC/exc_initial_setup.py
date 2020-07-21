@@ -3,7 +3,6 @@ import time
 from datetime import datetime, timezone
 
 # third party import
-from pymongo import MongoClient
 import pandas as pd
 import numpy as np
 
@@ -13,7 +12,7 @@ import cryptoindex.mongo_setup as mongo
 from cryptoindex.mongo_setup import (
     mongo_coll, mongo_coll_drop, mongo_indexing, mongo_upload, df_reorder)
 from cryptoindex.config import (
-    START_DATE, EXC_START_DATE, DAY_IN_SEC, MONGO_DICT,
+    EXC_START_DATE, DAY_IN_SEC, MONGO_DICT,
     PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME, CLEAN_DATA_HEAD)
 
 
@@ -56,8 +55,8 @@ collection_raw = "EXC_test"
 # ##
 
 # querying all raw data from EXC_rawdata
-# all_data = mongo.query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_raw"))
-all_data = mongo.query_mongo(DB_NAME, collection_raw)
+all_data = mongo.query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_raw"))
+# all_data = mongo.query_mongo(DB_NAME, collection_raw)
 
 # defining the columns on interest
 # head = ["Pair", "Exchange", "Time",
@@ -207,9 +206,7 @@ data = all_data.to_dict(orient="records")
 # ################# DATA CONVERSION MAIN PART ##################
 
 start = time.time()
-# defining the database name and the collection name
 
-collection_stable = "stable_coin_rates"
 
 # querying the data from mongo
 matrix_rate = mongo.query_mongo(DB_NAME, MONGO_DICT.get("coll_ecb_clean"))
