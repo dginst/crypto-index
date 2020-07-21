@@ -10,104 +10,62 @@ import numpy as np
 # local import
 import cryptoindex.data_setup as data_setup
 import cryptoindex.mongo_setup as mongo
+from cryptoindex.mongo_setup import (
+    mongo_coll, mongo_coll_drop, mongo_indexing, mongo_upload, df_reorder)
+from cryptoindex.config import (
+    START_DATE, EXC_START_DATE, DAY_IN_SEC, MONGO_DICT,
+    PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME, CLEAN_DATA_HEAD)
 
 
 # ########################## initial settings #################################
-
-# set start_period that has to correspond to the first day of exc data history
-start_period = "04-17-2020"
-
-
-day_in_sec = 86400
 
 # set today
 today_str = datetime.now().strftime("%Y-%m-%d")
 today = datetime.strptime(today_str, "%Y-%m-%d")
 today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
-y_TS = today_TS - day_in_sec
+y_TS = today_TS - DAY_IN_SEC
 
 # creating the timestamp array at 12:00 AM
-date_array = data_setup.date_gen(start_period)
+date_array = data_setup.date_gen(EXC_START_DATE)
 date_array_str = [str(el) for el in date_array]
-
-# pair arrat without USD (no need of conversion)
-pair_array = ["usd", "gbp", "eur", "cad", "jpy", "usdt", "usdc"]
-# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur']
-Crypto_Asset = [
-    "ETH",
-    "BTC",
-    "LTC",
-    "BCH",
-    "XRP",
-    "XLM",
-    "ADA",
-    "ZEC",
-    "XMR",
-    "EOS",
-    "BSV",
-    "ETC",
-]
-# crypto complete ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA',
-#  'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
-Exchanges = [
-    "coinbase-pro",
-    "poloniex",
-    "bitstamp",
-    "gemini",
-    "bittrex",
-    "kraken",
-    "bitflyer",
-]
-# exchange complete = ['coinbase-pro', 'poloniex', 'bitstamp',
-#  'gemini', 'bittrex', 'kraken', 'bitflyer']
+print(date_array_str)
 
 # defining the crypto-fiat pairs array
 cryptofiat_array = []
 
-for crypto in Crypto_Asset:
+for crypto in CRYPTO_ASSET:
 
-    for fiat in pair_array:
+    for fiat in PAIR_ARRAY:
 
         cryptofiat_array.append(crypto.lower() + fiat)
 
 # ############################ setup mongo connection ##################
 
-# connecting to mongo in local
-connection = MongoClient("localhost", 27017)
-db = connection.index
+# drop the pre-existing collection (if there is one)
+mongo_coll_drop("exc")
 
-# creating the new EXC_clean collection
-db.EXC_cleandata.create_index([("id", -1)])
-db.EXC_final_data.create_index([("id", -1)])
+mongo_indexing()
 
-# dropping pre-existing collections
-db.EXC_final_data.drop()
-db.EXC_cleandata.drop()
+collection_dict_upload = mongo_coll()
 
-# naming the existing collections as a variable
-collection_clean = db.EXC_cleandata
-collection_final = db.EXC_final_data
-
-# defining the database name and the collection name where to look for data
-# if is needed a data correction
-
-collection_CW_raw = "CW_rawdata"
 
 # ################### creation of EXC_cleandata collection ##################
 
-database = "index"
+# ## temporary
 collection_raw = "EXC_test"
+# ##
 
 # querying all raw data from EXC_rawdata
-all_data = mongo.query_mongo(database, collection_raw)
+# all_data = mongo.query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_raw"))
+all_data = mongo.query_mongo(DB_NAME, collection_raw)
 
 # defining the columns on interest
-head = ["Pair", "Exchange", "Time",
-        "Close Price", "Crypto Volume", "Pair Volume"]
+# head = ["Pair", "Exchange", "Time",
+# "Close Price", "Crypto Volume", "Pair Volume"]
 
 # keeping only the columns of interest among all the
 # information in rawdata
-all_data = all_data.loc[:, head]
+all_data = all_data.loc[:, CLEAN_DATA_HEAD]
 
 # changing the "Time" values format from integer to string
 all_data["Time"] = [str(element) for element in all_data["Time"]]
@@ -189,7 +147,7 @@ all_data["Pair"] = [element.replace("xbt", "btc")
 all_data = all_data.loc[all_data["Pair"].isin(cryptofiat_array)]
 
 # selecting the exchange used in the index computation
-all_data = all_data.loc[all_data["Exchange"].isin(Exchanges)]
+all_data = all_data.loc[all_data["Exchange"].isin(EXCHANGES)]
 
 # correcting the "Pair Volume" field
 all_data["Crypto Volume"] = [float(v) for v in all_data["Crypto Volume"]]
@@ -197,12 +155,11 @@ all_data["Close Price"] = [float(p) for p in all_data["Close Price"]]
 all_data["Pair Volume"] = all_data["Crypto Volume"] * all_data["Close Price"]
 
 # ########## DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
-db = "index"
-collect_log_key = "EXC_keys"
+
 q_dict = {"Time": y_TS}
 
 # downloading from MongoDB the matrix containing the exchange-pair logic values
-logic_key = mongo.query_mongo(db, collect_log_key)
+logic_key = mongo.query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_keys"))
 
 # creating the exchange-pair couples key for the daily matrix
 all_data["key"] = all_data["Exchange"] + "&" + all_data["Pair"]
@@ -243,25 +200,26 @@ for k in merg_absent["key"]:
 
 # uploading the cleaned data on MongoDB in the collection EXC_cleandata
 all_data = all_data.drop(columns=["key"])
+mongo_upload(all_data, "collection_exc_clean")
 data = all_data.to_dict(orient="records")
-collection_clean.insert_many(data)
 
 
 # ################# DATA CONVERSION MAIN PART ##################
 
 start = time.time()
 # defining the database name and the collection name
-db = "index"
-collection_data = "EXC_cleandata"
-collection_rates = "ecb_clean"
+
 collection_stable = "stable_coin_rates"
 
 # querying the data from mongo
-matrix_rate = mongo.query_mongo(db, collection_rates)
+matrix_rate = mongo.query_mongo(DB_NAME, MONGO_DICT.get("coll_ecb_clean"))
 matrix_rate = matrix_rate.rename({"Date": "Time"}, axis="columns")
 matrix_rate = matrix_rate.loc[matrix_rate.Time.isin(date_array_str)]
-matrix_data = mongo.query_mongo(db, collection_data)
-matrix_rate_stable = mongo.query_mongo(db, collection_stable)
+
+matrix_data = mongo.query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_clean"))
+
+matrix_rate_stable = mongo.query_mongo(
+    DB_NAME, MONGO_DICT.get("coll_stable_rate"))
 matrix_rate_stable = matrix_rate_stable.loc[matrix_rate_stable.Time.isin(
     date_array_str)]
 
@@ -275,9 +233,7 @@ matrix_rate_stable["fiat"] = [x[:4].lower()
 # ############ creating a USD subset which will not be converted #########
 
 usd_matrix = matrix_data.loc[matrix_data["fiat"] == "usd"]
-usd_matrix = usd_matrix[
-    ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]
-]
+usd_matrix = df_reorder(usd_matrix, "conversion")
 
 # ########### converting non-USD fiat currencies #########################
 
@@ -302,9 +258,8 @@ conv_merged["Pair Volume"].fillna(0, inplace=True)
 
 
 # subsetting the dataset with only the relevant columns
-conv_merged = conv_merged[
-    ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]
-]
+conv_merged = df_reorder(conv_merged, "conversion")
+
 
 # ############## converting STABLECOINS currencies #########################
 
@@ -331,17 +286,14 @@ stable_merged["Pair Volume"] = stable_merged["Pair Volume"].replace(
 stable_merged["Pair Volume"].fillna(0, inplace=True)
 
 # subsetting the dataset with only the relevant columns
-stable_merged = stable_merged[
-    ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]
-]
+stable_merged = df_reorder(stable_merged, "conversion")
 
 # reunite the dataframes and put data on MongoDB
 converted_data = conv_merged
 converted_data = converted_data.append(stable_merged)
 converted_data = converted_data.append(usd_matrix)
 
-data = converted_data.to_dict(orient="records")
-collection_final.insert_many(data)
+mongo_upload(converted_data, "collection_exc_final_data")
 
 end = time.time()
 

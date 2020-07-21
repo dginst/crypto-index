@@ -1,5 +1,9 @@
 START_DATE = "01-01-2016"
 
+EXC_START_DATE = "04-17-2020"
+
+DAY_IN_SEC = 86400
+
 PAIR_ARRAY = ["gbp", "usd", "cad", "jpy", "eur", "usdt", "usdc"]
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
 
@@ -40,11 +44,13 @@ MONGO_DICT = {
     "coll_cw_conv": "CW_converted_data",
     "coll_vol_chk": "CW_volume_checked_data",
     "coll_cw_final": "CW_final_data",
+    "coll_cw_keys": "CW_keys",
     "coll_exc_raw": "EXC_rawdata",
     "coll_exc_clean": "EXC_cleandata",
     "coll_exc_final": "EXC_final_data",
     "coll_ecb_raw": "ecb_raw",
     "coll_ecb_clean": "ecb_clean",
+    "coll_exc_keys": "EXC_keys",
     "coll_stable_rate": "stable_coin_rates",
     "coll_data_feed": "index_data_feed",
     "coll_log1": "index_logic_matrix_one",
@@ -63,5 +69,9 @@ MONGO_DICT = {
     "coll_1000_index": "index_level_1000"
 }
 
-
-#CRYPTO_DF_COL =
+CLEAN_DATA_HEAD = [
+    "Time", "Close Price",
+    "Crypto Volume", "Pair Volume",
+    "Pair", "Exchange"
+]
+# CRYPTO_DF_COL =
