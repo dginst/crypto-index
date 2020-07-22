@@ -747,3 +747,85 @@ def daily_sub_finder(curr_df, prev_df):
     weight_var = variation * curr_vol
 
     return weight_var, curr_vol
+
+
+def exc_pair_cleaning(exc_df):
+
+    exc_df["Pair"] = [
+        element.replace("USDT_BCHSV", "bsvusdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_BCHSV", "bsvusdc") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDT_BCHABC", "bchusdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_BCHABC", "bchusdc") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_LTC", "ltcusdc") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDT_LTC", "ltcusdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_XRP", "xrpusdc") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDT_XRP", "xrpusdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_ZEC", "zecusdc") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDT_ZEC", "zecusdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_EOS", "eosusdc") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDT_EOS", "eosusdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_ETC", "etcusdc") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDT_ETC", "etcusdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_STR", "xlmusdc") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDT_STR", "xlmusdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_BTC", "btcusdc") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDT_BTC", "btcusdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_ETH", "ethusdc") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDT_ETH", "ethusdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [element.lower() for element in exc_df["Pair"]]
+    exc_df["Pair"] = [element.replace("xbt", "btc")
+                      for element in exc_df["Pair"]]
+
+    clean_df = exc_df
+
+    return clean_df
+
+
+def exc_value_cleaning(exc_df):
+
+    exc_df["Crypto Volume"] = [float(v) for v in exc_df["Crypto Volume"]]
+    exc_df["Close Price"] = [float(p) for p in exc_df["Close Price"]]
+    exc_df["Pair Volume"] = exc_df["Close Price"] * exc_df["Crypto Volume"]
+
+    clean_df = exc_df
+
+    return clean_df

@@ -27,12 +27,14 @@ import pandas as pd
 import numpy as np
 
 # local import
-import cryptoindex.data_setup as data_setup
-import cryptoindex.mongo_setup as mongo
+from cryptoindex.data_setup import (
+    date_gen, timestamp_to_human, fix_zero_value)
 from cryptoindex.mongo_setup import (
-    mongo_coll_drop, mongo_coll, mongo_indexing, mongo_upload, df_reorder)
+    query_mongo, mongo_coll_drop, mongo_coll,
+    mongo_indexing, mongo_upload, df_reorder)
 from cryptoindex.config import (
-    START_DATE, DAY_IN_SEC, MONGO_DICT, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME)
+    START_DATE, DAY_IN_SEC, MONGO_DICT,
+    PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME)
 
 start = time.time()
 
@@ -47,7 +49,7 @@ y_TS = today_TS - DAY_IN_SEC
 
 # define the variable containing all the date from start_date to today.
 # the date are displayed as timestamp and each day refers to 12:00 am UTC
-reference_date_vector = data_setup.date_gen(START_DATE)
+reference_date_vector = date_gen(START_DATE)
 
 
 # ################ setup MongoDB connection ################
@@ -68,7 +70,7 @@ Exchanges = EXCHANGES
 
 # taking BTC/USD pair historical
 first_query = {"Pair": "btcusd", "Exchange": "kraken"}
-first_call = mongo.query_mongo(
+first_call = query_mongo(
     DB_NAME, MONGO_DICT.get("coll_cw_clean"), first_query)
 # isolating some values in single variables
 time_arr = first_call[["Time"]]
@@ -81,7 +83,7 @@ Exchanges.remove("kraken")
 for exchange in Exchanges:
 
     query = {"Pair": "btcusd", "Exchange": exchange}
-    single_ex = mongo.query_mongo(
+    single_ex = query_mongo(
         DB_NAME, MONGO_DICT.get("coll_cw_clean"), query)
 
     try:
@@ -114,17 +116,17 @@ average_df.fillna(0, inplace=True)
 
 # POLONIEX usdt/usd exchange rate
 query_usdt = {"Exchange": "poloniex", "Pair": "btcusdt"}
-usdt_poloniex = mongo.query_mongo(
+usdt_poloniex = query_mongo(
     DB_NAME, MONGO_DICT.get("coll_cw_clean"), query_usdt)
 
 # KRAKEN usdt/usd exchange rate
 query_usdt = {"Exchange": "kraken", "Pair": "btcusdt"}
-usdt_kraken = mongo.query_mongo(
+usdt_kraken = query_mongo(
     DB_NAME, MONGO_DICT.get("coll_cw_clean"), query_usdt)
 
 # BITTREX usdt/usd exchange rate
 query_usdt = {"Exchange": "bittrex", "Pair": "btcusdt"}
-usdt_bittrex = mongo.query_mongo(
+usdt_bittrex = query_mongo(
     DB_NAME, MONGO_DICT.get("coll_cw_clean"), query_usdt)
 
 # computing the rate on each exchange
@@ -172,7 +174,7 @@ index_to_remove = usdt_rates[usdt_rates.Time == "NaN"].index
 
 usdt_rates = usdt_rates.drop(index_to_remove)
 print(usdt_rates)
-usdt_rates["Standard Date"] = data_setup.timestamp_to_human(first_call["Time"])
+usdt_rates["Standard Date"] = timestamp_to_human(first_call["Time"])
 print(usdt_rates)
 # correcting the date 2016-10-02 using the previous day rate
 prev_rate = np.array(usdt_rates.loc[usdt_rates.Time == '1475280000', "Rate"])
@@ -191,17 +193,17 @@ mongo_upload(usdt_rates, "collection_stable_rate")
 
 # POLONIEX usdc/usd exchange rate
 query_usdc = {"Exchange": "poloniex", "Pair": "btcusdc"}
-usdc_poloniex = mongo.query_mongo(
+usdc_poloniex = query_mongo(
     DB_NAME, MONGO_DICT.get("coll_cw_clean"), query_usdc)
 
 # KRAKEN usdc/usd exchange rate
 query_usdc = {"Exchange": "kraken", "Pair": "btcusdc"}
-usdc_kraken = mongo.query_mongo(
+usdc_kraken = query_mongo(
     DB_NAME, MONGO_DICT.get("coll_cw_clean"), query_usdc)
 
 # COINBASE_PRO usdc exchange rate
 query_usdc_coinbase = {"Exchange": "coinbase-pro", "Pair": "btcusdc"}
-usdc_coinbase = mongo.query_mongo(
+usdc_coinbase = query_mongo(
     DB_NAME, MONGO_DICT.get("coll_cw_clean"), query_usdc_coinbase)
 
 # computing the rate on each exchange
@@ -241,7 +243,7 @@ usdc_rates["Currency"] = [
     str(x).replace("0.0", "USDC/USD") for x in usdc_rates["Currency"]
 ]
 usdc_rates["Time"] = first_call["Time"]
-usdc_rates["Standard Date"] = data_setup.timestamp_to_human(first_call["Time"])
+usdc_rates["Standard Date"] = timestamp_to_human(first_call["Time"])
 
 # USDC mongoDB upload
 mongo_upload(usdc_rates, "collection_stable_rate")
@@ -259,11 +261,11 @@ print("This script took: {} seconds".format(float(end - start)))
 start = time.time()
 
 # querying the data from mongo
-matrix_rate = mongo.query_mongo(DB_NAME, MONGO_DICT.get("coll_ecb_clean"))
+matrix_rate = query_mongo(DB_NAME, MONGO_DICT.get("coll_ecb_clean"))
 matrix_rate = matrix_rate.rename({"Date": "Time"}, axis="columns")
 matrix_rate = matrix_rate.loc[matrix_rate.Time != "1451520000"]
-matrix_data = mongo.query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_clean"))
-matrix_rate_stable = mongo.query_mongo(
+matrix_data = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_clean"))
+matrix_rate_stable = query_mongo(
     DB_NAME, MONGO_DICT.get("coll_stable_rate"))
 
 # creating a column containing the fiat currency
@@ -350,14 +352,15 @@ start = time.time()
 
 # retriving the needed information on MongoDB
 q_dict = {"Time": str(y_TS)}
-matrix_last_day = mongo.query_mongo(
+matrix_last_day = query_mongo(
     DB_NAME, MONGO_DICT.get("coll_cw_conv"), q_dict)
+
 old_head = matrix_last_day.columns
 matrix_last_day["key"] = matrix_last_day["Exchange"] + \
     "&" + matrix_last_day["Pair"]
-matrix_last_day["logic"] = 1
+matrix_last_day["logic_value"] = 1
 matrix_last_day = matrix_last_day.drop(columns=old_head)
-
+print(matrix_last_day)
 # creating the list containing all the possible exchange-pair key
 
 all_key = []
@@ -373,12 +376,19 @@ for exc in EXCHANGES:
 header = ["key", "logic_value"]
 key_df = pd.DataFrame(columns=header)
 key_df["key"] = all_key
+
+#
+key_df["logic_value"] = 0
 # key_df['logic_value'] = np.zeros(len(all_key) - 1)
+key_df = key_df.loc[~key_df.key.isin(matrix_last_day["key"])]
 
-merged = pd.merge(key_df, matrix_last_day, on="key", how="left")
-merged.fillna(0, inplace=True)
+key_df = key_df.append(matrix_last_day)
+#
 
-key_df["logic_value"] = merged["logic"]
+# merged = pd.merge(key_df, matrix_last_day, on="key", how="left")
+# merged.fillna(0, inplace=True)
+
+# key_df["logic_value"] = merged["logic"]
 
 mongo_upload(key_df, "collection_CW_key")
 mongo_upload(key_df, "collection_EXC_key")
@@ -390,7 +400,7 @@ print("This script took: {} seconds".format(float(end - start)))
 # ################ ZERO VOLUMES VALUE FILLING #####################
 
 # retriving the needed information on MongoDB
-matrix = mongo.query_mongo2(DB_NAME, MONGO_DICT.get("coll_cw_conv"))
+matrix = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_conv"))
 
 matrix = pd.DataFrame(list(matrix))
 
@@ -428,7 +438,7 @@ for Crypto in CRYPTO_ASSET:
 
                 if cp_matrix.shape[0] > 1:
 
-                    cp_matrix = data_setup.fix_zero_value(cp_matrix)
+                    cp_matrix = fix_zero_value(cp_matrix)
 
                     final_matrix = final_matrix.append(cp_matrix)
 

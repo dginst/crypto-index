@@ -30,9 +30,9 @@ import numpy as np
 # import cryptoindex.mongo_setup as mongo
 from cryptoindex.data_setup import (CW_series_fix_missing, date_gen,
                                     homogenize_dead_series, homogenize_series)
-from cryptoindex.mongo_setup import query_mongo
 from cryptoindex.mongo_setup import (
-    mongo_coll, mongo_coll_drop, mongo_indexing, mongo_upload)
+    query_mongo, mongo_coll, mongo_coll_drop,
+    mongo_indexing, mongo_upload)
 from cryptoindex.config import (
     START_DATE, DAY_IN_SEC, MONGO_DICT,
     PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME)

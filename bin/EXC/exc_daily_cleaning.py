@@ -3,93 +3,56 @@ from datetime import datetime, timezone
 from typing import Dict
 
 # third party import
-from pymongo import MongoClient
 import pandas as pd
 import numpy as np
 
 # local import
-import cryptoindex.data_setup as data_setup
-import cryptoindex.mongo_setup as mongo
+from cryptoindex.data_setup import (
+    date_gen, daily_fix_miss, exc_pair_cleaning,
+    exc_value_cleaning)
+from cryptoindex.mongo_setup import (
+    query_mongo, mongo_coll,
+    mongo_indexing, mongo_upload)
+from cryptoindex.config import (
+    START_DATE, DAY_IN_SEC, MONGO_DICT,
+    EXCHANGES, DB_NAME)
 
 
 # ############# INITIAL SETTINGS ################################
 
-pair_array = ["gbp", "usd", "cad", "jpy", "eur", "usdt", "usdc"]
-# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
-Crypto_Asset = [
-    "BTC",
-    "ETH",
-    "XRP",
-    "LTC",
-    "BCH",
-    "EOS",
-    "ETC",
-    "ZEC",
-    "ADA",
-    "XLM",
-    "XMR",
-    "BSV",
-]
-# crypto complete [ 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
-# 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
-Exchanges = [
-    "coinbase-pro",
-    "poloniex",
-    "bitstamp",
-    "gemini",
-    "bittrex",
-    "kraken",
-    "bitflyer",
-]
-# exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp',
-# 'gemini', 'bittrex', 'kraken', 'bitflyer']
-
-
-day_in_sec = 86400
-start_period = "01-01-2016"
 
 # set today
 today_str = datetime.now().strftime("%Y-%m-%d")
 today = datetime.strptime(today_str, "%Y-%m-%d")
 today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
-y_TS = today_TS - day_in_sec
-two_before_TS = y_TS - day_in_sec
-print(y_TS)
+y_TS = today_TS - DAY_IN_SEC
+two_before_TS = y_TS - DAY_IN_SEC
+
 # defining the array containing all the date from start_period until today
-date_complete_int = data_setup.date_gen(start_period)
+date_complete_int = date_gen(START_DATE)
+
 # converting the timestamp format date into string
 date_tot = [str(single_date) for single_date in date_complete_int]
 
 # #################### setup mongo connection ##################
 
-# connecting to mongo in local
-connection = MongoClient("localhost", 27017)
-# creating the database called index
-db = connection.index
+# creating the empty collections cleandata within the database index
+mongo_indexing()
 
-# naming the existing collections as a variable
-collection_clean = db.EXC_cleandata
-
-# defining the database name and the collection name where to look for data
-coll_EXC_raw = "EXC_rawdata"
-coll_clean = "EXC_cleandata"
-coll_CW_raw = "CW_rawdata"
+collection_dict_upload = mongo_coll()
 
 # ################### fixing the "Pair Volume" information #################
 
-db = "index"
-coll_EXC_raw = "EXC_rawdata"
-coll_EXC_raw = "EXC_test"
 q_dict: Dict[str, str] = {}
 q_dict = {"Time": str(y_TS)}
 
-daily_mat = mongo.query_mongo(db, coll_EXC_raw, q_dict)
+daily_mat = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_raw"), q_dict)
 daily_mat = daily_mat[
     ["Pair", "Exchange", "Close Price", "Time", "Crypto Volume", "date"]
 ]
 
 # selecting the exchange used in the index computation
-daily_mat = daily_mat.loc[daily_mat["Exchange"].isin(Exchanges)]
+daily_mat = daily_mat.loc[daily_mat["Exchange"].isin(EXCHANGES)]
 
 # creating a column containing the hour of extraction
 daily_mat["date"] = [str(d) for d in daily_mat["date"]]
@@ -97,74 +60,8 @@ daily_mat["hour"] = daily_mat["date"].str[11:16]
 
 daily_mat = daily_mat.loc[daily_mat.Time != 0]
 
-# changing some features in "Pair" field in order to homogeneize
-daily_mat["Pair"] = [
-    element.replace("USDT_BCHSV", "bsvusdt") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDC_BCHSV", "bsvusdc") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDT_BCHABC", "bchusdt") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDC_BCHABC", "bchusdc") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDC_LTC", "ltcusdc") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDT_LTC", "ltcusdt") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDC_XRP", "xrpusdc") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDT_XRP", "xrpusdt") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDC_ZEC", "zecusdc") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDT_ZEC", "zecusdt") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDC_EOS", "eosusdc") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDT_EOS", "eosusdt") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDC_ETC", "etcusdc") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDT_ETC", "etcusdt") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDC_STR", "xlmusdc") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDT_STR", "xlmusdt") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDC_BTC", "btcusdc") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDT_BTC", "btcusdt") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDC_ETH", "ethusdc") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [
-    element.replace("USDT_ETH", "ethusdt") for element in daily_mat["Pair"]
-]
-daily_mat["Pair"] = [element.lower() for element in daily_mat["Pair"]]
-daily_mat["Pair"] = [element.replace("xbt", "btc")
-                     for element in daily_mat["Pair"]]
-
-daily_mat["Crypto Volume"] = [float(v) for v in daily_mat["Crypto Volume"]]
-daily_mat["Close Price"] = [float(p) for p in daily_mat["Close Price"]]
-daily_mat["Pair Volume"] = daily_mat["Close Price"] * daily_mat["Crypto Volume"]
+daily_mat = exc_pair_cleaning(daily_mat)
+daily_mat = exc_value_cleaning(daily_mat)
 
 # ############################################################################
 # ################# EXTRACTION HOURS DEFINITION ##############################
@@ -188,13 +85,9 @@ daily_matrix_20["key"] = daily_matrix_20["Exchange"] + \
 
 # ########### DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
 
-collect_log_key = "EXC_keys"
-# q_dict: Dict[str, int] = {}
-# q_dict = {"Time": y_TS}
-
 # downloading from MongoDB the matrix with the daily values and the
 # matrix containing the exchange-pair logic values
-logic_key = mongo.query_mongo(db, collect_log_key)
+logic_key = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_keys"))
 
 # ########## adding the dead series to the daily values ##################
 
@@ -286,8 +179,8 @@ if new_key.empty is False:
 
         # upload the new artificial historical series on MongoDB
         # collection "EXC_cleandata"
-        data = key_hist_df.to_dict(orient="records")
-        collection_clean.insert_many(data)
+        mongo_upload(key_hist_df, collection_dict_upload.get(
+            "collection_exc_clean"))
 
 else:
     pass
@@ -295,13 +188,11 @@ else:
 # ###########################################################################
 # ######################## MISSING DATA FIXING ##############################
 
-database = "index"
-coll_clean = "EXC_cleandata"
 q_dict_str: Dict[str, str] = {}
 q_dict_str = {"Time": str(two_before_TS)}
 
 # downloading from MongoDB the matrix referring to the previuos day
-day_bfr_mat = mongo.query_mongo(db, coll_clean, q_dict_str)
+day_bfr_mat = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_clean"), q_dict_str)
 
 # add the "key" column
 day_bfr_mat["key"] = day_bfr_mat["Exchange"] + "&" + day_bfr_mat["Pair"]
@@ -321,7 +212,7 @@ for key_val in day_bfr_mat["key"]:
 
         if np.array(d_before_val["Close Price"]) != 0.0:
 
-            price_var = data_setup.daily_fix_miss(new_val, merged, day_bfr_mat)
+            price_var = daily_fix_miss(new_val, merged, day_bfr_mat)
 
             # applying the weighted variation to the day before 'Close Price'
             new_price = (1 + price_var) * d_before_val["Close Price"]
@@ -339,5 +230,4 @@ for key_val in day_bfr_mat["key"]:
 merged = merged.drop(columns=["key", "date", "hour"])
 merged['Time'] = [str(t) for t in merged['Time']]
 print(merged)
-data = merged.to_dict(orient="records")
-collection_clean.insert_many(data)
+mongo_upload(merged, "collection_exc_clean")

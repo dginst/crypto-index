@@ -7,10 +7,10 @@ import pandas as pd
 import numpy as np
 
 # local import
-import cryptoindex.data_setup as data_setup
-import cryptoindex.mongo_setup as mongo
+from cryptoindex.data_setup import (
+    date_gen, exc_pair_cleaning, exc_value_cleaning)
 from cryptoindex.mongo_setup import (
-    mongo_coll, mongo_coll_drop, mongo_indexing, mongo_upload, df_reorder)
+    query_mongo, mongo_coll, mongo_coll_drop, mongo_indexing, mongo_upload, df_reorder)
 from cryptoindex.config import (
     EXC_START_DATE, DAY_IN_SEC, MONGO_DICT,
     PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME, CLEAN_DATA_HEAD)
@@ -25,7 +25,7 @@ today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
 y_TS = today_TS - DAY_IN_SEC
 
 # creating the timestamp array at 12:00 AM
-date_array = data_setup.date_gen(EXC_START_DATE)
+date_array = date_gen(EXC_START_DATE)
 date_array_str = [str(el) for el in date_array]
 print(date_array_str)
 
@@ -50,17 +50,8 @@ collection_dict_upload = mongo_coll()
 
 # ################### creation of EXC_cleandata collection ##################
 
-# ## temporary
-collection_raw = "EXC_test"
-# ##
-
 # querying all raw data from EXC_rawdata
-all_data = mongo.query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_raw"))
-# all_data = mongo.query_mongo(DB_NAME, collection_raw)
-
-# defining the columns on interest
-# head = ["Pair", "Exchange", "Time",
-# "Close Price", "Crypto Volume", "Pair Volume"]
+all_data = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_raw"))
 
 # keeping only the columns of interest among all the
 # information in rawdata
@@ -73,74 +64,10 @@ all_data["Time"] = [str(element) for element in all_data["Time"]]
 # all_data["hour"] = all_data["date"].str[11:16]
 
 # selecting the date corresponding to 12:00 AM
-# all_data = all_data.loc[all_data.hour == "00:00"]
 all_data = all_data.loc[all_data["Time"].isin(date_array_str)]
 
 # changing some features in "Pair" field
-all_data["Pair"] = [
-    element.replace("USDT_BCHSV", "bsvusdt") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDC_BCHSV", "bsvusdc") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDT_BCHABC", "bchusdt") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDC_BCHABC", "bchusdc") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDC_LTC", "ltcusdc") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDT_LTC", "ltcusdt") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDC_XRP", "xrpusdc") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDT_XRP", "xrpusdt") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDC_ZEC", "zecusdc") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDT_ZEC", "zecusdt") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDC_EOS", "eosusdc") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDT_EOS", "eosusdt") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDC_ETC", "etcusdc") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDT_ETC", "etcusdt") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDC_STR", "xlmusdc") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDT_STR", "xlmusdt") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDC_BTC", "btcusdc") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDT_BTC", "btcusdt") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDC_ETH", "ethusdc") for element in all_data["Pair"]
-]
-all_data["Pair"] = [
-    element.replace("USDT_ETH", "ethusdt") for element in all_data["Pair"]
-]
-all_data["Pair"] = [element.lower() for element in all_data["Pair"]]
-all_data["Pair"] = [element.replace("xbt", "btc")
-                    for element in all_data["Pair"]]
-
+all_data = exc_pair_cleaning(all_data)
 
 # selecting the crypto-fiat pairs used in the index computation
 all_data = all_data.loc[all_data["Pair"].isin(cryptofiat_array)]
@@ -149,16 +76,14 @@ all_data = all_data.loc[all_data["Pair"].isin(cryptofiat_array)]
 all_data = all_data.loc[all_data["Exchange"].isin(EXCHANGES)]
 
 # correcting the "Pair Volume" field
-all_data["Crypto Volume"] = [float(v) for v in all_data["Crypto Volume"]]
-all_data["Close Price"] = [float(p) for p in all_data["Close Price"]]
-all_data["Pair Volume"] = all_data["Crypto Volume"] * all_data["Close Price"]
+all_data = exc_value_cleaning(all_data)
 
 # ########## DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
 
 q_dict = {"Time": y_TS}
 
 # downloading from MongoDB the matrix containing the exchange-pair logic values
-logic_key = mongo.query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_keys"))
+logic_key = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_keys"))
 
 # creating the exchange-pair couples key for the daily matrix
 all_data["key"] = all_data["Exchange"] + "&" + all_data["Pair"]
@@ -209,13 +134,13 @@ start = time.time()
 
 
 # querying the data from mongo
-matrix_rate = mongo.query_mongo(DB_NAME, MONGO_DICT.get("coll_ecb_clean"))
+matrix_rate = query_mongo(DB_NAME, MONGO_DICT.get("coll_ecb_clean"))
 matrix_rate = matrix_rate.rename({"Date": "Time"}, axis="columns")
 matrix_rate = matrix_rate.loc[matrix_rate.Time.isin(date_array_str)]
 
-matrix_data = mongo.query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_clean"))
+matrix_data = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_clean"))
 
-matrix_rate_stable = mongo.query_mongo(
+matrix_rate_stable = query_mongo(
     DB_NAME, MONGO_DICT.get("coll_stable_rate"))
 matrix_rate_stable = matrix_rate_stable.loc[matrix_rate_stable.Time.isin(
     date_array_str)]

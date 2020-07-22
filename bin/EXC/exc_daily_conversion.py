@@ -2,91 +2,53 @@
 from datetime import datetime, timezone
 
 # third party import
-from pymongo import MongoClient
 import pandas as pd
 import numpy as np
 
 # local import
-import cryptoindex.data_setup as data_setup
-import cryptoindex.mongo_setup as mongo
+from cryptoindex.data_setup import (
+    date_gen)
+from cryptoindex.mongo_setup import (
+    query_mongo, mongo_coll,
+    mongo_indexing, mongo_upload)
+from cryptoindex.config import (
+    START_DATE, DAY_IN_SEC, MONGO_DICT, DB_NAME)
 
 
 # ############# INITIAL SETTINGS ################################
-
-pair_array = ["gbp", "usd", "cad", "jpy", "eur", "usdt", "usdc"]
-# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
-Crypto_Asset = [
-    "BTC",
-    "ETH",
-    "XRP",
-    "LTC",
-    "BCH",
-    "EOS",
-    "ETC",
-    "ZEC",
-    "ADA",
-    "XLM",
-    "XMR",
-    "BSV",
-]
-# crypto complete [ 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
-# 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
-Exchanges = [
-    "coinbase-pro",
-    "poloniex",
-    "bitstamp",
-    "gemini",
-    "bittrex",
-    "kraken",
-    "bitflyer",
-]
-# exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp',
-# 'gemini', 'bittrex', 'kraken', 'bitflyer']
-
-
-day_in_sec = 86400
-start_period = "01-01-2016"
 
 # set today
 today_str = datetime.now().strftime("%Y-%m-%d")
 today = datetime.strptime(today_str, "%Y-%m-%d")
 today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
-y_TS = today_TS - day_in_sec
-two_before_TS = y_TS - day_in_sec
+y_TS = today_TS - DAY_IN_SEC
+two_before_TS = y_TS - DAY_IN_SEC
 
 # defining the array containing all the date from start_period until today
-date_complete_int = data_setup.date_gen(start_period)
+date_complete_int = date_gen(START_DATE)
 # converting the timestamp format date into string
 date_tot = [str(single_date) for single_date in date_complete_int]
 
 # #################### setup mongo connection ##################
 
-# connecting to mongo in local
-connection = MongoClient("localhost", 27017)
-# creating the database called index
-db = connection.index
+# creating the empty collections cleandata within the database index
+mongo_indexing()
 
-# naming the existing collections as a variable
-collection_final = db.EXC_final_data
+collection_dict_upload = mongo_coll()
 
 
 # ################# DAILY DATA CONVERSION MAIN PART ##################
-
-# defining the database name and the collection name
-db = "index"
-collection_data = "EXC_cleandata"
-collection_rates = "ecb_clean"
-collection_stable = "stable_coin_rates"
 
 # querying the data from mongo
 query_data = {"Time": str(y_TS)}
 query_rate = {"Date": str(y_TS)}
 query_stable = {"Time": str(y_TS)}
-matrix_rate = mongo.query_mongo(db, collection_rates, query_rate)
+matrix_rate = query_mongo(DB_NAME, MONGO_DICT.get("coll_ecb_clean"), query_rate)
 matrix_rate = matrix_rate.rename({"Date": "Time"}, axis="columns")
-matrix_data = mongo.query_mongo(db, collection_data, query_data)
+matrix_data = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_clean"), query_data)
 print(matrix_data)
-matrix_rate_stable = mongo.query_mongo(db, collection_stable, query_stable)
+matrix_rate_stable = query_mongo(
+    DB_NAME, MONGO_DICT.get("coll_stable_rate"), query_stable)
 
 # creating a column containing the fiat currency
 matrix_rate["fiat"] = [x[:3].lower() for x in matrix_rate["Currency"]]
@@ -161,5 +123,4 @@ converted_data = conv_merged
 converted_data = converted_data.append(stable_merged)
 converted_data = converted_data.append(usd_matrix)
 print(converted_data)
-data = converted_data.to_dict(orient="records")
-collection_final.insert_many(data)
+mongo_upload(converted_data, "collection_exc_final_data")

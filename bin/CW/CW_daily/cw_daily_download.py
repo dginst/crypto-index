@@ -2,87 +2,53 @@
 from datetime import datetime
 
 # third party import
-from pymongo import MongoClient
 import numpy as np
 
 # local import
 import cryptoindex.data_setup as data_setup
 import cryptoindex.data_download as data_download
-import cryptoindex.mongo_setup as mongo
-
+from cryptoindex.mongo_setup import (
+    mongo_coll, mongo_indexing, query_mongo)
+from cryptoindex.config import (
+    START_DATE, MONGO_DICT,
+    PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME)
 
 # initial settings ############################################
 
-# set start_period (ever)
-start_period = "01-01-2016"
+
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
 
-# pair arrat without USD (no need of conversion)
-pair_array = ["usd", "gbp", "eur", "cad", "jpy", "usdt", "usdc"]
-# pair complete = ['usd', 'gbp', 'eur', 'cad', 'jpy', 'usdt', 'usdc']
-Crypto_Asset = [
-    "BTC",
-    "ETH",
-    "XRP",
-    "LTC",
-    "BCH",
-    "EOS",
-    "ETC",
-    "ZEC",
-    "ADA",
-    "XLM",
-    "XMR",
-    "BSV",
-]
-# ['ETH', 'BTC', 'LTC', 'BCH', 'XRP', 'XLM', 'ADA',
-# 'ZEC', 'XMR', 'EOS', 'BSV', 'ETC']
-
-Exchanges = [
-    "coinbase-pro",
-    "poloniex",
-    "bitstamp",
-    "gemini",
-    "bittrex",
-    "kraken",
-    "bitflyer",
-]
-# exchange complete = ['coinbase-pro', 'poloniex',
-# 'bitstamp', 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
 # setup mongo connection ###################################
 
-# connecting to mongo in local
-connection = MongoClient("localhost", 27017)
-# creating the database called index
-db = connection.index
+mongo_indexing()
 
-# naming the existing rawdata collection as a variable
-collection_raw = db.CW_rawdata
+collection_dict_upload = mongo_coll()
 
 
 # converted_data check ###########################################
 
 # defining the array containing all the date from start_period until today
-date_tot = data_setup.date_gen(start_period)
+date_tot = data_setup.date_gen(START_DATE)
 # converting the timestamp format date into string
 date_tot = [str(single_date) for single_date in date_tot]
 
 # searching only the last five days
-last_five_days = date_tot[(len(date_tot) - 5) : len(date_tot)]
+last_five_days = date_tot[(len(date_tot) - 5): len(date_tot)]
 print(last_five_days)
 # defining the MongoDB path where to look for the rates
-database = "index"
-collection = "CW_rawdata"
+
 query = {"Exchange": "coinbase-pro", "Pair": "ethusd"}
 
 # retrieving data from MongoDB 'index' and 'ecb_raw' collection
-matrix = mongo.query_mongo(database, collection, query)
+matrix = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_raw"), query)
 
 # checking the time column
 date_list = np.array(matrix["Time"])
-last_five_days_mongo = date_list[(len(date_list) - 5) : len(date_list)]
-last_five_days_mongo = [str(single_date) for single_date in last_five_days_mongo]
+last_five_days_mongo = date_list[(len(date_list) - 5): len(date_list)]
+last_five_days_mongo = [str(single_date)
+                        for single_date in last_five_days_mongo]
 print(last_five_days_mongo)
 # finding the date to download as difference between
 # complete array of date and date now stored on MongoDB
@@ -110,13 +76,13 @@ if date_to_add != []:
 
     # download part #############
 
-    for Crypto in Crypto_Asset:
+    for Crypto in CRYPTO_ASSET:
 
         ccy_pair_array = []
-        for i in pair_array:
+        for i in PAIR_ARRAY:
             ccy_pair_array.append(Crypto.lower() + i)
 
-        for exchange in Exchanges:
+        for exchange in EXCHANGES:
 
             for cp in ccy_pair_array:
 
@@ -125,7 +91,8 @@ if date_to_add != []:
                 # create the matrix for the single currency_pair
                 # connecting to CryptoWatch website
                 data_download.CW_raw_to_mongo(
-                    exchange, cp, collection_raw, str(start_date)
+                    exchange, cp, collection_dict_upload.get(
+                        "collection_cw_raw"), str(start_date)
                 )
 else:
 
