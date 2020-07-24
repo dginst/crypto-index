@@ -7,6 +7,8 @@ DAY_IN_SEC = 86400
 PAIR_ARRAY = ["gbp", "usd", "cad", "jpy", "eur", "usdt", "usdc"]
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
 
+CONVERSION_FIAT = ["gbp", "cad", "jpy", "eur"]
+
 CRYPTO_ASSET = [
     "BTC",
     "ETH",

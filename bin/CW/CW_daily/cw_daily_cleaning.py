@@ -53,9 +53,6 @@ from cryptoindex.config import (
     PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME)
 
 
-# ############# INITIAL SETTINGS ################################
-
-
 # ########## MongoDB setup ################################
 
 # create the indexing for MongoDB and define the variable containing the
@@ -243,6 +240,17 @@ if new_key.empty is False:
         key_hist_df["Crypto Volume"] = 0
         key_hist_df["Exchange"] = splited_key[0]
         key_hist_df["Pair"] = splited_key[1]
+
+        # uploading on MongoDB collections "CW_converted_data" and "CW_final_data"
+        # the new series of zero except for the last value (yesterday)
+        mongo_upload(key_hist_df, "collection_cw_converted")
+        mongo_upload(key_hist_df, "collection_cw_final_data")
+
+        query_for_yst = {"Time": str(y_TS)}
+        collection_dict_upload.get(
+            "collection_cw_converted").delete_many(query_for_yst)
+        collection_dict_upload.get(
+            "collection_cw_final_data").delete_many(query_for_yst)
 
         # inserting the today value of the new couple(s)
         new_price = np.array(new_key.loc[new_key.key == key, "Close Price"])
