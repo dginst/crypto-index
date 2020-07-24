@@ -64,8 +64,8 @@ mongo_indexing()
 collection_dict_upload = mongo_coll()
 
 
-myquery = {'Time': 1595376000}
-my = {'Time': "1595376000"}
+myquery = {'Time': 1595462400}
+my = {'Time': "1595462400"}
 my2 = {"Exchange": "coinbase-pro", "Pair": "xrpgbp"}
 collection_dict_upload.get("collection_cw_vol_check").delete_many(myquery)
 collection_dict_upload.get("collection_cw_clean").delete_many(my)
@@ -245,12 +245,15 @@ if new_key.empty is False:
         key_hist_df["Pair"] = splited_key[1]
 
         # inserting the today value of the new couple(s)
-        new_price = new_key.loc[new_key.key == key, "Close Price"]
-        new_p_vol = new_key.loc[new_key.key == key, "Pair Volume"]
-        new_c_vol = new_key.loc[new_key.key == key, "Crypto Volume"]
-        key_hist_df.loc[key_hist_df.Time == y_TS, "Close Price"] = new_price
-        key_hist_df.loc[key_hist_df.Time == y_TS, "Pair Volume"] = new_p_vol
-        key_hist_df.loc[key_hist_df.Time == y_TS, "Crypto Volume"] = new_c_vol
+        new_price = np.array(new_key.loc[new_key.key == key, "Close Price"])
+        new_p_vol = np.array(new_key.loc[new_key.key == key, "Pair Volume"])
+        new_c_vol = np.array(new_key.loc[new_key.key == key, "Crypto Volume"])
+        key_hist_df.loc[key_hist_df.Time == str(
+            y_TS), "Close Price"] = new_price
+        key_hist_df.loc[key_hist_df.Time == str(
+            y_TS), "Pair Volume"] = new_p_vol
+        key_hist_df.loc[key_hist_df.Time == str(
+            y_TS), "Crypto Volume"] = new_c_vol
 
         # upload the dataframe on MongoDB collection "CW_cleandata"
         mongo_upload(key_hist_df, "collection_cw_clean")
@@ -273,7 +276,7 @@ day_bfr_mat = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_clean"), q_dict_time)
 
 # add the "key" column
 day_bfr_mat["key"] = day_bfr_mat["Exchange"] + "&" + day_bfr_mat["Pair"]
-
+print(day_bfr_mat)
 # looping through all the daily keys looking for potential missing value
 for key_val in day_bfr_mat["key"]:
 
