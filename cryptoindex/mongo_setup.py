@@ -28,15 +28,33 @@ def query_mongo(database, collection, query_dict=None):
     if query_dict is None:
 
         df = pd.DataFrame(list(coll.find()))
+
         try:
+
             df = df.drop(columns="_id")
-        except:
+
+        except AttributeError:
+
             df = []
+
+        except KeyError:
+
+            df = []
+
     else:
+
         df = pd.DataFrame(list(coll.find(query_dict)))
+
         try:
+
             df = df.drop(columns="_id")
-        except:
+
+        except AttributeError:
+
+            df = []
+
+        except KeyError:
+
             df = []
 
     return df

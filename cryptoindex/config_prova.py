@@ -1,11 +1,7 @@
-from cryptoindex.mongo_setup import (
-    mongo_coll, mongo_indexing)
+from cryptoindex.mongo_setup import query_mongo
 
-mongo_indexing()
-collection_dict_upload = mongo_coll()
+db_name = "index"
+# coll_data = "index_data_feed"
+coll_data = "CW_final_dat"
 
-### just for testing ####
-my = {'Time': "1595462400"}
-my2 = {"Exchange": "coinbase-pro", "Pair": "xrpgbp"}
-collection_dict_upload.get("collection_cw_converted").delete_many(my)
-collection_dict_upload.get("collection_cw_final_data").delete_many(my)
+a = query_mongo(db_name, coll_data)
