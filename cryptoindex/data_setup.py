@@ -197,8 +197,7 @@ def fix_zero_value(matrix):
         value_to_check = np.array(
             matrix.loc[matrix.Time == date, "Crypto Volume"])
         price_check = np.array(matrix.loc[matrix.Time == date, "Close Price"])
-        print(value_to_check)
-        print(matrix.loc[matrix.Time == date])
+
         if val_sum != 0 and int(value_to_check) == 0:
 
             if int(price_check) == 0:
@@ -207,8 +206,7 @@ def fix_zero_value(matrix):
                     matrix.loc[matrix.Time == str(
                         int(date) - 86400), "Close Price"]
                 )
-                print(previous_price)
-                print(date)
+
                 matrix.loc[matrix.Time == date, "Close Price"] = previous_price
 
             previous_c_vol = np.array(
@@ -709,6 +707,7 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
 
         # defining the dataframes containing the variations of price and volume
 
+        print(fixing_price)
         fixing_price_df = pd.DataFrame(fixing_price)
         fixing_p_vol_df = pd.DataFrame(fixing_p_vol)
 
@@ -829,3 +828,21 @@ def exc_value_cleaning(exc_df):
     clean_df = exc_df
 
     return clean_df
+
+
+def make_unique(df_to_check):
+
+    # create a key that has to be unique
+    time_to_str = [str(date) for date in df_to_check["Time"]]
+    df_to_check["Time_str"] = time_to_str
+    df_to_check["key"] = df_to_check["Time_str"] + \
+        df_to_check["Exchange"] + df_to_check["Pair"]
+
+    df_to_check.drop_duplicates(
+        subset="key", keep="first", inplace=True)
+
+    unique_df = df_to_check
+
+    unique_df = unique_df.drop(columns=["Time_str", "key"])
+
+    return unique_df

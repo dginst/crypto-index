@@ -29,7 +29,8 @@ import numpy as np
 # import cryptoindex.data_setup as data_setup
 # import cryptoindex.mongo_setup as mongo
 from cryptoindex.data_setup import (CW_series_fix_missing, date_gen,
-                                    homogenize_dead_series, homogenize_series)
+                                    homogenize_dead_series, homogenize_series,
+                                    make_unique)
 from cryptoindex.mongo_setup import (
     query_mongo, mongo_coll, mongo_coll_drop,
     mongo_indexing, mongo_upload)
@@ -60,11 +61,19 @@ mongo_indexing()
 
 collection_dict_upload = mongo_coll()
 
+# ################ download raw data freom MngoDB #################
+
+raw_matrix = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_raw"))
+raw_matrix = raw_matrix.loc[raw_matrix.Time != 0]
+raw_matrix = raw_matrix.drop(columns=["Low", "High", "Open"])
+
+# ################ remove potential duplicate values ##############
+
+tot_matrix = make_unique(raw_matrix)
+
 # ################ fixing the "Pair Volume" information ###########
 
-tot_matrix = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_raw"))
-tot_matrix = tot_matrix.loc[tot_matrix.Time != 0]
-tot_matrix = tot_matrix.drop(columns=["Low", "High", "Open"])
+
 # tot_matrix['str_t'] = [str(t) for t in tot_matrix['Time']]
 tot_matrix['key'] = tot_matrix['Exchange'] + '&' + \
     tot_matrix['Pair']

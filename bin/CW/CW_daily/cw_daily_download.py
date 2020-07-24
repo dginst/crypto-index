@@ -5,65 +5,64 @@ from datetime import datetime
 import numpy as np
 
 # local import
-import cryptoindex.data_setup as data_setup
-import cryptoindex.data_download as data_download
+from cryptoindex.data_download import CW_raw_to_mongo
+from cryptoindex.data_setup import (date_gen, Diff, timestamp_to_human)
 from cryptoindex.mongo_setup import (
     mongo_coll, mongo_indexing, query_mongo)
 from cryptoindex.config import (
     START_DATE, MONGO_DICT,
     PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME)
 
-# initial settings ############################################
-
+# #########################################################
 
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
-
-
-# setup mongo connection ###################################
-
-mongo_indexing()
-
-collection_dict_upload = mongo_coll()
-
-
-# converted_data check ###########################################
-
 # defining the array containing all the date from start_period until today
-date_tot = data_setup.date_gen(START_DATE)
+date_tot = date_gen(START_DATE)
 # converting the timestamp format date into string
 date_tot = [str(single_date) for single_date in date_tot]
 
-# searching only the last five days
+# ########## MongoDB setup ################################
+
+# create the indexing for MongoDB and define the variable containing the
+# MongoDB collections where to upload data
+mongo_indexing()
+collection_dict_upload = mongo_coll()
+
+# ####################### check for the cw_rawdata ####################
+
+# selecting the last five days and put them into an array
 last_five_days = date_tot[(len(date_tot) - 5): len(date_tot)]
 print(last_five_days)
-# defining the MongoDB path where to look for the rates
 
+# defining the details to query on MongoDB
 query = {"Exchange": "coinbase-pro", "Pair": "ethusd"}
 
-# retrieving data from MongoDB 'index' and 'ecb_raw' collection
+# retrieving the wanted data on MongoDB collection
 matrix = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_raw"), query)
 
-# checking the time column
+# checking the time column and selecting only the last five days retrived
+# from MongoDB collection
 date_list = np.array(matrix["Time"])
 last_five_days_mongo = date_list[(len(date_list) - 5): len(date_list)]
 last_five_days_mongo = [str(single_date)
                         for single_date in last_five_days_mongo]
 print(last_five_days_mongo)
+
 # finding the date to download as difference between
 # complete array of date and date now stored on MongoDB
-date_to_add = data_setup.Diff(last_five_days, last_five_days_mongo)
+date_to_add = Diff(last_five_days, last_five_days_mongo)
 
 if date_to_add != []:
 
     if len(date_to_add) > 1:
 
         date_to_add.sort()
-        start_date = data_setup.timestamp_to_human(
+        start_date = timestamp_to_human(
             [date_to_add[0]], date_format="%m-%d-%Y"
         )
         start_date = start_date[0]
-        end_date = data_setup.timestamp_to_human(
+        end_date = timestamp_to_human(
             [date_to_add[len(date_to_add) - 1]], date_format="%m-%d-%Y"
         )
         end_date = end_date[0]
@@ -74,7 +73,7 @@ if date_to_add != []:
         start_date = start_date.strftime("%m-%d-%Y")
         end_date = start_date
 
-    # download part #############
+    # #### data download part #####
 
     for Crypto in CRYPTO_ASSET:
 
@@ -90,7 +89,7 @@ if date_to_add != []:
                 pair = cp[3:]
                 # create the matrix for the single currency_pair
                 # connecting to CryptoWatch website
-                data_download.CW_raw_to_mongo(
+                CW_raw_to_mongo(
                     exchange, cp, collection_dict_upload.get(
                         "collection_cw_raw"), str(start_date)
                 )

@@ -401,10 +401,10 @@ print("This script took: {} seconds".format(float(end - start)))
 
 # retriving the needed information on MongoDB
 matrix = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_conv"))
-
-matrix = pd.DataFrame(list(matrix))
-
-matrix = matrix.drop(columns="_id")
+# print(matrix)
+# matrix = pd.DataFrame(list(matrix))
+# print(matrix)
+# matrix = matrix.drop(columns=["_id"])
 
 matrix["Crypto"] = matrix["Pair"].str[:3]
 head = [
