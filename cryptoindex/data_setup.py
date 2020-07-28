@@ -333,7 +333,7 @@ def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N"):
             to_date = datetime.strptime(element, "%Y-%m-%d")
             today_TS = int(to_date.replace(tzinfo=timezone.utc).timestamp())
 
-            Exchange_Matrix[j, 0] = time_stamp
+            Exchange_Matrix[j, 0] = today_TS
 
     return pd.DataFrame(Exchange_Matrix, columns=header)
 

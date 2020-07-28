@@ -28,12 +28,12 @@ import pandas as pd
 # local import
 
 from cryptoindex.calc import (
-    conv_into_usd, btcusd_average, stable_rate_calc, stable_single_exc)
+    conv_into_usd, btcusd_average, stable_rate_calc, key_log_mat)
 from cryptoindex.data_setup import (
-    date_gen, timestamp_to_human, fix_zero_value)
+    date_gen, fix_zero_value)
 from cryptoindex.mongo_setup import (
     query_mongo, mongo_coll_drop, mongo_coll,
-    mongo_indexing, mongo_upload, df_reorder)
+    mongo_indexing, mongo_upload)
 from cryptoindex.config import (
     START_DATE, DAY_IN_SEC, MONGO_DICT,
     PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES,
@@ -114,45 +114,8 @@ print("This script took: {} seconds".format(float(end - start)))
 
 start = time.time()
 
-# retriving the needed information on MongoDB
-q_dict = {"Time": str(y_TS)}
-matrix_last_day = query_mongo(
-    DB_NAME, MONGO_DICT.get("coll_cw_conv"), q_dict)
-
-old_head = matrix_last_day.columns
-matrix_last_day["key"] = matrix_last_day["Exchange"] + \
-    "&" + matrix_last_day["Pair"]
-matrix_last_day["logic_value"] = 1
-matrix_last_day = matrix_last_day.drop(columns=old_head)
-print(matrix_last_day)
-# creating the list containing all the possible exchange-pair key
-
-all_key = []
-for exc in EXCHANGES:
-
-    for cry in CRYPTO_ASSET:
-
-        for i in PAIR_ARRAY:
-
-            all_key.append(exc + "&" + cry.lower() + i)
-
-# creating the logic check dataframe
-header = ["key", "logic_value"]
-key_df = pd.DataFrame(columns=header)
-key_df["key"] = all_key
-
-#
-key_df["logic_value"] = 0
-# key_df['logic_value'] = np.zeros(len(all_key) - 1)
-key_df = key_df.loc[~key_df.key.isin(matrix_last_day["key"])]
-
-key_df = key_df.append(matrix_last_day)
-#
-
-# merged = pd.merge(key_df, matrix_last_day, on="key", how="left")
-# merged.fillna(0, inplace=True)
-
-# key_df["logic_value"] = merged["logic"]
+key_df = key_log_mat(DB_NAME, "coll_cw_conv", y_TS,
+                     EXCHANGES, CRYPTO_ASSET, PAIR_ARRAY)
 
 mongo_upload(key_df, "collection_CW_key")
 mongo_upload(key_df, "collection_EXC_key")

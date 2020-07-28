@@ -427,7 +427,7 @@ def first_logic_matrix_reshape(
 ):
 
     reb_start = start_q()
-    rebalance_stop = stop_q(reb_start)
+    # rebalance_stop = stop_q(reb_start)
 
     # calling the function that yields the start and stop date couple
     reb_start_couple = next_quarterly_period(
@@ -1777,15 +1777,15 @@ def conv_into_usd(db, data_df, fiat_rate_df, stable_rate_df, fiat_list, stableco
 
 
 # ############################################################################
-# ######################### STABLE COIN RATES ################################
+# ######################### STABLE COIN RATES FUNCTIONS ######################
 
 
 def btcusd_average(db, collection_mongo, exchange_list, exc_to_start="kraken", day_to_comp=None):
 
     Exchanges = exchange_list
 
-    # taking BTC/USD pair historical
-    if day_to_comp == None:
+    # defining the query details
+    if day_to_comp is None:
 
         first_query = {"Pair": "btcusd", "Exchange": exc_to_start}
 
@@ -1794,6 +1794,7 @@ def btcusd_average(db, collection_mongo, exchange_list, exc_to_start="kraken", d
         first_query = {"Pair": "btcusd",
                        "Exchange": exc_to_start, "Time": str(day_to_comp)}
 
+    # retrieving the
     first_call = query_mongo(
         db, MONGO_DICT.get(collection_mongo), first_query)
 
@@ -1807,7 +1808,7 @@ def btcusd_average(db, collection_mongo, exchange_list, exc_to_start="kraken", d
 
     for exchange in Exchanges:
 
-        if day_to_comp == None:
+        if day_to_comp is None:
 
             query = {"Pair": "btcusd", "Exchange": exchange}
 
@@ -1844,7 +1845,7 @@ def stable_single_exc(db, collection_mongo, exchange, stable_coin, average_df, d
 
     pair_for_query = "btc" + stable_coin.lower()
 
-    if day_to_comp == None:
+    if day_to_comp is None:
 
         query_dict = {"Exchange": exchange, "Pair": pair_for_query}
 
@@ -1868,10 +1869,6 @@ def stable_single_exc(db, collection_mongo, exchange, stable_coin, average_df, d
 
 
 def stable_rate_calc(db, collection_mongo, stable_coin, stable_exc_list, average_df):
-
-    # ############# USDT exchange rates computation ##########
-    # BTC/USDT is traded on Poloniex, Kraken and bittrex
-    # Poloniex has the entire historical values from 01/01/2016
 
     tot_df_w = []
     tot_df_v = []
@@ -1912,18 +1909,76 @@ def stable_rate_calc(db, collection_mongo, stable_coin, stable_exc_list, average
     ]
     rates_df["Time"] = average_df["Time"]
 
+    # correcting potential lenght mismatches
     rates_df.fillna("NaN", inplace=True)
     index_to_remove = rates_df[rates_df.Time == "NaN"].index
-
     rates_df = rates_df.drop(index_to_remove)
-    print(rates_df)
+
+    # adding a column with human readable date
     rates_df["Standard Date"] = timestamp_to_human(average_df["Time"])
 
+    # correcting the date 2016-10-02 for USDT using the previous day rate
     if stable_coin == "USDT":
 
-        # correcting the date 2016-10-02 using the previous day rate
         prev_rate = np.array(
             rates_df.loc[rates_df.Time == '1475280000', "Rate"])
         rates_df.loc[rates_df.Time == '1475366400', "Rate"] = prev_rate
 
     return rates_df
+
+
+# #####################################################################
+# ############### LOGIC MATRIX OF KEYS ################################
+
+def key_list_creation(exchange_list, asset_list, fiat_list):
+
+    # creating the list containing all the possible exchange-pair key
+
+    all_key = []
+
+    for exc in exchange_list:
+
+        for cry in asset_list:
+
+            for fiat in fiat_list:
+
+                all_key.append(exc + "&" + cry.lower() + fiat)
+
+    return all_key
+
+
+def key_log_mat(db, collection, time_to_query, exchange_list, asset_list, fiat_list):
+
+    # retriving the needed information on MongoDB
+    q_dict = {"Time": str(time_to_query)}
+    matrix_last_day = query_mongo(
+        db, MONGO_DICT.get(collection), q_dict)
+
+    # defining the list of header of the matrix
+    old_head = matrix_last_day.columns
+
+    # composing the "key" and assigining 1 as "logic value"
+    matrix_last_day["key"] = matrix_last_day["Exchange"] + \
+        "&" + matrix_last_day["Pair"]
+    matrix_last_day["logic_value"] = 1
+
+    # deleting the unuseful header
+    matrix_last_day = matrix_last_day.drop(columns=old_head)
+
+    # creating the list of every possible keys
+    all_key = key_list_creation(exchange_list, asset_list, fiat_list)
+
+    # creating the DF with every keys and assigning each a zero as logic value
+    header = ["key", "logic_value"]
+    key_df = pd.DataFrame(columns=header)
+    key_df["key"] = all_key
+    key_df["logic_value"] = 0
+
+    # deleting from the DF all the keys that are present
+    # in the matrix_last_day df
+    key_df = key_df.loc[~key_df.key.isin(matrix_last_day["key"])]
+
+    # appending the keys present in the matrix_last_day df
+    key_df = key_df.append(matrix_last_day)
+
+    return key_df
