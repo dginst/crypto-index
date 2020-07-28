@@ -9,6 +9,8 @@ PAIR_ARRAY = ["gbp", "usd", "cad", "jpy", "eur", "usdt", "usdc"]
 
 CONVERSION_FIAT = ["gbp", "cad", "jpy", "eur"]
 
+STABLE_COIN = ["usdt", "usdc"]
+
 CRYPTO_ASSET = [
     "BTC",
     "ETH",
@@ -77,3 +79,7 @@ CLEAN_DATA_HEAD = [
     "Pair", "Exchange"
 ]
 # CRYPTO_DF_COL =
+
+USDT_EXC_LIST = ["poloniex", "bittrex", "kraken"]
+
+USDC_EXC_LIST = ["poloniex", "coinbase-pro", "kraken"]

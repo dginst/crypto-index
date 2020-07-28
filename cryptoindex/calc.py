@@ -8,7 +8,10 @@ from dateutil.relativedelta import relativedelta
 
 # local import
 from . import data_setup
+from .data_setup import (timestamp_to_human)
 from . import mongo_setup as mongo
+from .mongo_setup import (df_reorder, query_mongo)
+from .config import (MONGO_DICT)
 
 # ###########################################################################
 # ######################## DATE SETTINGS FUNCTIONS ##########################
@@ -486,7 +489,7 @@ def daily_perc_volumes(
 ):
 
     # day_in_sec = 86400
-    # 
+    #
     today_str = datetime.now().strftime("%Y-%m-%d")
     today = datetime.strptime(today_str, "%Y-%m-%d")
     today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
@@ -1690,3 +1693,237 @@ def index_based(index_df, base=1000):
     index_1000_based = pd.DataFrame(index_1000_based, columns=header)
 
     return index_1000_based
+
+
+# ##########################################################################
+# ################### CONVERSION FUNCTION ##################################
+
+def conv_into_usd(db, data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_list):
+
+    fiat_rate_df = fiat_rate_df.rename({"Date": "Time"}, axis="columns")
+    # leave out the rates referred to 2015-12-31
+    fiat_rate_df = fiat_rate_df.loc[fiat_rate_df.Time != "1451520000"]
+
+    # creating a column containing the fiat currency
+    fiat_rate_df["fiat"] = [x[:3].lower() for x in fiat_rate_df["Currency"]]
+    data_df["fiat"] = [x[3:].lower() for x in data_df["Pair"]]
+    stable_rate_df["fiat"] = [x[:4].lower()
+                              for x in stable_rate_df["Currency"]]
+
+    # ############ creating a USD subset which will not be converted #########
+
+    usd_matrix = data_df.loc[data_df["fiat"] == "usd"]
+    usd_matrix = df_reorder(usd_matrix, "conversion")
+
+    # ########### converting non-USD fiat currencies #########################
+
+    conv_matrix = data_df.loc[data_df["fiat"].isin(fiat_list)]
+
+    # merging the dataset on 'Time' and 'fiat' column
+    conv_merged = pd.merge(conv_matrix, fiat_rate_df, on=["Time", "fiat"])
+
+    # converting the prices in usd
+    conv_merged["Close Price"] = conv_merged["Close Price"] / \
+        conv_merged["Rate"]
+    conv_merged["Close Price"] = conv_merged["Close Price"].replace(
+        [np.inf, -np.inf], np.nan
+    )
+    conv_merged["Close Price"].fillna(0, inplace=True)
+
+    conv_merged["Pair Volume"] = conv_merged["Pair Volume"] / \
+        conv_merged["Rate"]
+    conv_merged["Pair Volume"] = conv_merged["Pair Volume"].replace(
+        [np.inf, -np.inf], np.nan
+    )
+    conv_merged["Pair Volume"].fillna(0, inplace=True)
+
+    # subsetting the dataset with only the relevant columns
+    conv_merged = df_reorder(conv_merged, "conversion")
+
+    # ############## converting STABLECOINS currencies #################
+
+    # creating a matrix for stablecoins
+    stablecoin_matrix = data_df.loc[data_df["fiat"].isin(stablecoin_list)]
+
+    # merging the dataset on 'Time' and 'fiat' column
+    stable_merged = pd.merge(
+        stablecoin_matrix, stable_rate_df, on=["Time", "fiat"])
+
+    # converting the prices in usd
+    stable_merged["Close Price"] = stable_merged["Close Price"] / \
+        stable_merged["Rate"]
+    stable_merged["Close Price"] = stable_merged["Close Price"].replace(
+        [np.inf, -np.inf], np.nan
+    )
+    stable_merged["Close Price"].fillna(0, inplace=True)
+    stable_merged["Pair Volume"] = stable_merged["Pair Volume"] / \
+        stable_merged["Rate"]
+    stable_merged["Pair Volume"] = stable_merged["Pair Volume"].replace(
+        [np.inf, -np.inf], np.nan
+    )
+    stable_merged["Pair Volume"].fillna(0, inplace=True)
+
+    # subsetting the dataset with only the relevant columns
+    stable_merged = df_reorder(stable_merged, "conversion")
+
+    # reunite the dataframes
+    converted_data = conv_merged
+    converted_data = converted_data.append(stable_merged)
+    converted_data = converted_data.append(usd_matrix)
+
+    converted_data = converted_data.sort_values(by=["Time"])
+
+    return converted_data
+
+
+# ############################################################################
+# ######################### STABLE COIN RATES ################################
+
+
+def btcusd_average(db, collection_mongo, exchange_list, exc_to_start="kraken", day_to_comp=None):
+
+    Exchanges = exchange_list
+
+    # taking BTC/USD pair historical
+    if day_to_comp == None:
+
+        first_query = {"Pair": "btcusd", "Exchange": exc_to_start}
+
+    else:
+
+        first_query = {"Pair": "btcusd",
+                       "Exchange": exc_to_start, "Time": str(day_to_comp)}
+
+    first_call = query_mongo(
+        db, MONGO_DICT.get(collection_mongo), first_query)
+
+    # isolating some values in single variables
+    time_arr = first_call[["Time"]]
+    price_df = first_call[["Close Price"]]
+    volume_df = first_call[["Pair Volume"]]
+    price_df = price_df.rename(columns={"Close Price": exc_to_start})
+    volume_df = volume_df.rename(columns={"Pair Volume": exc_to_start})
+    Exchanges.remove("kraken")
+
+    for exchange in Exchanges:
+
+        if day_to_comp == None:
+
+            query = {"Pair": "btcusd", "Exchange": exchange}
+
+        else:
+
+            query = {"Pair": "btcusd", "Exchange": exchange,
+                     "Time": str(day_to_comp)}
+
+        single_ex = query_mongo(
+            db, MONGO_DICT.get(collection_mongo), query)
+
+    try:
+        single_price = single_ex["Close Price"]
+        single_vol = single_ex["Pair Volume"]
+        price_df[exchange] = single_price
+        volume_df[exchange] = single_vol
+
+    except TypeError:
+        pass
+
+    num = (price_df * volume_df).sum(axis=1)
+    den = volume_df.sum(axis=1)
+
+    average_usd = num / den
+    average_df = pd.DataFrame(average_usd, columns=["average usd"])
+    average_df["Time"] = time_arr
+    average_df = average_df.replace([np.inf, -np.inf], np.nan)
+    average_df.fillna(0, inplace=True)
+
+    return average_df
+
+
+def stable_single_exc(db, collection_mongo, exchange, stable_coin, average_df, day_to_comp=None):
+
+    pair_for_query = "btc" + stable_coin.lower()
+
+    if day_to_comp == None:
+
+        query_dict = {"Exchange": exchange, "Pair": pair_for_query}
+
+    else:
+
+        query_dict = {"Exchange": exchange,
+                      "Pair": pair_for_query, "Time": str(day_to_comp)}
+
+    # querying on MongoDB
+    exc_df = query_mongo(db, MONGO_DICT.get(collection_mongo), query_dict)
+
+    # computing the desired values using the obtained df and the usd average df
+    exc_df["rate"] = exc_df["Close Price"] / average_df["average usd"]
+    exc_df.fillna(0, inplace=True)
+
+    # isolating the useful information in two diffewrent df
+    exc_df_weighted = exc_df["rate"] * exc_df["Pair Volume"]
+    exc_df_vol = exc_df["Pair Volume"]
+
+    return exc_df_vol, exc_df_weighted
+
+
+def stable_rate_calc(db, collection_mongo, stable_coin, stable_exc_list, average_df):
+
+    # ############# USDT exchange rates computation ##########
+    # BTC/USDT is traded on Poloniex, Kraken and bittrex
+    # Poloniex has the entire historical values from 01/01/2016
+
+    tot_df_w = []
+    tot_df_v = []
+
+    i = 0
+    for exc in stable_exc_list:
+
+        single_exc_vol, single_exc_weighted = stable_single_exc(
+            db, collection_mongo, exc, stable_coin, average_df)
+
+        if i == 0:
+
+            tot_df_w = single_exc_weighted
+            tot_df_v = single_exc_vol
+
+        else:
+
+            tot_df_w = pd.concat([tot_df_w, single_exc_weighted], axis=1)
+            tot_df_v = pd.concat([tot_df_v, single_exc_vol], axis=1)
+
+        i = i + 1
+
+    tot_df_w["sum"] = tot_df_w.sum(axis=1)
+    tot_df_v["sum"] = tot_df_v.sum(axis=1)
+
+    rates_arr = 1 / np.array((tot_df_w["sum"] / tot_df_v["sum"]))
+
+    # tranforming the data structure into a dataframe
+    rates_df = pd.DataFrame(rates_arr, columns=["Rate"])
+    rates_df = rates_df.replace([np.inf, -np.inf], np.nan)
+    rates_df.fillna(0, inplace=True)
+
+    # adding Currency (USDT/USD), Time (timestamp),
+    # and Standard Date (YYYY-MM-DD) columns
+    rates_df["Currency"] = np.zeros(len(rates_df["Rate"]))
+    rates_df["Currency"] = [
+        str(x).replace("0.0", stable_coin + "/USD") for x in rates_df["Currency"]
+    ]
+    rates_df["Time"] = average_df["Time"]
+
+    rates_df.fillna("NaN", inplace=True)
+    index_to_remove = rates_df[rates_df.Time == "NaN"].index
+
+    rates_df = rates_df.drop(index_to_remove)
+    print(rates_df)
+    rates_df["Standard Date"] = timestamp_to_human(average_df["Time"])
+
+    if stable_coin == "USDT":
+
+        # correcting the date 2016-10-02 using the previous day rate
+        prev_rate = np.array(
+            rates_df.loc[rates_df.Time == '1475280000', "Rate"])
+        rates_df.loc[rates_df.Time == '1475366400', "Rate"] = prev_rate
+
+    return rates_df
