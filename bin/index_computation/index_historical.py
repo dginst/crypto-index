@@ -341,7 +341,7 @@ ewma_df = ewma_crypto_volume(
 # computing the second logic matrix
 second_logic_matrix_df = second_logic_matrix(
     Crypto_Asset_Volume,
-    first_logic_matrix,
+    first_logic_matrix_df,
     CRYPTO_ASSET,
     reference_date_vector,
     time_column="Y",
@@ -349,8 +349,8 @@ second_logic_matrix_df = second_logic_matrix(
 print(second_logic_matrix_df)
 # computing the ewma checked with both the first and second logic matrices
 double_checked_EWMA = ewma_second_logic_check(
-    first_logic_matrix,
-    second_logic_matrix,
+    first_logic_matrix_df,
+    second_logic_matrix_df,
     ewma_df,
     reference_date_vector,
     CRYPTO_ASSET,
