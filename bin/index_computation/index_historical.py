@@ -386,7 +386,7 @@ second_logic_matrix_df["Time"] = next_rebalance_date[1: len(
 
 if y_TS == rebalance_start_date[len(rebalance_start_date) - 1]:
 
-    second_logic_matrix = second_logic_matrix_df[:-1]
+    second_logic_matrix_df = second_logic_matrix_df[:-1]
 
 print(second_logic_matrix)
 
@@ -407,7 +407,7 @@ print(weights_for_period)
 divisor_array = divisor_adjustment(
     Crypto_Asset_Prices,
     weights_for_period,
-    second_logic_matrix,
+    second_logic_matrix_df,
     CRYPTO_ASSET,
     reference_date_vector,
 )
