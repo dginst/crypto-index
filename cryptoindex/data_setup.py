@@ -667,7 +667,7 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
     pair = np.array(curr_df["Pair"])
     exchange = exchange[0]
     pair = pair[0]
-
+    print(pair)
     # select a sub-df containing only the pair of interest of the previous
     # and current dataframes
     pair_prev_df = tot_prev_df.loc[tot_prev_df.Pair == pair]
@@ -675,8 +675,9 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
 
     # find the list of exchange that actually trade the crypto-fiat pair
     exc_with_pair = list(pair_prev_df["Exchange"].unique())
+    print(exc_with_pair)
     exc_with_pair.remove(exchange)
-
+    print(exc_with_pair)
     if exc_with_pair == []:
 
         price_var = 0
@@ -687,6 +688,8 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
         fixing_p_vol = np.array([])
 
         for el in exc_with_pair:
+
+            print(el)
 
             # find a subdataframe related with the single exchange of the loop
             ex_pair_prev_df = pair_prev_df.loc[pair_prev_df.Exchange == el]
@@ -707,10 +710,11 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
 
         # defining the dataframes containing the variations of price and volume
 
-        print(fixing_price)
-        fixing_price_df = pd.DataFrame(fixing_price)
-        fixing_p_vol_df = pd.DataFrame(fixing_p_vol)
-
+        print(float(fixing_price))
+        print(type(fixing_price))
+        fixing_price_df = pd.DataFrame(np.array([fixing_price]))
+        fixing_p_vol_df = pd.DataFrame(np.array([fixing_p_vol]))
+        print(fixing_price_df)
         # compute row sum
         fixing_price_df["sum"] = fixing_price_df.sum(axis=1)
         fixing_p_vol_df["sum"] = fixing_p_vol_df.sum(axis=1)

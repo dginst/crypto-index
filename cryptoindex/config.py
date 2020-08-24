@@ -1,11 +1,17 @@
 START_DATE = "01-01-2016"
 
+ECB_START_DATE_D = "2015-12-31"
+
+ECB_START_DATE = "12-31-2015"
+
 EXC_START_DATE = "04-17-2020"
 
 DAY_IN_SEC = 86400
 
 PAIR_ARRAY = ["gbp", "usd", "cad", "jpy", "eur", "usdt", "usdc"]
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
+
+ECB_FIAT = ["USD", "GBP", "CAD", "JPY"]
 
 CONVERSION_FIAT = ["gbp", "cad", "jpy", "eur"]
 
