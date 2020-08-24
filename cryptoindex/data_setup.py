@@ -7,7 +7,13 @@ import pandas as pd
 import numpy as np
 
 # local import
-from . import mongo_setup as mongo
+from cryptoindex.mongo_setup import (
+    query_mongo
+)
+from cryptoindex.config import (
+    DB_NAME, MONGO_DICT, DAY_IN_SEC,
+    EXCHANGES
+)
 
 
 # TIME AND TIME ARRAYS FUNCTIONS
@@ -235,13 +241,11 @@ def fix_zero_value(matrix):
 # start_Period and End_Period
 
 
-def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N"):
+def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N",
+              db=DB_NAME, coll_raw="coll_ecb_raw"):
 
     # defining the array of date to be used
-
     date_ECB = date_gen(start_period, End_Period, EoD="Y")
-    # date = timestamp_convert(date_TS)
-    # date = [datetime.strptime(x, '%Y-%m-%d') for x in date]
 
     # defining the headers of the returning data frame
     header = ["Date", "Currency", "Rate"]
@@ -252,12 +256,10 @@ def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N"):
 
     for i, single_date in enumerate(date_ECB):
 
-        database = "index"
-        collection = "ecb_raw"
         query = {"TIME_PERIOD": str(date_ECB[i])}
 
         # retrieving data from MongoDB 'index' and 'ecb_raw' collection
-        single_date_ex_matrix = mongo.query_mongo(database, collection, query)
+        single_date_ex_matrix = query_mongo(db, MONGO_DICT.get(coll_raw), query)
 
         # check if rates exist in the specified date
         if len(single_date_ex_matrix) != 0:
@@ -346,19 +348,16 @@ def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N"):
 # interest
 
 
-def ECB_daily_setup(key_curr_vector):
-
-    # defining the array of date to be used
-
-    day_in_sec = 86400
+def ECB_daily_setup(key_curr_vector, db=DB_NAME, coll_raw="coll_ecb_raw",
+                    coll_clean="coll_ecb_clean"):
 
     today_str = datetime.now().strftime("%Y-%m-%d")
     today = datetime.strptime(today_str, "%Y-%m-%d")
 
     # timestamp date
     today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
-    y_TS = today_TS - day_in_sec
-    two_before_TS = y_TS - day_in_sec
+    y_TS = today_TS - DAY_IN_SEC
+    two_before_TS = y_TS - DAY_IN_SEC
 
     # human format date
     yest_h = timestamp_to_human([y_TS])
@@ -366,13 +365,8 @@ def ECB_daily_setup(key_curr_vector):
     # defining the headers of the returning data frame
     header = ["Currency", "Rate"]
 
-    # defining the MongoDB path where to look for the rates
-    db = "index"
-    raw_coll = "ecb_raw"
-    clean_coll = "ecb_clean"
-
     # retrieving data from MongoDB 'index' and 'ecb_raw' collection
-    ecb_raw_mat = mongo.query_mongo(db, raw_coll)
+    ecb_raw_mat = query_mongo(db, MONGO_DICT.get(coll_raw))
 
     # searching into the df only the values referred to yesterday
     y_ecb_raw = ecb_raw_mat.loc[ecb_raw_mat.TIME_PERIOD == str(y_TS)]
@@ -418,7 +412,7 @@ def ECB_daily_setup(key_curr_vector):
     else:
 
         query = {"Date": str(two_before_TS)}
-        prev_clean = mongo.query_mongo(db, clean_coll, query)
+        prev_clean = query_mongo(db, MONGO_DICT.get(coll_clean), query)
 
         # changing "Date" and "Standard Date" from two day before to yesterday
         prev_clean["Date"] = str(y_TS)
@@ -439,20 +433,12 @@ def ECB_daily_setup(key_curr_vector):
 
 
 def CW_series_fix_missing(
-    broken_matrix, exchange, crypto_fiat_pair, reference_array, db, collection
+    broken_matrix, exchange, crypto_fiat_pair, reference_array, collection, db=DB_NAME
 ):
 
     # define the list af all exchanges and then pop out
     # the exchanges subject to the fixing
-    exchange_list = [
-        "bitflyer",
-        "poloniex",
-        "bitstamp",
-        "bittrex",
-        "coinbase-pro",
-        "gemini",
-        "kraken",
-    ]
+    exchange_list = EXCHANGES
     exchange_list.remove(exchange)
 
     broken_array = broken_matrix["Time"]
@@ -464,7 +450,7 @@ def CW_series_fix_missing(
     # query MongoDB and rerieve a DataFrame containing
     # all the data related to the specified crypto-fiat pair
     query_dict = {"Pair": crypto_fiat_pair}
-    matrix = mongo.query_mongo(db, collection, query_dict)
+    matrix = query_mongo(db, collection, query_dict)
     matrix = matrix.drop(columns=["Pair"])
 
     # defining the list of exchanges that actually trade the

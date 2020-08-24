@@ -21,11 +21,6 @@ from cryptoindex.config import (
     DB_NAME, MONGO_DICT
 )
 
-# initial settings ############################################
-
-
-# set today
-today = datetime.now().strftime("%Y-%m-%d")
 
 # ################ setup MongoDB connection ################
 
@@ -34,7 +29,7 @@ mongo_indexing()
 
 collection_dict_upload = mongo_coll()
 
-# ecb_raw collection check ##########################################
+# ############### ecb_raw collection check ##################
 
 # set today
 today = datetime.now().strftime("%Y-%m-%d")
@@ -68,7 +63,7 @@ date_to_download = [datetime.fromtimestamp(
     int(date)) for date in date_to_download]
 date_to_download = [date.strftime("%Y-%m-%d") for date in date_to_download]
 
-# ECB rates raw data download ###################################
+# ############## new ECB rates raw data download ######################
 
 Exchange_Rate_List = pd.DataFrame()
 
@@ -91,7 +86,7 @@ for single_date in date_to_download:
         Exchange_Rate_List = Exchange_Rate_List.append(
             single_date_ex_matrix, sort=True)
 
-# upload the raw data to MongoDB ############################
+# ################ upload data on MongoDB ############################
 
 if Exchange_Rate_List.empty is True:
 

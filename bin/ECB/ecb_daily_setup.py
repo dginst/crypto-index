@@ -2,26 +2,27 @@
 from pymongo import MongoClient
 
 # local import
-import cryptoindex.data_setup as data_setup
+from cryptoindex.data_setup import ECB_daily_setup
+from cryptoindex.mongo_setup import (
+    mongo_coll_drop, mongo_coll,
+    mongo_upload, mongo_indexing
+)
+from cryptoindex.config import (
+    ECB_START_DATE, ECB_FIAT,
+    DB_NAME, MONGO_DICT
+)
 
+# ################ setup MongoDB connection ################
 
-# ################# setup mongo connection ##########################
+# creating the empty collection cleandata within the database index
+mongo_indexing()
 
-# connecting to mongo in local
-connection = MongoClient("localhost", 27017)
-db = connection.index
+collection_dict_upload = mongo_coll()
 
-# connecting to the collection
-collection_ECB_clean = db.ecb_clean
+# ################## ECB rates cleaning ############################
 
-# ################## ECB rates manipulation ############################
+cleaned_ecb = ECB_daily_setup(ECB_FIAT)
 
-# define the array with all the currencies
-key_curr_vector = ["USD", "GBP", "CAD", "JPY"]
+# ############# upload data on MongoDB ##################
 
-cleaned_ecb = data_setup.ECB_daily_setup(key_curr_vector)
-
-# ############# upload the manipulated data in MongoDB ##################
-
-data = cleaned_ecb.to_dict(orient="records")
-collection_ECB_clean.insert_many(data)
+mongo_upload(cleaned_ecb, "collection_ecb_clean")
