@@ -61,11 +61,6 @@ mongo_indexing()
 collection_dict_upload = mongo_coll()
 
 
-myquery = {'Time': 1597881600}
-my = {'Time': "1597881600"}
-collection_dict_upload.get("collection_cw_vol_check").delete_many(myquery)
-collection_dict_upload.get("collection_cw_clean").delete_many(my)
-
 # ############################ missing days check #############################
 
 # this section allows to check if CW_clean data contains the new values of the
@@ -78,6 +73,12 @@ today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
 y_TS = today_TS - DAY_IN_SEC
 two_before_TS = y_TS - DAY_IN_SEC
 
+# TEMPORARY
+myquery = {'Time': y_TS}
+my = {'Time': str(y_TS)}
+collection_dict_upload.get("collection_cw_vol_check").delete_many(myquery)
+collection_dict_upload.get("collection_cw_clean").delete_many(my)
+########
 # defining the array containing all the date from start_period until today
 date_complete_int = date_gen(START_DATE)
 # converting the timestamp format date into string
