@@ -12,11 +12,15 @@
 from datetime import datetime
 
 # third party import
-from pymongo import MongoClient
 import numpy as np
 
 # local import
-import cryptoindex.data_setup as data_setup
+from cryptoindex.data_setup import ECB_setup
+from cryptoindex.config import ECB_FIAT
+from cryptoindex.mongo_setup import (
+    mongo_coll_drop, mongo_coll,
+    mongo_upload, mongo_indexing
+)
 
 # #################### initial settings ################################
 
@@ -24,31 +28,24 @@ start_period = "12-31-2015"
 
 # set today as End_period
 End_Period = datetime.now().strftime("%m-%d-%Y")
-# or
-# End_Period = '03-01-2020'
 
-key_curr_vector = ["USD", "GBP", "CAD", "JPY"]
+# ################ setup MongoDB connection ################
 
-# ################## setup mongo connection ##########################
+# drop the pre-existing collection
+mongo_coll_drop("ecb_hist_s")
 
-# connecting to mongo in local
-connection = MongoClient("localhost", 27017)
-db = connection.index
+# creating the empty collection cleandata within the database index
+mongo_indexing()
 
-# drop the pre-existing collection (if there is one)
-db.ecb_clean.drop()
+collection_dict_upload = mongo_coll()
 
-# creating the empty collection rawdata within the database index
-db.ecb_clean.create_index([("id", -1)])
-collection_ECB_clean = db.ecb_clean
-
-# ECB rates manipulation ###################################
+# ################ ECB rates cleaning ###########################
 
 # makes the raw data clean through the ECB_setup function
 try:
 
-    mongo_clean = data_setup.ECB_setup(
-        key_curr_vector, start_period, End_Period)
+    mongo_clean = ECB_setup(
+        ECB_FIAT, start_period, End_Period)
 
 except UnboundLocalError:
 
@@ -72,7 +69,6 @@ for element in mongo_clean["Date"]:
 mongo_clean["Date"] = new_date
 mongo_clean["Standard Date"] = standard_date
 
-# ############# upload the manipulated data in MongoDB ##################
+# ############# upload data on MongoDB ##################
 
-data = mongo_clean.to_dict(orient="records")
-collection_ECB_clean.insert_many(data)
+mongo_upload(mongo_clean, "collection_ecb_clean")

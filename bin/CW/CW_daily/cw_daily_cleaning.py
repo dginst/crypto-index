@@ -61,13 +61,11 @@ mongo_indexing()
 collection_dict_upload = mongo_coll()
 
 
-myquery = {'Time': 1595462400}
-my = {'Time': "1595462400"}
-my2 = {"Exchange": "coinbase-pro", "Pair": "xrpgbp"}
+myquery = {'Time': 1597881600}
+my = {'Time': "1597881600"}
 collection_dict_upload.get("collection_cw_vol_check").delete_many(myquery)
 collection_dict_upload.get("collection_cw_clean").delete_many(my)
-collection_dict_upload.get("collection_cw_clean").delete_many(my2)
-##
+
 # ############################ missing days check #############################
 
 # this section allows to check if CW_clean data contains the new values of the
@@ -288,8 +286,9 @@ print(day_bfr_mat)
 # looping through all the daily keys looking for potential missing value
 for key_val in day_bfr_mat["key"]:
 
+    print(key_val)
     new_val = merged.loc[merged.key == key_val]
-
+    print(new_val)
     # if the new 'Close Price' referred to a certain key is 0 the script
     # check the previous day value: if is == 0 then pass, if is != 0
     # the values related to the selected key needs to be corrected
@@ -298,6 +297,7 @@ for key_val in day_bfr_mat["key"]:
     if np.array(new_val["Close Price"]) == 0.0:
 
         d_before_val = day_bfr_mat.loc[day_bfr_mat.key == key_val]
+        print(d_before_val)
 
         if np.array(d_before_val["Close Price"]) != 0.0:
 

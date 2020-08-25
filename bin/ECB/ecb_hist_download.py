@@ -3,55 +3,53 @@
 # for the currencies 'USD', 'GBP', 'CAD' and 'JPY'. Then store the retrieved
 # data on MongoDB in the database "index" and collection "ecb_raw"
 # ############################################################################
-# standard import
 
+# standard import
 import time
 from datetime import datetime
 
-# local import
-import cryptoindex.data_download as data_download
-import cryptoindex.data_setup as data_setup
-
 # third party import
 import pandas as pd
-from pymongo import MongoClient
+from cryptoindex.data_setup import date_gen
 
-# ################### initial settings ########################################
+from cryptoindex.data_download import ECB_rates_extractor
+from cryptoindex.mongo_setup import (
+    mongo_coll_drop, mongo_coll,
+    mongo_upload, mongo_indexing
+)
+from cryptoindex.config import (
+    ECB_START_DATE_D, ECB_FIAT
+)
 
-start_period = "2015-12-31"
+# ################ setup MongoDB connection ################
 
-# set today as End_period
-End_Period = datetime.now().strftime("%Y-%m-%d")
+# drop the pre-existing collection
+mongo_coll_drop("ecb_hist_d")
 
-key_curr_vector = ["USD", "GBP", "CAD", "JPY"]
+# creating the empty collection cleandata within the database index
+mongo_indexing()
 
-# ############# setup mongo connection ###################################
-
-# connecting to mongo in local
-connection = MongoClient("localhost", 27017)
-# creating the database called index
-db = connection.index
-
-# drop the pre-existing collection (if there is one)
-db.ecb_raw.drop()
-# creating the empty collection rawdata within the database index
-db.ecb_raw.create_index([("id", -1)])
-collection_ECB_raw = db.ecb_raw
+collection_dict_upload = mongo_coll()
 
 # ####################### ECB rates raw data download #########################
 
+# set today as end_date
+end_date = datetime.now().strftime("%Y-%m-%d")
 # create an array of date containing the list of date to download
 
-date = data_setup.date_gen(start_period, End_Period, timeST="N", clss="list", EoD="N")
+date_list = date_gen(ECB_START_DATE_D, end_date,
+                     timeST="N", clss="list", EoD="N")
 
-date = [datetime.strptime(day, "%m-%d-%Y").strftime("%Y-%m-%d") for day in date]
+date_list_str = [datetime.strptime(day, "%m-%d-%Y").strftime("%Y-%m-%d")
+                 for day in date_list]
 
 Exchange_Rate_List = pd.DataFrame()
 
-for i, single_date in enumerate(date):
+for i, single_date in enumerate(date_list_str):
 
     # retrieving data from ECB website
-    single_date_ex_matrix = data_download.ECB_rates_extractor(key_curr_vector, date[i])
+    single_date_ex_matrix = ECB_rates_extractor(
+        ECB_FIAT, date_list_str[i])
     # put a sllep time in order to do not overuse API connection
     time.sleep(0.05)
     print(single_date_ex_matrix)
@@ -62,9 +60,9 @@ for i, single_date in enumerate(date):
 
     else:
 
-        Exchange_Rate_List = Exchange_Rate_List.append(single_date_ex_matrix, sort=True)
+        Exchange_Rate_List = Exchange_Rate_List.append(
+            single_date_ex_matrix, sort=True)
 
 # ################ upload the raw data to MongoDB #######################
 
-data = Exchange_Rate_List.to_dict(orient="records")
-collection_ECB_raw.insert_many(data)
+mongo_upload(Exchange_Rate_List, "collection_ecb_raw")
