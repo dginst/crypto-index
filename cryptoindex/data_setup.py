@@ -11,8 +11,7 @@ from cryptoindex.mongo_setup import (
     query_mongo
 )
 from cryptoindex.config import (
-    DB_NAME, MONGO_DICT, DAY_IN_SEC,
-    EXCHANGES
+    DB_NAME, MONGO_DICT, DAY_IN_SEC
 )
 
 
@@ -433,12 +432,22 @@ def ECB_daily_setup(key_curr_vector, db=DB_NAME, coll_raw="coll_ecb_raw",
 
 
 def CW_series_fix_missing(
-    broken_matrix, exchange, crypto_fiat_pair, reference_array, collection, db=DB_NAME
+    broken_matrix, exchange, crypto_fiat_pair, reference_array, db, collection
 ):
 
     # define the list af all exchanges and then pop out
     # the exchanges subject to the fixing
-    exchange_list = EXCHANGES
+    exchange_list = [
+        "coinbase-pro",
+        "poloniex",
+        "bitstamp",
+        "gemini",
+        "bittrex",
+        "kraken",
+        "bitflyer",
+    ]
+    print(exchange_list)
+    print(exchange)
     exchange_list.remove(exchange)
 
     broken_array = broken_matrix["Time"]
