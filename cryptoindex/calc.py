@@ -1795,9 +1795,11 @@ def btcusd_average(db, collection_mongo, exchange_list, exc_to_start="kraken", d
                        "Exchange": exc_to_start, "Time": str(day_to_comp)}
 
     # retrieving the
+    print(day_to_comp)
+    print(collection_mongo)
     first_call = query_mongo(
         db, MONGO_DICT.get(collection_mongo), first_query)
-
+    print(first_call)
     # isolating some values in single variables
     time_arr = first_call[["Time"]]
     price_df = first_call[["Close Price"]]
@@ -1868,7 +1870,7 @@ def stable_single_exc(db, collection_mongo, exchange, stable_coin, average_df, d
     return exc_df_vol, exc_df_weighted
 
 
-def stable_rate_calc(db, collection_mongo, stable_coin, stable_exc_list, average_df):
+def stable_rate_calc(db, collection_mongo, stable_coin, stable_exc_list, average_df, day_to_comp=None):
 
     tot_df_w = []
     tot_df_v = []
@@ -1877,7 +1879,7 @@ def stable_rate_calc(db, collection_mongo, stable_coin, stable_exc_list, average
     for exc in stable_exc_list:
 
         single_exc_vol, single_exc_weighted = stable_single_exc(
-            db, collection_mongo, exc, stable_coin, average_df)
+            db, collection_mongo, exc, stable_coin, average_df, day_to_comp)
 
         if i == 0:
 
@@ -1918,11 +1920,14 @@ def stable_rate_calc(db, collection_mongo, stable_coin, stable_exc_list, average
     rates_df["Standard Date"] = timestamp_to_human(average_df["Time"])
 
     # correcting the date 2016-10-02 for USDT using the previous day rate
-    if stable_coin == "USDT":
 
-        prev_rate = np.array(
-            rates_df.loc[rates_df.Time == '1475280000', "Rate"])
-        rates_df.loc[rates_df.Time == '1475366400', "Rate"] = prev_rate
+    if day_to_comp is None:
+
+        if stable_coin == "USDT":
+
+            prev_rate = np.array(
+                rates_df.loc[rates_df.Time == '1475280000', "Rate"])
+            rates_df.loc[rates_df.Time == '1475366400', "Rate"] = prev_rate
 
     return rates_df
 
