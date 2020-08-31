@@ -348,18 +348,32 @@ def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N",
 
 
 def ECB_daily_setup(key_curr_vector, db=DB_NAME, coll_raw="coll_ecb_raw",
-                    coll_clean="coll_ecb_clean"):
+                    coll_clean="coll_ecb_clean", day_to_clean=None):
 
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    today = datetime.strptime(today_str, "%Y-%m-%d")
+    if day_to_clean is None:
 
-    # timestamp date
-    today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
-    y_TS = today_TS - DAY_IN_SEC
-    two_before_TS = y_TS - DAY_IN_SEC
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.strptime(today_str, "%Y-%m-%d")
 
-    # human format date
-    yest_h = timestamp_to_human([y_TS])
+        # timestamp date
+        today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+        day_to_clean_TS = today_TS - DAY_IN_SEC
+        two_before_TS = day_to_clean_TS - DAY_IN_SEC
+
+        # human format date
+        day_to_clean_human = timestamp_to_human([day_to_clean_TS])
+
+    else:
+
+        day_to_clean_d = datetime.strptime(day_to_clean, "%Y-%m-%d")
+
+        # timestamp date
+        day_to_clean_TS = int(day_to_clean_d.replace(
+            tzinfo=timezone.utc).timestamp())
+        two_before_TS = day_to_clean_TS - DAY_IN_SEC
+
+        # human format date
+        day_to_clean_human = timestamp_to_human([day_to_clean_TS])
 
     # defining the headers of the returning data frame
     header = ["Currency", "Rate"]
@@ -368,7 +382,7 @@ def ECB_daily_setup(key_curr_vector, db=DB_NAME, coll_raw="coll_ecb_raw",
     ecb_raw_mat = query_mongo(db, MONGO_DICT.get(coll_raw))
 
     # searching into the df only the values referred to yesterday
-    y_ecb_raw = ecb_raw_mat.loc[ecb_raw_mat.TIME_PERIOD == str(y_TS)]
+    y_ecb_raw = ecb_raw_mat.loc[ecb_raw_mat.TIME_PERIOD == str(day_to_clean_TS)]
 
     if y_ecb_raw.empty is False:
 
@@ -404,8 +418,8 @@ def ECB_daily_setup(key_curr_vector, db=DB_NAME, coll_raw="coll_ecb_raw",
 
         # converting into dataframe
         df = pd.DataFrame(array, columns=header)
-        df["Date"] = str(y_TS)
-        df["Standard Date"] = yest_h[0]
+        df["Date"] = str(day_to_clean_TS)
+        df["Standard Date"] = day_to_clean_human[0]
         exc_ecb = df[["Date", "Standard Date", "Currency", "Rate"]]
 
     else:
@@ -414,8 +428,8 @@ def ECB_daily_setup(key_curr_vector, db=DB_NAME, coll_raw="coll_ecb_raw",
         prev_clean = query_mongo(db, MONGO_DICT.get(coll_clean), query)
 
         # changing "Date" and "Standard Date" from two day before to yesterday
-        prev_clean["Date"] = str(y_TS)
-        prev_clean["Standard Date"] = yest_h[0]
+        prev_clean["Date"] = str(day_to_clean_TS)
+        prev_clean["Standard Date"] = day_to_clean_human[0]
         exc_ecb = prev_clean[["Date", "Standard Date", "Currency", "Rate"]]
 
     return exc_ecb
@@ -705,8 +719,6 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
 
         # defining the dataframes containing the variations of price and volume
 
-        print(float(fixing_price))
-        print(type(fixing_price))
         fixing_price_df = pd.DataFrame(np.array([fixing_price]))
         fixing_p_vol_df = pd.DataFrame(np.array([fixing_p_vol]))
         print(fixing_price_df)
