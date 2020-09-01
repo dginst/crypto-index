@@ -718,9 +718,17 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
                 fixing_p_vol = np.column_stack((fixing_p_vol, volume))
 
         # defining the dataframes containing the variations of price and volume
+        print(fixing_price)
+        try:
 
-        fixing_price_df = pd.DataFrame(np.array([fixing_price]))
-        fixing_p_vol_df = pd.DataFrame(np.array([fixing_p_vol]))
+            fixing_price_df = pd.DataFrame(np.array([fixing_price]))
+            fixing_p_vol_df = pd.DataFrame(np.array([fixing_p_vol]))
+
+        except ValueError:
+
+            fixing_price_df = pd.DataFrame(fixing_price)
+            fixing_p_vol_df = pd.DataFrame(fixing_p_vol)
+
         print(fixing_price_df)
         # compute row sum
         fixing_price_df["sum"] = fixing_price_df.sum(axis=1)

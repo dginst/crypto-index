@@ -1,6 +1,5 @@
 # standard library import
 import io
-import time
 from datetime import datetime, timezone
 
 # third party import
@@ -54,7 +53,8 @@ def ECB_rates_extractor(
         request_url = entrypoint + resource + "/" + flow_ref + "/" + key
 
         # API call
-        response = get(request_url, params=param, headers={"Accept": "text/csv"})
+        response = get(request_url, params=param,
+                       headers={"Accept": "text/csv"})
 
         # if data is empty, it is an holiday, therefore exit
         try:
@@ -69,10 +69,12 @@ def ECB_rates_extractor(
             ["TIME_PERIOD", "OBS_VALUE", "CURRENCY", "CURRENCY_DENOM"], axis=1
         )
         # transform date from datetime to string
-        date_to_string = Main_Data_Frame["TIME_PERIOD"].to_string(index=False).strip()
+        date_to_string = Main_Data_Frame["TIME_PERIOD"].to_string(
+            index=False).strip()
         # transform date into unix timestamp and add 3600 sec in order to uniform the date at 12:00 am
         date_to_string = datetime.strptime(date_to_string, "%Y-%m-%d")
-        date_timestamp = int(date_to_string.replace(tzinfo=timezone.utc).timestamp())
+        date_timestamp = int(date_to_string.replace(
+            tzinfo=timezone.utc).timestamp())
         date_timestamp = str(date_timestamp)
         # reassigning the timestamp date to the dataframe
         Main_Data_Frame["TIME_PERIOD"] = date_timestamp
@@ -83,7 +85,8 @@ def ECB_rates_extractor(
 
         else:
 
-            Exchange_Rate_List = Exchange_Rate_List.append(Main_Data_Frame, sort=True)
+            Exchange_Rate_List = Exchange_Rate_List.append(
+                Main_Data_Frame, sort=True)
 
     Exchange_Rate_List.reset_index(drop=True, inplace=True)
 
@@ -120,7 +123,8 @@ def CW_raw_to_mongo(
     end_date = datetime.strptime(end_date, "%m-%d-%Y")
     # transform date into timestamps
     start_date = str(int(start_date.replace(tzinfo=timezone.utc).timestamp()))
-    end_date = str(int(end_date.replace(tzinfo=timezone.utc).timestamp()) - 86400)
+    end_date = str(int(end_date.replace(
+        tzinfo=timezone.utc).timestamp()) - 86400)
     # API settings
     entrypoint = "https://api.cryptowat.ch/markets/"
     key = (
