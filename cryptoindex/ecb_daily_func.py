@@ -141,6 +141,7 @@ def ecb_daily_download(day_to_download=None):
 
         Exchange_Rate_List = single_date_ex_matrix
 
+        print("New ECB data have been correctly downloaded")
     return Exchange_Rate_List
 
 
@@ -183,6 +184,8 @@ def ecb_daily_op(day=None):
         mongo_upload(ecb_day_raw, "collection_ecb_raw")
 
         ecb_day_clean = ECB_daily_setup(ECB_FIAT, day_to_clean=day)
+
+        print('New ECB rawdata have been correctly manipulated and are now ready')
 
         mongo_upload(ecb_day_clean, "collection_ecb_clean")
 

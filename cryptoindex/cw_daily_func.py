@@ -111,6 +111,7 @@ def cw_daily_download():
                                 "collection_cw_raw"), str(date_h)
                         )
 
+                        print('CW rawdata have been correctly downloaded ')
     else:
 
         print(
@@ -361,6 +362,8 @@ def cw_daily_cleaning():
         daily_fixed_df.drop(columns=["key"])
         daily_fixed_df["Time"] = [str(d) for d in daily_fixed_df["Time"]]
         mongo_upload(daily_fixed_df, "collection_cw_clean")
+        
+        print('The CW rawdata have been correctly manipulated and are now ready for conversion')
 
     else:
 
@@ -487,6 +490,7 @@ def cw_daily_conv():
             # put the manipulated data on MongoDB
             mongo_upload(matrix, "collection_cw_final_data")
 
+            print('CW data are now converted. Is it possible to compute the index-value right now.')
     else:
 
         print(
