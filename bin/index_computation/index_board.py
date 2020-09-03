@@ -136,13 +136,16 @@ quarterly_date = calc.quarterly_period()
 
 # defining time variables
 curr_reb_start = str(int(rebalance_start_date[len(rebalance_start_date) - 1]))
+next_reb_start = str(int(next_rebalance_date[len(rebalance_start_date)]))
 last_reb_start = str(int(rebalance_start_date[len(rebalance_start_date) - 2]))
 next_reb_stop = str(int(rebalance_stop_date[len(rebalance_stop_date) - 2]))
 curr_board_eve = str(int(board_date_eve[len(board_date_eve) - 1]))
 
-print(last_reb_start)
-print(next_reb_stop)
-print(curr_board_eve)
+print(data_setup.timestamp_to_human([last_reb_start], date_format="%m-%d-%y"))
+print(data_setup.timestamp_to_human([curr_reb_start], date_format="%m-%d-%y"))
+print(data_setup.timestamp_to_human([next_reb_start], date_format="%m-%d-%y"))
+
+print(curr_board_eve["Time"])
 # ####################### MAIN PART #################################
 # downloading the daily value from MongoDB and put it into a dataframe
 

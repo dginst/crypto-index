@@ -8,10 +8,16 @@ from dateutil.relativedelta import relativedelta
 
 # local import
 from . import data_setup
-from .data_setup import (timestamp_to_human)
+from cryptoindex.data_setup import (
+    timestamp_to_human
+)
 from . import mongo_setup as mongo
-from .mongo_setup import (df_reorder, query_mongo)
-from .config import (MONGO_DICT)
+from cryptoindex.mongo_setup import (
+    df_reorder, query_mongo
+)
+from cryptoindex.config import (
+    DB_NAME, MONGO_DICT, DAY_IN_SEC
+)
 
 # ###########################################################################
 # ######################## DATE SETTINGS FUNCTIONS ##########################
@@ -862,15 +868,14 @@ def daily_ewma_fraction(
     first_logic_row,
     last_reb_start,
     board_date_eve,
-    db_name="index",
+    db_name=DB_NAME,
     coll_name="index_EWMA",
 ):
 
-    day_in_sec = 86400
-    before_eve = int(board_date_eve) - day_in_sec
+    before_eve = int(board_date_eve) - DAY_IN_SEC
 
     # retrieving the EWMA df from MongoDB
-    ewma_df = mongo.query_mongo(db_name, coll_name)
+    ewma_df = query_mongo(db_name, coll_name)
     period_ewma = ewma_df.loc[
         ewma_df["Time"].between(int(last_reb_start),
                                 int(before_eve), inclusive=True)
@@ -1064,15 +1069,14 @@ def daily_double_log_check(
     ewma_row,
     last_reb_start,
     board_date_eve,
-    db_name="index",
+    db_name=DB_NAME,
     coll_name="index_EWMA",
 ):
 
-    day_in_sec = 86400
-    before_eve = int(board_date_eve) - day_in_sec
+    before_eve = int(board_date_eve) - DAY_IN_SEC
 
     # retrieving the EWMA df from MongoDB
-    ewma_df = mongo.query_mongo(db_name, coll_name)
+    ewma_df = query_mongo(db_name, coll_name)
     period_ewma = ewma_df.loc[
         ewma_df["Time"].between(int(last_reb_start),
                                 int(before_eve), inclusive=True)
