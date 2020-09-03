@@ -1,19 +1,17 @@
 # standard library import
+import sys
 from datetime import datetime, timezone
 
 # third party import
-import pandas as pd
 import numpy as np
 
-# local import
-from cryptoindex.data_setup import (
-    date_gen)
-from cryptoindex.mongo_setup import (
-    query_mongo, mongo_coll,
-    mongo_indexing, mongo_upload)
-from cryptoindex.config import (
-    START_DATE, DAY_IN_SEC, MONGO_DICT, DB_NAME)
+import pandas as pd
 
+# local import
+from cryptoindex.config import DAY_IN_SEC, DB_NAME, MONGO_DICT, START_DATE
+from cryptoindex.data_setup import date_gen
+from cryptoindex.mongo_setup import (mongo_coll, mongo_indexing, mongo_upload,
+                                     query_mongo)
 
 # ############# INITIAL SETTINGS ################################
 
@@ -39,12 +37,12 @@ collection_dict_upload = mongo_coll()
 
 # ################# DAILY DATA CONVERSION MAIN PART ##################
 query_data = {"Time": str(y_TS)}
-matrix_data = query_mongo(DB_NAME, MONGO_DICT.get("collection_exc_final_data"), query_data)
+matrix_data = query_mongo(DB_NAME, 'Exc_final_data', query_data)
 
 
 if matrix_data is not list:
     
-    sys.exit('The  data are already converted')
+    sys.exit('Data are already converted')
 
 # querying the data from mongo
 query_data = {"Time": str(y_TS)}
