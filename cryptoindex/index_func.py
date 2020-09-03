@@ -15,7 +15,7 @@ from cryptoindex.calc import (start_q, stop_q, board_meeting_day,
                               )
 from cryptoindex.data_setup import (date_gen, timestamp_to_human)
 from cryptoindex.mongo_setup import (
-    mongo_coll, mongo_indexing, mongo_upload, query_mongo)
+    mongo_indexing, mongo_upload, query_mongo)
 from cryptoindex.config import (
     START_DATE, MONGO_DICT, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME, DAY_IN_SEC)
 
@@ -318,8 +318,13 @@ def loop_crypto_asset(exc_price, exc_vol, crypto_asset_price, crypto_asset_vol):
 
 
 def index_daily_operation(crypto_asset, crypto_asset_price,
-                          crypto_asset_vol, two_before_TS,
+                          crypto_asset_vol, day_before_TS,
+                          curr_reb_start, next_reb_start,
+                          curr_board_eve, logic_one_arr=None,
                           day_type=None, day=None):
+
+    two_before_TS = day_before_TS - DAY_IN_SEC
+    two_before_human = timestamp_to_human([two_before_TS])
 
     # turn prices and volumes into pandas dataframe
     crypto_asset_price = pd.DataFrame(crypto_asset_price, columns=crypto_asset)
@@ -350,12 +355,14 @@ def index_daily_operation(crypto_asset, crypto_asset_price,
 
     if day_type is None:
 
-        daily_ewma_double_check = index_norm_logic_op(crypto_asset)
+        daily_ewma_double_check = index_norm_logic_op(crypto_asset, daily_ewma)
+        first_logic_row = []
+        second_logic_row = []
 
     elif day_type == "board":
 
-        first_logic_row, second_logic_row,
-        weights_for_board, daily_ewma_double_check = index_board_logic_op(
+        (first_logic_row, second_logic_row,
+         weights_for_board, daily_ewma_double_check) = index_board_logic_op(
             crypto_asset, logic_one_arr, daily_ewma,
             curr_reb_start, next_reb_start, curr_board_eve)
 
@@ -367,7 +374,7 @@ def index_daily_operation(crypto_asset, crypto_asset_price,
         DB_NAME, MONGO_DICT.get("coll_synt"), {"Date": two_before_human[0]}
     )
     yesterday_synt_matrix = yesterday_synt_matrix.drop(columns=["Date", "Time"])
-    daily_return = np.array(price_ret.loc[:, cr])
+    daily_return = np.array(price_ret.loc[:, crypto_asset])
     new_synt = (1 + daily_return) * np.array(yesterday_synt_matrix)
     daily_synt = pd.DataFrame(new_synt, columns=crypto_asset)
 
@@ -411,6 +418,7 @@ def index_daily_operation(crypto_asset, crypto_asset_price,
 
     return (crypto_asset_price, crypto_asset_vol, price_ret, daily_ewma,
             daily_ewma_double_check, daily_synt, daily_rel, curr_divisor,
+            first_logic_row, second_logic_row,
             weights_for_board, daily_index_1000_df, raw_index_df)
 
 
@@ -421,7 +429,6 @@ def index_board_logic_op(crypto_asset, logic_one_arr, daily_ewma,
     # turn the first logic row into a dataframe and add the 'Time' column
     # the first logic row will be used for the next quarter weights computation
     first_logic_row = pd.DataFrame(logic_one_arr, columns=crypto_asset)
-    first_logic_row["Time"] = next_reb_stop
 
     # computing the new second logic row that is used to compute the
     # weights relative to the next rebalance period
@@ -464,7 +471,7 @@ def index_board_logic_op(crypto_asset, logic_one_arr, daily_ewma,
     return first_logic_row, second_logic_row, weights_for_board, double_checked_ewma
 
 
-def index_norm_logic_op(crypto_asset):
+def index_norm_logic_op(crypto_asset, daily_ewma):
 
     # downloading from mongoDB the current logic matrices (1 e 2)
     logic_one = query_mongo(DB_NAME, MONGO_DICT.get("coll_log1"))
@@ -496,29 +503,22 @@ def index_board_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
         day_date = datetime.strptime(day_str, "%Y-%m-%d")
         day_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
         day_before_TS = day_TS - DAY_IN_SEC
-        two_before_TS = day_before_TS - DAY_IN_SEC
-        two_before_human = timestamp_to_human([two_before_TS])
 
     else:
 
         day_date = datetime.strptime(day, "%Y-%m-%d")
         day_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
         day_before_TS = day_TS - DAY_IN_SEC
-        two_before_TS = day_before_TS - DAY_IN_SEC
-        two_before_TS = day_TS - DAY_IN_SEC
-        two_before_human = timestamp_to_human([two_before_TS])
 
     # define all the useful arrays containing the rebalance start
     # date, stop date, board meeting date
     rebalance_start_date = start_q(START_DATE)
     rebalance_stop_date = stop_q(rebalance_start_date)
-    board_date = board_meeting_day()
     board_date_eve = day_before_board()
     next_rebalance_date = next_start()
 
     # call the function that creates a object containing
     # the couple of quarterly start-stop date
-    quarterly_date = quarterly_period()
     next_reb_start = str(int(next_rebalance_date[len(rebalance_start_date)]))
     curr_reb_start = str(
         int(rebalance_start_date[len(rebalance_start_date) - 1]))
@@ -537,121 +537,16 @@ def index_board_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
         daily_mat, crypto_asset, exc_list, pair_list, day,
         last_reb_start, next_reb_stop, curr_board_eve, day_type="board")
 
-    # turn prices and volumes into pandas dataframe
-    crypto_asset_price = pd.DataFrame(crypto_asset_price, columns=crypto_asset)
-    crypto_asset_vol = pd.DataFrame(crypto_asset_vol, columns=crypto_asset)
-
-    # compute the price return of the day
-    two_before_price = query_mongo(
-        DB_NAME, MONGO_DICT.get("coll_price"), {"Time": two_before_TS})
-    two_before_price = two_before_price.drop(columns=["Time", "Date"])
-    return_df = two_before_price.append(crypto_asset_price)
-    price_ret = return_df.pct_change()
-    price_ret = price_ret.iloc[[1]]
-    # then add the 'Time' column
-    time_header = ["Time"]
-    time_header.extend(crypto_asset)
-    crypto_asset_price = pd.DataFrame(crypto_asset_price, columns=time_header)
-    crypto_asset_price["Time"] = int(day_before_TS)
-    crypto_asset_vol = pd.DataFrame(crypto_asset_vol, columns=time_header)
-    crypto_asset_vol["Time"] = int(day_before_TS)
-    # adding the Time column to the price ret df
-    price_ret["Time"] = int(day_before_TS)
-
-    # computing the Exponential Weighted Moving Average of the day
-    hist_volume = query_mongo(DB_NAME, MONGO_DICT.get("coll_volume"))
-    hist_volume = hist_volume.drop(columns=["Date"])
-    hist_volume = hist_volume.append(crypto_asset_vol)
-    daily_ewma = daily_ewma_crypto_volume(hist_volume, crypto_asset)
-
-    # turn the first logic row into a dataframe and add the 'Time' column
-    # the first logic row will be used for the next quarter weights computation
-    first_logic_row = pd.DataFrame(logic_one_arr, columns=crypto_asset)
-    first_logic_row["Time"] = next_reb_stop
-
-    # computing the new second logic row that is used to compute the
-    # weights relative to the next rebalance period
-    ewma_fraction = daily_ewma_fraction(
-        daily_ewma, first_logic_row, last_reb_start, curr_board_eve
-    )
-    print(ewma_fraction)
-    second_logic_row = (ewma_fraction >= 0.02) * 1
-
-    double_checked_ewma = daily_double_log_check(
-        first_logic_row, second_logic_row, daily_ewma,
-        last_reb_start, curr_board_eve)
-
-    # adding the Time columns to the double checked ewma
-    human_start = timestamp_to_human(
-        [last_reb_start], date_format="%m-%d-%y")
-    human_curr = timestamp_to_human(
-        [curr_board_eve], date_format="%m-%d-%y")
-    period_date_list = date_gen(human_start[0], human_curr[0], EoD="N")
-    double_checked_ewma["Time"] = period_date_list
-
-    print(double_checked_ewma)
-    # giving "Time" and "Date" columns to the df containing the logic rows
-    human_next_start = timestamp_to_human(
-        [next_reb_start], date_format="%m-%d-%y")
-    first_logic_row["Time"] = next_reb_start
-    first_logic_row["Date"] = human_next_start
-    second_logic_row["Time"] = next_reb_start
-    second_logic_row["Date"] = human_next_start
-
-    # computing the new weights that will be used starting from the
-    # next rebalance date
-    weights_for_board = quarter_weights(
-        double_checked_ewma, [int(curr_board_eve)], crypto_asset
-    )
-    weights_for_board["Time"] = next_reb_start
-    weights_for_board["Date"] = human_next_start
-
-    # compute the daily syntethic matrix
-    yesterday_synt_matrix = query_mongo(
-        DB_NAME, MONGO_DICT.get("coll_synt"), {"Date": two_before_human[0]}
-    )
-    yesterday_synt_matrix = yesterday_synt_matrix.drop(columns=["Date", "Time"])
-    daily_return = np.array(price_ret.loc[:, CRYPTO_ASSET])
-    new_synt = (1 + daily_return) * np.array(yesterday_synt_matrix)
-    daily_synt = pd.DataFrame(new_synt, columns=CRYPTO_ASSET)
-
-    # compute the daily relative syntethic matrix
-    daily_tot = np.array(daily_synt.sum(axis=1))
-
-    daily_rel = np.array(daily_synt) / daily_tot
-    daily_rel = pd.DataFrame(daily_rel, columns=crypto_asset)
-
-    # daily index value computation
-    curr_divisor = query_mongo(
-        DB_NAME, MONGO_DICT.get("coll_divisor_res"), {
-            "Date": two_before_human[0]}
-    )
-    curr_div_val = np.array(curr_divisor["Divisor Value"])
-    index_numerator = np.array(
-        crypto_asset_price[CRYPTO_ASSET]) * np.array(daily_rel)
-    numerator_sum = index_numerator.sum(axis=1)
-    num = pd.DataFrame(numerator_sum)
-    daily_index_value = np.array(num) / curr_div_val
-    raw_index_df = pd.DataFrame(daily_index_value, columns=["Index Value"])
-
-    # retrieving from mongoDB the yesterday value of the raw index
-    yesterday_raw_index = query_mongo(
-        DB_NAME, MONGO_DICT.get("coll_raw_index"), {"Date": two_before_human[0]}
-    )
-    yesterday_raw_index = yesterday_raw_index.drop(columns=["Date", "Time"])
-    raw_curr = yesterday_raw_index.append(raw_index_df)
-    variation = raw_curr.pct_change()
-    variation = np.array(variation.iloc[1])
-
-    # retrieving from mongoDB the yesterday value of the raw index
-    yesterday_1000_index = query_mongo(
-        DB_NAME, MONGO_DICT.get("coll_1000_index"), {
-            "Date": two_before_human[0]}
-    )
-    daily_index_1000 = np.array(
-        yesterday_1000_index["Index Value"]) * (1 + variation)
-    daily_index_1000_df = pd.DataFrame(
-        daily_index_1000, columns=["Index Value"])
+    (crypto_asset_price, crypto_asset_vol, price_ret,
+     daily_ewma, daily_ewma_double_check, daily_synt,
+     daily_rel, curr_divisor, first_logic_row,
+     second_logic_row, weights_for_board,
+     daily_index_1000_df, raw_index_df) = index_daily_operation(
+        crypto_asset, crypto_asset_price,
+        crypto_asset_vol, day_before_TS,
+        curr_reb_start, next_reb_start,
+        curr_board_eve, logic_one_arr=logic_one_arr,
+        day_type="board", day=day)
 
     index_daily_uploader(crypto_asset_price, crypto_asset_vol,
                          exc_vol_tot, price_ret, daily_ewma,
@@ -660,7 +555,7 @@ def index_board_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
                          daily_index_1000_df, raw_index_df,
                          new_logic_one=first_logic_row,
                          new_logic_two=second_logic_row,
-                         new_weights=weights_for_board, day=)
+                         new_weights=weights_for_board, day=day)
 
     return None
 
