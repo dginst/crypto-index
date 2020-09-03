@@ -1,22 +1,19 @@
 # standard library import
+import sys
 from datetime import datetime, timezone
 from typing import Dict
 
+import numpy as np
 # third party import
 import pandas as pd
-import numpy as np
 
+from cryptoindex.config import (DAY_IN_SEC, DB_NAME, EXCHANGES, MONGO_DICT,
+                                START_DATE)
 # local import
-from cryptoindex.data_setup import (
-    date_gen, daily_fix_miss, exc_pair_cleaning,
-    exc_value_cleaning)
-from cryptoindex.mongo_setup import (
-    query_mongo, mongo_coll,
-    mongo_indexing, mongo_upload)
-from cryptoindex.config import (
-    START_DATE, DAY_IN_SEC, MONGO_DICT,
-    EXCHANGES, DB_NAME)
-
+from cryptoindex.data_setup import (daily_fix_miss, date_gen,
+                                    exc_pair_cleaning, exc_value_cleaning)
+from cryptoindex.mongo_setup import (mongo_coll, mongo_indexing, mongo_upload,
+                                     query_mongo)
 
 # ############# INITIAL SETTINGS ################################
 
@@ -41,12 +38,18 @@ mongo_indexing()
 
 collection_dict_upload = mongo_coll()
 
-# ################### fixing the "Pair Volume" information #################
 
+# checking if the collection are already updated
 q_dict: Dict[str, str] = {}
 q_dict = {"Time": str(y_TS)}
+daily_mat = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_clean"), q_dict)
 
-daily_mat = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_raw"), q_dict)
+if daily_mat != []:
+
+      sys.exit('The exc data are already manipulated')
+
+# ################### fixing the "Pair Volume" information #################
+
 daily_mat = daily_mat[
     ["Pair", "Exchange", "Close Price", "Time", "Crypto Volume", "date"]
 ]
