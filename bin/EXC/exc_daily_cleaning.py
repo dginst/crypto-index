@@ -44,9 +44,9 @@ q_dict: Dict[str, str] = {}
 q_dict = {"Time": str(y_TS)}
 daily_mat = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_clean"), q_dict)
 
-if daily_mat != []:
-
-      sys.exit('The exc data are already manipulated')
+if matrix_data is not list:
+    
+    sys.exit('The exc data are already manipulated')
 
 # ################### fixing the "Pair Volume" information #################
 

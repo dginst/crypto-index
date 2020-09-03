@@ -38,6 +38,13 @@ collection_dict_upload = mongo_coll()
 
 
 # ################# DAILY DATA CONVERSION MAIN PART ##################
+query_data = {"Time": str(y_TS)}
+matrix_data = query_mongo(DB_NAME, MONGO_DICT.get("collection_exc_final_data"), query_data)
+
+
+if matrix_data is not list:
+    
+    sys.exit('The  data are already converted')
 
 # querying the data from mongo
 query_data = {"Time": str(y_TS)}
