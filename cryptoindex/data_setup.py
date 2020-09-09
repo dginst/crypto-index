@@ -838,15 +838,15 @@ def exc_pair_cleaning(exc_df):
     return clean_df
 
 
-def exc_value_cleaning(exc_df):
+def pair_vol_fix(exc_df):
 
     exc_df["Crypto Volume"] = [float(v) for v in exc_df["Crypto Volume"]]
     exc_df["Close Price"] = [float(p) for p in exc_df["Close Price"]]
     exc_df["Pair Volume"] = exc_df["Close Price"] * exc_df["Crypto Volume"]
 
-    clean_df = exc_df
+    fixed_df = exc_df
 
-    return clean_df
+    return fixed_df
 
 
 def make_unique(df_to_check):
