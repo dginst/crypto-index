@@ -37,7 +37,20 @@ def check_missing(tot_date_arr, coll_to_check, query, days_to_check=5):
 
     # checking the time column and selecting only the last five days retrived
     # from MongoDB collection
-    date_list = np.array(matrix["Time"])
+    try:
+
+        date_list = np.array(matrix["Time"])
+
+    except KeyError:
+
+        try:
+
+            date_list = np.array(matrix["TIME_PERIOD"])
+
+        except KeyError:
+
+            date_list = np.array(matrix["Date"])
+
     last_days_db = date_list[(len(date_list) - 5): len(date_list)]
     last_days_db_str = [str(single_date)
                         for single_date in last_days_db]
@@ -362,7 +375,7 @@ def cw_daily_cleaning():
         daily_fixed_df.drop(columns=["key"])
         daily_fixed_df["Time"] = [str(d) for d in daily_fixed_df["Time"]]
         mongo_upload(daily_fixed_df, "collection_cw_clean")
-        
+
         print('The CW rawdata have been correctly manipulated and are now ready for conversion')
 
     else:
@@ -490,7 +503,8 @@ def cw_daily_conv():
             # put the manipulated data on MongoDB
             mongo_upload(matrix, "collection_cw_final_data")
 
-            print('CW data are now converted. Is it possible to compute the index-value right now.')
+            print(
+                'CW data are now converted. Is it possible to compute the index-value right now.')
     else:
 
         print(
