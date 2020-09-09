@@ -10,14 +10,15 @@ import pandas as pd
 from cryptoindex.data_download import CW_raw_to_mongo
 from cryptoindex.data_setup import (
     date_gen, Diff, timestamp_to_human,
-    daily_fix_miss
+    daily_fix_miss, pair_vol_fix
 )
 from cryptoindex.calc import (
     btcusd_average, stable_rate_calc,
     conv_into_usd
 )
 from cryptoindex.mongo_setup import (
-    mongo_coll, mongo_indexing, query_mongo, mongo_upload)
+    mongo_coll, mongo_indexing, query_mongo, mongo_upload
+)
 from cryptoindex.config import (
     START_DATE, MONGO_DICT, DAY_IN_SEC,
     PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES,
@@ -135,7 +136,7 @@ def cw_daily_download():
     return None
 
 
-def daily_pair_vol_fix(time_to_fix):
+def daily_pair_vol_fix2(time_to_fix):
 
     # defining the query details
     q_dict: Dict[str, int] = {}
@@ -176,6 +177,22 @@ def daily_pair_vol_fix(time_to_fix):
                     pass
 
     return None
+
+
+def daily_pair_vol_fix(day):
+
+    # defining the query details
+    q_dict: Dict[str, int] = {}
+    q_dict = {"Time": day}
+
+    # querying oin MongoDB collection
+    daily_mat = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_raw"), q_dict)
+    daily_mat = daily_mat.loc[daily_mat.Time != 0]
+    daily_mat = daily_mat.drop(columns=["Low", "High", "Open"])
+
+    daily_vol_fix = pair_vol_fix(daily_mat)
+
+    return daily_vol_fix
 
 
 def cw_new_key_mngm(logic_key_df, daily_mat, time_to_check, date_tot_str):
@@ -511,5 +528,13 @@ def cw_daily_conv():
             "Message: No new date to upload on on Mongo DB, the CW_final_data \
             collection on MongoDB is updated."
         )
+
+    return None
+
+
+def cw_daily_operation(day=None):
+
+    mat_vol_fix = daily_pair_vol_fix(day)
+    mongo_upload(mat_vol_fix, "collection_cw_vol_check")
 
     return None

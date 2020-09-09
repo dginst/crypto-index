@@ -10,7 +10,7 @@ from cryptoindex.config import (DAY_IN_SEC, DB_NAME, EXCHANGES, MONGO_DICT,
                                 START_DATE, STABLE_COIN, CONVERSION_FIAT)
 # local import
 from cryptoindex.data_setup import (daily_fix_miss, date_gen, Diff,
-                                    exc_pair_cleaning, exc_value_cleaning)
+                                    exc_pair_cleaning, pair_vol_fix)
 from cryptoindex.mongo_setup import (mongo_coll, mongo_upload,
                                      query_mongo)
 
@@ -67,7 +67,7 @@ def daily_exc_pair_vol_fix(daily_mat, exc_list):
     daily_mat = daily_mat.loc[daily_mat.Time != 0]
 
     daily_mat_clean = exc_pair_cleaning(daily_mat)
-    daily_mat_fixed = exc_value_cleaning(daily_mat_clean)
+    daily_mat_fixed = pair_vol_fix(daily_mat_clean)
 
     return daily_mat_fixed
 
