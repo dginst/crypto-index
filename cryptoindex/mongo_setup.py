@@ -60,17 +60,6 @@ def query_mongo(database, collection, query_dict=None):
     return df
 
 
-def query_mongo2(database, collection):
-
-    # defining the variable that allows to work with MongoDB
-    db = connection[database]
-    coll = db[collection]
-
-    call = coll.find()
-
-    return call
-
-
 def mongo_index_conn():
 
     # connecting to mongo in local
@@ -162,6 +151,9 @@ def mongo_coll():
         "collection_weights": db.index_weights,
         "collection_index_level_1000": db.index_level_1000,
         "collection_index_level_raw": db.index_level_raw,
+        #test 
+
+        'test_mongo' : db.test_mongo
 
     }
 
