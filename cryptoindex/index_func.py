@@ -589,7 +589,7 @@ def index_normal_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
     daily_mat = query_mongo(
         DB_NAME, MONGO_DICT.get(coll_to_use), query_dict)
 
-    crypto_asset_price, crypto_asset_vol, exc_vol_tot, logic_one_arr = index_daily_loop(
+    (crypto_asset_price, crypto_asset_vol, exc_vol_tot, _) = index_daily_loop(
         daily_mat, crypto_asset, exc_list, pair_list, day)
 
     # turn prices and volumes into pandas dataframe

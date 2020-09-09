@@ -63,6 +63,35 @@ def check_missing(tot_date_arr, coll_to_check, query, days_to_check=5):
     return date_to_add
 
 
+def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
+
+    day_before_TS, _ = days_variable(day_to_check)
+
+    if coll_kind is None:
+
+        query["Time"] = str(day_before_TS)
+
+    elif coll_kind == "ecb_raw":
+
+        query["TIME_PERIOD"] = str(day_before_TS)
+
+    elif coll_kind == "ecb_clean":
+
+        query["Date"] = str(day_before_TS)
+
+    # retrieving the wanted data on MongoDB collection
+    matrix = query_mongo(DB_NAME, MONGO_DICT.get(coll_to_check), query)
+
+    if matrix == []:
+
+        res = False
+
+    else:
+        res = True
+
+    return bool(res)
+
+
 def missing_start_stop(date_to_add):
 
     if len(date_to_add) > 1:
@@ -86,51 +115,41 @@ def missing_start_stop(date_to_add):
     return start_date, end_date
 
 
-def cw_daily_download():
+def cw_daily_download(day_to_download=None):
 
-    # defining the array containing all the date from start_period until today
-    date_tot = date_gen(START_DATE)
-    # converting the timestamp format date into string
-    date_tot_str = [str(single_date) for single_date in date_tot]
-
+    day_before_TS, _ = days_variable(day_to_download)
     # create the indexing for MongoDB and define the variable containing the
     # MongoDB collections where to upload data
     mongo_indexing()
     collection_dict_upload = mongo_coll()
 
-    date_to_add = check_missing(date_tot_str, "coll_cw_raw", {
-                                "Exchange": "coinbase-pro", "Pair": "ethusd"})
+    if daily_check_mongo("coll_cw_raw", {"Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
 
-    if date_to_add != []:
+        date_long = datetime.fromtimestamp(int(day_before_TS))
+        date_h = date_long.strftime("%m-%d-%Y")
 
-        for date in date_to_add:
+        for Crypto in CRYPTO_ASSET:
 
-            date_long = datetime.fromtimestamp(int(date))
-            date_h = date_long.strftime("%m-%d-%Y")
+            ccy_pair_array = []
+            for i in PAIR_ARRAY:
+                ccy_pair_array.append(Crypto.lower() + i)
 
-            for Crypto in CRYPTO_ASSET:
+            for exchange in EXCHANGES:
 
-                ccy_pair_array = []
-                for i in PAIR_ARRAY:
-                    ccy_pair_array.append(Crypto.lower() + i)
+                for cp in ccy_pair_array:
 
-                for exchange in EXCHANGES:
+                    # create the matrix for the single currency_pair
+                    # connecting to CryptoWatch website
+                    CW_raw_to_mongo(
+                        exchange, cp, collection_dict_upload.get(
+                            "collection_cw_raw"), str(date_h)
+                    )
 
-                    for cp in ccy_pair_array:
-
-                        # create the matrix for the single currency_pair
-                        # connecting to CryptoWatch website
-                        CW_raw_to_mongo(
-                            exchange, cp, collection_dict_upload.get(
-                                "collection_cw_raw"), str(date_h)
-                        )
-
-                        print('CW rawdata have been correctly downloaded ')
+                    print('CW rawdata have been correctly downloaded ')
     else:
 
         print(
-            "Message: No new date to download from CryptoWatch,\
-            the rawdata collection on MongoDB is updated."
+            "Message: No new date to download from CryptoWatch, the CW_rawdata collection on MongoDB is updated."
         )
 
     return None
@@ -195,9 +214,68 @@ def daily_pair_vol_fix(day):
     return daily_vol_fix
 
 
-def cw_new_key_mngm(logic_key_df, daily_mat, time_to_check, date_tot_str):
+def log_key_update(key_to_update, collection):
 
     collection_dict_upload = mongo_coll()
+
+    q_del = {"key": key_to_update}
+    collection_dict_upload.get(collection).delete_many(q_del)
+
+    # updating the logic matrix of exchange-pair couple
+    new_key_log = pd.DataFrame(np.column_stack(
+        (key_to_update, int(1))), columns=["key", "logic_value"])
+    new_key_log["logic_value"] = 1
+
+    return new_key_log
+
+
+def new_series_composer(key, new_key_df, date_tot_str, day_to_check, kind_of_series="CW"):
+
+    # create the df containing the historical series of the new couple(s)
+    # composed by zeros
+    splited_key = key.split("&")
+    key_hist_df = pd.DataFrame(date_tot_str, columns=["Time"])
+    key_hist_df["Close Price"] = 0
+    key_hist_df["Pair Volume"] = 0
+    key_hist_df["Crypto Volume"] = 0
+    key_hist_df["Exchange"] = splited_key[0]
+    key_hist_df["Pair"] = splited_key[1]
+
+    if kind_of_series == "CW":
+
+        collection_dict_upload = mongo_coll()
+
+        # uploading on MongoDB collections "CW_converted_data" and "CW_final_data"
+        # the new series of zero except for the last value (yesterday)
+        mongo_upload(key_hist_df, "collection_cw_converted")
+        mongo_upload(key_hist_df, "collection_cw_final_data")
+
+        query_to_del = {"Time": str(day_to_check)}
+        collection_dict_upload.get(
+            "collection_cw_converted").delete_many(query_to_del)
+        collection_dict_upload.get(
+            "collection_cw_final_data").delete_many(query_to_del)
+
+    else:
+        pass
+
+    # inserting the today value of the new couple(s)
+    new_price = np.array(new_key_df.loc[new_key_df.key == key, "Close Price"])
+    new_p_vol = np.array(new_key_df.loc[new_key_df.key == key, "Pair Volume"])
+    new_c_vol = np.array(
+        new_key_df.loc[new_key_df.key == key, "Crypto Volume"])
+    key_hist_df.loc[key_hist_df.Time == str(
+        day_to_check), "Close Price"] = new_price
+    key_hist_df.loc[key_hist_df.Time == str(
+        day_to_check), "Pair Volume"] = new_p_vol
+    key_hist_df.loc[key_hist_df.Time == str(
+        day_to_check), "Crypto Volume"] = new_c_vol
+
+    return key_hist_df
+
+
+def cw_new_key_mngm(logic_key_df, daily_mat, time_to_check, date_tot_str):
+
     # selecting only the keys with 0 value
     key_absent = logic_key_df.loc[logic_key_df.logic_value == 0]
     key_absent.drop(columns=["logic_value"])
@@ -205,81 +283,44 @@ def cw_new_key_mngm(logic_key_df, daily_mat, time_to_check, date_tot_str):
     # merging the dataframe in order to find the potenatial new keys
     merg_absent = pd.merge(key_absent, daily_mat, on="key", how="left")
     merg_absent.fillna("NaN", inplace=True)
-    new_key = merg_absent.loc[merg_absent["Close Price"] != "NaN"]
+    new_key_df = merg_absent.loc[merg_absent["Close Price"] != "NaN"]
 
-    if new_key.empty is False:
+    if new_key_df.empty is False:
 
         print("Message: New exchange-pair couple(s) found.")
-        new_key_list = new_key["key"]
+        new_key_list = new_key_df["key"]
+
+        date_tot_int = date_gen(START_DATE)
+        # converting the timestamp format date into string
+        date_tot_str = [str(single_date) for single_date in date_tot_int]
 
         for key in new_key_list:
 
-            q_del = {"key": key}
-            collection_dict_upload.get("collection_CW_key").delete_many(q_del)
+            # updating the logic matrix of exchange-pair keys
+            logic_row_update = log_key_update(key, "collection_CW_key")
+            mongo_upload(logic_row_update, "collection_CW_key")
 
-            # updating the logic matrix of exchange-pair couple
-            new_key_log = pd.DataFrame(np.column_stack(
-                (key, int(1))), columns=["key", "logic_value"])
-            new_key_log["logic_value"] = 1
-
-            # create the historical series of the new couple(s)
-            # composed by zeros
-            splited_key = key.split("&")
-            key_hist_df = pd.DataFrame(date_tot_str, columns=["Time"])
-            key_hist_df["Close Price"] = 0
-            key_hist_df["Pair Volume"] = 0
-            key_hist_df["Crypto Volume"] = 0
-            key_hist_df["Exchange"] = splited_key[0]
-            key_hist_df["Pair"] = splited_key[1]
-
-            # uploading on MongoDB collections "CW_converted_data" and "CW_final_data"
-            # the new series of zero except for the last value (yesterday)
-            mongo_upload(key_hist_df, "collection_cw_converted")
-            mongo_upload(key_hist_df, "collection_cw_final_data")
-
-            query_for_yst = {"Time": str(time_to_check)}
-            collection_dict_upload.get(
-                "collection_cw_converted").delete_many(query_for_yst)
-            collection_dict_upload.get(
-                "collection_cw_final_data").delete_many(query_for_yst)
-
-            # inserting the today value of the new couple(s)
-            new_price = np.array(new_key.loc[new_key.key == key, "Close Price"])
-            new_p_vol = np.array(new_key.loc[new_key.key == key, "Pair Volume"])
-            new_c_vol = np.array(
-                new_key.loc[new_key.key == key, "Crypto Volume"])
-            key_hist_df.loc[key_hist_df.Time == str(
-                time_to_check), "Close Price"] = new_price
-            key_hist_df.loc[key_hist_df.Time == str(
-                time_to_check), "Pair Volume"] = new_p_vol
-            key_hist_df.loc[key_hist_df.Time == str(
-                time_to_check), "Crypto Volume"] = new_c_vol
+            key_hist_df = new_series_composer(
+                key, new_key_df, date_tot_str, time_to_check, kind_of_series="CW")
 
             # upload the dataframe on MongoDB collection "CW_cleandata"
             mongo_upload(key_hist_df, "collection_cw_clean")
 
-            # uploading the updated keys df on the CW_keys collection
-            mongo_upload(new_key_log, "collection_CW_key")
-
     else:
-
         pass
 
     return None
 
 
-def cw_daily_key_mngm(time_to_check, date_tot_str):
-
-    # defining the query details
-    q_dict = {"Time": int(time_to_check)}
+def cw_daily_key_mngm(volume_checked_df, time_to_check, date_tot_str):
 
     # downloading from MongoDB the matrix with the daily values and the
     # matrix containing the exchange-pair logic values
-    daily_mat = query_mongo(DB_NAME, MONGO_DICT.get("coll_vol_chk"), q_dict)
     logic_key = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_keys"))
 
     # creating the exchange-pair couples key for the daily matrix
-    daily_mat["key"] = daily_mat["Exchange"] + "&" + daily_mat["Pair"]
+    volume_checked_df["key"] = volume_checked_df["Exchange"] + \
+        "&" + volume_checked_df["Pair"]
 
     # selecting only the exchange-pair couples present in the historical series
     key_present = logic_key.loc[logic_key.logic_value == 1]
@@ -287,7 +328,7 @@ def cw_daily_key_mngm(time_to_check, date_tot_str):
     # applying a left join between the prresent keys matrix and the daily
     # matrix, this operation returns a matrix containing all the keys in
     # "key_present" and NaN where some keys are missing
-    merged = pd.merge(key_present, daily_mat, on="key", how="left")
+    merged = pd.merge(key_present, volume_checked_df, on="key", how="left")
     # assigning some columns values and substituting NaN with 0
     # in the "merged" df
     merged["Time"] = str(time_to_check)
@@ -296,115 +337,83 @@ def cw_daily_key_mngm(time_to_check, date_tot_str):
     merged["Pair"] = split_val[1]
     merged.fillna(0, inplace=True)
 
-    #  checking potential new exchange-pair couple ##################
+    #  checking potential new exchange-pair couple
 
-    cw_new_key_mngm(logic_key, daily_mat, time_to_check, date_tot_str)
+    cw_new_key_mngm(logic_key, volume_checked_df, time_to_check, date_tot_str)
 
     return merged
 
 
-def cw_daily_cleaning():
+def days_variable(day):
 
-    # create the indexing for MongoDB and define the variable containing the
-    # MongoDB collections where to upload data
-    mongo_indexing()
+    if day is None:
 
-    # assign date of interest to variables
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    today = datetime.strptime(today_str, "%Y-%m-%d")
-    today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
-    y_TS = today_TS - DAY_IN_SEC
-    two_before_TS = y_TS - DAY_IN_SEC
-
-    # defining the array containing all the date from start_period until today
-    date_complete_int = date_gen(START_DATE)
-    # converting the timestamp format date into string
-    date_tot_str = [str(single_date) for single_date in date_complete_int]
-
-    # fixing the "Pair Volume" information #################
-
-    date_to_fix = check_missing(date_tot_str, "coll_vol_chk", {
-                                "Exchange": "coinbase-pro", "Pair": "ethusd"})
-
-    if date_to_fix != []:
-
-        daily_pair_vol_fix(y_TS)
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.strptime(today_str, "%Y-%m-%d")
+        today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+        day_before_TS = today_TS - DAY_IN_SEC
+        two_before_TS = day_before_TS - DAY_IN_SEC
 
     else:
 
-        print(
-            "Message: No need to fix pair volume. The collection on MongoDB is updated."
-        )
+        day_date = datetime.strptime(day, "%Y-%m-%d")
+        day_before_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
+        two_before_TS = day_before_TS - DAY_IN_SEC
 
-    # DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
+    return day_before_TS, two_before_TS
 
-    daily_fixed_df = cw_daily_key_mngm(y_TS, date_tot_str)
 
-    # MISSING DATA FIXING ##############################
+def daily_fix_miss_op(daily_complete_df, day, collection):
 
-    date_to_add = check_missing(date_tot_str, "coll_cw_clean", {
-                                "Exchange": "coinbase-pro", "Pair": "ethusd"})
+    _, two_before_TS = days_variable(day)
+    # defining the query details
+    q_dict_time: Dict[str, str] = {}
+    q_dict_time = {"Time": str(two_before_TS)}
 
-    if date_to_add != []:
+    # downloading from MongoDB the matrix referring to the previuos day
+    day_bfr_mat = query_mongo(
+        DB_NAME, MONGO_DICT.get(collection), q_dict_time)
 
-        # defining the query details
-        q_dict_time: Dict[str, str] = {}
-        q_dict_time = {"Time": str(two_before_TS)}
+    # add the "key" column
+    day_bfr_mat["key"] = day_bfr_mat["Exchange"] + "&" + day_bfr_mat["Pair"]
 
-        # downloading from MongoDB the matrix referring to the previuos day
-        day_bfr_mat = query_mongo(
-            DB_NAME, MONGO_DICT.get("coll_cw_clean"), q_dict_time)
+    # looping through all the daily keys looking for potential missing value
+    for key_val in day_bfr_mat["key"]:
 
-        # add the "key" column
-        day_bfr_mat["key"] = day_bfr_mat["Exchange"] + "&" + day_bfr_mat["Pair"]
+        new_val = daily_complete_df.loc[daily_complete_df.key == key_val]
 
-        # looping through all the daily keys looking for potential missing value
-        for key_val in day_bfr_mat["key"]:
+        # if the new 'Close Price' referred to a certain key is 0 the script
+        # check the previous day value: if is == 0 then pass, if is != 0
+        # the values related to the selected key needs to be corrected
+        if np.array(new_val["Close Price"]) == 0.0:
 
-            new_val = daily_fixed_df.loc[daily_fixed_df.key == key_val]
+            d_before_val = day_bfr_mat.loc[day_bfr_mat.key == key_val]
 
-            # if the new 'Close Price' referred to a certain key is 0 the script
-            # check the previous day value: if is == 0 then pass, if is != 0
-            # the values related to the selected key needs to be corrected
-            # ###### IF A EXC-PAIR DIES AT A CERTAIN POINT, THE SCRIPT
-            # CHANGES THE VALUES. MIGHT BE WRONG #######################
-            if np.array(new_val["Close Price"]) == 0.0:
+            if np.array(d_before_val["Close Price"]) != 0.0:
 
-                d_before_val = day_bfr_mat.loc[day_bfr_mat.key == key_val]
-
-                if np.array(d_before_val["Close Price"]) != 0.0:
-
-                    price_var = daily_fix_miss(
-                        new_val, daily_fixed_df, day_bfr_mat)
-                    # applying the weighted variation to the day before 'Close Price'
-                    new_price = (1 + price_var) * d_before_val["Close Price"]
-                    # changing the 'Close Price' value using the new computed price
-                    daily_fixed_df.loc[daily_fixed_df.key
-                                       == key_val, "Close Price"] = new_price
-
-                else:
-                    pass
+                price_var = daily_fix_miss(
+                    new_val, daily_complete_df, day_bfr_mat)
+                # applying the weighted variation to the day before 'Close Price'
+                new_price = (1 + price_var) * d_before_val["Close Price"]
+                # changing the 'Close Price' value using the new computed price
+                daily_complete_df.loc[daily_complete_df.key
+                                      == key_val, "Close Price"] = new_price
 
             else:
                 pass
 
-        # put the manipulated data on MongoDB
-        daily_fixed_df.drop(columns=["key"])
-        daily_fixed_df["Time"] = [str(d) for d in daily_fixed_df["Time"]]
-        mongo_upload(daily_fixed_df, "collection_cw_clean")
+        else:
+            pass
 
-        print('The CW rawdata have been correctly manipulated and are now ready for conversion')
+    daily_complete_df.drop(columns=["key"])
+    daily_complete_df["Time"] = [str(d) for d in daily_complete_df["Time"]]
 
-    else:
+    daily_fixed_df = daily_complete_df
 
-        print(
-            "Message: The collection cw_clean on MongoDB is updated."
-        )
-
-    return None
+    return daily_fixed_df
 
 
-def stable_rates_op(coll_to_query, coll_where_upload, day_to_comp=None):
+def stable_rates_op(coll_to_query, day_to_comp):
 
     if day_to_comp is None:
 
@@ -428,113 +437,110 @@ def stable_rates_op(coll_to_query, coll_where_upload, day_to_comp=None):
         usdc_rates = stable_rate_calc(
             DB_NAME, coll_to_query, "USDC", USDC_EXC_LIST, average_btcusd, day_to_comp=str(day_to_comp))
 
-    mongo_upload(usdt_rates, coll_where_upload)
-    mongo_upload(usdc_rates, coll_where_upload)
-
-    return None
+    return usdt_rates, usdc_rates
 
 
-def cw_daily_conv():
+def cw_daily_conv_op(day_to_conv_TS):
 
-    # define today date as timestamp
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    today = datetime.strptime(today_str, "%Y-%m-%d")
-    today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
-    y_TS = today_TS - DAY_IN_SEC
+    # querying the data from mongo
+    query_data = {"Time": str(day_to_conv_TS)}
+    query_rate = {"Date": str(day_to_conv_TS)}
+    query_stable = {"Time": str(day_to_conv_TS)}
+    # querying the data from mongo
+    matrix_rate = query_mongo(
+        DB_NAME, MONGO_DICT.get("coll_ecb_clean"), query_rate)
+    matrix_data = query_mongo(
+        DB_NAME, MONGO_DICT.get("coll_cw_clean"), query_data)
+    matrix_rate_stable = query_mongo(
+        DB_NAME, MONGO_DICT.get("coll_stable_rate"), query_stable)
 
-    # define the variable containing all the date from start_date to today.
-    # the date are displayed as timestamp and each day refers to 12:00 am UTC
-    date_tot_int = date_gen(START_DATE)
-    date_tot_str = [str(single_date) for single_date in date_tot_int]
+    # converting the "matrix_rate" df
+    converted_df = conv_into_usd(
+        DB_NAME, matrix_data, matrix_rate,
+        matrix_rate_stable, CONVERSION_FIAT, STABLE_COIN)
 
-    # ########## MongoDB setup ################################
+    return converted_df
+
+
+def cw_daily_operation(day=None):
 
     # create the indexing for MongoDB and define the variable containing the
     # MongoDB collections where to upload data
     mongo_indexing()
 
-    # USDC/USD and USDT/USD computation #####################
+    date_tot = date_gen(START_DATE)
+    # converting the timestamp format date into string
+    date_tot_str = [str(single_date) for single_date in date_tot]
 
-    rates_to_add = check_missing(
-        date_tot_str, "coll_stable_rate", {"Currency": "USDT/USD"})
+    day_before_TS, _ = days_variable(day)
 
-    if rates_to_add != []:
+    if day is None:
 
-        stable_rates_op("coll_cw_clean",
-                        "collection_stable_rate", day_to_comp=str(y_TS))
+        if daily_check_mongo("coll_vol_chk", {
+                "Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
 
-    else:
+            mat_vol_fix = daily_pair_vol_fix(day_before_TS)
+            mongo_upload(mat_vol_fix, "collection_cw_vol_check")
 
-        print(
-            "Message: No need to compute new rates. The stable rates collection on MongoDB is updated."
-        )
-
-    # ################# DAILY DATA CONVERSION MAIN PART ##################
-
-    date_to_convert = check_missing(date_tot_str, "coll_cw_conv", {
-        "Exchange": "coinbase-pro", "Pair": "ethusd"})
-
-    if date_to_convert != []:
-
-        # querying the data from mongo
-        query_data = {"Time": str(y_TS)}
-        query_rate = {"Date": str(y_TS)}
-        query_stable = {"Time": str(y_TS)}
-        # querying the data from mongo
-        matrix_rate = query_mongo(
-            DB_NAME, MONGO_DICT.get("coll_ecb_clean"), query_rate)
-        matrix_data = query_mongo(
-            DB_NAME, MONGO_DICT.get("coll_cw_clean"), query_data)
-        matrix_rate_stable = query_mongo(
-            DB_NAME, MONGO_DICT.get("coll_stable_rate"), query_stable)
-
-        # converting the "matrix_rate" df
-        converted_data = conv_into_usd(
-            DB_NAME, matrix_data, matrix_rate,
-            matrix_rate_stable, CONVERSION_FIAT, STABLE_COIN)
-
-        # uploading converted data on MongoDB
-        mongo_upload(converted_data, "collection_cw_converted")
-
-    else:
-
-        print(
-            "Message: No need to convert. The cw converted data collection on MongoDB is updated."
-        )
-
-    # ################### CW_final_data upload ##################################
-
-    date_to_upload = check_missing(date_tot_str, "coll_cw_final", {
-        "Exchange": "coinbase-pro", "Pair": "ethusd"})
-
-    if date_to_upload != []:
-
-        for date in date_to_upload:
-
-            query_dict = {"Time": str(date)}
-
-            # retriving the needed information on MongoDB
-            matrix = query_mongo(DB_NAME, MONGO_DICT.get(
-                "coll_cw_conv"), query_dict)
-
-            # put the manipulated data on MongoDB
-            mongo_upload(matrix, "collection_cw_final_data")
+        else:
 
             print(
-                'CW data are now converted. Is it possible to compute the index-value right now.')
+                "Message: No need to fix pair volume. The collection on MongoDB is updated."
+            )
+
+        # new and dead crypto-fiat key management
+
+        daily_complete_df = cw_daily_key_mngm(
+            mat_vol_fix, day_before_TS, date_tot_str)
+
+        # missing data fixing
+
+        if daily_check_mongo("coll_cw_clean", {"Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
+
+            daily_fixed_df = daily_fix_miss_op(
+                daily_complete_df, day, "coll_cw_clean")
+            mongo_upload(daily_fixed_df, "collection_cw_clean")
+
+        else:
+
+            print(
+                "Message: The collection cw_clean on MongoDB is updated."
+            )
+
+        if daily_check_mongo("coll_stable_rate", {"Currency": "USDT/USD"}) is False:
+
+            usdt_rates, usdc_rates = stable_rates_op(
+                "coll_cw_clean", str(day_before_TS))
+
+            mongo_upload(usdt_rates, "collection_stable_rate")
+            mongo_upload(usdc_rates, "collection_stable_rate")
+
+        else:
+
+            print("The stable_rates_collection on MongoDB is already updated.")
+
+        if daily_check_mongo("coll_cw_conv", {"Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
+
+            converted_data = cw_daily_conv_op(day_before_TS)
+            mongo_upload(converted_data, "collection_cw_converted")
+
+        else:
+
+            print(
+                "Message: The cw_converted_data collection on MongoDB is already updated."
+            )
+
+        if daily_check_mongo("coll_cw_final", {"Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
+
+            mongo_upload(converted_data, "collection_cw_final_data")
+
+        else:
+
+            print(
+                "The CW_final_data collection on MongoDB is already updated."
+            )
+
     else:
-
-        print(
-            "Message: No new date to upload on on Mongo DB, the CW_final_data \
-            collection on MongoDB is updated."
-        )
-
-    return None
-
-
-def cw_daily_operation(day=None):
-
-    mat_vol_fix = daily_pair_vol_fix(day)
-    mongo_upload(mat_vol_fix, "collection_cw_vol_check")
+        pass
 
     return None
