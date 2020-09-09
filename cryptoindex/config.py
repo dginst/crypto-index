@@ -89,3 +89,13 @@ CLEAN_DATA_HEAD = [
 USDT_EXC_LIST = ["poloniex", "bittrex", "kraken"]
 
 USDC_EXC_LIST = ["poloniex", "coinbase-pro", "kraken"]
+
+CW_RAW_HEAD = ["Exchange",
+               "Pair",
+               "Time",
+               "Low",
+               "High",
+               "Open",
+               "Close Price",
+               "Crypto Volume",
+               "Pair Volume"]

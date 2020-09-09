@@ -9,8 +9,7 @@ import pandas as pd
 # local import
 from cryptoindex.data_download import CW_raw_to_mongo
 from cryptoindex.data_setup import (
-    date_gen, Diff, timestamp_to_human,
-    daily_fix_miss, pair_vol_fix
+    date_gen, daily_fix_miss, pair_vol_fix
 )
 from cryptoindex.calc import (
     btcusd_average, stable_rate_calc,
@@ -25,42 +24,6 @@ from cryptoindex.config import (
     DB_NAME, CONVERSION_FIAT, USDC_EXC_LIST,
     USDT_EXC_LIST, STABLE_COIN
 )
-
-
-def check_missing(tot_date_arr, coll_to_check, query, days_to_check=5):
-
-    # selecting the last five days and put them into an array
-    last_days = tot_date_arr[(
-        len(tot_date_arr) - days_to_check): len(tot_date_arr)]
-
-    # retrieving the wanted data on MongoDB collection
-    matrix = query_mongo(DB_NAME, MONGO_DICT.get(coll_to_check), query)
-
-    # checking the time column and selecting only the last five days retrived
-    # from MongoDB collection
-    try:
-
-        date_list = np.array(matrix["Time"])
-
-    except KeyError:
-
-        try:
-
-            date_list = np.array(matrix["TIME_PERIOD"])
-
-        except KeyError:
-
-            date_list = np.array(matrix["Date"])
-
-    last_days_db = date_list[(len(date_list) - 5): len(date_list)]
-    last_days_db_str = [str(single_date)
-                        for single_date in last_days_db]
-
-    # finding the date to download as difference between
-    # complete array of date and date now stored on MongoDB
-    date_to_add = Diff(last_days, last_days_db_str)
-
-    return date_to_add
 
 
 def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
@@ -90,29 +53,6 @@ def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
         res = True
 
     return bool(res)
-
-
-def missing_start_stop(date_to_add):
-
-    if len(date_to_add) > 1:
-
-        date_to_add.sort()
-        start_date = timestamp_to_human(
-            [date_to_add[0]], date_format="%m-%d-%Y"
-        )
-        start_date = start_date[0]
-        end_date = timestamp_to_human(
-            [date_to_add[len(date_to_add) - 1]], date_format="%m-%d-%Y"
-        )
-        end_date = end_date[0]
-
-    else:
-
-        start_date = datetime.fromtimestamp(int(date_to_add[0]))
-        start_date = start_date.strftime("%m-%d-%Y")
-        end_date = start_date
-
-    return start_date, end_date
 
 
 def cw_daily_download(day_to_download=None):
