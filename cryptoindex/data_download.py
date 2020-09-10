@@ -8,7 +8,9 @@ import pandas as pd
 import requests
 from requests import get
 
-# local import
+from cryptoindex.config import (
+    START_DATE, DAY_IN_SEC
+)
 
 
 # #################### ECB rates download function ###################
@@ -106,9 +108,9 @@ def CW_raw_to_mongo(
     exchange,
     currencypair,
     mongo_collection,
-    start_date="01-01-2016",
+    start_date=START_DATE,
     end_date=None,
-    periods="86400",
+    periods="86400"
 ):
 
     Pair = currencypair[3:].upper()
@@ -124,7 +126,7 @@ def CW_raw_to_mongo(
     # transform date into timestamps
     start_date = str(int(start_date.replace(tzinfo=timezone.utc).timestamp()))
     end_date = str(int(end_date.replace(
-        tzinfo=timezone.utc).timestamp()) - 86400)
+        tzinfo=timezone.utc).timestamp()) - DAY_IN_SEC)
     # API settings
     entrypoint = "https://api.cryptowat.ch/markets/"
     key = (
@@ -200,3 +202,107 @@ def CW_raw_to_mongo(
         mongo_collection.insert_one(rawdata)
 
     return None
+
+
+def cw_raw_download(
+    exchange,
+    currencypair,
+    dataframe,
+    start_date=START_DATE,
+    end_date=None,
+    periods="86400"
+):
+
+    Pair = currencypair[3:].upper()
+
+    start_date = datetime.strptime(start_date, "%m-%d-%Y")
+
+    # set end_date = today if empty
+    if end_date is None:
+
+        end_date = datetime.now().strftime("%m-%d-%Y")
+
+    end_date = datetime.strptime(end_date, "%m-%d-%Y")
+    # transform date into timestamps
+    start_date = str(int(start_date.replace(tzinfo=timezone.utc).timestamp()))
+    end_date = str(int(end_date.replace(
+        tzinfo=timezone.utc).timestamp()) - DAY_IN_SEC)
+    # API settings
+    entrypoint = "https://api.cryptowat.ch/markets/"
+    key = (
+        exchange
+        + "/"
+        + currencypair
+        + "/ohlc?periods="
+        + periods
+        + "&after="
+        + start_date
+        + "&before="
+        + end_date
+    )
+    request_url = entrypoint + key
+
+    # API call
+    response = requests.get(request_url)
+    response = response.json()
+
+    try:
+
+        for i in range(len(response["result"]["86400"])):
+
+            r = response["result"]["86400"]
+            Exchange = exchange
+            Pair = currencypair
+            Time = r[i][0]
+            Open = r[i][1]
+            High = r[i][2]
+            Low = r[i][3]
+            Close_Price = r[i][4]
+            Crypto_Volume = r[i][5]
+            Pair_Volume = r[i][6]
+
+            rawdata = {
+                "Exchange": Exchange,
+                "Pair": Pair,
+                "Time": Time,
+                "Low": Low,
+                "High": High,
+                "Open": Open,
+                "Close Price": Close_Price,
+                "Crypto Volume": Crypto_Volume,
+                "Pair Volume": Pair_Volume,
+            }
+
+            rawdata_df = pd.DataFrame.from_dict(rawdata, orient="index")
+            rawdata_df = rawdata_df.transpose()
+
+            dataframe = dataframe.append(rawdata_df, ignore_index=True)
+
+    except KeyError:
+
+        r = response
+        Exchange = exchange
+        Pair = currencypair
+        Time = 0
+        Open = 0
+        High = 0
+        Low = 0
+        Close_Price = 0
+        Crypto_Volume = 0
+        Pair_Volume = 0
+        rawdata = {
+            "Exchange": Exchange,
+            "Pair": Pair,
+            "Time": Time,
+            "Low": Low,
+            "High": High,
+            "Open": Open,
+            "Close Price": Close_Price,
+            "Crypto Volume": Crypto_Volume,
+            "Pair Volume": Pair_Volume,
+        }
+        rawdata_df = pd.DataFrame.from_dict(rawdata, orient="index")
+        rawdata_df = rawdata_df.transpose()
+        dataframe = dataframe.append(rawdata_df, ignore_index=True)
+
+    return dataframe

@@ -10,7 +10,6 @@ from cryptoindex.index_func import (
 from cryptoindex.exc_func import exc_daily_operation
 
 ecb_daily_op()
-cw_daily_download()
 cw_daily_operation()
 exc_daily_operation()
 index_daily()

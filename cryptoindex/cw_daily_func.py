@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 # local import
-from cryptoindex.data_download import CW_raw_to_mongo
+from cryptoindex.data_download import cw_raw_download
 from cryptoindex.data_setup import (
     date_gen, daily_fix_miss, pair_vol_fix
 )
@@ -22,7 +22,7 @@ from cryptoindex.config import (
     START_DATE, MONGO_DICT, DAY_IN_SEC,
     PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES,
     DB_NAME, CONVERSION_FIAT, USDC_EXC_LIST,
-    USDT_EXC_LIST, STABLE_COIN
+    USDT_EXC_LIST, STABLE_COIN, CW_RAW_HEAD
 )
 
 
@@ -55,44 +55,35 @@ def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
     return bool(res)
 
 
-def cw_daily_download(day_to_download=None):
+def cw_daily_download(day_to_download):
 
     day_before_TS, _ = days_variable(day_to_download)
-    # create the indexing for MongoDB and define the variable containing the
-    # MongoDB collections where to upload data
-    mongo_indexing()
-    collection_dict_upload = mongo_coll()
+    date_long = datetime.fromtimestamp(int(day_before_TS))
+    date_h = date_long.strftime("%m-%d-%Y")
 
-    if daily_check_mongo("coll_cw_raw", {"Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
+    cw_raw = pd.DataFrame(columns=CW_RAW_HEAD)
 
-        date_long = datetime.fromtimestamp(int(day_before_TS))
-        date_h = date_long.strftime("%m-%d-%Y")
+    for Crypto in CRYPTO_ASSET:
 
-        for Crypto in CRYPTO_ASSET:
+        ccy_pair_array = []
 
-            ccy_pair_array = []
-            for i in PAIR_ARRAY:
-                ccy_pair_array.append(Crypto.lower() + i)
+        for i in PAIR_ARRAY:
 
-            for exchange in EXCHANGES:
+            ccy_pair_array.append(Crypto.lower() + i)
 
-                for cp in ccy_pair_array:
+        for exchange in EXCHANGES:
 
-                    # create the matrix for the single currency_pair
-                    # connecting to CryptoWatch website
-                    CW_raw_to_mongo(
-                        exchange, cp, collection_dict_upload.get(
-                            "collection_cw_raw"), str(date_h)
-                    )
+            for cp in ccy_pair_array:
 
-                    print('CW rawdata have been correctly downloaded ')
-    else:
+                # create the matrix for the single currency_pair
+                # connecting to CryptoWatch website
+                cw_raw = cw_raw_download(
+                    exchange, cp, cw_raw, str(date_h)
+                )
 
-        print(
-            "Message: No new date to download from CryptoWatch, the CW_rawdata collection on MongoDB is updated."
-        )
+                print('CW rawdata have been correctly downloaded.')
 
-    return None
+    return cw_raw
 
 
 def daily_pair_vol_fix2(time_to_fix):
@@ -415,6 +406,15 @@ def cw_daily_operation(day=None):
     day_before_TS, _ = days_variable(day)
 
     if day is None:
+
+        if daily_check_mongo("coll_cw_raw", {"Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
+
+            cw_rawdata_daily = cw_daily_download(day_before_TS)
+            mongo_upload(cw_rawdata_daily, "collection_cw_raw")
+
+        else:
+
+            print("The CW_rawdata collection on MongoDB is updated.")
 
         if daily_check_mongo("coll_vol_chk", {
                 "Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:

@@ -14,14 +14,15 @@
 # standard library import
 from datetime import datetime
 
+import pandas as pd
 
 # local import
 import cryptoindex.data_setup as data_setup
 import cryptoindex.data_download as data_download
 from cryptoindex.mongo_setup import (
-    mongo_coll, mongo_coll_drop, mongo_indexing)
+    mongo_coll, mongo_coll_drop, mongo_indexing, mongo_upload)
 from cryptoindex.config import (
-    START_DATE, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES)
+    START_DATE, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, CW_RAW_HEAD)
 
 # ################### initial settings #########################
 
@@ -44,6 +45,7 @@ mongo_indexing()
 collection_dict_upload = mongo_coll()
 
 # ################# downloading and storing part ################
+df = pd.DataFrame(columns=CW_RAW_HEAD)
 
 for Crypto in CRYPTO_ASSET:
     print(Crypto)
@@ -61,7 +63,9 @@ for Crypto in CRYPTO_ASSET:
             pair = cp[3:]
             # create the matrix for the single currency_pair connecting
             # to CryptoWatch website
-            data_download.CW_raw_to_mongo(
-                exchange, cp, collection_dict_upload.get(
-                    "collection_cw_raw"), START_DATE, end_date
+            df = data_download.cw_raw_download(
+                exchange, cp, df, START_DATE, end_date
             )
+
+print("download finished")
+mongo_upload(df, "collection_cw_raw")
