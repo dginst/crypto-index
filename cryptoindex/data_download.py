@@ -27,7 +27,7 @@ from cryptoindex.config import (
 def ECB_rates_extractor(
     key_curr_vector,
     start_period,
-    End_Period=None,
+    end_period=None,
     freq="D",
     curr_den="EUR",
     type_rates="SP00",
@@ -35,16 +35,16 @@ def ECB_rates_extractor(
 ):
 
     # set end_period = start_period if empty, so that is possible to perform daily download
-    if End_Period is None:
-        End_Period = start_period
+    if end_period is None:
+        end_period = start_period
 
     # API settings
     entrypoint = "https://sdw-wsrest.ecb.europa.eu/service/"
     resource = "data"
     flow_ref = "EXR"
-    param = {"startPeriod": start_period, "endPeriod": End_Period}
+    param = {"startPeriod": start_period, "endPeriod": end_period}
 
-    Exchange_Rate_List = pd.DataFrame()
+    exc_rate_list = pd.DataFrame()
     # turning off a pandas warning about slicing of DF
     pd.options.mode.chained_assignment = None
 
@@ -61,17 +61,17 @@ def ECB_rates_extractor(
         # if data is empty, it is an holiday, therefore exit
         try:
 
-            Data_Frame = pd.read_csv(io.StringIO(response.text))
+            df = pd.read_csv(io.StringIO(response.text))
 
-        except:
+        except pd.errors.EmptyDataError:
 
             break
 
-        Main_Data_Frame = Data_Frame.filter(
+        main_df = df.filter(
             ["TIME_PERIOD", "OBS_VALUE", "CURRENCY", "CURRENCY_DENOM"], axis=1
         )
         # transform date from datetime to string
-        date_to_string = Main_Data_Frame["TIME_PERIOD"].to_string(
+        date_to_string = main_df["TIME_PERIOD"].to_string(
             index=False).strip()
         # transform date into unix timestamp and add 3600 sec in order to uniform the date at 12:00 am
         date_to_string = datetime.strptime(date_to_string, "%Y-%m-%d")
@@ -79,20 +79,20 @@ def ECB_rates_extractor(
             tzinfo=timezone.utc).timestamp())
         date_timestamp = str(date_timestamp)
         # reassigning the timestamp date to the dataframe
-        Main_Data_Frame["TIME_PERIOD"] = date_timestamp
+        main_df["TIME_PERIOD"] = date_timestamp
 
-        if Exchange_Rate_List.size == 0:
+        if exc_rate_list.size == 0:
 
-            Exchange_Rate_List = Main_Data_Frame
+            exc_rate_list = main_df
 
         else:
 
-            Exchange_Rate_List = Exchange_Rate_List.append(
-                Main_Data_Frame, sort=True)
+            exc_rate_list = exc_rate_list.append(
+                main_df, sort=True)
 
-    Exchange_Rate_List.reset_index(drop=True, inplace=True)
+    exc_rate_list.reset_index(drop=True, inplace=True)
 
-    return Exchange_Rate_List
+    return exc_rate_list
 
 
 # CRYPTOWATCH DOWNLOAD FUNCTION
