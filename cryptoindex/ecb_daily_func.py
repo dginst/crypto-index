@@ -9,17 +9,20 @@ import pandas as pd
 # local import
 from cryptoindex.data_setup import (
     date_gen, Diff, ECB_daily_setup,
-    timestamp_to_human
+    timestamp_to_human, ECB_setup
 )
 from cryptoindex.data_download import ECB_rates_extractor
 from cryptoindex.mongo_setup import (
     mongo_upload, mongo_indexing,
-    query_mongo
+    query_mongo, mongo_coll_drop
 )
 from cryptoindex.config import (
-    ECB_START_DATE, ECB_FIAT,
+    ECB_START_DATE, ECB_START_DATE_D,
+    ECB_FIAT,
     DB_NAME, MONGO_DICT
 )
+
+# DAILY
 
 
 def check_missing(tot_date_arr, coll_to_check, query, days_to_check=5):
@@ -188,5 +191,101 @@ def ecb_daily_op(day=None):
         print('New ECB rawdata have been correctly manipulated and are now ready')
 
         mongo_upload(ecb_day_clean, "collection_ecb_clean")
+
+    return None
+
+
+# HIST
+
+def ecb_hist_download(start_date):
+
+    # drop the pre-existing collection related to ecb_rawdata
+    mongo_coll_drop("ecb_hist_d")
+
+    # set today as end_date
+    end_date = datetime.now().strftime("%Y-%m-%d")
+    # create an array of date containing the list of date to download
+
+    date_list = date_gen(start_date, end_date,
+                         timeST="N", clss="list", EoD="N")
+
+    date_list_str = [datetime.strptime(day, "%m-%d-%Y").strftime("%Y-%m-%d")
+                     for day in date_list]
+
+    ecb_hist_series = pd.DataFrame()
+
+    for date in date_list_str:
+
+        # retrieving data from ECB website
+        single_date_ex_matrix = ECB_rates_extractor(
+            ECB_FIAT, date)
+        # put a sllep time in order to do not overuse API connection
+        time.sleep(0.05)
+
+        # put all the downloaded data into a DafaFrame
+        if ecb_hist_series.size == 0:
+
+            ecb_hist_series = single_date_ex_matrix
+
+        else:
+
+            ecb_hist_series = ecb_hist_series.append(
+                single_date_ex_matrix, sort=True)
+
+    return ecb_hist_series
+
+
+def ecb_hist_setup(start_date, fiat_curr):
+
+    # set today as End_period
+    end_date = datetime.now().strftime("%m-%d-%Y")
+
+    # drop the pre-existing collection
+    mongo_coll_drop("ecb_hist_s")
+
+    # make the raw data clean through the ECB_setup function
+    try:
+
+        cleaned_ecb = ECB_setup(
+            fiat_curr, start_date, end_date)
+
+    except UnboundLocalError:
+
+        print(
+            "The chosen start date does not exist in ECB websites. Be sure to avoid holiday as first date"
+        )
+
+    # transform the timestamp format date into string
+
+    timestamp_str, standard_date = date_converter(cleaned_ecb["Date"])
+
+    cleaned_ecb["Date"] = timestamp_str
+    cleaned_ecb["Standard Date"] = standard_date
+
+    return cleaned_ecb
+
+
+def date_converter(date_arr):
+
+    ts_series = np.array([])
+    standard_series = np.array([])
+
+    for ts in date_arr:
+
+        date_format = datetime.fromtimestamp(int(ts))
+        date_str = date_format.strftime("%Y-%m-%d")
+        ts_str = str(ts)
+        ts_series = np.append(ts_series, ts_str)
+        standard_series = np.append(standard_series, date_str)
+
+    return ts_series, standard_series
+
+
+def ecb_hist_op(start_date_d=ECB_START_DATE_D, start_date_s=ECB_START_DATE, fiat_curr=ECB_FIAT):
+
+    ecb_hist_raw = ecb_hist_download(start_date_d)
+    mongo_upload(ecb_hist_raw, "collection_ecb_raw")
+    ecb_hist_clean = ecb_hist_setup(start_date_s, fiat_curr)
+    mongo_upload(ecb_hist_clean, "collection_ecb_clean")
 
     return None

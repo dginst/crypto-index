@@ -6,49 +6,64 @@ import numpy as np
 # third party import
 import pandas as pd
 
+from cryptoindex.calc import (
+    conv_into_usd
+)
 from cryptoindex.config import (DAY_IN_SEC, DB_NAME, EXCHANGES, MONGO_DICT,
                                 START_DATE, STABLE_COIN, CONVERSION_FIAT)
 # local import
-from cryptoindex.data_setup import (daily_fix_miss, date_gen, Diff,
+from cryptoindex.data_setup import (daily_fix_miss, date_gen,
                                     exc_pair_cleaning, pair_vol_fix)
 from cryptoindex.mongo_setup import (mongo_coll, mongo_upload,
                                      query_mongo)
 
 
-def check_missing(tot_date_arr, coll_to_check, query, days_to_check=5):
+def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
 
-    # selecting the last five days and put them into an array
-    last_days = tot_date_arr[(
-        len(tot_date_arr) - days_to_check): len(tot_date_arr)]
+    day_before_TS, _ = days_variable(day_to_check)
+
+    if coll_kind is None:
+
+        query["Time"] = str(day_before_TS)
+
+    elif coll_kind == "ecb_raw":
+
+        query["TIME_PERIOD"] = str(day_before_TS)
+
+    elif coll_kind == "ecb_clean":
+
+        query["Date"] = str(day_before_TS)
 
     # retrieving the wanted data on MongoDB collection
     matrix = query_mongo(DB_NAME, MONGO_DICT.get(coll_to_check), query)
 
-    # checking the time column and selecting only the last five days retrived
-    # from MongoDB collection
-    try:
+    if matrix == []:
 
-        date_list = np.array(matrix["Time"])
+        res = False
 
-    except KeyError:
+    else:
+        res = True
 
-        try:
+    return bool(res)
 
-            date_list = np.array(matrix["TIME_PERIOD"])
 
-        except KeyError:
+def days_variable(day):
 
-            date_list = np.array(matrix["Date"])
+    if day is None:
 
-    last_days_db = date_list[(len(date_list) - 5): len(date_list)]
-    last_days_db_str = [str(single_date)
-                        for single_date in last_days_db]
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.strptime(today_str, "%Y-%m-%d")
+        today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+        day_before_TS = today_TS - DAY_IN_SEC
+        two_before_TS = day_before_TS - DAY_IN_SEC
 
-    # finding the date to download as difference between
-    # complete array of date and date now stored on MongoDB
-    date_to_add = Diff(last_days, last_days_db_str)
+    else:
 
-    return date_to_add
+        day_date = datetime.strptime(day, "%Y-%m-%d")
+        day_before_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
+        two_before_TS = day_before_TS - DAY_IN_SEC
+
+    return day_before_TS, two_before_TS
 
 
 def daily_exc_pair_vol_fix(daily_mat, exc_list):
@@ -310,211 +325,92 @@ def exc_daily_fix_op(day_bfr_mat, daily_mat_complete):
     return daily_mat_final
 
 
-def exc_daily_cleaning(exc_list, date_tot_arr, day_to_clean=None):
+def exc_daily_cleaning(exc_list, day_to_clean):
 
-    if day_to_clean is None:
+    previous_day = int(day_to_clean) - DAY_IN_SEC
 
-        today_str = datetime.now().strftime("%Y-%m-%d")
-        today_date = datetime.strptime(today_str, "%Y-%m-%d")
-        today_TS = int(today_date.replace(tzinfo=timezone.utc).timestamp())
-        day_before_TS = today_TS - DAY_IN_SEC
-        two_before_TS = day_before_TS - DAY_IN_SEC
+    # download from MongoDB the exc raw data of yesterday
+    q_dict: Dict[str, str] = {}
+    q_dict = {"Time": str(day_to_clean)}
+    daily_mat = query_mongo(
+        DB_NAME, MONGO_DICT.get("coll_exc_raw"), q_dict)
 
-        date_to_clean = check_missing(
-            date_tot_arr, "coll_exc_clean", {
-                "Exchange": "coinbase-pro", "Pair": "ethusd"})
+    # fixing the "pair volume" information in the daily df
+    daily_mat_vol_fix = daily_exc_pair_vol_fix(daily_mat, exc_list)
 
-        if date_to_clean != []:
+    # creating different df based on the hour of download
+    (daily_mat_00, daily_mat_12, _, _) = exc_time_split(daily_mat_vol_fix)
 
-            # download from MongoDB the exc raw data of yesterday
-            q_dict: Dict[str, str] = {}
-            q_dict = {"Time": str(day_before_TS)}
-            daily_mat = query_mongo(
-                DB_NAME, MONGO_DICT.get("coll_exc_raw"), q_dict)
+    # completing the daily matrix with dead crypto-fiat pair
+    daily_mat_complete = exc_daily_key_mngm(
+        daily_mat_00, daily_mat_12, day_to_clean)
 
-            # fixing the "pair volume" information in the daily df
-            daily_mat_vol_fix = daily_exc_pair_vol_fix(daily_mat, exc_list)
+    # downloading from MongoDB the matrix referring to the previuos day
+    q_dict_bfr: Dict[str, str] = {}
+    q_dict_bfr = {"Time": str(previous_day)}
+    day_bfr_mat = query_mongo(
+        DB_NAME, MONGO_DICT.get("coll_exc_clean"), q_dict_bfr)
 
-            # creating different df based on the hour of download
-            (daily_mat_00, daily_mat_12, _,
-             _) = exc_time_split(daily_mat_vol_fix)
-
-            # completing the daily matrix with dead crypto-fiat pair
-            daily_mat_complete = exc_daily_key_mngm(
-                daily_mat_00, daily_mat_12, day_before_TS)
-
-            # downloading from MongoDB the matrix referring to the previuos day
-            q_dict_bfr: Dict[str, str] = {}
-            q_dict_bfr = {"Time": str(two_before_TS)}
-            day_bfr_mat = query_mongo(
-                DB_NAME, MONGO_DICT.get("coll_exc_clean"), q_dict_bfr)
-
-            fixed_daily_mat = exc_daily_fix_op(day_bfr_mat, daily_mat_complete)
-
-        else:
-
-            print("The collection EXC_cleandata is already updated")
-
-    else:
-
-        day_date = datetime.strptime(day_to_clean, "%Y-%m-%d")
-        day_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
-        day_before_TS = day_TS - DAY_IN_SEC
-
-        # download from MongoDB the exc raw data of the day before
-        q_dict: Dict[str, str] = {}
-        q_dict = {"Time": str(day_TS)}
-        daily_mat = query_mongo(
-            DB_NAME, MONGO_DICT.get("coll_exc_raw"), q_dict)
-
-        # fixing the "pair volume" information in the daily df
-        daily_mat_vol_fix = daily_exc_pair_vol_fix(daily_mat, exc_list)
-
-        # creating different df based on the hour of download
-        (daily_mat_00, daily_mat_12, _, _) = exc_time_split(daily_mat_vol_fix)
-
-        # completing the daily matrix with dead crypto-fiat pair
-        daily_mat_complete = exc_daily_key_mngm(
-            daily_mat_00, daily_mat_12, day_TS)
-
-        # downloading from MongoDB the matrix referring to the previuos day
-        q_dict_bfr: Dict[str, str] = {}
-        q_dict_bfr = {"Time": str(day_before_TS)}
-        day_bfr_mat = query_mongo(
-            DB_NAME, MONGO_DICT.get("coll_exc_clean"), q_dict_bfr)
-
-        fixed_daily_mat = exc_daily_fix_op(day_bfr_mat, daily_mat_complete)
+    fixed_daily_mat = exc_daily_fix_op(day_bfr_mat, daily_mat_complete)
 
     return fixed_daily_mat
 
 
-def exc_daily_conversion(conversion_fiat, stablecoin, date_tot_arr, day_to_conv=None):
+def daily_conv_op(day_to_conv_TS, conversion_fiat=CONVERSION_FIAT,
+                  stable=STABLE_COIN, series="CW"):
 
-    if day_to_conv is None:
+    # querying the data from mongo
+    query_data = {"Time": str(day_to_conv_TS)}
+    query_rate = {"Date": str(day_to_conv_TS)}
+    query_stable = {"Time": str(day_to_conv_TS)}
+    # querying the data from mongo
+    matrix_rate = query_mongo(
+        DB_NAME, MONGO_DICT.get("coll_ecb_clean"), query_rate)
+    if series == "CW":
 
-        today_str = datetime.now().strftime("%Y-%m-%d")
-        today_date = datetime.strptime(today_str, "%Y-%m-%d")
-        today_TS = int(today_date.replace(tzinfo=timezone.utc).timestamp())
-        day_before_TS = today_TS - DAY_IN_SEC
+        matrix_data = query_mongo(
+            DB_NAME, MONGO_DICT.get("coll_cw_clean"), query_data)
 
-        date_to_conv = check_missing(
-            date_tot_arr, "coll_exc_final", {
-                "Exchange": "coinbase-pro", "Pair": "ethusd"})
+    elif series == "EXC":
 
-        if date_to_conv != []:
+        matrix_data = query_mongo(
+            DB_NAME, MONGO_DICT.get("coll_exc_clean"), query_data)
 
-            converted_df = exc_conv_op(
-                day_before_TS, conversion_fiat, stablecoin)
+    matrix_rate_stable = query_mongo(
+        DB_NAME, MONGO_DICT.get("coll_stable_rate"), query_stable)
+
+    # converting the "matrix_rate" df
+    converted_df = conv_into_usd(
+        DB_NAME, matrix_data, matrix_rate,
+        matrix_rate_stable, conversion_fiat, stable)
+
+    return converted_df
+
+
+def exc_daily_op(day=None):
+
+    day_before_TS, _ = days_variable(day)
+
+    if day is None:
+
+        if daily_check_mongo("coll_exc_clean", {"Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
+
+            cleaned_df = exc_daily_cleaning(EXCHANGES, day_before_TS)
+            mongo_upload(cleaned_df, "collection_exc_clean")
+
+        else:
+            print("The collection EXC_cleandata is already updated")
+
+        if daily_check_mongo("coll_exc_final", {"Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
+
+            converted_df = daily_conv_op(day_before_TS, series="EXC")
+            mongo_upload(converted_df, "collection_exc_final_data")
 
         else:
 
             print("The collection EXC_final_data is already updated")
 
     else:
-
-        day_date = datetime.strptime(day_to_conv, "%Y-%m-%d")
-        day_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
-        day_before_TS = day_TS - DAY_IN_SEC
-
-        converted_df = exc_conv_op(day_before_TS, conversion_fiat, stablecoin)
-
-    return converted_df
-
-
-def exc_conv_op(day_to_conv_TS, conversion_fiat, stablecoin):
-
-    query_data = {"Time": str(day_to_conv_TS)}
-    query_rate = {"Date": str(day_to_conv_TS)}
-    query_stable = {"Time": str(day_to_conv_TS)}
-    matrix_rate = query_mongo(
-        DB_NAME, MONGO_DICT.get("coll_ecb_clean"), query_rate)
-    matrix_rate = matrix_rate.rename({"Date": "Time"}, axis="columns")
-    matrix_data = query_mongo(
-        DB_NAME, MONGO_DICT.get("coll_exc_clean"), query_data)
-    matrix_rate_stable = query_mongo(
-        DB_NAME, MONGO_DICT.get("coll_stable_rate"), query_stable)
-
-    # creating a column containing the fiat currency
-    matrix_rate["fiat"] = [x[:3].lower() for x in matrix_rate["Currency"]]
-    matrix_data["fiat"] = [x[3:].lower() for x in matrix_data["Pair"]]
-    matrix_rate_stable["fiat"] = [x[:4].lower()
-                                  for x in matrix_rate_stable["Currency"]]
-
-    # creating a USD subset which will not be converted
-    usd_matrix = matrix_data.loc[matrix_data["fiat"] == "usd"]
-    usd_matrix = usd_matrix[
-        ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]]
-
-    #  converting non-USD fiat currencies
-    conv_matrix = matrix_data.loc[matrix_data["fiat"].isin(conversion_fiat)]
-    # merging the dataset on 'Time' and 'fiat' column
-    conv_merged = pd.merge(conv_matrix, matrix_rate, on=["Time", "fiat"])
-
-    # converting the prices in usd
-    conv_merged["Close Price"] = conv_merged["Close Price"] / \
-        conv_merged["Rate"]
-    conv_merged["Close Price"] = conv_merged["Close Price"].replace(
-        [np.inf, -np.inf], np.nan
-    )
-    conv_merged["Close Price"].fillna(0, inplace=True)
-    conv_merged["Pair Volume"] = conv_merged["Pair Volume"] / \
-        conv_merged["Rate"]
-    conv_merged["Pair Volume"] = conv_merged["Pair Volume"].replace(
-        [np.inf, -np.inf], np.nan
-    )
-    conv_merged["Pair Volume"].fillna(0, inplace=True)
-
-    # subsetting the dataset with only the relevant columns
-    conv_merged = conv_merged[
-        ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]
-    ]
-
-    # converting STABLECOINS currencies
-
-    # creating a matrix for stablecoins]
-    stablecoin_matrix = matrix_data.loc[matrix_data["fiat"].isin(stablecoin)]
-
-    # merging the dataset on 'Time' and 'fiat' column
-    stable_merged = pd.merge(
-        stablecoin_matrix, matrix_rate_stable, on=["Time", "fiat"])
-
-    # converting the prices in usd
-    stable_merged["Close Price"] = stable_merged["Close Price"] / \
-        stable_merged["Rate"]
-    stable_merged["Close Price"] = stable_merged["Close Price"].replace(
-        [np.inf, -np.inf], np.nan
-    )
-    stable_merged["Close Price"].fillna(0, inplace=True)
-    stable_merged["Pair Volume"] = stable_merged["Pair Volume"] / \
-        stable_merged["Rate"]
-    stable_merged["Pair Volume"] = stable_merged["Pair Volume"].replace(
-        [np.inf, -np.inf], np.nan
-    )
-    stable_merged["Pair Volume"].fillna(0, inplace=True)
-
-    # subsetting the dataset with only the relevant columns
-    stable_merged = stable_merged[
-        ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]
-    ]
-
-    # reunite the dataframes and put data on MongoDB
-    converted_data = conv_merged
-    converted_data = converted_data.append(stable_merged)
-    converted_data = converted_data.append(usd_matrix)
-
-    return converted_data
-
-
-def exc_daily_operation(day=None):
-
-    date_tot_int = date_gen(START_DATE)
-    # converting the timestamp format date into string
-    date_tot_str = [str(single_date) for single_date in date_tot_int]
-
-    cleaned_df = exc_daily_cleaning(EXCHANGES, date_tot_str, day)
-    mongo_upload(cleaned_df, "collection_exc_clean")
-    converted_df = exc_daily_conversion(
-        CONVERSION_FIAT, STABLE_COIN, date_tot_str, day)
-    mongo_upload(converted_df, "collection_exc_final_data")
+        pass
 
     return None

@@ -70,6 +70,7 @@ def ECB_rates_extractor(
         main_df = df.filter(
             ["TIME_PERIOD", "OBS_VALUE", "CURRENCY", "CURRENCY_DENOM"], axis=1
         )
+        print(main_df)
         # transform date from datetime to string
         date_to_string = main_df["TIME_PERIOD"].to_string(
             index=False).strip()

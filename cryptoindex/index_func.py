@@ -20,6 +20,25 @@ from cryptoindex.config import (
     START_DATE, MONGO_DICT, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME, DAY_IN_SEC)
 
 
+def days_variable(day):
+
+    if day is None:
+
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.strptime(today_str, "%Y-%m-%d")
+        today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+        day_before_TS = today_TS - DAY_IN_SEC
+        two_before_TS = day_before_TS - DAY_IN_SEC
+
+    else:
+
+        day_date = datetime.strptime(day, "%Y-%m-%d")
+        day_before_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
+        two_before_TS = day_before_TS - DAY_IN_SEC
+
+    return day_before_TS, two_before_TS
+
+
 def loop_crypto_fiat(ccy_fiat_vol, ccy_fiat_price_vol):
 
     # first if condition: the crypto-fiat is in more than 1 exchange
@@ -493,22 +512,20 @@ def index_norm_logic_op(crypto_asset, daily_ewma):
     return daily_ewma_double_check
 
 
+def index_start_q_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
+
+    mongo_indexing()
+
+    day_before_TS, _ = days_variable(day)
+
+    return None
+
+
 def index_board_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
 
     mongo_indexing()
 
-    if day is None:
-
-        day_str = datetime.now().strftime("%Y-%m-%d")
-        day_date = datetime.strptime(day_str, "%Y-%m-%d")
-        day_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
-        day_before_TS = day_TS - DAY_IN_SEC
-
-    else:
-
-        day_date = datetime.strptime(day, "%Y-%m-%d")
-        day_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
-        day_before_TS = day_TS - DAY_IN_SEC
+    day_before_TS, _ = days_variable(day)
 
     # define all the useful arrays containing the rebalance start
     # date, stop date, board meeting date

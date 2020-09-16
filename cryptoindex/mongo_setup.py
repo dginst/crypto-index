@@ -151,9 +151,9 @@ def mongo_coll():
         "collection_weights": db.index_weights,
         "collection_index_level_1000": db.index_level_1000,
         "collection_index_level_raw": db.index_level_raw,
-        #test 
+        # test
 
-        'test_mongo' : db.test_mongo
+        'test_mongo': db.test_mongo
 
     }
 
@@ -172,11 +172,11 @@ def mongo_coll_drop(operation):
 
         db.ecb_clean.drop()
 
-    elif operation == "cw_hist_d":
+    elif operation == "cw_hist_down":
 
         db.CW_rawdata.drop()
 
-    elif operation == "cw_hist_s":
+    elif operation == "cw_hist_clean":
 
         db.CW_cleandata.drop()
         db.CW_volume_checked_data.drop()
