@@ -58,7 +58,7 @@ def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
 def cw_daily_download(day_to_download):
 
     # day_before_TS, _ = days_variable(day_to_download)
-    date_long = datetime.fromtimestamp(int(day_before_TS))
+    date_long = datetime.fromtimestamp(int(day_to_download))
     date_h = date_long.strftime("%m-%d-%Y")
 
     cw_raw = pd.DataFrame(columns=CW_RAW_HEAD)
