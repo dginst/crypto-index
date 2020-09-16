@@ -7,9 +7,9 @@ from cryptoindex.ecb_daily_func import (
 from cryptoindex.index_func import (
     index_daily
 )
-from cryptoindex.exc_func import exc_daily_operation
+from cryptoindex.exc_func import exc_daily_op
 
 ecb_daily_op()
 cw_daily_operation()
-exc_daily_operation()
+exc_daily_op()
 index_daily()
