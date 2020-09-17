@@ -9,25 +9,38 @@ import pandas as pd
 from cryptoindex.data_download import (
     cw_raw_download
 )
-from cryptoindex.data_setup import (CW_series_fix_missing, date_gen,
-                                    homogenize_dead_series, homogenize_series,
-                                    make_unique, pair_vol_fix, Diff)
+from cryptoindex.data_setup import (
+    CW_series_fix_missing, date_gen,
+    homogenize_dead_series, Diff,
+    homogenize_series, fix_zero_value,
+    make_unique, pair_vol_fix
+)
 from cryptoindex.mongo_setup import (
-    query_mongo, mongo_coll, mongo_coll_drop,
-    mongo_indexing, mongo_upload, df_reorder)
+    query_mongo, mongo_coll_drop,
+    mongo_indexing, mongo_upload,
+    df_reorder
+)
+from cryptoindex.calc import (
+    key_log_mat, conv_into_usd
+)
 from cryptoindex.config import (
-    START_DATE, DAY_IN_SEC, MONGO_DICT,
+    START_DATE, MONGO_DICT,
     PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES,
-    DB_NAME, CW_RAW_HEAD, CLEAN_DATA_HEAD
+    DB_NAME, CW_RAW_HEAD, CLEAN_DATA_HEAD,
+    CONVERSION_FIAT, STABLE_COIN
+)
+
+from cryptoindex.cw_daily_func import (
+    cw_daily_download, stable_rates_op
 )
 
 
-def check_missing(tot_date_arr, coll_to_check, query, days_to_check=50):
+def check_missing(tot_date_arr, coll_to_check, query, days_to_check=10):
 
     # selecting the last five days and put them into an array
     last_days = tot_date_arr[(
         len(tot_date_arr) - days_to_check): len(tot_date_arr)]
-
+    print(last_days)
     # retrieving the wanted data on MongoDB collection
     matrix = query_mongo(DB_NAME, MONGO_DICT.get(coll_to_check), query)
 
@@ -47,7 +60,11 @@ def check_missing(tot_date_arr, coll_to_check, query, days_to_check=50):
 
             date_list = np.array(matrix["Date"])
 
-    last_days_db = date_list[(len(date_list) - days_to_check): len(date_list)]
+    to_del = np.array([0])
+    date_list = np.setdiff1d(date_list, to_del)
+
+    last_days_db = date_list[(len(date_list) - days_to_check):len(date_list)]
+
     # last_days_db_str = [str(single_date)
     #                     for single_date in last_days_db]
 
@@ -56,7 +73,7 @@ def check_missing(tot_date_arr, coll_to_check, query, days_to_check=50):
     date_to_add = Diff(last_days, last_days_db)
     print(date_to_add)
 
-    if len(date_to_add) > 20:
+    if len(date_to_add) > 9:
 
         date_to_add = None
 
@@ -173,8 +190,10 @@ def cw_hist_pair_vol_fix(hist_raw_mat):
     # correcting some df issues related to original raw data
     bug_fixed_df = cw_hist_raw_bugfix(tot_matrix)
 
+    print(bug_fixed_df)
     # fixing the Pair_Vol info of the df
     vol_fixed_df = pair_vol_fix(bug_fixed_df)
+    print(vol_fixed_df)
 
     return vol_fixed_df
 
@@ -249,21 +268,84 @@ def cw_hist_cleaning(vol_fixed_df, start_date, crypto_list=CRYPTO_ASSET, exc_lis
     return cleaned_df
 
 
+def cw_hist_zero_vol_fill_op(converted_df, head=CLEAN_DATA_HEAD):
+
+    converted_df["Crypto"] = converted_df["Pair"].str[:3]
+
+    final_matrix = pd.DataFrame(columns=head)
+
+    for crypto in CRYPTO_ASSET:
+
+        cry_matrix = converted_df.loc[converted_df.Crypto == crypto.lower()]
+        exc_list = list(converted_df["Exchange"].unique())
+
+        for exc in exc_list:
+
+            ex_matrix = cry_matrix.loc[cry_matrix.Exchange == exc]
+            ex_matrix.drop(columns=["Crypto"])
+            # finding the crypto-fiat pair in the selected exchange
+            pair_list = list(ex_matrix["Pair"].unique())
+
+            for pair in pair_list:
+
+                cp_matrix = ex_matrix.loc[ex_matrix.Pair == pair]
+                # checking if the matrix is not empty
+                try:
+
+                    if cp_matrix.shape[0] > 1:
+
+                        cp_matrix = fix_zero_value(cp_matrix)
+
+                        final_matrix = final_matrix.append(cp_matrix)
+
+                except AttributeError:
+                    pass
+
+    return final_matrix
+
+
+def cw_hist_conv_op(cleaned_df, conv_fiat=CONVERSION_FIAT, stable=STABLE_COIN):
+
+    matrix_rate = query_mongo(DB_NAME, MONGO_DICT.get("coll_ecb_clean"))
+    matrix_rate_stable = query_mongo(
+        DB_NAME, MONGO_DICT.get("coll_stable_rate"))
+
+    # converting the "matrix_rate" df
+    converted_df = conv_into_usd(
+        DB_NAME, cleaned_df, matrix_rate,
+        matrix_rate_stable, conv_fiat, stable)
+
+    return converted_df
+
+
 def cw_hist_operation(start_date=START_DATE):
 
     date_tot = date_gen(start_date)
-    print(date_tot)
+    last_day_TS = date_tot[len(date_tot) - 1]
+
     mongo_indexing()
     # deleting previous MongoDB collection for rawdata
     raw_to_download = check_missing(date_tot, "coll_cw_raw", {
                                     "Exchange": "coinbase-pro", "Pair": "btcusd"})
     print(raw_to_download)
+    print(len(raw_to_download))
     if raw_to_download != [] and raw_to_download is not None:
 
-        start, stop = start_stop_missing(raw_to_download, series_to_check="CW")
-        print("Downloading from ", start, " to ", stop)
-        cw_raw_data = cw_hist_download(start, stop)
-        mongo_upload(cw_raw_data, "collection_cw_raw")
+        if len(raw_to_download) == 1:
+
+            start = raw_to_download[0]
+            print("Downloading ", start)
+            cw_raw_data = cw_daily_download(start)
+            print(cw_raw_data)
+            mongo_upload(cw_raw_data, "collection_cw_raw")
+
+        else:
+
+            start, stop = start_stop_missing(
+                raw_to_download, series_to_check="CW")
+            print("Downloading from ", start, " to ", stop)
+            cw_raw_data = cw_hist_download(start, stop)
+            mongo_upload(cw_raw_data, "collection_cw_raw")
 
     elif raw_to_download is None:
 
@@ -276,16 +358,38 @@ def cw_hist_operation(start_date=START_DATE):
 
         print("cw_rawdata is updated")
 
-    # deleting previous MongoDB collection for cleandata
+    # deleting previous MongoDB collections
     mongo_coll_drop("cw_hist_clean")
+    mongo_coll_drop("cw_hist_conv")
+
+    # fix and upload the series for the "pair volume" info
     tot_raw_data = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_raw"))
     cw_vol_fix_data = cw_hist_pair_vol_fix(tot_raw_data)
     print(cw_vol_fix_data)
     mongo_upload(cw_vol_fix_data, "collection_cw_vol_check")
 
+    # clean and upload all the series
     cleaned_df = cw_hist_cleaning(cw_vol_fix_data, start_date)
     mongo_upload(cleaned_df, "collection_cw_clean")
 
-    mongo_coll_drop("cw_hist_conv")
+    # compute and upload USDC and USDT rates series
+    usdt_rates, usdc_rates = stable_rates_op(
+        "coll_cw_clean", None)
+    mongo_upload(usdt_rates, "collection_stable_rate")
+    mongo_upload(usdc_rates, "collection_stable_rate")
+
+    # convert and upload all the data into USD
+    converted_df = cw_hist_conv_op(cleaned_df)
+    mongo_upload(converted_df, "collection_cw_converted")
+
+    # logic matrix of crypto-fiat keys
+    key_df = key_log_mat(DB_NAME, "coll_cw_conv", last_day_TS,
+                         EXCHANGES, CRYPTO_ASSET, PAIR_ARRAY)
+    mongo_upload(key_df, "collection_CW_key")
+    mongo_upload(key_df, "collection_EXC_key")
+
+    # fill zero-volume data and upload on MongoDB
+    final_df = cw_hist_zero_vol_fill_op(converted_df)
+    mongo_upload(final_df, "collection_cw_final_data")
 
     return None

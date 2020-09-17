@@ -81,8 +81,6 @@ def cw_daily_download(day_to_download):
                     exchange, cp, cw_raw, str(date_h)
                 )
 
-                print('CW rawdata have been correctly downloaded.')
-
     return cw_raw
 
 

@@ -289,3 +289,48 @@ def ecb_hist_op(start_date_d=ECB_START_DATE_D, start_date_s=ECB_START_DATE, fiat
     mongo_upload(ecb_hist_clean, "collection_ecb_clean")
 
     return None
+
+
+def check_missing(tot_date_arr, coll_to_check, query, days_to_check=10):
+
+    # selecting the last five days and put them into an array
+    last_days = tot_date_arr[(
+        len(tot_date_arr) - days_to_check): len(tot_date_arr)]
+
+    # retrieving the wanted data on MongoDB collection
+    matrix = query_mongo(DB_NAME, MONGO_DICT.get(coll_to_check), query)
+
+    # checking the time column and selecting only the last five days retrived
+    # from MongoDB collection
+    try:
+
+        date_list = np.array(matrix["Time"])
+
+    except KeyError:
+
+        try:
+
+            date_list = np.array(matrix["TIME_PERIOD"])
+
+        except KeyError:
+
+            date_list = np.array(matrix["Date"])
+
+    to_del = np.array([0])
+    date_list = np.setdiff1d(date_list, to_del)
+
+    last_days_db = date_list[(len(date_list) - days_to_check):len(date_list)]
+
+    # last_days_db_str = [str(single_date)
+    #                     for single_date in last_days_db]
+
+    # finding the date to download as difference between
+    # complete array of date and date now stored on MongoDB
+    date_to_add = Diff(last_days, last_days_db)
+    print(date_to_add)
+
+    if len(date_to_add) > 9:
+
+        date_to_add = None
+
+    return date_to_add
