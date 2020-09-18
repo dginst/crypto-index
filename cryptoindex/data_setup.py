@@ -208,18 +208,18 @@ def fix_zero_value(matrix):
             if int(price_check) == 0:
 
                 previous_price = np.array(
-                    matrix.loc[matrix.Time == str(
+                    matrix.loc[matrix.Time == int(
                         int(date) - 86400), "Close Price"]
                 )
-
+                print(previous_price)
                 matrix.loc[matrix.Time == date, "Close Price"] = previous_price
 
             previous_c_vol = np.array(
-                matrix.loc[matrix.Time == str(
+                matrix.loc[matrix.Time == int(
                     int(date) - 86400), "Crypto Volume"]
             )
             previous_p_vol = np.array(
-                matrix.loc[matrix.Time == str(int(date) - 86400), "Pair Volume"]
+                matrix.loc[matrix.Time == int(int(date) - 86400), "Pair Volume"]
             )
             matrix.loc[matrix.Time == date, "Crypto Volume"] = previous_c_vol
             matrix.loc[matrix.Time == date, "Pair Volume"] = previous_p_vol
@@ -460,8 +460,6 @@ def CW_series_fix_missing(
         "kraken",
         "bitflyer",
     ]
-    print(exchange_list)
-    print(exchange)
     exchange_list.remove(exchange)
 
     broken_array = broken_matrix["Time"]
@@ -479,9 +477,9 @@ def CW_series_fix_missing(
     # defining the list of exchanges that actually trade the
     # specified crypto-fiat pair
     exc_with_pair = list(matrix["Exchange"].unique())
-    #
-    if exchange == "kraken" and crypto_fiat_pair == "btcusd":
-        print(exc_with_pair)
+    # #
+    # if exchange == "kraken" and crypto_fiat_pair == "btcusd":
+    #     print(exc_with_pair)
 
     for element in exc_with_pair:
 
@@ -556,11 +554,8 @@ def CW_series_fix_missing(
     # NaN and will be fixed afterwards
     new_df = pd.DataFrame(reference_array, columns=["Time"])
     merged = pd.merge(new_df, broken_matrix, on="Time", how="left")
-    # print(merged.head(100))
-    # print(merged.loc[merged['Time'].isin(missing_item_time)])
+
     merged.fillna(0, inplace=True)
-    # print(merged.head(10))
-    print(merged.loc[merged['Time'].isin(missing_item_time)])
 
     for element in missing_item_time:
 
@@ -676,7 +671,7 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
     pair = np.array(curr_df["Pair"])
     exchange = exchange[0]
     pair = pair[0]
-    print(pair)
+
     # select a sub-df containing only the pair of interest of the previous
     # and current dataframes
     pair_prev_df = tot_prev_df.loc[tot_prev_df.Pair == pair]
@@ -684,9 +679,9 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
 
     # find the list of exchange that actually trade the crypto-fiat pair
     exc_with_pair = list(pair_prev_df["Exchange"].unique())
-    print(exc_with_pair)
+
     exc_with_pair.remove(exchange)
-    print(exc_with_pair)
+
     if exc_with_pair == []:
 
         price_var = 0
@@ -718,7 +713,7 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
                 fixing_p_vol = np.column_stack((fixing_p_vol, volume))
 
         # defining the dataframes containing the variations of price and volume
-        print(fixing_price)
+
         try:
 
             fixing_price_df = pd.DataFrame(np.array([fixing_price]))
@@ -729,7 +724,6 @@ def daily_fix_miss(curr_df, tot_curr_df, tot_prev_df):
             fixing_price_df = pd.DataFrame(fixing_price)
             fixing_p_vol_df = pd.DataFrame(fixing_p_vol)
 
-        print(fixing_price_df)
         # compute row sum
         fixing_price_df["sum"] = fixing_price_df.sum(axis=1)
         fixing_p_vol_df["sum"] = fixing_p_vol_df.sum(axis=1)

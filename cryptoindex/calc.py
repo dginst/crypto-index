@@ -1705,6 +1705,7 @@ def index_based(index_df, base=1000):
 def conv_into_usd(db, data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_list):
 
     fiat_rate_df = fiat_rate_df.rename({"Date": "Time"}, axis="columns")
+    # [int(date) for date in fiat_rate_df["Time"]]
     # leave out the rates referred to 2015-12-31
     fiat_rate_df = fiat_rate_df.loc[fiat_rate_df.Time != "1451520000"]
 
@@ -1720,11 +1721,21 @@ def conv_into_usd(db, data_df, fiat_rate_df, stable_rate_df, fiat_list, stableco
     usd_matrix = df_reorder(usd_matrix, "conversion")
 
     # ########### converting non-USD fiat currencies #########################
+    fiat_df_key = fiat_rate_df
+    fiat_df_key["key"] = fiat_df_key["Time"] + fiat_df_key["fiat"]
+    print(fiat_df_key)
 
     conv_matrix = data_df.loc[data_df["fiat"].isin(fiat_list)]
+    conv_matrix["Time"] = [str(date) for date in conv_matrix["Time"]]
+    conv_matrix["key"] = conv_matrix["Time"] + conv_matrix["fiat"]
+    conv_matrix.reset_index(drop=True)
+    print("conv_matrix")
+    print(conv_matrix)
 
     # merging the dataset on 'Time' and 'fiat' column
-    conv_merged = pd.merge(conv_matrix, fiat_rate_df, on=["Time", "fiat"])
+    conv_merged = pd.merge(conv_matrix, fiat_df_key, on=["key"])
+    # conv_merged = pd.merge(conv_matrix, fiat_rate_df, on=["Time", "fiat"])
+    print(conv_merged)
 
     # converting the prices in usd
     conv_merged["Close Price"] = conv_merged["Close Price"] / \
@@ -1741,8 +1752,11 @@ def conv_into_usd(db, data_df, fiat_rate_df, stable_rate_df, fiat_list, stableco
     )
     conv_merged["Pair Volume"].fillna(0, inplace=True)
 
+    conv_merged = conv_merged.rename({"Time_x": "Time"}, axis="columns")
+
     # subsetting the dataset with only the relevant columns
     conv_merged = df_reorder(conv_merged, "conversion")
+    conv_merged["Time"] = [int(date) for date in conv_merged["Time"]]
 
     # ############## converting STABLECOINS currencies #################
 
@@ -1959,7 +1973,7 @@ def key_list_creation(exchange_list, asset_list, fiat_list):
 def key_log_mat(db, collection, time_to_query, exchange_list, asset_list, fiat_list):
 
     # retriving the needed information on MongoDB
-    q_dict = {"Time": str(time_to_query)}
+    q_dict = {"Time": int(time_to_query)}
     matrix_last_day = query_mongo(
         db, MONGO_DICT.get(collection), q_dict)
 

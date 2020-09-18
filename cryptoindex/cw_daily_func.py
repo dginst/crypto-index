@@ -32,7 +32,7 @@ def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
 
     if coll_kind is None:
 
-        query["Time"] = str(day_before_TS)
+        query["Time"] = int(day_before_TS)
 
     elif coll_kind == "ecb_raw":
 
@@ -45,7 +45,7 @@ def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
     # retrieving the wanted data on MongoDB collection
     matrix = query_mongo(DB_NAME, MONGO_DICT.get(coll_to_check), query)
 
-    if matrix == []:
+    if isinstance(matrix, list):
 
         res = False
 
@@ -243,6 +243,12 @@ def cw_new_key_mngm(logic_key_df, daily_mat, time_to_check, date_tot_str):
 
 def cw_daily_key_mngm(volume_checked_df, time_to_check, date_tot_str):
 
+    if isinstance(volume_checked_df, list):
+
+        volume_checked_df = query_mongo(DB_NAME,
+                                        MONGO_DICT.get("coll_vol_chk"),
+                                        {"Time": int(time_to_check)})
+
     # downloading from MongoDB the matrix with the daily values and the
     # matrix containing the exchange-pair logic values
     logic_key = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_keys"))
@@ -260,7 +266,7 @@ def cw_daily_key_mngm(volume_checked_df, time_to_check, date_tot_str):
     merged = pd.merge(key_present, volume_checked_df, on="key", how="left")
     # assigning some columns values and substituting NaN with 0
     # in the "merged" df
-    merged["Time"] = str(time_to_check)
+    merged["Time"] = int(time_to_check)
     split_val = merged["key"].str.split("&", expand=True)
     merged["Exchange"] = split_val[0]
     merged["Pair"] = split_val[1]
@@ -296,8 +302,8 @@ def daily_fix_miss_op(daily_complete_df, day, collection):
 
     _, two_before_TS = days_variable(day)
     # defining the query details
-    q_dict_time: Dict[str, str] = {}
-    q_dict_time = {"Time": str(two_before_TS)}
+    q_dict_time: Dict[str, int] = {}
+    q_dict_time = {"Time": int(two_before_TS)}
 
     # downloading from MongoDB the matrix referring to the previuos day
     day_bfr_mat = query_mongo(
@@ -335,7 +341,7 @@ def daily_fix_miss_op(daily_complete_df, day, collection):
             pass
 
     daily_complete_df.drop(columns=["key"])
-    daily_complete_df["Time"] = [str(d) for d in daily_complete_df["Time"]]
+    daily_complete_df["Time"] = [int(d) for d in daily_complete_df["Time"]]
 
     daily_fixed_df = daily_complete_df
 
@@ -372,7 +378,7 @@ def stable_rates_op(coll_to_query, day_to_comp):
 def cw_daily_conv_op(day_to_conv_TS):
 
     # querying the data from mongo
-    query_data = {"Time": str(day_to_conv_TS)}
+    query_data = {"Time": int(day_to_conv_TS)}
     query_rate = {"Date": str(day_to_conv_TS)}
     query_stable = {"Time": str(day_to_conv_TS)}
     # querying the data from mongo
@@ -422,6 +428,7 @@ def cw_daily_operation(day=None):
 
         else:
 
+            mat_vol_fix = []
             print(
                 "Message: No need to fix pair volume. The collection on MongoDB is updated."
             )

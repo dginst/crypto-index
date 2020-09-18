@@ -335,9 +335,9 @@ def cw_hist_operation(start_date=START_DATE):
 
             start = raw_to_download[0]
             print("Downloading ", start)
-            cw_raw_data = cw_daily_download(start)
-            print(cw_raw_data)
-            mongo_upload(cw_raw_data, "collection_cw_raw")
+            #cw_raw_data = cw_daily_download(start)
+
+            #mongo_upload(cw_raw_data, "collection_cw_raw")
 
         else:
 
@@ -381,7 +381,7 @@ def cw_hist_operation(start_date=START_DATE):
     # convert and upload all the data into USD
     converted_df = cw_hist_conv_op(cleaned_df)
     mongo_upload(converted_df, "collection_cw_converted")
-
+    print(converted_df)
     # logic matrix of crypto-fiat keys
     key_df = key_log_mat(DB_NAME, "coll_cw_conv", last_day_TS,
                          EXCHANGES, CRYPTO_ASSET, PAIR_ARRAY)

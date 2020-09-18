@@ -1,6 +1,6 @@
 # standard library import
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 # third party import
 import numpy as np
@@ -9,7 +9,7 @@ import pandas as pd
 # local import
 from cryptoindex.data_setup import (
     date_gen, Diff, ECB_daily_setup,
-    timestamp_to_human, ECB_setup
+    ECB_setup
 )
 from cryptoindex.data_download import ECB_rates_extractor
 from cryptoindex.mongo_setup import (
@@ -18,179 +18,106 @@ from cryptoindex.mongo_setup import (
 )
 from cryptoindex.config import (
     ECB_START_DATE, ECB_START_DATE_D,
-    ECB_FIAT,
+    ECB_FIAT, DAY_IN_SEC,
     DB_NAME, MONGO_DICT
 )
 
 # DAILY
 
 
-def check_missing(tot_date_arr, coll_to_check, query, days_to_check=5):
+def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
 
-    # selecting the last five days and put them into an array
-    last_days = tot_date_arr[(
-        len(tot_date_arr) - days_to_check): len(tot_date_arr)]
+    day_before_TS, _ = days_variable(day_to_check)
+
+    if coll_kind is None:
+
+        query["Time"] = int(day_before_TS)
+
+    elif coll_kind == "ecb_raw":
+
+        query["TIME_PERIOD"] = str(day_before_TS)
+
+    elif coll_kind == "ecb_clean":
+
+        query["Date"] = str(day_before_TS)
 
     # retrieving the wanted data on MongoDB collection
     matrix = query_mongo(DB_NAME, MONGO_DICT.get(coll_to_check), query)
+    print(matrix)
 
-    # checking the time column and selecting only the last five days retrived
-    # from MongoDB collection
-    try:
+    if isinstance(matrix, list):
 
-        date_list = np.array(matrix["Time"])
+        res = False
 
-    except KeyError:
+    else:
+        res = True
 
-        try:
-
-            date_list = np.array(matrix["TIME_PERIOD"])
-
-        except KeyError:
-
-            date_list = np.array(matrix["Date"])
-
-    last_days_db = date_list[(len(date_list) - 5): len(date_list)]
-    last_days_db_str = [str(single_date)
-                        for single_date in last_days_db]
-
-    # finding the date to download as difference between
-    # complete array of date and date now stored on MongoDB
-    date_to_add = Diff(last_days, last_days_db_str)
-
-    return date_to_add
+    return bool(res)
 
 
-def missing_start_stop(date_to_add):
+def days_variable(day):
 
-    if len(date_to_add) > 1:
+    if day is None:
 
-        date_to_add.sort()
-        start_date = timestamp_to_human(
-            [date_to_add[0]], date_format="%m-%d-%Y"
-        )
-        start_date = start_date[0]
-        end_date = timestamp_to_human(
-            [date_to_add[len(date_to_add) - 1]], date_format="%m-%d-%Y"
-        )
-        end_date = end_date[0]
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.strptime(today_str, "%Y-%m-%d")
+        today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+        day_before_TS = today_TS - DAY_IN_SEC
+        two_before_TS = day_before_TS - DAY_IN_SEC
 
     else:
 
-        start_date = datetime.fromtimestamp(int(date_to_add[0]))
-        start_date = start_date.strftime("%m-%d-%Y")
-        end_date = start_date
+        day_date = datetime.strptime(day, "%Y-%m-%d")
+        day_before_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
+        two_before_TS = day_before_TS - DAY_IN_SEC
 
-    return start_date, end_date
+    return day_before_TS, two_before_TS
 
 
-def ecb_daily_download(day_to_download=None):
+def ecb_daily_download(day_to_download_TS):
 
     # creating the empty collection cleandata within the database index
     mongo_indexing()
 
-    if day_to_download is None:
+    day_date = datetime.fromtimestamp(int(day_to_download_TS))
+    day_date_str = day_date.strftime("%Y-%m-%d")
 
-        # defining the array containing all the date from start_period until today
-        date_tot = date_gen(ECB_START_DATE)
+    # retrieving data from ECB website
+    rate_of_day = ECB_rates_extractor(ECB_FIAT, day_date_str)
 
-        # converting the timestamp format date into string
-        date_tot_str = [str(single_date) for single_date in date_tot]
-
-        date_to_download = check_missing(
-            date_tot_str, "coll_ecb_raw", {"CURRENCY": "USD"})
-
-        # converting the timestamp into YYYY-MM-DD in order to perform
-        # the download from the ECB website
-        date_to_download = [datetime.fromtimestamp(
-            int(date)) for date in date_to_download]
-        date_to_download = [date.strftime("%Y-%m-%d")
-                            for date in date_to_download]
-
-        Exchange_Rate_List = pd.DataFrame()
-
-        if date_to_download != []:
-
-            for single_date in date_to_download:
-
-                # retrieving data from ECB website
-                single_date_ex_matrix = ECB_rates_extractor(
-                    ECB_FIAT, single_date
-                )
-                # put a sleep time in order to do not overuse API connection
-                time.sleep(0.05)
-
-                # put all the downloaded data into a DafaFrame
-                if Exchange_Rate_List.size == 0:
-
-                    Exchange_Rate_List = single_date_ex_matrix
-
-                else:
-
-                    Exchange_Rate_List = Exchange_Rate_List.append(
-                        single_date_ex_matrix, sort=True)
-
-        else:
-
-            print(
-                "Message: No new date to download, the ecb_raw collection on MongoDB is updated."
-            )
-
-    else:
-
-        single_date_ex_matrix = ECB_rates_extractor(
-            ECB_FIAT, day_to_download
-        )
-
-        Exchange_Rate_List = single_date_ex_matrix
-
-        print("New ECB data have been correctly downloaded")
-    return Exchange_Rate_List
+    return rate_of_day
 
 
 def ecb_daily_op(day=None):
 
-    if day is None:
+    day_to_download_TS, _ = days_variable(day)
 
-        date_tot = date_gen(ECB_START_DATE)
-        date_tot_str = [str(single_date) for single_date in date_tot]
+    if daily_check_mongo("coll_ecb_raw", {"CURRENCY": "USD"}, coll_kind="ecb_raw") is False:
 
-        ecb_day_raw = ecb_daily_download()
+        ecb_day_raw = ecb_daily_download(day_to_download_TS)
 
         try:
 
             mongo_upload(ecb_day_raw, "collection_ecb_raw")
 
         except TypeError:
-            pass
 
-        day_missing = check_missing(
-            date_tot_str, "coll_ecb_clean", {"Currency": "EUR/USD"}
-        )
-
-        if day_missing != []:
-
-            ecb_day_clean = ECB_daily_setup(ECB_FIAT)
-
-            mongo_upload(ecb_day_clean, "collection_ecb_clean")
-
-        else:
-
-            print(
-                "Message: No need to upload rates, the ecb_clean collection on MongoDB is updated."
-            )
+            print("The ecb_raw collection is updated, the passed day is a holiday")
 
     else:
 
-        ecb_day_raw = ecb_daily_download(day)
+        print("The ecb_raw collection on MongoDB is already updated.")
 
-        mongo_upload(ecb_day_raw, "collection_ecb_raw")
+    if daily_check_mongo("coll_ecb_clean", {"Currency": "EUR/USD"}, coll_kind="ecb_clean") is False:
 
-        ecb_day_clean = ECB_daily_setup(ECB_FIAT, day_to_clean=day)
-
-        print('New ECB rawdata have been correctly manipulated and are now ready')
-
+        ecb_day_clean = ECB_daily_setup(ECB_FIAT)
         mongo_upload(ecb_day_clean, "collection_ecb_clean")
+
+    else:
+
+        print(
+            "The ecb_clean collection on MongoDB is already updated."
+        )
 
     return None
 
