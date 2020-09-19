@@ -11,5 +11,5 @@ from cryptoindex.exc_func import exc_daily_op
 
 ecb_daily_op()
 cw_daily_operation()
-exc_daily_op()
+# exc_daily_op()
 index_daily()

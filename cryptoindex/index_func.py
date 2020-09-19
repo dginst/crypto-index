@@ -601,7 +601,7 @@ def index_normal_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
         two_before_human = timestamp_to_human([two_before_TS])
 
     # defining the dictionary for the MongoDB query
-    query_dict = {"Time": str(day_before_TS)}
+    query_dict = {"Time": int(day_before_TS)}
     # retriving the needed information on MongoDB
     daily_mat = query_mongo(
         DB_NAME, MONGO_DICT.get(coll_to_use), query_dict)

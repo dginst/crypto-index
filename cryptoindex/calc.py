@@ -1810,7 +1810,7 @@ def btcusd_average(db, collection_mongo, exchange_list, exc_to_start="kraken", d
     else:
 
         first_query = {"Pair": "btcusd",
-                       "Exchange": exc_to_start, "Time": str(day_to_comp)}
+                       "Exchange": exc_to_start, "Time": int(day_to_comp)}
 
     # retrieving the
     print(day_to_comp)
@@ -1872,7 +1872,7 @@ def stable_single_exc(db, collection_mongo, exchange, stable_coin, average_df, d
     else:
 
         query_dict = {"Exchange": exchange,
-                      "Pair": pair_for_query, "Time": str(day_to_comp)}
+                      "Pair": pair_for_query, "Time": int(day_to_comp)}
 
     # querying on MongoDB
     exc_df = query_mongo(db, MONGO_DICT.get(collection_mongo), query_dict)
