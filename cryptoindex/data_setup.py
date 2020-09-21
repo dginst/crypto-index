@@ -379,8 +379,8 @@ def ECB_daily_setup(key_curr_vector, db=DB_NAME, coll_raw="coll_ecb_raw",
     header = ["Currency", "Rate"]
 
     # retrieving data from MongoDB 'index' and 'ecb_raw' collection
-    ecb_raw_mat = query_mongo(db, MONGO_DICT.get(coll_raw))
-
+    ecb_raw_mat = query_mongo(db, MONGO_DICT.get("coll_ecb_raw"))
+    print(ecb_raw_mat)
     # searching into the df only the values referred to yesterday
     y_ecb_raw = ecb_raw_mat.loc[ecb_raw_mat.TIME_PERIOD == str(day_to_clean_TS)]
 

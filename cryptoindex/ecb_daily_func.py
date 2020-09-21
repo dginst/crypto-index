@@ -14,7 +14,8 @@ from cryptoindex.data_setup import (
 from cryptoindex.data_download import ECB_rates_extractor
 from cryptoindex.mongo_setup import (
     mongo_upload, mongo_indexing,
-    query_mongo, mongo_coll_drop
+    query_mongo, mongo_coll_drop,
+    mongo_daily_delete
 )
 from cryptoindex.config import (
     ECB_START_DATE, ECB_START_DATE_D,
@@ -92,7 +93,38 @@ def ecb_daily_op(day=None):
 
     day_to_download_TS, _ = days_variable(day)
 
-    if daily_check_mongo("coll_ecb_raw", {"CURRENCY": "USD"}, coll_kind="ecb_raw") is False:
+    if day is None:
+
+        if daily_check_mongo("coll_ecb_raw", {"CURRENCY": "USD"}, coll_kind="ecb_raw") is False:
+
+            ecb_day_raw = ecb_daily_download(day_to_download_TS)
+
+            try:
+
+                mongo_upload(ecb_day_raw, "collection_ecb_raw")
+
+            except TypeError:
+
+                print("No rate on ECB website, the passed day is a holiday")
+
+        else:
+
+            print("The ecb_raw collection on MongoDB is already updated.")
+
+        if daily_check_mongo("coll_ecb_clean", {"Currency": "EUR/USD"}, coll_kind="ecb_clean") is False:
+
+            ecb_day_clean = ECB_daily_setup(ECB_FIAT)
+            mongo_upload(ecb_day_clean, "collection_ecb_clean")
+
+        else:
+
+            print(
+                "The ecb_clean collection on MongoDB is already updated."
+            )
+
+    else:
+
+        mongo_daily_delete(day, "ecb")
 
         ecb_day_raw = ecb_daily_download(day_to_download_TS)
 
@@ -102,22 +134,10 @@ def ecb_daily_op(day=None):
 
         except TypeError:
 
-            print("The ecb_raw collection is updated, the passed day is a holiday")
+            print("No rate on ECB website, the passed day is a holiday")
 
-    else:
-
-        print("The ecb_raw collection on MongoDB is already updated.")
-
-    if daily_check_mongo("coll_ecb_clean", {"Currency": "EUR/USD"}, coll_kind="ecb_clean") is False:
-
-        ecb_day_clean = ECB_daily_setup(ECB_FIAT)
+        ecb_day_clean = ECB_daily_setup(ECB_FIAT, day)
         mongo_upload(ecb_day_clean, "collection_ecb_clean")
-
-    else:
-
-        print(
-            "The ecb_clean collection on MongoDB is already updated."
-        )
 
     return None
 

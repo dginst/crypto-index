@@ -16,7 +16,9 @@ from cryptoindex.calc import (
     conv_into_usd
 )
 from cryptoindex.mongo_setup import (
-    mongo_coll, mongo_indexing, query_mongo, mongo_upload
+    mongo_coll, mongo_indexing,
+    query_mongo, mongo_upload,
+    mongo_daily_delete
 )
 from cryptoindex.config import (
     START_DATE, MONGO_DICT, DAY_IN_SEC,
@@ -280,7 +282,10 @@ def cw_daily_key_mngm(volume_checked_df, time_to_check, date_tot_str):
 
 
 def days_variable(day):
+    '''
+    @param day: "%Y-%m-%d" string format
 
+    '''
     if day is None:
 
         today_str = datetime.now().strftime("%Y-%m-%d")
@@ -398,6 +403,10 @@ def cw_daily_conv_op(day_to_conv_TS):
 
 
 def cw_daily_operation(day=None):
+    '''
+    @param day has to be either None or "%Y-%m-%d" string format
+
+    '''
 
     # create the indexing for MongoDB and define the variable containing the
     # MongoDB collections where to upload data
@@ -486,6 +495,24 @@ def cw_daily_operation(day=None):
             )
 
     else:
-        pass
+
+        mongo_daily_delete(day, "cw")
+
+        cw_rawdata_daily = cw_daily_download(day_before_TS)
+        mongo_upload(cw_rawdata_daily, "collection_cw_raw")
+        mat_vol_fix = daily_pair_vol_fix(day_before_TS)
+        mongo_upload(mat_vol_fix, "collection_cw_vol_check")
+        daily_complete_df = cw_daily_key_mngm(
+            mat_vol_fix, day_before_TS, date_tot_str)
+        daily_fixed_df = daily_fix_miss_op(
+            daily_complete_df, day, "coll_cw_clean")
+        mongo_upload(daily_fixed_df, "collection_cw_clean")
+        usdt_rates, usdc_rates = stable_rates_op(
+            "coll_cw_clean", str(day_before_TS))
+        mongo_upload(usdt_rates, "collection_stable_rate")
+        mongo_upload(usdc_rates, "collection_stable_rate")
+        converted_data = cw_daily_conv_op(day_before_TS)
+        mongo_upload(converted_data, "collection_cw_converted")
+        mongo_upload(converted_data, "collection_cw_final_data")
 
     return None

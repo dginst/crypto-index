@@ -13,11 +13,18 @@ from cryptoindex.calc import (start_q, stop_q, board_meeting_day,
                               daily_ewma_crypto_volume, daily_ewma_fraction,
                               daily_double_log_check, quarter_weights
                               )
-from cryptoindex.data_setup import (date_gen, timestamp_to_human)
+from cryptoindex.data_setup import (
+    date_gen, timestamp_to_human
+)
 from cryptoindex.mongo_setup import (
-    mongo_indexing, mongo_upload, query_mongo)
+    mongo_indexing, mongo_upload,
+    query_mongo, mongo_daily_delete
+)
 from cryptoindex.config import (
-    START_DATE, MONGO_DICT, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES, DB_NAME, DAY_IN_SEC)
+    START_DATE, MONGO_DICT, PAIR_ARRAY,
+    CRYPTO_ASSET, EXCHANGES, DB_NAME,
+    DAY_IN_SEC
+)
 
 
 def days_variable(day):
@@ -829,8 +836,16 @@ def index_daily_uploader(crypto_asset_price, crypto_asset_vol,
     return None
 
 
-def index_daily():
+def index_daily(coll_to_use="coll_data_feed", day=None):
 
-    index_normal_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY, "coll_cw_final")
+    if day is not None:
+
+        mongo_daily_delete(day, "index")
+
+    else:
+        pass
+
+    index_normal_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
+                     coll_to_use, day=day)
 
     return None

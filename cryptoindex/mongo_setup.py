@@ -1,7 +1,13 @@
+from datetime import datetime, timezone
 # third party packages
 import pandas as pd
 
 from pymongo import MongoClient
+
+from cryptoindex.config import (
+    DAY_IN_SEC
+)
+
 
 # connecting to mongo in local
 connection = MongoClient("localhost", 27017)
@@ -22,8 +28,6 @@ def query_mongo(database, collection, query_dict=None):
     # defining the variable that allows to work with MongoDB
     db = connection[database]
     coll = db[collection]
-
-    #     # find in the selected collection the wanted element/s
 
     if query_dict is None:
 
@@ -134,8 +138,9 @@ def mongo_coll():
         "collection_ecb_raw": db.ecb_raw,
         "collection_ecb_clean": db.ecb_clean,
         "collection_stable_rate": db.stable_coin_rates,
-        # index computation collections
+        # data feed final collection
         "collection_data_feed": db.index_data_feed,
+        # index computation collections
         "collection_all_exc_vol": db.all_exc_volume,
         "collection_price": db.crypto_price,
         "collection_volume": db.crypto_volume,
@@ -291,3 +296,74 @@ def mongo_upload(data_to_upload, where_to_upload, reorder="N", column_set_val=No
     collection_dict.get(where_to_upload).insert_many(data_to_dict)
 
     return None
+
+
+def mongo_delete(coll_where_del, query_to_del):
+
+    collection_dict_upload = mongo_coll()
+    collection_dict_upload.get(coll_where_del).delete_many(query_to_del)
+
+    return None
+
+
+def mongo_daily_delete(day_to_del, op_set):
+    '''
+    @param day_to_del has to be in "YY-mm-dd" string format
+    @param op_set can be "ecb", "cw", "index"
+    '''
+
+    day_to_del_TS, _ = days_variable(day_to_del)
+
+    if op_set == "ecb":
+
+        mongo_delete("collection_ecb_raw", {"TIME_PERIOD": str(day_to_del_TS)})
+        mongo_delete("collection_ecb_clean", {"Date": str(day_to_del_TS)})
+
+    elif op_set == "cw":
+
+        mongo_delete("collection_cw_raw", {"Time": day_to_del_TS})
+        mongo_delete("collection_cw_clean", {"Time": day_to_del_TS})
+        mongo_delete("collection_cw_vol_check", {"Time": day_to_del_TS})
+        mongo_delete("collection_cw_converted", {"Time": day_to_del_TS})
+        mongo_delete("collection_cw_final_data", {"Time": day_to_del_TS})
+
+        mongo_delete("collection_stable_rate", {"Time": day_to_del_TS})
+
+    elif op_set == "index":
+
+        mongo_delete("collection_price", {"Time": day_to_del_TS})
+        mongo_delete("collection_volume", {"Time": day_to_del_TS})
+        mongo_delete("collection_price_ret", {"Time": day_to_del_TS})
+        mongo_delete("collection_EWMA", {"Time": day_to_del_TS})
+        mongo_delete("collection_divisor_reshaped", {"Time": day_to_del_TS})
+        mongo_delete("collection_EWMA_check", {"Time": day_to_del_TS})
+        mongo_delete("collection_synth", {"Time": day_to_del_TS})
+        mongo_delete("collection_relative_synth", {"Time": day_to_del_TS})
+        mongo_delete("collection_index_level_raw", {"Time": day_to_del_TS})
+        mongo_delete("collection_index_level_1000", {"Time": day_to_del_TS})
+        mongo_delete("collection_all_exc_vol", {"Time": day_to_del_TS})
+        mongo_delete("collection_cw_raw", {"Time": day_to_del_TS})
+
+    return None
+
+
+def days_variable(day):
+    '''
+    @param day: "%Y-%m-%d" string format
+
+    '''
+    if day is None:
+
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.strptime(today_str, "%Y-%m-%d")
+        today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+        day_before_TS = today_TS - DAY_IN_SEC
+        two_before_TS = day_before_TS - DAY_IN_SEC
+
+    else:
+
+        day_date = datetime.strptime(day, "%Y-%m-%d")
+        day_before_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
+        two_before_TS = day_before_TS - DAY_IN_SEC
+
+    return day_before_TS, two_before_TS

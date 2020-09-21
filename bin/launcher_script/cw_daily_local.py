@@ -9,7 +9,15 @@ from cryptoindex.index_func import (
 )
 from cryptoindex.exc_func import exc_daily_op
 
-ecb_daily_op()
-cw_daily_operation()
-# exc_daily_op()
-index_daily()
+
+def daily_op(day=None):
+
+    ecb_daily_op(day)
+    cw_daily_operation(day)
+    # exc_daily_op(day)
+    index_daily(day)
+
+    return None
+
+
+daily_op("2020-09-18")

@@ -335,17 +335,17 @@ def cw_hist_operation(start_date=START_DATE):
 
             start = raw_to_download[0]
             print("Downloading ", start)
-            #cw_raw_data = cw_daily_download(start)
+            # cw_raw_data = cw_daily_download(start)
 
-            #mongo_upload(cw_raw_data, "collection_cw_raw")
+            # mongo_upload(cw_raw_data, "collection_cw_raw")
 
         else:
 
             start, stop = start_stop_missing(
                 raw_to_download, series_to_check="CW")
             print("Downloading from ", start, " to ", stop)
-            cw_raw_data = cw_hist_download(start, stop)
-            mongo_upload(cw_raw_data, "collection_cw_raw")
+            # cw_raw_data = cw_hist_download(start, stop)
+            # mongo_upload(cw_raw_data, "collection_cw_raw")
 
     elif raw_to_download is None:
 

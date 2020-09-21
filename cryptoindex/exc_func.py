@@ -9,13 +9,17 @@ import pandas as pd
 from cryptoindex.calc import (
     conv_into_usd
 )
-from cryptoindex.config import (DAY_IN_SEC, DB_NAME, EXCHANGES, MONGO_DICT,
-                                START_DATE, STABLE_COIN, CONVERSION_FIAT)
+from cryptoindex.config import (
+    DAY_IN_SEC, DB_NAME, EXCHANGES,
+    MONGO_DICT, EXC_START_DATE,
+    START_DATE, STABLE_COIN, CONVERSION_FIAT
+)
 # local import
 from cryptoindex.data_setup import (daily_fix_miss, date_gen,
                                     exc_pair_cleaning, pair_vol_fix)
 from cryptoindex.mongo_setup import (mongo_coll, mongo_upload,
-                                     query_mongo)
+                                     query_mongo, df_reorder
+                                     )
 
 
 def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
@@ -412,5 +416,34 @@ def exc_daily_op(day=None):
 
     else:
         pass
+
+    return None
+
+
+def cw_exc_merging(start_date=START_DATE, exc_start=EXC_START_DATE,
+                   db=DB_NAME, coll_cw="coll_cw_final",
+                   coll_exc="coll_exc_final"):
+
+    cw_date_arr = date_gen(start_date, exc_start)
+
+    exc_series = query_mongo(db, MONGO_DICT.get(coll_exc))
+    exc_part = df_reorder(exc_series, column_set="conversion")
+
+    # downloading the CW series from MongoDB and selecting only the date
+    # from 2016-01-01 to 2020-04-17
+    cw_series = query_mongo(db, MONGO_DICT.get(coll_cw))
+    cw_part = cw_series.loc[cw_series.Time.isin(cw_date_arr)]
+    cw_part = df_reorder(cw_part, column_set="conversion")
+
+    # creting an unique dataframe containing the two different data source
+    merged_series = cw_part.append(exc_part, sort=True)
+
+    return merged_series
+
+
+def data_feed_op():
+
+    merged_series = cw_exc_merging()
+    mongo_upload(merged_series, "collection_data_feed")
 
     return None
