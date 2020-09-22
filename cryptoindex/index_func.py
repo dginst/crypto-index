@@ -170,8 +170,8 @@ def loop_exc_value(single_crypto, exc_price, exc_vol,
     exc_price_df = pd.DataFrame(exc_price, columns=EXCHANGES)
 
     # adding "Time" column to both Exchanges dataframe
-    exc_vol_df["Time"] = str(day_TS)
-    exc_price_df["Time"] = str(day_TS)
+    exc_vol_df["Time"] = int(day_TS)
+    exc_price_df["Time"] = int(day_TS)
 
     exc_vol_tot_new = exc_all_vol(single_crypto, exc_vol_df, exc_vol_tot_old)
 
@@ -365,7 +365,7 @@ def index_daily_operation(crypto_asset, crypto_asset_price,
     price_ret = price_ret.iloc[[1]]
     # then add the 'Time' column
     time_header = ["Time"]
-    time_header.extend()
+    time_header.extend(crypto_asset)
     crypto_asset_price = pd.DataFrame(crypto_asset_price, columns=time_header)
     crypto_asset_price["Time"] = int(day_before_TS)
     crypto_asset_vol = pd.DataFrame(crypto_asset_vol, columns=time_header)
@@ -461,7 +461,13 @@ def index_board_logic_op(crypto_asset, logic_one_arr, daily_ewma,
     ewma_fraction = daily_ewma_fraction(
         daily_ewma, first_logic_row, curr_reb_start, curr_board_eve
     )
+    print("ewma_fraction")
     print(ewma_fraction)
+
+    daily_ewma_double_row = index_norm_logic_op(crypto_asset, daily_ewma)
+
+    print(daily_ewma_double_row)
+
     second_logic_row = (ewma_fraction >= 0.02) * 1
 
     double_checked_ewma = daily_double_log_check(
@@ -494,7 +500,7 @@ def index_board_logic_op(crypto_asset, logic_one_arr, daily_ewma,
     weights_for_board["Time"] = next_reb_start
     weights_for_board["Date"] = human_next_start
 
-    return first_logic_row, second_logic_row, weights_for_board, double_checked_ewma
+    return first_logic_row, second_logic_row, weights_for_board, daily_ewma_double_row
 
 
 def index_norm_logic_op(crypto_asset, daily_ewma):
@@ -552,13 +558,13 @@ def index_board_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
     curr_board_eve = str(int(board_date_eve[len(board_date_eve) - 1]))
 
     # defining the dictionary for the MongoDB query
-    query_dict = {"Time": str(day_before_TS)}
+    query_dict = {"Time": int(day_before_TS)}
     # retriving the needed information on MongoDB
     daily_mat = query_mongo(
         DB_NAME, MONGO_DICT.get(coll_to_use), query_dict)
 
     crypto_asset_price, crypto_asset_vol, exc_vol_tot, logic_one_arr = index_daily_loop(
-        daily_mat, crypto_asset, exc_list, pair_list, day,
+        daily_mat, crypto_asset, exc_list, pair_list, day_before_TS,
         last_reb_start, next_reb_stop, curr_board_eve, day_type="board")
 
     (crypto_asset_price, crypto_asset_vol, price_ret,
@@ -572,6 +578,7 @@ def index_board_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
         curr_board_eve, logic_one_arr=logic_one_arr,
         day_type="board", day=day)
 
+    print(daily_ewma_double_check)
     index_daily_uploader(crypto_asset_price, crypto_asset_vol,
                          exc_vol_tot, price_ret, daily_ewma,
                          daily_ewma_double_check, daily_synt,
@@ -845,7 +852,10 @@ def index_daily(coll_to_use="coll_data_feed", day=None):
     else:
         pass
 
-    index_normal_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
-                     coll_to_use, day=day)
+    # index_normal_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
+    #                 coll_to_use, day = day)
+
+    index_board_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
+                    coll_to_use, day=day)
 
     return None

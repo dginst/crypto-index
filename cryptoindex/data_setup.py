@@ -1,6 +1,6 @@
 # standard library import
 from datetime import datetime, timezone
-
+import holidays
 # third party import
 # from pymongo import MongoClient
 import pandas as pd
@@ -53,6 +53,33 @@ def date_gen(start_date, end_date=None, timeST="Y", clss="array", EoD="Y"):
         date_ll = date_ll[: len(date_ll) - 1]
 
     return date_ll
+
+
+def is_business_day(date):
+
+    return bool(len(pd.bdate_range(date, date)))
+
+
+def date_gen_no_holiday(start_date, end_date=None):
+
+    it_holiday = holidays.CountryHoliday("IT", prov="MI")
+    print(it_holiday)
+
+    if end_date is None:
+
+        end_date = datetime.now().strftime("%m-%d-%Y")
+
+    tot_arr = date_gen(start_date, end_date)
+
+    for date in tot_arr:
+
+        if date in it_holiday:
+
+            tot_arr = tot_arr.remove(date)
+
+    date_arr = tot_arr
+
+    return date_arr
 
 
 def timestamp_to_human(ts_array, date_format="%Y-%m-%d"):
@@ -211,7 +238,7 @@ def fix_zero_value(matrix):
                     matrix.loc[matrix.Time == int(
                         int(date) - 86400), "Close Price"]
                 )
-                print(previous_price)
+
                 matrix.loc[matrix.Time == date, "Close Price"] = previous_price
 
             previous_c_vol = np.array(
@@ -221,6 +248,7 @@ def fix_zero_value(matrix):
             previous_p_vol = np.array(
                 matrix.loc[matrix.Time == int(int(date) - 86400), "Pair Volume"]
             )
+
             matrix.loc[matrix.Time == date, "Crypto Volume"] = previous_c_vol
             matrix.loc[matrix.Time == date, "Pair Volume"] = previous_p_vol
 
@@ -379,7 +407,7 @@ def ECB_daily_setup(key_curr_vector, db=DB_NAME, coll_raw="coll_ecb_raw",
     header = ["Currency", "Rate"]
 
     # retrieving data from MongoDB 'index' and 'ecb_raw' collection
-    ecb_raw_mat = query_mongo(db, MONGO_DICT.get("coll_ecb_raw"))
+    ecb_raw_mat = query_mongo(db, MONGO_DICT.get(coll_raw))
     print(ecb_raw_mat)
     # searching into the df only the values referred to yesterday
     y_ecb_raw = ecb_raw_mat.loc[ecb_raw_mat.TIME_PERIOD == str(day_to_clean_TS)]

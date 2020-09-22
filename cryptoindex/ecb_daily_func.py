@@ -27,6 +27,9 @@ from cryptoindex.config import (
 
 
 def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
+    '''
+    @param day_to_check: has to be either None or string yy-mm-dd format
+    '''
 
     day_before_TS, _ = days_variable(day_to_check)
 
@@ -44,7 +47,7 @@ def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
 
     # retrieving the wanted data on MongoDB collection
     matrix = query_mongo(DB_NAME, MONGO_DICT.get(coll_to_check), query)
-    print(matrix)
+    # print(matrix)
 
     if isinstance(matrix, list):
 
@@ -89,6 +92,19 @@ def ecb_daily_download(day_to_download_TS):
     return rate_of_day
 
 
+def ecb_daily_up(day_to_download_TS):
+
+    ecb_day_raw = ecb_daily_download(day_to_download_TS)
+
+    try:
+
+        mongo_upload(ecb_day_raw, "collection_ecb_raw")
+
+    except TypeError:
+
+        print("No rate on ECB website, the passed day is a holiday")
+
+
 def ecb_daily_op(day=None):
 
     day_to_download_TS, _ = days_variable(day)
@@ -97,15 +113,7 @@ def ecb_daily_op(day=None):
 
         if daily_check_mongo("coll_ecb_raw", {"CURRENCY": "USD"}, coll_kind="ecb_raw") is False:
 
-            ecb_day_raw = ecb_daily_download(day_to_download_TS)
-
-            try:
-
-                mongo_upload(ecb_day_raw, "collection_ecb_raw")
-
-            except TypeError:
-
-                print("No rate on ECB website, the passed day is a holiday")
+            ecb_daily_up(day_to_download_TS)
 
         else:
 
@@ -124,22 +132,15 @@ def ecb_daily_op(day=None):
 
     else:
 
+        # prima scarico, se c'è aggiorno, altriemnti no ######
+        print("here")
         mongo_daily_delete(day, "ecb")
 
-        ecb_day_raw = ecb_daily_download(day_to_download_TS)
-
-        try:
-
-            mongo_upload(ecb_day_raw, "collection_ecb_raw")
-
-        except TypeError:
-
-            print("No rate on ECB website, the passed day is a holiday")
+        ecb_daily_up(day_to_download_TS)
 
         ecb_day_clean = ECB_daily_setup(ECB_FIAT, day)
-        mongo_upload(ecb_day_clean, "collection_ecb_clean")
 
-    return None
+        mongo_upload(ecb_day_clean, "collection_ecb_clean")
 
 
 # HIST

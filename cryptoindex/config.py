@@ -76,7 +76,8 @@ MONGO_DICT = {
     "coll_divisor": "index_divisor",
     "coll_divisor_res": "index_divisor_reshaped",
     "coll_raw_index": "index_level_raw",
-    "coll_1000_index": "index_level_1000"
+    "coll_1000_index": "index_level_1000",
+    "coll_all_exc": "all_exc_volume"
 }
 
 CLEAN_DATA_HEAD = [

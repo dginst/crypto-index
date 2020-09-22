@@ -420,7 +420,7 @@ def cw_daily_operation(day=None):
 
     if day is None:
 
-        if daily_check_mongo("coll_cw_raw", {"Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
+        if daily_check_mongo("coll_cw_raw", {"Exchange": "coinbase-pro", "Pair": "btcusd"}) is False:
 
             cw_rawdata_daily = cw_daily_download(day_before_TS)
             mongo_upload(cw_rawdata_daily, "collection_cw_raw")
@@ -430,7 +430,7 @@ def cw_daily_operation(day=None):
             print("The CW_rawdata collection on MongoDB is updated.")
 
         if daily_check_mongo("coll_vol_chk", {
-                "Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
+                "Exchange": "coinbase-pro", "Pair": "btcusd"}) is False:
 
             mat_vol_fix = daily_pair_vol_fix(day_before_TS)
             mongo_upload(mat_vol_fix, "collection_cw_vol_check")
@@ -449,7 +449,7 @@ def cw_daily_operation(day=None):
 
         # missing data fixing
 
-        if daily_check_mongo("coll_cw_clean", {"Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
+        if daily_check_mongo("coll_cw_clean", {"Exchange": "coinbase-pro", "Pair": "btcusd"}) is False:
 
             daily_fixed_df = daily_fix_miss_op(
                 daily_complete_df, day, "coll_cw_clean")
@@ -473,7 +473,7 @@ def cw_daily_operation(day=None):
 
             print("The stable_rates_collection on MongoDB is already updated.")
 
-        if daily_check_mongo("coll_cw_conv", {"Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
+        if daily_check_mongo("coll_cw_conv", {"Exchange": "coinbase-pro", "Pair": "btcusd"}) is False:
 
             converted_data = cw_daily_conv_op(day_before_TS)
             mongo_upload(converted_data, "collection_cw_converted")
@@ -484,7 +484,7 @@ def cw_daily_operation(day=None):
                 "Message: The cw_converted_data collection on MongoDB is already updated."
             )
 
-        if daily_check_mongo("coll_cw_final", {"Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
+        if daily_check_mongo("coll_cw_final", {"Exchange": "coinbase-pro", "Pair": "btcusd"}) is False:
 
             mongo_upload(converted_data, "collection_cw_final_data")
 

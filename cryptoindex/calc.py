@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 
+
 # local import
 from . import data_setup
 from cryptoindex.data_setup import (
@@ -16,7 +17,8 @@ from cryptoindex.mongo_setup import (
     df_reorder, query_mongo
 )
 from cryptoindex.config import (
-    DB_NAME, MONGO_DICT, DAY_IN_SEC
+    DB_NAME, MONGO_DICT, DAY_IN_SEC,
+    START_DATE, EXCHANGES
 )
 
 # ###########################################################################
@@ -484,18 +486,19 @@ def first_logic_matrix_reshape(
 
 def daily_perc_volumes(
     Crypto_Ex_Vol,
-    Exchanges,
-    Crypto,
+    exchange_list,
+    crypto,
     last_reb_start,
     next_reb_stop,
     curr_board_eve=None,
-    start_date="01-01-2016",
+    start_date=START_DATE,
     end_date=None,
+    db=DB_NAME,
+    coll_name="coll_all_exc",
     time_column="N"
 ):
 
-    # day_in_sec = 86400
-    #
+    head = EXCHANGES
     today_str = datetime.now().strftime("%Y-%m-%d")
     today = datetime.strptime(today_str, "%Y-%m-%d")
     today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
@@ -505,14 +508,12 @@ def daily_perc_volumes(
 
         curr_board_eve = today_TS
 
-    Crypto_Ex_Vol["Crypto"] = Crypto
+    Crypto_Ex_Vol["Crypto"] = crypto
 
     # retrieving from MongoDB the df containg the volume of each Exchange
-    db = "index"
-    coll_volume = "all_exc_volume"
-    tot_vol = mongo.query_mongo(db, coll_volume)
+    tot_vol = query_mongo(db, MONGO_DICT.get(coll_name))
     # selecting only the element related to the specific "Crypto"
-    tot_vol_c = tot_vol.loc[tot_vol.Crypto == Crypto]
+    tot_vol_c = tot_vol.loc[tot_vol.Crypto == crypto]
 
     # append the new volume value to the df
     tot_vol_u = tot_vol_c.append(Crypto_Ex_Vol)
@@ -520,9 +521,11 @@ def daily_perc_volumes(
     # the board eve date is used to compute the values, the period of
     # computation goes from the previuos rebalance date to the eve of
     # the board date
+
     quarter_matrix = tot_vol_u.loc[tot_vol_u.Time.between(
         int(last_reb_start), int(curr_board_eve), inclusive=True)]
     quarter_matrix = quarter_matrix.drop(columns=["Time", "Crypto"])
+    # print(list(quarter_matrix.columns))
 
     quarter_sum = quarter_matrix.sum()
     # finding relative percentage
@@ -534,16 +537,16 @@ def daily_perc_volumes(
         rebalance_date_perc = np.column_stack(
             (next_reb_stop, exchange_percentage))
         header = ["Time"]
-        header.extend(Exchanges)
+        header.extend(exchange_list)
 
     else:
 
         rebalance_date_perc = exchange_percentage
-        header = Exchanges
+        header = exchange_list
 
     perc_df = pd.DataFrame(rebalance_date_perc)
     perc_df_T = perc_df.T
-    perc_df_T.columns = header
+    perc_df_T.columns = quarter_matrix.columns
 
     return perc_df_T
 
@@ -558,7 +561,7 @@ def daily_first_logic(
     last_reb_start,
     next_reb_stop,
     curr_board_eve=None,
-    start_date="01-01-2016"
+    start_date=START_DATE
 ):
 
     exchange_vol_percentage = daily_perc_volumes(
