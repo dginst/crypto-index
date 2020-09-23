@@ -9,7 +9,11 @@ from cryptoindex.index_func import (
 )
 from cryptoindex.exc_func import exc_daily_op
 
-from cryptoindex.mongo_setup import mongo_daily_delete
+from cryptoindex.mongo_setup import mongo_daily_delete, query_mongo
+
+from cryptoindex.config import (
+    MONGO_DICT, DB_NAME
+)
 
 
 def daily_op(day=None):
@@ -23,6 +27,15 @@ def daily_op(day=None):
 
 
 # daily_op("2020-09-18")
-mongo_daily_delete("2020-09-21", "index")
+# mongo_daily_delete("2020-09-21", "index")
 # daily_op()
-index_daily(coll_to_use="coll_cw_final")
+# index_daily(coll_to_use="coll_cw_final")
+volume_checked_tot = query_mongo(DB_NAME,
+                                 MONGO_DICT.get("coll_vol_chk"))
+
+last_day_with_val = max(volume_checked_tot.Time)
+
+volume_checked_df = volume_checked_tot.loc[volume_checked_tot.Time
+                                           == last_day_with_val]
+
+print(volume_checked_df)

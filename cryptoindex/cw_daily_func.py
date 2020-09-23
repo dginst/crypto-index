@@ -135,12 +135,19 @@ def daily_pair_vol_fix(day):
     q_dict: Dict[str, int] = {}
     q_dict = {"Time": day}
 
-    # querying oin MongoDB collection
+    # querying on MongoDB collection
     daily_mat = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_raw"), q_dict)
-    daily_mat = daily_mat.loc[daily_mat.Time != 0]
-    daily_mat = daily_mat.drop(columns=["Low", "High", "Open"])
 
-    daily_vol_fix = pair_vol_fix(daily_mat)
+    try:
+
+        daily_mat = daily_mat.loc[daily_mat.Time != 0]
+        daily_mat = daily_mat.drop(columns=["Low", "High", "Open"])
+
+        daily_vol_fix = pair_vol_fix(daily_mat)
+
+    except AttributeError:
+
+        daily_vol_fix = []
 
     return daily_vol_fix
 
@@ -247,9 +254,13 @@ def cw_daily_key_mngm(volume_checked_df, time_to_check, date_tot_str):
 
     if isinstance(volume_checked_df, list):
 
-        volume_checked_df = query_mongo(DB_NAME,
-                                        MONGO_DICT.get("coll_vol_chk"),
-                                        {"Time": int(time_to_check)})
+        volume_checked_tot = query_mongo(DB_NAME,
+                                         MONGO_DICT.get("coll_vol_chk"))
+
+        last_day_with_val = max(volume_checked_tot.Time)
+
+        volume_checked_df = volume_checked_tot.loc[volume_checked_tot.Time
+                                                   == last_day_with_val]
 
     # downloading from MongoDB the matrix with the daily values and the
     # matrix containing the exchange-pair logic values
@@ -433,7 +444,13 @@ def cw_daily_operation(day=None):
                 "Exchange": "coinbase-pro", "Pair": "btcusd"}) is False:
 
             mat_vol_fix = daily_pair_vol_fix(day_before_TS)
-            mongo_upload(mat_vol_fix, "collection_cw_vol_check")
+
+            try:
+
+                mongo_upload(mat_vol_fix, "collection_cw_vol_check")
+
+            except AttributeError:
+                pass
 
         else:
 

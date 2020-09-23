@@ -621,7 +621,7 @@ def index_normal_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
         DB_NAME, MONGO_DICT.get(coll_to_use), query_dict)
 
     (crypto_asset_price, crypto_asset_vol, exc_vol_tot, _) = index_daily_loop(
-        daily_mat, crypto_asset, exc_list, pair_list, day)
+        daily_mat, crypto_asset, exc_list, pair_list, day_before_TS)
 
     # turn prices and volumes into pandas dataframe
     crypto_asset_price = pd.DataFrame(crypto_asset_price, columns=CRYPTO_ASSET)
@@ -852,10 +852,10 @@ def index_daily(coll_to_use="coll_data_feed", day=None):
     else:
         pass
 
-    # index_normal_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
-    #                 coll_to_use, day = day)
+    index_normal_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
+                     coll_to_use, day=day)
 
-    index_board_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
-                    coll_to_use, day=day)
+    # index_board_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
+    #                 coll_to_use, day=day)
 
     return None
