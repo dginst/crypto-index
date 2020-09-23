@@ -8,7 +8,7 @@ import numpy as np
 
 # local import
 from cryptoindex.data_setup import (
-    date_gen, exc_pair_cleaning, exc_value_cleaning)
+    date_gen, exc_pair_cleaning, exc_pair_cleaning)
 from cryptoindex.mongo_setup import (
     query_mongo, mongo_coll, mongo_coll_drop, mongo_indexing, mongo_upload, df_reorder)
 from cryptoindex.config import (
@@ -76,7 +76,7 @@ all_data = all_data.loc[all_data["Pair"].isin(cryptofiat_array)]
 all_data = all_data.loc[all_data["Exchange"].isin(EXCHANGES)]
 
 # correcting the "Pair Volume" field
-all_data = exc_value_cleaning(all_data)
+all_data = exc_pair_cleaning(all_data)
 
 # ########## DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
 
