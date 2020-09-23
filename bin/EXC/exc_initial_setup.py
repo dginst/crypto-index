@@ -124,6 +124,7 @@ for k in merg_absent["key"]:
 
 # uploading the cleaned data on MongoDB in the collection EXC_cleandata
 all_data = all_data.drop(columns=["key"])
+all_data["Time"] = [int(element) for element in all_data["Time"]]
 mongo_upload(all_data, "collection_exc_clean")
 data = all_data.to_dict(orient="records")
 
@@ -215,6 +216,7 @@ converted_data = conv_merged
 converted_data = converted_data.append(stable_merged)
 converted_data = converted_data.append(usd_matrix)
 
+converted_data["Time"] = [int(element) for element in converted_data["Time"]]
 mongo_upload(converted_data, "collection_exc_final_data")
 
 end = time.time()
