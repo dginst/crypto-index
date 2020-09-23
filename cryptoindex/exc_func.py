@@ -28,7 +28,7 @@ def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
 
     if coll_kind is None:
 
-        query["Time"] = str(day_before_TS)
+        query["Time"] = int(day_before_TS)
 
     elif coll_kind == "ecb_raw":
 
@@ -199,7 +199,7 @@ def new_series_composer(key, new_key_df, date_tot_str, day_to_check, kind_of_ser
         mongo_upload(key_hist_df, "collection_cw_converted")
         mongo_upload(key_hist_df, "collection_cw_final_data")
 
-        query_to_del = {"Time": str(day_to_check)}
+        query_to_del = {"Time": int(day_to_check)}
         collection_dict_upload.get(
             "collection_cw_converted").delete_many(query_to_del)
         collection_dict_upload.get(
@@ -213,11 +213,11 @@ def new_series_composer(key, new_key_df, date_tot_str, day_to_check, kind_of_ser
     new_p_vol = np.array(new_key_df.loc[new_key_df.key == key, "Pair Volume"])
     new_c_vol = np.array(
         new_key_df.loc[new_key_df.key == key, "Crypto Volume"])
-    key_hist_df.loc[key_hist_df.Time == str(
+    key_hist_df.loc[key_hist_df.Time == int(
         day_to_check), "Close Price"] = new_price
-    key_hist_df.loc[key_hist_df.Time == str(
+    key_hist_df.loc[key_hist_df.Time == int(
         day_to_check), "Pair Volume"] = new_p_vol
-    key_hist_df.loc[key_hist_df.Time == str(
+    key_hist_df.loc[key_hist_df.Time == int(
         day_to_check), "Crypto Volume"] = new_c_vol
 
     return key_hist_df
@@ -243,7 +243,7 @@ def exc_new_key_mng(logic_key_df, daily_mat_00, day_to_clean_TS):
 
         date_tot_int = date_gen(START_DATE)
         # converting the timestamp format date into string
-        date_tot_str = [str(single_date) for single_date in date_tot_int]
+        date_tot_str = [int(single_date) for single_date in date_tot_int]
 
         for key in new_key_list:
 
@@ -324,7 +324,7 @@ def exc_daily_fix_op(day_bfr_mat, daily_mat_complete):
 
     # put the manipulated data on MongoDB
     daily_mat_final = daily_mat_complete.drop(columns=["key", "date", "hour"])
-    daily_mat_final['Time'] = [str(t) for t in daily_mat_final['Time']]
+    daily_mat_final['Time'] = [int(t) for t in daily_mat_final['Time']]
 
     return daily_mat_final
 
@@ -350,8 +350,8 @@ def exc_daily_cleaning(exc_list, day_to_clean):
         daily_mat_00, daily_mat_12, day_to_clean)
 
     # downloading from MongoDB the matrix referring to the previuos day
-    q_dict_bfr: Dict[str, str] = {}
-    q_dict_bfr = {"Time": str(previous_day)}
+    q_dict_bfr: Dict[str, int] = {}
+    q_dict_bfr = {"Time": int(previous_day)}
     day_bfr_mat = query_mongo(
         DB_NAME, MONGO_DICT.get("coll_exc_clean"), q_dict_bfr)
 
@@ -364,7 +364,7 @@ def daily_conv_op(day_to_conv_TS, conversion_fiat=CONVERSION_FIAT,
                   stable=STABLE_COIN, series="CW"):
 
     # querying the data from mongo
-    query_data = {"Time": str(day_to_conv_TS)}
+    query_data = {"Time": int(day_to_conv_TS)}
     query_rate = {"Date": str(day_to_conv_TS)}
     query_stable = {"Time": str(day_to_conv_TS)}
     # querying the data from mongo
