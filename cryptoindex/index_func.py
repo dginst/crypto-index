@@ -859,3 +859,8 @@ def index_daily(coll_to_use="coll_data_feed", day=None):
     #                 coll_to_use, day=day)
 
     return None
+
+
+# ##############################################àà
+# HISTORICAL INDEX
+# ################################################
