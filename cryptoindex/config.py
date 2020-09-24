@@ -10,6 +10,8 @@ EXC_START_DATE = "04-17-2020"
 
 DAY_IN_SEC = 86400
 
+SYNT_PTF_VALUE = 100
+
 PAIR_ARRAY = ["gbp", "usd", "cad", "jpy", "eur", "usdt", "usdc"]
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
 

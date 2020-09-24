@@ -13,3 +13,5 @@ print(timestamp_to_human(board_meeting_day()))
 for x, y in next_quarterly_period(initial_val=0):
     print(timestamp_to_human([x]))
     print(timestamp_to_human([y]))
+
+print(timestamp_to_human(start_q("03-23-2020")))
