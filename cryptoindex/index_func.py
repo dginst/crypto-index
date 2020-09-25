@@ -7,11 +7,11 @@ import pandas as pd
 
 # local import
 
-from cryptoindex.calc import (start_q, stop_q, board_meeting_day,
-                              day_before_board, next_start,
-                              quarterly_period, daily_first_logic,
+from cryptoindex.calc import (start_q, stop_q, day_before_board,
+                              next_start, daily_first_logic,
                               daily_ewma_crypto_volume, daily_ewma_fraction,
-                              daily_double_log_check, quarter_weights
+                              daily_double_log_check, quarter_weights,
+                              new_divisor_comp
                               )
 from cryptoindex.data_setup import (
     date_gen, timestamp_to_human
@@ -23,7 +23,7 @@ from cryptoindex.mongo_setup import (
 from cryptoindex.config import (
     START_DATE, MONGO_DICT, PAIR_ARRAY,
     CRYPTO_ASSET, EXCHANGES, DB_NAME,
-    DAY_IN_SEC
+    DAY_IN_SEC, SYNT_PTF_VALUE
 )
 
 
@@ -379,45 +379,61 @@ def index_daily_operation(crypto_asset, crypto_asset_price,
     hist_volume = hist_volume.append(crypto_asset_vol)
     daily_ewma = daily_ewma_crypto_volume(hist_volume, crypto_asset)
 
-    if day_type is None:
-
-        daily_ewma_double_check = index_norm_logic_op(crypto_asset, daily_ewma)
-        first_logic_row = []
-        second_logic_row = []
-
-    elif day_type == "board":
+    if day_type == "board":
 
         (first_logic_row, second_logic_row,
          weights_for_board, daily_ewma_double_check) = index_board_logic_op(
             crypto_asset, logic_one_arr, daily_ewma,
             curr_reb_start, next_reb_start, curr_board_eve)
 
-    elif day_type == "q_start":
-        pass
+    else:
+
+        daily_ewma_double_check = index_norm_logic_op(
+            crypto_asset, daily_ewma)
+        first_logic_row = []
+        second_logic_row = []
 
     # compute the daily syntethic matrix
-    yesterday_synt_matrix = query_mongo(
-        DB_NAME, MONGO_DICT.get("coll_synt"), {"Date": two_before_human[0]}
-    )
-    yesterday_synt_matrix = yesterday_synt_matrix.drop(columns=["Date", "Time"])
-    daily_return = np.array(price_ret.loc[:, crypto_asset])
-    new_synt = (1 + daily_return) * np.array(yesterday_synt_matrix)
-    daily_synt = pd.DataFrame(new_synt, columns=crypto_asset)
+
+    if day_type == "start_q":
+
+        daily_synth = new_synth_op(crypto_asset, price_ret, SYNT_PTF_VALUE)
+
+    else:
+
+        yesterday_synt_matrix = query_mongo(
+            DB_NAME, MONGO_DICT.get("coll_synt"), {"Date": two_before_human[0]}
+        )
+        yesterday_synt_matrix = yesterday_synt_matrix.drop(
+            columns=["Date", "Time"])
+        daily_return = np.array(price_ret.loc[:, crypto_asset])
+        new_synt = (1 + daily_return) * np.array(yesterday_synt_matrix)
+        daily_synth = pd.DataFrame(new_synt, columns=crypto_asset)
 
     # compute the daily relative syntethic matrix
-    daily_tot = np.array(daily_synt.sum(axis=1))
+    daily_tot = np.array(daily_synth.sum(axis=1))
 
-    daily_rel = np.array(daily_synt) / daily_tot
+    daily_rel = np.array(daily_synth) / daily_tot
     daily_rel = pd.DataFrame(daily_rel, columns=crypto_asset)
 
     # daily index value computation
-    curr_divisor = query_mongo(
-        DB_NAME, MONGO_DICT.get("coll_divisor_res"), {
-            "Date": two_before_human[0]}
-    )
+
+    if day_type == "start_q":
+
+        new_divisor = new_divisor_comp(DB_NAME, two_before_price, crypto_asset)
+        curr_divisor = new_divisor
+
+    else:
+
+        curr_divisor = query_mongo(
+            DB_NAME, MONGO_DICT.get("coll_divisor_res"), {
+                "Date": two_before_human[0]}
+        )
+
     curr_div_val = np.array(curr_divisor["Divisor Value"])
+
     index_numerator = np.array(
-        crypto_asset_price[CRYPTO_ASSET]) * np.array(daily_rel)
+        crypto_asset_price[crypto_asset]) * np.array(daily_rel)
     numerator_sum = index_numerator.sum(axis=1)
     num = pd.DataFrame(numerator_sum)
     daily_index_value = np.array(num) / curr_div_val
@@ -443,9 +459,28 @@ def index_daily_operation(crypto_asset, crypto_asset_price,
         daily_index_1000, columns=["Index Value"])
 
     return (crypto_asset_price, crypto_asset_vol, price_ret, daily_ewma,
-            daily_ewma_double_check, daily_synt, daily_rel, curr_divisor,
-            first_logic_row, second_logic_row,
-            weights_for_board, daily_index_1000_df, raw_index_df)
+            daily_ewma_double_check, daily_synth, daily_rel, curr_divisor,
+            first_logic_row, second_logic_row, weights_for_board,
+            daily_index_1000_df, raw_index_df, new_divisor)
+
+
+def new_synth_op(crypto_asset, daily_return_df, synt_ptf_value):
+
+    past_start_quarter_list = start_q()
+    new_start_q = past_start_quarter_list[len(past_start_quarter_list) - 1]
+
+    # downloading from mongoDB the current weights
+    tot_weights = query_mongo(DB_NAME, MONGO_DICT.get("coll_weights"))
+    new_weights = tot_weights.loc[tot_weights.Time == int(
+        new_start_q), crypto_asset]
+
+    # daily syntethic matrix computation
+    daily_ret_arr = np.array(daily_return_df[crypto_asset])
+    synt_weights = np.array(new_weights) * synt_ptf_value
+    new_synth = synt_weights * (1 + daily_ret_arr)
+    daily_synthh = pd.DataFrame(new_synth, columns=crypto_asset)
+
+    return daily_synthh
 
 
 def index_board_logic_op(crypto_asset, logic_one_arr, daily_ewma,
@@ -505,14 +540,18 @@ def index_board_logic_op(crypto_asset, logic_one_arr, daily_ewma,
 
 def index_norm_logic_op(crypto_asset, daily_ewma):
 
+    past_start_quarter_list = start_q()
+    last_start_q = past_start_quarter_list[len(past_start_quarter_list) - 1]
     # downloading from mongoDB the current logic matrices (1 e 2)
     logic_one = query_mongo(DB_NAME, MONGO_DICT.get("coll_log1"))
     # taking only the logic value referred to the current period
-    current_logic_one = logic_one.iloc[[len(logic_one["Date"]) - 2]]
+    # current_logic_one = logic_one.iloc[[len(logic_one["Date"]) - 2]]
+    current_logic_one = logic_one.iloc[logic_one.Time == int(last_start_q)]
     current_logic_one = current_logic_one.drop(columns=["Date", "Time"])
     logic_two = query_mongo(DB_NAME, MONGO_DICT.get("coll_log2"))
     # taking only the logic value referred to the current period
-    current_logic_two = logic_two.iloc[[len(logic_two["Date"]) - 2]]
+    # current_logic_two = logic_two.iloc[[len(logic_two["Date"]) - 2]]
+    current_logic_two = logic_two.iloc[logic_two.Time == int(last_start_q)]
     current_logic_two = current_logic_two.drop(columns=["Date", "Time"])
 
     # computing the ewma checked with both the first and second logic matrices
@@ -530,6 +569,55 @@ def index_start_q_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
     mongo_indexing()
 
     day_before_TS, _ = days_variable(day)
+
+    # define all the useful arrays containing the rebalance start
+    # date, stop date, board meeting date
+    rebalance_start_date = start_q(START_DATE)
+    rebalance_stop_date = stop_q(rebalance_start_date)
+    board_date_eve = day_before_board()
+    next_rebalance_date = next_start()
+
+    # call the function that creates a object containing
+    # the couple of quarterly start-stop date
+    next_reb_start = str(int(next_rebalance_date[len(rebalance_start_date)]))
+    curr_reb_start = str(
+        int(rebalance_start_date[len(rebalance_start_date) - 1]))
+    last_reb_start = str(
+        int(rebalance_start_date[len(rebalance_start_date) - 2]))
+    next_reb_stop = str(int(rebalance_stop_date[len(rebalance_stop_date) - 2]))
+    curr_board_eve = str(int(board_date_eve[len(board_date_eve) - 1]))
+
+    # defining the dictionary for the MongoDB query
+    query_dict = {"Time": int(day_before_TS)}
+    # retriving the needed information on MongoDB
+    daily_mat = query_mongo(
+        DB_NAME, MONGO_DICT.get(coll_to_use), query_dict)
+
+    crypto_asset_price, crypto_asset_vol, exc_vol_tot, _ = index_daily_loop(
+        daily_mat, crypto_asset, exc_list, pair_list, day_before_TS,
+        last_reb_start, next_reb_stop, curr_board_eve)
+
+    (crypto_asset_price, crypto_asset_vol, price_ret,
+     daily_ewma, daily_ewma_double_check, daily_synth,
+     daily_rel, curr_divisor, first_logic_row,
+     second_logic_row, _,
+     daily_index_1000_df, raw_index_df,
+     new_divisor) = index_daily_operation(
+        crypto_asset, crypto_asset_price,
+        crypto_asset_vol, day_before_TS,
+        curr_reb_start, next_reb_start,
+        curr_board_eve,
+        day_type="start_q", day=day)
+
+    print(daily_ewma_double_check)
+    index_daily_uploader(crypto_asset_price, crypto_asset_vol,
+                         exc_vol_tot, price_ret, daily_ewma,
+                         daily_ewma_double_check, daily_synth,
+                         daily_rel, curr_divisor,
+                         daily_index_1000_df, raw_index_df,
+                         new_logic_one=first_logic_row,
+                         new_logic_two=second_logic_row,
+                         new_divisor=new_divisor, day=day)
 
     return None
 
@@ -568,10 +656,10 @@ def index_board_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
         last_reb_start, next_reb_stop, curr_board_eve, day_type="board")
 
     (crypto_asset_price, crypto_asset_vol, price_ret,
-     daily_ewma, daily_ewma_double_check, daily_synt,
+     daily_ewma, daily_ewma_double_check, daily_synth,
      daily_rel, curr_divisor, first_logic_row,
      second_logic_row, weights_for_board,
-     daily_index_1000_df, raw_index_df) = index_daily_operation(
+     daily_index_1000_df, raw_index_df, _) = index_daily_operation(
         crypto_asset, crypto_asset_price,
         crypto_asset_vol, day_before_TS,
         curr_reb_start, next_reb_start,
@@ -581,7 +669,7 @@ def index_board_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
     print(daily_ewma_double_check)
     index_daily_uploader(crypto_asset_price, crypto_asset_vol,
                          exc_vol_tot, price_ret, daily_ewma,
-                         daily_ewma_double_check, daily_synt,
+                         daily_ewma_double_check, daily_synth,
                          daily_rel, curr_divisor,
                          daily_index_1000_df, raw_index_df,
                          new_logic_one=first_logic_row,
@@ -674,12 +762,12 @@ def index_normal_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
     yesterday_synt_matrix = yesterday_synt_matrix.drop(columns=["Date", "Time"])
     daily_return = np.array(price_ret.loc[:, CRYPTO_ASSET])
     new_synt = (1 + daily_return) * np.array(yesterday_synt_matrix)
-    daily_synt = pd.DataFrame(new_synt, columns=CRYPTO_ASSET)
+    daily_synth = pd.DataFrame(new_synt, columns=CRYPTO_ASSET)
 
     # compute the daily relative syntethic matrix
-    daily_tot = np.array(daily_synt.sum(axis=1))
+    daily_tot = np.array(daily_synth.sum(axis=1))
 
-    daily_rel = np.array(daily_synt) / daily_tot
+    daily_rel = np.array(daily_synth) / daily_tot
     daily_rel = pd.DataFrame(daily_rel, columns=CRYPTO_ASSET)
 
     # daily index value computation
@@ -716,7 +804,7 @@ def index_normal_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
 
     index_daily_uploader(crypto_asset_price, crypto_asset_vol,
                          exc_vol_tot, price_ret, daily_ewma,
-                         daily_ewma_double_check, daily_synt,
+                         daily_ewma_double_check, daily_synth,
                          daily_rel, curr_divisor,
                          daily_index_1000_df, raw_index_df, day)
 
@@ -725,7 +813,7 @@ def index_normal_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
 
 def index_daily_uploader(crypto_asset_price, crypto_asset_vol,
                          exc_vol_tot, price_ret, daily_ewma,
-                         daily_ewma_double_check, daily_synt,
+                         daily_ewma_double_check, daily_synth,
                          daily_rel, curr_divisor,
                          daily_index_1000_df, raw_index_df,
                          new_divisor=None, new_logic_one=None,
@@ -777,9 +865,9 @@ def index_daily_uploader(crypto_asset_price, crypto_asset_vol,
                  reorder="Y", column_set_val="complete")
 
     # put the synth matrix on MongoDB
-    daily_synt["Date"] = yesterday_human
-    daily_synt["Time"] = day_before_TS
-    mongo_upload(daily_synt, "collection_synth",
+    daily_synth["Date"] = yesterday_human
+    daily_synth["Time"] = day_before_TS
+    mongo_upload(daily_synth, "collection_synth",
                  reorder="Y", column_set_val="complete")
 
     # put the relative synth matrix on MongoDB
@@ -845,6 +933,11 @@ def index_daily_uploader(crypto_asset_price, crypto_asset_vol,
 
 def index_daily(coll_to_use="coll_data_feed", day=None):
 
+    start_q_list = next_start()
+    board_eve_list = day_before_board()
+
+    day_TS = days_variable(day)
+
     if day is not None:
 
         mongo_daily_delete(day, "index")
@@ -852,10 +945,20 @@ def index_daily(coll_to_use="coll_data_feed", day=None):
     else:
         pass
 
-    index_normal_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
-                     coll_to_use, day=day)
+    if day_TS in start_q_list:
+        pass
 
-    # index_board_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
-    #                 coll_to_use, day=day)
+    elif day_TS in board_eve_list:
 
-    return None
+        index_board_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
+                        coll_to_use, day=day)
+
+    else:
+
+        index_normal_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
+                         coll_to_use, day=day)
+
+
+# ##############################################àà
+# HISTORICAL INDEX
+# ################################################

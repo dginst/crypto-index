@@ -331,7 +331,7 @@ price_ret["Time"] = reference_date_vector
 first_logic_matrix_df = pd.DataFrame(logic_matrix_one, columns=CRYPTO_ASSET)
 
 first_logic_matrix_df["Time"] = next_rebalance_date[1: len(next_rebalance_date)]
-print(first_logic_matrix_df)
+print(first_logic_matrix)
 
 # computing the Exponential Moving Weighted Average of the selected period
 ewma_df = ewma_crypto_volume(
@@ -394,13 +394,13 @@ print(second_logic_matrix)
 # display the quarter start date of each row
 weights_for_period = weights_for_board
 print(weights_for_period)
-# if y_TS >= int(curr_board_eve) and y_TS <= int(last_reb_stop):
+if y_TS >= int(curr_board_eve) and y_TS <= int(last_reb_stop):
 
-weights_for_period['Time'] = next_rebalance_date[1:]
+    weights_for_period['Time'] = next_rebalance_date[1:]
 
-# else:
+else:
 
-#     weights_for_period["Time"] = rebalance_start_date[1:]
+    weights_for_period["Time"] = rebalance_start_date[1:]
 
 print(weights_for_period)
 
@@ -511,19 +511,346 @@ mongo_upload(index_values, "collection_index_level_raw",
              reorder="Y", column_set_val="index")
 
 
-# ####### some printing ##########
-print("Crypto_Asset_Prices")
-print(Crypto_Asset_Prices)
-print("Crypto_Asset_Volume")
-print(Crypto_Asset_Volume)
-print("Price Returns")
-print(price_ret)
-print("EWMA DataFrame")
-print(ewma_df)
-print("WEIGHTS for board")
-print(weights_for_board)
-print("Syntethic relative matrix")
-print(syntethic_relative_matrix)
-print("index value")
-print(index_values)
-#################################
+# ##################
+
+def index_hist_loop(data_matrix, crypto_asset, exc_list,
+                    pair_list, day, last_reb_start=None,
+                    next_reb_stop=None,
+                    curr_board_eve=None, day_type=None):
+
+    # initialize the matrices that will contain the prices
+    # and volumes of all the single_cryptosset
+    crypto_asset_price = np.matrix([])
+    crypto_asset_vol = np.matrix([])
+
+    logic_one_arr = np.matrix([])
+
+    # initialize the matrix that contain the volumes per Exchange
+    exc_head = exc_list
+    exc_head.append("Time")
+    exc_head.append("Crypto")
+    exc_vol_tot = pd.DataFrame(columns=exc_head)
+
+    for single_crypto in crypto_asset:
+
+        # initialize useful matrices
+        crypto_fiat_arr = []
+        exc_price = np.matrix([])
+        exc_vol = np.matrix([])
+        exc_price_vol = np.matrix([])
+
+        crypto_fiat_arr = crypto_fiat_gen(
+            single_crypto, crypto_fiat_arr, pair_list)
+
+        for exchange in exc_list:
+
+            # initialize the matrices that will contain the data related
+            # to all currencypair for the single exchange
+            ccy_fiat_price_vol = np.matrix([])
+            ccy_fiat_vol = np.matrix([])
+            ccy_fiat_price = np.matrix([])
+
+            for cp in crypto_fiat_arr:
+                print(cp)
+
+                crypto = cp[:3]
+                fiat_curr = cp[3:]
+
+                # selecting the data referring to specific exchange and crypto-fiat pair
+                matrix = data_matrix.loc[
+                    (data_matrix["Exchange"] == exchange) & (
+                        data_matrix["Pair"] == cp)
+                ]
+
+                if matrix.empty is False:
+
+                    price = np.array((matrix["Close Price"]))
+                    volume = np.array((matrix["Pair Volume"]))
+                    price_vol = np.array(price * volume)
+
+                    # every "cp" the loop adds a column in the matrices referred
+                    # to the single "exchange"
+                    if ccy_fiat_price_vol.size == 0:
+                        ccy_fiat_price_vol = price_vol
+                        ccy_fiat_vol = volume
+                    else:
+                        ccy_fiat_price_vol = np.column_stack(
+                            (ccy_fiat_price_vol, price_vol)
+                        )
+                        ccy_fiat_vol = np.column_stack((ccy_fiat_vol, volume))
+
+                else:
+                    pass
+
+            # computing the volume weighted average price of the single exchange
+
+            ccy_fiat_price, ccy_fiat_vol, ccy_fiat_price_vol = loop_crypto_fiat(
+                ccy_fiat_vol, ccy_fiat_price_vol)
+
+            exc_price, exc_vol, exc_price_vol = loop_single_exc(
+                exc_price, exc_vol, exc_price_vol, ccy_fiat_price,
+                ccy_fiat_vol, ccy_fiat_price_vol)
+
+        exc_price, exc_vol, exc_vol_tot, logic_one_arr = loop_exc_value(
+            single_crypto, exc_price, exc_vol, exc_price_vol,
+            exc_vol_tot, day, exc_list, logic_one_arr,
+            last_reb_start, next_reb_stop,
+            curr_board_eve, day_type)
+
+        # creating every loop the matrices of all the single_cryptossets
+        # Crypto_Asset_Price contains the prices of all the cryptocurrencies
+        # crypto_asset_vol contains the volume of all the cryptocurrencies
+        crypto_asset_price, crypto_asset_vol = loop_crypto_asset(
+            exc_price, exc_vol, crypto_asset_price, crypto_asset_vol)
+
+    return crypto_asset_price, crypto_asset_vol, exc_vol_tot, logic_one_arr
+
+
+def hist_loop_exc_value(single_crypto, exc_price, exc_vol,
+                        exc_price_vol, exc_vol_tot_old,
+                        day_TS, exc_list, logic_one_arr,
+                        last_reb_start=None, next_reb_stop=None,
+                        curr_board_eve=None, day_type=None):
+
+    # dataframes that contain volume and price of a single crytpo
+    # for all the exchanges. If an exchange does not have value
+    # in the crypto will be insertd a column with zero
+    exc_vol_df = pd.DataFrame(exc_vol, columns=EXCHANGES)
+    exc_price_df = pd.DataFrame(exc_price, columns=EXCHANGES)
+
+    # adding "Time" column to both Exchanges dataframe
+    exc_vol_df["Time"] = int(day_TS)
+    exc_price_df["Time"] = int(day_TS)
+
+    exc_vol_tot_new = exc_all_vol(single_crypto, exc_vol_df, exc_vol_tot_old)
+
+    logic_one_arr = index_board_logic_arr(logic_one_arr, exc_vol_df, single_crypto,
+                                          exc_list, last_reb_start,
+                                          next_reb_stop, curr_board_eve)
+
+    try:
+
+        # computing the volume weighted average price of the single
+        # Crypto_Asset ("single_crypto") into a single vector
+        exc_price_num = exc_price_vol.sum(axis=1)
+        exc_price_den = exc_vol.sum(axis=1)
+        exc_price = np.divide(
+            exc_price_num,
+            exc_price_den,
+            out=np.zeros_like(exc_price_num),
+            where=exc_price_num != 0.0,
+        )
+        # computing the total volume  average price of the
+        # single Crypto_Asset ("single_crypto") into a single vector
+        exc_vol = exc_vol.sum(axis=1)
+
+    except np.AxisError:
+
+        exc_price = exc_price
+        exc_vol = exc_vol
+
+    return exc_price, exc_vol, exc_vol_tot_new, logic_one_arr
+
+
+for CryptoA in CRYPTO_ASSET:
+
+    print(CryptoA)
+    # initialize useful matrices
+    ccy_pair_array = []
+    Exchange_Price = np.matrix([])
+    Exchange_Volume = np.matrix([])
+    Ex_PriceVol = np.matrix([])
+
+    # create the crypto-fiat strings useful to download from CW
+    for pair in PAIR_ARRAY:
+        ccy_pair_array.append(CryptoA.lower() + pair)
+
+    for exchange in EXCHANGES:
+
+        print(exchange)
+        # initialize the matrices that will contain the data related to all
+        # currencypair for the single exchange
+        Ccy_Pair_PriceVolume = np.matrix([])
+        Ccy_Pair_Volume = np.matrix([])
+        Ccy_Pair_Price = np.matrix([])
+
+        for cp in ccy_pair_array:
+
+            print(cp)
+            crypto = cp[:3]
+            fiat_curr = cp[3:]
+
+            # defining the dictionary for the MongoDB query
+            query_dict = {"Exchange": exchange, "Pair": cp}
+            # retriving the needed information on MongoDB
+            matrix = query_mongo(
+                DB_NAME, MONGO_DICT.get("coll_cw_final"), query_dict)
+
+            try:
+
+                matrix = matrix.drop(columns=["Low", "High", "Open"])
+
+            except KeyError:
+
+                pass
+
+            except AttributeError:
+
+                pass
+
+            try:
+
+                cp_matrix = matrix.to_numpy()
+
+                # retrieves the wanted data from the matrix
+                # 2 for crypto vol, 3 for pair volume
+                priceXvolume = cp_matrix[:, 1] * cp_matrix[:, 3]
+                volume = cp_matrix[:, 3]  # 2 for crypto vol, 3 for pair volume
+                price = cp_matrix[:, 1]
+
+                # every "cp" the for loop adds a column in the matrices
+                # referred to the single "exchange"
+                if Ccy_Pair_PriceVolume.size == 0:
+                    Ccy_Pair_PriceVolume = priceXvolume
+                    Ccy_Pair_Volume = volume
+                else:
+                    Ccy_Pair_PriceVolume = np.column_stack(
+                        (Ccy_Pair_PriceVolume, priceXvolume)
+                    )
+                    Ccy_Pair_Volume = np.column_stack((Ccy_Pair_Volume, volume))
+
+            except AttributeError:
+
+                pass
+
+        # computing the volume weighted average price of the single exchange
+        if (
+            Ccy_Pair_Volume.size != 0
+            and Ccy_Pair_Volume.size > reference_date_vector.size
+        ):
+
+            PxV = Ccy_Pair_PriceVolume.sum(axis=1)
+            V = Ccy_Pair_Volume.sum(axis=1)
+            Ccy_Pair_Price = np.divide(
+                PxV, V, out=np.zeros_like(V), where=V != 0.0)
+
+            # computing the total volume of the exchange
+            Ccy_Pair_Volume = Ccy_Pair_Volume.sum(axis=1)
+            # computing price X volume of the exchange
+            Ccy_Pair_PxV = Ccy_Pair_Price * Ccy_Pair_Volume
+
+        # case when just one crypto-fiat has the values in that exchange
+        elif (
+            Ccy_Pair_Volume.size != 0
+            and Ccy_Pair_Volume.size == reference_date_vector.size
+        ):
+
+            np.seterr(all=None, divide="warn")
+            Ccy_Pair_Price = np.divide(
+                Ccy_Pair_PriceVolume,
+                Ccy_Pair_Volume,
+                out=np.zeros_like(Ccy_Pair_Volume),
+                where=Ccy_Pair_Volume != 0.0,
+            )
+            Ccy_Pair_Price = np.nan_to_num(Ccy_Pair_Price)
+            Ccy_Pair_PxV = Ccy_Pair_Price * Ccy_Pair_Volume
+
+        else:
+
+            Ccy_Pair_Price = np.array([])
+            Ccy_Pair_Volume = np.array([])
+            Ccy_Pair_PxV = np.array([])
+
+        # creating every loop the matrices containing the data
+        # referred to all the exchanges Exchange_Price contains
+        # the crypto ("cp") prices in all the different Exchanges
+        # Exchange_Volume contains the crypto ("cp") volume
+        # in all the different Exchanges
+        if Exchange_Price.size == 0:
+
+            if Ccy_Pair_Volume.size != 0:
+
+                Exchange_Price = Ccy_Pair_Price
+                Exchange_Volume = Ccy_Pair_Volume
+                Ex_PriceVol = Ccy_Pair_PxV
+
+            else:
+
+                Exchange_Price = np.zeros(reference_date_vector.size)
+                Exchange_Volume = np.zeros(reference_date_vector.size)
+                Ex_PriceVol = np.zeros(reference_date_vector.size)
+
+        else:
+
+            if Ccy_Pair_Volume.size != 0:
+
+                Exchange_Price = np.column_stack(
+                    (Exchange_Price, Ccy_Pair_Price))
+                Exchange_Volume = np.column_stack(
+                    (Exchange_Volume, Ccy_Pair_Volume))
+                Ex_PriceVol = np.column_stack((Ex_PriceVol, Ccy_Pair_PxV))
+
+            else:
+
+                Exchange_Price = np.column_stack(
+                    (Exchange_Price, np.zeros(reference_date_vector.size))
+                )
+                Exchange_Volume = np.column_stack(
+                    (Exchange_Volume, np.zeros(reference_date_vector.size))
+                )
+                Ex_PriceVol = np.column_stack(
+                    (Ex_PriceVol, np.zeros(reference_date_vector.size))
+                )
+
+    # dataframes that contain volume and price of a single crytpo
+    # for all the exchanges; if an exchange does not have value
+    # in the crypto will be insertd a column with zero
+    Exchange_Vol_DF = pd.DataFrame(Exchange_Volume, columns=EXCHANGES)
+    Exchange_Price_DF = pd.DataFrame(Exchange_Price, columns=EXCHANGES)
+
+    # adding "Time" column to both Exchanges dataframe
+    Exchange_Vol_DF["Time"] = reference_date_vector
+    Exchange_Price_DF["Time"] = reference_date_vector
+
+    exc_vol_p = Exchange_Vol_DF
+    exc_vol_p["Crypto"] = CryptoA
+    exc_vol_tot = exc_vol_tot.append(exc_vol_p)
+    # for each CryptoAsset compute the first logic array
+    first_logic_array = first_logic_matrix(Exchange_Vol_DF, EXCHANGES)
+
+    # put the logic array into the logic matrix
+    if logic_matrix_one.size == 0:
+        logic_matrix_one = first_logic_array
+    else:
+        logic_matrix_one = np.column_stack(
+            (logic_matrix_one, first_logic_array))
+
+    try:
+        # computing the volume weighted average price of the single
+        # Crypto_Asset ("CryptoA") into a single vector
+        Ex_price_num = Ex_PriceVol.sum(axis=1)
+        Ex_price_den = Exchange_Volume.sum(axis=1)
+        Exchange_Price = np.divide(
+            Ex_price_num,
+            Ex_price_den,
+            out=np.zeros_like(Ex_price_num),
+            where=Ex_price_num != 0.0,
+        )
+        # computing the total volume  average price of the
+        # single Crypto_Asset into a single vector
+        Exchange_Volume = Exchange_Volume.sum(axis=1)
+    except np.AxisError:
+        Exchange_Price = Exchange_Price
+        Exchange_Volume = Exchange_Volume
+
+    # creating every loop the matrices of all Cryptoassets
+    # Crypto_Asset_Price contains the prices of all the cryptocurrencies
+    # Crypto_Asset_Volume contains the volume of all the cryptocurrencies
+    if Crypto_Asset_Prices.size == 0:
+        Crypto_Asset_Prices = Exchange_Price
+        Crypto_Asset_Volume = Exchange_Volume
+    else:
+        Crypto_Asset_Prices = np.column_stack(
+            (Crypto_Asset_Prices, Exchange_Price))
+        Crypto_Asset_Volume = np.column_stack(
+            (Crypto_Asset_Volume, Exchange_Volume))

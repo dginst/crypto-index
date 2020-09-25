@@ -1,5 +1,7 @@
 START_DATE = "01-01-2016"
 
+FIRST_BOARD_DATE = "12-21-2015"
+
 ECB_START_DATE_D = "2015-12-31"
 
 ECB_START_DATE = "12-31-2015"
@@ -7,6 +9,8 @@ ECB_START_DATE = "12-31-2015"
 EXC_START_DATE = "04-17-2020"
 
 DAY_IN_SEC = 86400
+
+SYNT_PTF_VALUE = 100
 
 PAIR_ARRAY = ["gbp", "usd", "cad", "jpy", "eur", "usdt", "usdc"]
 # pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
