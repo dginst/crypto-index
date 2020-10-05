@@ -18,24 +18,22 @@ from cryptoindex.config import (
 
 def daily_op(day=None):
 
+    if day is not None:
+
+        mongo_daily_delete(day, "ecb")
+        mongo_daily_delete(day, "cw")
+        mongo_daily_delete(day, "index")
+
     ecb_daily_op(day)
     cw_daily_operation(day)
     # exc_daily_op(day)
     index_daily(coll_to_use="coll_cw_final", day=day)
 
-    return None
 
+# mongo_daily_delete("2020-09-23", "index")
+daily_op("2020-09-22")
+daily_op("2020-09-23")
+daily_op("2020-09-24")
 
-# daily_op("2020-09-18")
-# mongo_daily_delete("2020-09-21", "index")
 # daily_op()
 # index_daily(coll_to_use="coll_cw_final")
-volume_checked_tot = query_mongo(DB_NAME,
-                                 MONGO_DICT.get("coll_vol_chk"))
-
-last_day_with_val = max(volume_checked_tot.Time)
-
-volume_checked_df = volume_checked_tot.loc[volume_checked_tot.Time
-                                           == last_day_with_val]
-
-print(volume_checked_df)

@@ -696,10 +696,8 @@ def index_normal_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
     else:
 
         day_date = datetime.strptime(day, "%Y-%m-%d")
-        day_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
-        day_before_TS = day_TS - DAY_IN_SEC
+        day_before_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
         two_before_TS = day_before_TS - DAY_IN_SEC
-        two_before_TS = day_TS - DAY_IN_SEC
         two_before_human = timestamp_to_human([two_before_TS])
 
     # defining the dictionary for the MongoDB query
@@ -806,7 +804,7 @@ def index_normal_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
                          exc_vol_tot, price_ret, daily_ewma,
                          daily_ewma_double_check, daily_synth,
                          daily_rel, curr_divisor,
-                         daily_index_1000_df, raw_index_df, day)
+                         daily_index_1000_df, raw_index_df, day=day)
 
     return None
 
@@ -830,8 +828,7 @@ def index_daily_uploader(crypto_asset_price, crypto_asset_vol,
     else:
 
         day_date = datetime.strptime(day, "%Y-%m-%d")
-        day_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
-        day_before_TS = day_TS - DAY_IN_SEC
+        day_before_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
         yesterday_human = timestamp_to_human([day_before_TS])
 
     # put the "crypto_asset_price" dataframe on MongoDB
@@ -938,15 +935,10 @@ def index_daily(coll_to_use="coll_data_feed", day=None):
 
     day_TS = days_variable(day)
 
-    if day is not None:
-
-        mongo_daily_delete(day, "index")
-
-    else:
-        pass
-
     if day_TS in start_q_list:
-        pass
+
+        index_start_q_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
+                          coll_to_use, day=day)
 
     elif day_TS in board_eve_list:
 

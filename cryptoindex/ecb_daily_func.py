@@ -134,7 +134,6 @@ def ecb_daily_op(day=None):
 
         # prima scarico, se c'è aggiorno, altriemnti no ######
         print("here")
-        mongo_daily_delete(day, "ecb")
 
         ecb_daily_up(day_to_download_TS)
 

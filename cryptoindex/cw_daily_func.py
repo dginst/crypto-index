@@ -62,7 +62,7 @@ def cw_daily_download(day_to_download):
     # day_before_TS, _ = days_variable(day_to_download)
     date_long = datetime.fromtimestamp(int(day_to_download))
     date_h = date_long.strftime("%m-%d-%Y")
-
+    print(date_h)
     cw_raw = pd.DataFrame(columns=CW_RAW_HEAD)
 
     for Crypto in CRYPTO_ASSET:
@@ -513,12 +513,16 @@ def cw_daily_operation(day=None):
 
     else:
 
-        mongo_daily_delete(day, "cw")
-
         cw_rawdata_daily = cw_daily_download(day_before_TS)
         mongo_upload(cw_rawdata_daily, "collection_cw_raw")
         mat_vol_fix = daily_pair_vol_fix(day_before_TS)
-        mongo_upload(mat_vol_fix, "collection_cw_vol_check")
+        try:
+
+            mongo_upload(mat_vol_fix, "collection_cw_vol_check")
+
+        except AttributeError:
+            pass
+
         daily_complete_df = cw_daily_key_mngm(
             mat_vol_fix, day_before_TS, date_tot_str)
         daily_fixed_df = daily_fix_miss_op(

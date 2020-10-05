@@ -665,6 +665,7 @@ def daily_ewma_crypto_volume(
     if stop is None:
 
         last_row = Crypto_Volume_Matrix.tail(1)
+        print(last_row)
         stop = int(last_row["Time"])
 
     else:
@@ -679,6 +680,13 @@ def daily_ewma_crypto_volume(
         Crypto_Volume_Matrix.Time.between(
             start, stop, inclusive=True), Crypto_list
     ]
+
+    if period_volume.shape[0] > moving_average_period:
+
+        surplus = period_volume.shape[0] - moving_average_period
+        period_volume = period_volume.iloc[surplus:]
+
+    print(period_volume.shape[0])
     period_average = np.array(
         (period_volume * smoothing_array[:, None]).sum(axis=0))
 

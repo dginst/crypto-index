@@ -375,8 +375,8 @@ def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N",
 # interest
 
 
-def ECB_daily_setup(key_curr_vector, db=DB_NAME, coll_raw="coll_ecb_raw",
-                    coll_clean="coll_ecb_clean", day_to_clean=None):
+def ECB_daily_setup(key_curr_vector, day_to_clean=None, db=DB_NAME, coll_raw="coll_ecb_raw",
+                    coll_clean="coll_ecb_clean"):
 
     if day_to_clean is None:
 
@@ -408,7 +408,7 @@ def ECB_daily_setup(key_curr_vector, db=DB_NAME, coll_raw="coll_ecb_raw",
 
     # retrieving data from MongoDB 'index' and 'ecb_raw' collection
     ecb_raw_mat = query_mongo(db, MONGO_DICT.get(coll_raw))
-    print(ecb_raw_mat)
+
     # searching into the df only the values referred to yesterday
     y_ecb_raw = ecb_raw_mat.loc[ecb_raw_mat.TIME_PERIOD == str(day_to_clean_TS)]
 

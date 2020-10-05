@@ -28,7 +28,7 @@ def query_mongo(database, collection, query_dict=None):
     # defining the variable that allows to work with MongoDB
     db = connection[database]
     coll = db[collection]
-    # print(coll)
+    print(coll)
     if query_dict is None:
 
         df = pd.DataFrame(list(coll.find()))
@@ -300,8 +300,8 @@ def mongo_upload(data_to_upload, where_to_upload, reorder="N", column_set_val=No
 
 def mongo_delete(coll_where_del, query_to_del):
 
-    collection_dict_upload = mongo_coll()
-    collection_dict_upload.get(coll_where_del).delete_many(query_to_del)
+    collection_dict = mongo_coll()
+    collection_dict.get(coll_where_del).delete_many(query_to_del)
 
     return None
 
