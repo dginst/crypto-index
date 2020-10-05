@@ -1,6 +1,6 @@
 # standard library import
 from datetime import datetime, timezone
-import holidays
+# import holidays
 # third party import
 # from pymongo import MongoClient
 import pandas as pd
@@ -288,6 +288,7 @@ def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N",
         # retrieving data from MongoDB 'index' and 'ecb_raw' collection
         single_date_ex_matrix = query_mongo(db, MONGO_DICT.get(coll_raw), query)
 
+        print(single_date_ex_matrix)
         # check if rates exist in the specified date
         if len(single_date_ex_matrix) != 0:
 
