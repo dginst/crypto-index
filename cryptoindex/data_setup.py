@@ -610,6 +610,7 @@ def CW_series_fix_missing(
 
         else:
 
+            print(prev_val)
             merged.loc[merged.Time == element, "Close Price"] = float(
                 prev_val["Close Price"]
             ) * (1 + price_var)

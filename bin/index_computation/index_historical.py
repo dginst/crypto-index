@@ -394,9 +394,10 @@ print(second_logic_matrix)
 # display the quarter start date of each row
 weights_for_period = weights_for_board
 print(weights_for_period)
+print(next_rebalance_date)
 # if y_TS >= int(curr_board_eve) and y_TS <= int(last_reb_stop):
 
-weights_for_period['Time'] = next_rebalance_date[1:]
+weights_for_period['Time'] = next_rebalance_date[1:len(next_rebalance_date) - 1]
 
 # else:
 
