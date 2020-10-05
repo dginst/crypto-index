@@ -113,6 +113,7 @@ key_present = key_present.drop(columns=["logic_value"])
 
 
 # selecting the last day of the EXC "historical" series
+all_00_clean = all_00_clean.loc[all_00_clean.Time != str(today_TS)]
 last_day_with_val = max(all_00_clean.Time)
 last_day = all_00_clean.loc[all_00_clean.Time
                             == last_day_with_val]
@@ -145,6 +146,8 @@ for k in merg_absent["key"]:
 # uploading the cleaned data on MongoDB in the collection EXC_cleandata
 all_00_clean = all_00_clean.drop(columns=["key"])
 all_00_clean["Time"] = [int(element) for element in all_00_clean["Time"]]
+
+all_00_clean = all_00_clean.loc[all_00_clean.Time != 1587081600]
 
 
 mongo_upload(all_00_clean, "collection_exc_clean")

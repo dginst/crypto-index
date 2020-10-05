@@ -18,7 +18,8 @@ from cryptoindex.config import (
 from cryptoindex.data_setup import (daily_fix_miss, date_gen,
                                     exc_pair_cleaning, pair_vol_fix)
 from cryptoindex.mongo_setup import (mongo_coll, mongo_upload,
-                                     query_mongo, df_reorder
+                                     query_mongo, df_reorder,
+                                     mongo_coll_drop
                                      )
 
 
@@ -424,7 +425,7 @@ def cw_exc_merging(start_date=START_DATE, exc_start=EXC_START_DATE,
                    db=DB_NAME, coll_cw="coll_cw_final",
                    coll_exc="coll_exc_final"):
 
-    cw_date_arr = date_gen(start_date, exc_start)
+    cw_date_arr = date_gen(start_date, exc_start, EoD="N")
 
     exc_series = query_mongo(db, MONGO_DICT.get(coll_exc))
     exc_part = df_reorder(exc_series, column_set="conversion")
@@ -437,11 +438,14 @@ def cw_exc_merging(start_date=START_DATE, exc_start=EXC_START_DATE,
 
     # creting an unique dataframe containing the two different data source
     merged_series = cw_part.append(exc_part, sort=True)
+    merged_series["Time"] = [int(d) for d in merged_series["Time"]]
 
     return merged_series
 
 
 def data_feed_op():
+
+    mongo_coll_drop("index_feed")
 
     merged_series = cw_exc_merging()
     mongo_upload(merged_series, "collection_data_feed")

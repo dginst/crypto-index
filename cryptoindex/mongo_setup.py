@@ -329,6 +329,10 @@ def mongo_daily_delete(day_to_del, op_set):
 
         mongo_delete("collection_stable_rate", {"Time": day_to_del_TS})
 
+    # elif op_set == "data_feed":
+
+    #     mongo_delete("collection_data_feed")
+
     elif op_set == "index":
 
         mongo_delete("collection_price", {"Time": day_to_del_TS})

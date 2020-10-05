@@ -7,7 +7,9 @@ from cryptoindex.ecb_daily_func import (
 from cryptoindex.index_func import (
     index_daily
 )
-from cryptoindex.exc_func import exc_daily_op
+from cryptoindex.exc_func import (
+    exc_daily_op, data_feed_op
+)
 
 from cryptoindex.mongo_setup import mongo_daily_delete, query_mongo
 
@@ -35,5 +37,6 @@ def daily_op(day=None):
 # daily_op("2020-09-23")
 # daily_op("2020-09-24")
 exc_daily_op()
+data_feed_op()
 # daily_op()
 # index_daily(coll_to_use="coll_cw_final")
