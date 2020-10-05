@@ -41,7 +41,7 @@ def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
     # retrieving the wanted data on MongoDB collection
     matrix = query_mongo(DB_NAME, MONGO_DICT.get(coll_to_check), query)
 
-    if matrix == []:
+    if isinstance(matrix, list):
 
         res = False
 

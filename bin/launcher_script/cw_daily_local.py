@@ -31,9 +31,9 @@ def daily_op(day=None):
 
 
 # mongo_daily_delete("2020-09-23", "index")
-daily_op("2020-09-22")
-daily_op("2020-09-23")
-daily_op("2020-09-24")
-
+# daily_op("2020-09-22")
+# daily_op("2020-09-23")
+# daily_op("2020-09-24")
+exc_daily_op()
 # daily_op()
 # index_daily(coll_to_use="coll_cw_final")
