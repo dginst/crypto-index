@@ -11,7 +11,9 @@ from cryptoindex.calc import (
     conv_into_usd
 )
 from cryptoindex.data_setup import (
-    date_gen, exc_pair_cleaning, exc_pair_cleaning)
+    date_gen, exc_pair_cleaning,
+    exc_pair_cleaning, homogenize_series
+)
 from cryptoindex.mongo_setup import (
     query_mongo, mongo_coll, mongo_coll_drop, mongo_indexing, mongo_upload, df_reorder)
 from cryptoindex.config import (
@@ -19,6 +21,9 @@ from cryptoindex.config import (
     PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES,
     DB_NAME, CLEAN_DATA_HEAD, STABLE_COIN,
     CONVERSION_FIAT
+)
+from cryptoindex.cw_hist_func import (
+    crypto_fiat_pair_gen
 )
 from cryptoindex.exc_func import (
     exc_time_split
@@ -149,8 +154,39 @@ all_00_clean["Time"] = [int(element) for element in all_00_clean["Time"]]
 
 all_00_clean = all_00_clean.loc[all_00_clean.Time != 1587081600]
 
+# homogeneize
+new_clean = pd.DataFrame(columns=CLEAN_DATA_HEAD)
 
-mongo_upload(all_00_clean, "collection_exc_clean")
+for crypto in CRYPTO_ASSET:
+
+    pair_arr = crypto_fiat_pair_gen(crypto)
+
+    for exchange in EXCHANGES:
+
+        ex_matrix = all_00_clean.loc[all_00_clean.Exchange == exchange]
+
+        for cp in pair_arr:
+
+            crypto = cp[:3]
+
+            cp_matrix = ex_matrix.loc[ex_matrix["Pair"] == cp]
+            cp_matrix = cp_matrix.drop(columns=["Exchange", "Pair"])
+            # checking if the matrix is not empty
+            if cp_matrix.shape[0] > 1:
+
+                # check if the historical series start at the same date as
+                # the start date if not fill the dataframe with zero values
+                cp_matrix = homogenize_series(
+                    cp_matrix, date_array)
+
+            cp_matrix["Exchange"] = exchange
+            cp_matrix["Pair"] = cp
+            new_clean = new_clean.append(cp_matrix)
+
+new_clean = new_clean.drop(columns=["key"])
+# ##########
+
+mongo_upload(new_clean, "collection_exc_clean")
 
 # ################# DATA CONVERSION MAIN PART ##################
 
