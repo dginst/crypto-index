@@ -367,7 +367,7 @@ def daily_conv_op(day_to_conv_TS, conversion_fiat=CONVERSION_FIAT,
     # querying the data from mongo
     query_data = {"Time": int(day_to_conv_TS)}
     query_rate = {"Date": str(day_to_conv_TS)}
-    query_stable = {"Time": str(day_to_conv_TS)}
+    query_stable = {"Time": int(day_to_conv_TS)}
     # querying the data from mongo
     matrix_rate = query_mongo(
         DB_NAME, MONGO_DICT.get("coll_ecb_clean"), query_rate)
