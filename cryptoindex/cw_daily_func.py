@@ -80,7 +80,7 @@ def cw_daily_download(day_to_download):
                 # create the matrix for the single currency_pair
                 # connecting to CryptoWatch website
                 cw_raw = cw_raw_download(
-                    exchange, cp, cw_raw, str(date_h)
+                    exchange, cp, cw_raw, str(date_h), str(date_h)
                 )
 
     return cw_raw

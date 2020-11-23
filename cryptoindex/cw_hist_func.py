@@ -1,6 +1,6 @@
 
 # standard library import
-from datetime import datetime
+from datetime import datetime, timezone
 import numpy as np
 import pandas as pd
 
@@ -18,7 +18,7 @@ from cryptoindex.data_setup import (
 from cryptoindex.mongo_setup import (
     query_mongo, mongo_coll_drop,
     mongo_indexing, mongo_upload,
-    df_reorder
+    df_reorder, mongo_coll
 )
 from cryptoindex.calc import (
     key_log_mat, conv_into_usd
@@ -190,10 +190,8 @@ def cw_hist_pair_vol_fix(hist_raw_mat):
     # correcting some df issues related to original raw data
     bug_fixed_df = cw_hist_raw_bugfix(tot_matrix)
 
-    print(bug_fixed_df)
     # fixing the Pair_Vol info of the df
     vol_fixed_df = pair_vol_fix(bug_fixed_df)
-    print(vol_fixed_df)
 
     return vol_fixed_df
 
@@ -324,39 +322,22 @@ def cw_hist_operation(start_date=START_DATE):
     last_day_TS = date_tot[len(date_tot) - 1]
 
     mongo_indexing()
+    collection_dict_upload = mongo_coll()
     # deleting previous MongoDB collection for rawdata
-    raw_to_download = check_missing(date_tot, "coll_cw_raw", {
-                                    "Exchange": "coinbase-pro", "Pair": "btcusd"})
-    print(raw_to_download)
-    print(len(raw_to_download))
-    if raw_to_download != [] and raw_to_download is not None:
 
-        if len(raw_to_download) == 1:
+    print("Downloading all CW history")
+    mongo_coll_drop("cw_hist_d")
+    cw_raw_data = cw_hist_download(start_date)
+    mongo_upload(cw_raw_data, "collection_cw_raw")
+    print("CW series download completed")
 
-            start = raw_to_download[0]
-            print("Downloading ", start)
-            # cw_raw_data = cw_daily_download(start)
-
-            # mongo_upload(cw_raw_data, "collection_cw_raw")
-
-        else:
-
-            start, stop = start_stop_missing(
-                raw_to_download, series_to_check="CW")
-            print("Downloading from ", start, " to ", stop)
-            # cw_raw_data = cw_hist_download(start, stop)
-            # mongo_upload(cw_raw_data, "collection_cw_raw")
-
-    elif raw_to_download is None:
-
-        print("Downloading all CW history")
-        mongo_coll_drop("cw_hist_d")
-        cw_raw_data = cw_hist_download(start_date)
-        mongo_upload(cw_raw_data, "collection_cw_raw")
-
-    else:
-
-        print("cw_rawdata is updated")
+    # deleting today value if present
+    # assign date of interest to variables
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.strptime(today_str, "%Y-%m-%d")
+    today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+    query_ = {'Time': today_TS}
+    collection_dict_upload.get("collection_cw_raw").delete_many(query_)
 
     # deleting previous MongoDB collections
     mongo_coll_drop("cw_hist_clean")
@@ -365,7 +346,6 @@ def cw_hist_operation(start_date=START_DATE):
     # fix and upload the series for the "pair volume" info
     tot_raw_data = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_raw"))
     cw_vol_fix_data = cw_hist_pair_vol_fix(tot_raw_data)
-    print(cw_vol_fix_data)
     mongo_upload(cw_vol_fix_data, "collection_cw_vol_check")
 
     # clean and upload all the series
@@ -381,7 +361,7 @@ def cw_hist_operation(start_date=START_DATE):
     # convert and upload all the data into USD
     converted_df = cw_hist_conv_op(cleaned_df)
     mongo_upload(converted_df, "collection_cw_converted")
-    print(converted_df)
+
     # logic matrix of crypto-fiat keys
     key_df = key_log_mat(DB_NAME, "coll_cw_conv", last_day_TS,
                          EXCHANGES, CRYPTO_ASSET, PAIR_ARRAY)
@@ -393,3 +373,87 @@ def cw_hist_operation(start_date=START_DATE):
     mongo_upload(final_df, "collection_cw_final_data")
 
     return None
+
+
+# def cw_hist_operation(start_date=START_DATE):
+
+#     date_tot = date_gen(start_date)
+#     last_day_TS = date_tot[len(date_tot) - 1]
+
+#     mongo_indexing()
+#     collection_dict_upload = mongo_coll()
+#     # deleting previous MongoDB collection for rawdata
+#     raw_to_download = check_missing(date_tot, "coll_cw_raw", {
+#                                     "Exchange": "coinbase-pro", "Pair": "btcusd"})
+
+#     if raw_to_download != [] and raw_to_download is not None:
+
+#         if len(raw_to_download) == 1:
+
+#             start = raw_to_download[0]
+#             print("Downloading ", start)
+#             # cw_raw_data = cw_daily_download(start)
+
+#             # mongo_upload(cw_raw_data, "collection_cw_raw")
+
+#         else:
+
+#             start, stop = start_stop_missing(
+#                 raw_to_download, series_to_check="CW")
+#             print("Downloading from ", start, " to ", stop)
+#             # cw_raw_data = cw_hist_download(start, stop)
+#             # mongo_upload(cw_raw_data, "collection_cw_raw")
+
+#     elif raw_to_download is None:
+
+#         print("Downloading all CW history")
+#         mongo_coll_drop("cw_hist_d")
+#         cw_raw_data = cw_hist_download(start_date)
+#         mongo_upload(cw_raw_data, "collection_cw_raw")
+
+#     else:
+
+#         print("cw_rawdata is updated")
+
+#     # deleting today value is present
+#     # assign date of interest to variables
+#     today_str = datetime.now().strftime("%Y-%m-%d")
+#     today = datetime.strptime(today_str, "%Y-%m-%d")
+#     today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+#     query_ = {'Time': today_TS}
+#     collection_dict_upload.get("collection_cw_raw").delete_many(query_)
+
+#     # deleting previous MongoDB collections
+#     mongo_coll_drop("cw_hist_clean")
+#     mongo_coll_drop("cw_hist_conv")
+
+#     # fix and upload the series for the "pair volume" info
+#     tot_raw_data = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_raw"))
+#     cw_vol_fix_data = cw_hist_pair_vol_fix(tot_raw_data)
+#     mongo_upload(cw_vol_fix_data, "collection_cw_vol_check")
+
+#     # clean and upload all the series
+#     cleaned_df = cw_hist_cleaning(cw_vol_fix_data, start_date)
+#     mongo_upload(cleaned_df, "collection_cw_clean")
+
+#     # compute and upload USDC and USDT rates series
+#     usdt_rates, usdc_rates = stable_rates_op(
+#         "coll_cw_clean", None)
+#     mongo_upload(usdt_rates, "collection_stable_rate")
+#     mongo_upload(usdc_rates, "collection_stable_rate")
+
+#     # convert and upload all the data into USD
+#     converted_df = cw_hist_conv_op(cleaned_df)
+#     mongo_upload(converted_df, "collection_cw_converted")
+
+#     # logic matrix of crypto-fiat keys
+#     key_df = key_log_mat(DB_NAME, "coll_cw_conv", last_day_TS,
+#                          EXCHANGES, CRYPTO_ASSET, PAIR_ARRAY)
+#     mongo_upload(key_df, "collection_CW_key")
+#     mongo_upload(key_df, "collection_EXC_key")
+
+#     # fill zero-volume data and upload on MongoDB
+#     final_df = cw_hist_zero_vol_fill_op(converted_df)
+#     mongo_upload(final_df, "collection_cw_final_data")
+
+#     return None

@@ -1765,19 +1765,14 @@ def conv_into_usd(db, data_df, fiat_rate_df, stable_rate_df, fiat_list, stableco
     # ########### converting non-USD fiat currencies #########################
     fiat_df_key = fiat_rate_df
     fiat_df_key["key"] = fiat_df_key["Time"] + fiat_df_key["fiat"]
-    print(fiat_df_key)
 
     conv_matrix = data_df.loc[data_df["fiat"].isin(fiat_list)]
     conv_matrix["Time"] = [str(date) for date in conv_matrix["Time"]]
     conv_matrix["key"] = conv_matrix["Time"] + conv_matrix["fiat"]
     conv_matrix.reset_index(drop=True)
-    print("conv_matrix")
-    print(conv_matrix)
 
     # merging the dataset on 'Time' and 'fiat' column
     conv_merged = pd.merge(conv_matrix, fiat_df_key, on=["key"])
-    # conv_merged = pd.merge(conv_matrix, fiat_rate_df, on=["Time", "fiat"])
-    print(conv_merged)
 
     # converting the prices in usd
     conv_merged["Close Price"] = conv_merged["Close Price"] / \
@@ -1854,19 +1849,17 @@ def btcusd_average(db, collection_mongo, exchange_list, exc_to_start="kraken", d
         first_query = {"Pair": "btcusd",
                        "Exchange": exc_to_start, "Time": int(day_to_comp)}
 
-    # retrieving the
-    print(day_to_comp)
-    print(collection_mongo)
+    # retrieving the first collection values
     first_call = query_mongo(
         db, MONGO_DICT.get(collection_mongo), first_query)
-    print(first_call)
+
     # isolating some values in single variables
     time_arr = first_call[["Time"]]
     price_df = first_call[["Close Price"]]
     volume_df = first_call[["Pair Volume"]]
     price_df = price_df.rename(columns={"Close Price": exc_to_start})
     volume_df = volume_df.rename(columns={"Pair Volume": exc_to_start})
-    Exchanges.remove("kraken")
+    Exchanges.remove(exc_to_start)
 
     for exchange in Exchanges:
 

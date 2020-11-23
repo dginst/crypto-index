@@ -222,12 +222,21 @@ def cw_raw_download(
     if end_date is None:
 
         end_date = datetime.now().strftime("%m-%d-%Y")
+        end_date = datetime.strptime(end_date, "%m-%d-%Y")
+        end_date = str(int(end_date.replace(
+            tzinfo=timezone.utc).timestamp()) - DAY_IN_SEC)
 
-    end_date = datetime.strptime(end_date, "%m-%d-%Y")
+    else:
+
+        end_date = datetime.strptime(end_date, "%m-%d-%Y")
+        end_date = str(int(end_date.replace(
+            tzinfo=timezone.utc).timestamp()))
+
     # transform date into timestamps
     start_date = str(int(start_date.replace(tzinfo=timezone.utc).timestamp()))
-    end_date = str(int(end_date.replace(
-        tzinfo=timezone.utc).timestamp()) - DAY_IN_SEC)
+
+    print(start_date)
+    print(end_date)
     # API settings
     entrypoint = "https://api.cryptowat.ch/markets/"
     key = (
@@ -242,7 +251,7 @@ def cw_raw_download(
         + end_date
     )
     request_url = entrypoint + key
-
+    print(request_url)
     # API call
     response = requests.get(request_url)
     response = response.json()

@@ -11,7 +11,8 @@ from cryptoindex.mongo_setup import (
     query_mongo
 )
 from cryptoindex.config import (
-    DB_NAME, MONGO_DICT, DAY_IN_SEC
+    DB_NAME, MONGO_DICT, DAY_IN_SEC,
+    START_DATE
 )
 
 
@@ -26,7 +27,7 @@ from cryptoindex.config import (
 # the returned array of date will be from start to today - 1 (EoD = 'Y')
 
 
-def date_gen(start_date, end_date=None, timeST="Y", clss="array", EoD="Y"):
+def date_gen(start_date=START_DATE, end_date=None, timeST="Y", clss="array", EoD="Y"):
 
     if end_date is None:
 

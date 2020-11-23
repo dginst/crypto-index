@@ -371,6 +371,7 @@ def daily_conv_op(day_to_conv_TS, conversion_fiat=CONVERSION_FIAT,
     # querying the data from mongo
     matrix_rate = query_mongo(
         DB_NAME, MONGO_DICT.get("coll_ecb_clean"), query_rate)
+
     if series == "CW":
 
         matrix_data = query_mongo(

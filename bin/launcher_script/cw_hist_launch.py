@@ -8,7 +8,12 @@ from cryptoindex.data_setup import (
     date_gen_no_holiday
 )
 
-# x = date_gen_no_holiday("09-15-2020")
-# print(x)
+from cryptoindex.index_hist import (
+    index_hist_total
+)
+
+
 # ecb_hist_op()
-cw_hist_operation()
+# cw_hist_operation()
+
+index_hist_total(coll_to_use="coll_cw_final")

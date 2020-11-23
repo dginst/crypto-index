@@ -96,7 +96,7 @@ import cryptoindex.data_download as data_download
 
 # print(df)
 
-# a = pd.read_json('EXC_rawdata.json', lines=True)
+# a = pd.read_json('EXC_rawdata.json',  )
 # head = ['Pair', 'Exchange', 'Time', 'Close Price', 'Crypto Volume', 'Pair Volume']
 # a= a.drop(columns = ['_id', 'date'])
 # #connecting to mongo in local
