@@ -184,7 +184,8 @@ for crypto in CRYPTO_ASSET:
 
             if exchange == "poloniex" and (cp == "btcusdc" or cp == "btcusdt"):
 
-                cp_matrix = cp_matrix.loc[cp_matrix["Close Price"] != 0.0]
+                print("here")
+                cp_matrix = cp_matrix.loc[cp_matrix["Close Price"] != 0.000000]
 
             # checking if the matrix is not empty
             if cp_matrix.shape[0] > 1:
