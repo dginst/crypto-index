@@ -53,7 +53,7 @@ for crypto in CRYPTO_ASSET:
 # ############################ setup mongo connection ##################
 
 # drop the pre-existing collection (if there is one)
-# mongo_coll_drop("exc")
+mongo_coll_drop("exc")
 
 mongo_indexing()
 
