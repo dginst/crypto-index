@@ -21,4 +21,5 @@ from cryptoindex.index_wrap_func import (
 # cw_hist_operation()
 
 # index_hist_total(coll_to_use="coll_cw_final")
-hist_complete()
+# hist_complete()
+index_hist_total()
