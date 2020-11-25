@@ -226,6 +226,7 @@ for crypto in CRYPTO_ASSET:
                         print(merged_cp)
                     print(cp_matrix.shape)
 
+            cp_matrix.fillna(0, inplace=True)
             cp_matrix["Exchange"] = exchange
             cp_matrix["Pair"] = cp
 
