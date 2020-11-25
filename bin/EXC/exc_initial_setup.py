@@ -181,6 +181,11 @@ for crypto in CRYPTO_ASSET:
 
             cp_matrix = ex_matrix.loc[ex_matrix["Pair"] == cp]
             cp_matrix = cp_matrix.drop(columns=["Exchange", "Pair"])
+
+            if exchange == "poloniex" and (cp == "btcusdc" or cp == "btcusdt"):
+
+                cp_matrix = cp_matrix.loc[cp_matrix["Close Price"] != 0.0]
+
             # checking if the matrix is not empty
             if cp_matrix.shape[0] > 1:
                 if exchange == "poloniex":
