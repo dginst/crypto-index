@@ -189,32 +189,33 @@ for crypto in CRYPTO_ASSET:
                 cp_matrix = homogenize_series(
                     cp_matrix, date_array)
 
-            if cp_matrix.shape[0] != len(date_array_str):
+                if cp_matrix.shape[0] != len(date_array_str):
 
-                print("fixing")
-                date_df = pd.DataFrame(columns=["Time"])
-                date_df["Time"] = np.array(date_array)
-                print(date_df)
-                merged_cp = pd.merge(date_df, cp_matrix, on="Time", how="left")
-                merged_cp.fillna("NaN", inplace=True)
-                nan_list = list(
-                    merged_cp.loc[merged_cp["Close Price"] == "NaN", "Time"])
-                for nan in nan_list:
+                    print("fixing")
+                    date_df = pd.DataFrame(columns=["Time"])
+                    date_df["Time"] = np.array(date_array)
+                    print(date_df)
+                    merged_cp = pd.merge(
+                        date_df, cp_matrix, on="Time", how="left")
+                    merged_cp.fillna("NaN", inplace=True)
+                    nan_list = list(
+                        merged_cp.loc[merged_cp["Close Price"] == "NaN", "Time"])
+                    for nan in nan_list:
 
-                    prev_price = merged_cp.loc[merged_cp.Time
-                                               == nan - 86400, "Close Price"]
-                    prev_p_vol = merged_cp.loc[merged_cp.Time
-                                               == nan - 86400, "Pair Volume"]
-                    prev_c_vol = merged_cp.loc[merged_cp.Time
-                                               == nan - 86400, "Crypto Volume"]
-                    merged_cp.loc[merged_cp.Time
-                                  == nan, "Close Price"] = prev_price
-                    merged_cp.loc[merged_cp.Time
-                                  == nan, "Pair Volume"] = prev_p_vol
-                    merged_cp.loc[merged_cp.Time
-                                  == nan, "Crypto Volume"] = prev_c_vol
+                        prev_price = merged_cp.loc[merged_cp.Time
+                                                   == nan - 86400, "Close Price"]
+                        prev_p_vol = merged_cp.loc[merged_cp.Time
+                                                   == nan - 86400, "Pair Volume"]
+                        prev_c_vol = merged_cp.loc[merged_cp.Time
+                                                   == nan - 86400, "Crypto Volume"]
+                        merged_cp.loc[merged_cp.Time
+                                      == nan, "Close Price"] = prev_price
+                        merged_cp.loc[merged_cp.Time
+                                      == nan, "Pair Volume"] = prev_p_vol
+                        merged_cp.loc[merged_cp.Time
+                                      == nan, "Crypto Volume"] = prev_c_vol
 
-                cp_matrix = merged_cp
+                    cp_matrix = merged_cp
 
             cp_matrix["Exchange"] = exchange
             cp_matrix["Pair"] = cp
