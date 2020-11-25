@@ -12,8 +12,13 @@ from cryptoindex.index_hist import (
     index_hist_total
 )
 
+from cryptoindex.index_wrap_func import (
+    hist_complete
+)
+
 
 # ecb_hist_op()
 # cw_hist_operation()
 
-index_hist_total(coll_to_use="coll_cw_final")
+# index_hist_total(coll_to_use="coll_cw_final")
+hist_complete()
