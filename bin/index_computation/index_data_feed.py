@@ -42,7 +42,7 @@ Exchanges = [
 # 'gemini', 'bittrex', 'kraken', 'bitflyer']
 
 start_date = "01-01-2016"
-EXC_start_date = "04-17-2020"
+EXC_start_date = "04-18-2020"
 
 
 day_in_sec = 86400

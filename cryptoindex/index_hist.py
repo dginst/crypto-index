@@ -167,6 +167,7 @@ def index_hist_loop(data_matrix, crypto_asset, exc_list,
 
     ref_date_arr = date_gen()
     print(len(ref_date_arr))
+    print(ref_date_arr)
     # initialize the matrices that will contain the prices
     # and volumes of all the single_cryptosset
     crypto_asset_price = np.matrix([])
