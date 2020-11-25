@@ -26,7 +26,7 @@ from cryptoindex.cw_hist_func import (
     crypto_fiat_pair_gen
 )
 from cryptoindex.exc_func import (
-    exc_time_split
+    exc_time_split, exc_daily_cleaning
 )
 
 # ########################## initial settings #################################
@@ -53,7 +53,7 @@ for crypto in CRYPTO_ASSET:
 # ############################ setup mongo connection ##################
 
 # drop the pre-existing collection (if there is one)
-mongo_coll_drop("exc")
+# mongo_coll_drop("exc")
 
 mongo_indexing()
 
@@ -89,6 +89,16 @@ all_00_clean = all_00_clean.loc[all_00_clean["Pair"].isin(cryptofiat_array)]
 
 # selecting the exchange used in the index computation
 all_00_clean = all_00_clean.loc[all_00_clean["Exchange"].isin(EXCHANGES)]
+
+# fixing 1598486400 day
+prev_day = 1598486400 - 86400
+prev_day_mat = all_00_clean.loc[all_00_clean["Time"] == str(prev_day)]
+prev_day_new_time = prev_day_mat
+
+prev_day_new_time["Time"] = str(1598486400)
+
+all_00_clean = all_00_clean.loc[all_00_clean.Time != str(1598486400)]
+all_00_clean = all_00_clean.append(prev_day_new_time)
 
 # correcting the "Pair Volume" field
 all_00_clean["Close Price"] = [float(element)
