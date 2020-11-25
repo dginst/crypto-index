@@ -200,7 +200,7 @@ def index_hist_loop(data_matrix, crypto_asset, exc_list,
             single_crypto, crypto_fiat_arr, pair_list)
 
         for exchange in exc_list:
-
+            print(exchange)
             # initialize the matrices that will contain the data related
             # to all currencypair for the single exchange
             ccy_fiat_price_vol = np.matrix([])
@@ -208,7 +208,7 @@ def index_hist_loop(data_matrix, crypto_asset, exc_list,
             ccy_fiat_price = np.matrix([])
 
             for cp in crypto_fiat_arr:
-
+                print(cp)
                 # selecting the data referring to specific exchange and crypto-fiat pair
                 matrix = data_matrix.loc[
                     (data_matrix["Exchange"] == exchange) & (
