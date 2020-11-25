@@ -166,7 +166,7 @@ def index_hist_loop(data_matrix, crypto_asset, exc_list,
                     pair_list):
 
     ref_date_arr = date_gen()
-
+    print(len(ref_date_arr))
     # initialize the matrices that will contain the prices
     # and volumes of all the single_cryptosset
     crypto_asset_price = np.matrix([])
@@ -214,7 +214,7 @@ def index_hist_loop(data_matrix, crypto_asset, exc_list,
                     (data_matrix["Exchange"] == exchange) & (
                         data_matrix["Pair"] == cp)
                 ]
-
+                print(matrix.shape)
                 if matrix.empty is False:
 
                     price = np.array((matrix["Close Price"]))
