@@ -193,7 +193,8 @@ for crypto in CRYPTO_ASSET:
 
                 print("fixing")
                 date_df = pd.DataFrame(columns=["Time"])
-                date_df["Time"] = np.array(date_array_str)
+                date_df["Time"] = np.array(date_array)
+                print(date_df)
                 merged_cp = pd.merge(date_df, cp_matrix, on="Time", how="left")
                 merged_cp.fillna("NaN", inplace=True)
                 nan_list = list(
