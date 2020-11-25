@@ -172,11 +172,11 @@ for crypto in CRYPTO_ASSET:
     pair_arr = crypto_fiat_pair_gen(crypto)
 
     for exchange in EXCHANGES:
-
+        print(exchange)
         ex_matrix = all_00_clean.loc[all_00_clean.Exchange == exchange]
 
         for cp in pair_arr:
-
+            print(cp)
             crypto = cp[:3]
 
             cp_matrix = ex_matrix.loc[ex_matrix["Pair"] == cp]
@@ -194,7 +194,6 @@ for crypto in CRYPTO_ASSET:
                     print("fixing")
                     date_df = pd.DataFrame(columns=["Time"])
                     date_df["Time"] = np.array(date_array)
-                    print(date_df)
                     merged_cp = pd.merge(
                         date_df, cp_matrix, on="Time", how="left")
                     merged_cp.fillna("NaN", inplace=True)
@@ -216,6 +215,7 @@ for crypto in CRYPTO_ASSET:
                                       == nan, "Crypto Volume"] = prev_c_vol
 
                     cp_matrix = merged_cp
+                    print(cp_matrix.shape)
 
             cp_matrix["Exchange"] = exchange
             cp_matrix["Pair"] = cp
