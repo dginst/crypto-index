@@ -198,15 +198,11 @@ for crypto in CRYPTO_ASSET:
 
                 if cp_matrix.shape[0] != len(date_array_str):
 
-                    if exchange == "poloniex":
-                        print(cp_matrix)
                     print("fixing")
                     date_df = pd.DataFrame(columns=["Time"])
                     date_df["Time"] = np.array(date_array)
                     merged_cp = pd.merge(
                         date_df, cp_matrix, on="Time", how="left")
-                    if exchange == "poloniex":
-                        print(merged_cp)
                     merged_cp.fillna("NaN", inplace=True)
                     nan_list = list(
                         merged_cp.loc[merged_cp["Close Price"] == "NaN", "Time"])
@@ -226,6 +222,8 @@ for crypto in CRYPTO_ASSET:
                                       == nan, "Crypto Volume"] = prev_c_vol
 
                     cp_matrix = merged_cp
+                    if exchange == "poloniex":
+                        print(merged_cp)
                     print(cp_matrix.shape)
 
             cp_matrix["Exchange"] = exchange
