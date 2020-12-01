@@ -141,7 +141,7 @@ def kraken_ticker(Crypto, Fiat, collection):
 
         return pair
 
-    except :
+    except:
 
         err = "This key doesn't exist"
         print(err)
@@ -386,7 +386,7 @@ def bitflyer_ticker(Crypto, Fiat, collection):
             "Time": time,
             "date": date,
             "ticker_time": ticker_time,
-            "Crypto Volume": volume,
+            "Crypto Volume": volume_by_product,  # changed from volume into
             "Close Price": price,
             "volume_by_product": volume_by_product,
             "best_bid": best_bid,

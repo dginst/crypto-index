@@ -9,10 +9,10 @@ from cryptoindex.index_hist import (
 )
 
 
-def hist_complete():
+def hist_complete(coll_to_use="coll_data_feed"):
 
     ecb_hist_op()
     cw_hist_operation()
-    index_hist_total()
+    index_hist_total(coll_to_use)
 
     return None

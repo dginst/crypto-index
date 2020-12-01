@@ -86,6 +86,7 @@ def mongo_indexing():
     db.CW_keys.create_index([("id", -1)])
 
     # EXC related collections
+    db.EXC_uniform.create_index([("id", -1)])
     db.EXC_cleandata.create_index([("id", -1)])
     db.EXC_final_data.create_index([("id", -1)])
     db.EXC_keys.create_index([("id", -1)])
@@ -130,6 +131,7 @@ def mongo_coll():
         "collection_cw_vol_check": db.CW_volume_checked_data,
         "collection_CW_key": db.CW_keys,
         # EXC related collections
+        "collection_exc_uniform": db.EXC_uniform,
         "collection_exc_clean": db.EXC_cleandata,
         "collection_exc_final_data": db.EXC_final_data,
         "collection_EXC_key": db.EXC_keys,
@@ -217,6 +219,7 @@ def mongo_coll_drop(operation):
 
     elif operation == "exc":
 
+        db.EXC_uniform.drop()
         db.EXC_final_data.drop()
         db.EXC_cleandata.drop()
 

@@ -35,7 +35,7 @@ def daily_op(day=None):
 # mongo_daily_delete("2020-09-23", "index")
 # daily_op("2020-09-22")
 # daily_op("2020-09-23")
-daily_op("2020-11-06")
+daily_op()
 # exc_daily_op()
 # data_feed_op()
 # daily_op()

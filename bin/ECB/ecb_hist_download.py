@@ -52,7 +52,6 @@ for i, single_date in enumerate(date_list_str):
         ECB_FIAT, date_list_str[i])
     # put a sllep time in order to do not overuse API connection
     time.sleep(0.05)
-    print(single_date_ex_matrix)
     # put all the downloaded data into a DafaFrame
     if Exchange_Rate_List.size == 0:
 

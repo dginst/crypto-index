@@ -59,7 +59,9 @@ MONGO_DICT = {
     "coll_vol_chk": "CW_volume_checked_data",
     "coll_cw_final": "CW_final_data",
     "coll_cw_keys": "CW_keys",
+
     "coll_exc_raw": "EXC_rawdata",
+    "coll_exc_uniform": "EXC_uniform",
     "coll_exc_clean": "EXC_cleandata",
     "coll_exc_final": "EXC_final_data",
     "coll_ecb_raw": "ecb_raw",

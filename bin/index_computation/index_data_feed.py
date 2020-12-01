@@ -7,46 +7,11 @@ from pymongo import MongoClient
 # local import
 import cryptoindex.data_setup as data_setup
 import cryptoindex.mongo_setup as mongo
+from cryptoindex.config import (DAY_IN_SEC, PAIR_ARRAY, CRYPTO_ASSET, EXCHANGES,
+                                START_DATE, EXC_START_DATE)
 
 
 # ############# INITIAL SETTINGS ################################
-
-pair_array = ["gbp", "usd", "cad", "jpy", "eur", "usdt", "usdc"]
-# pair complete = ['gbp', 'usd', 'cad', 'jpy', 'eur', 'usdt', 'usdc']
-Crypto_Asset = [
-    "BTC",
-    "ETH",
-    "XRP",
-    "LTC",
-    "BCH",
-    "EOS",
-    "ETC",
-    "ZEC",
-    "ADA",
-    "XLM",
-    "XMR",
-    "BSV",
-]
-# crypto complete [ 'BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
-# 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']
-Exchanges = [
-    "coinbase-pro",
-    "poloniex",
-    "bitstamp",
-    "gemini",
-    "bittrex",
-    "kraken",
-    "bitflyer",
-]
-# exchange complete = [ 'coinbase-pro', 'poloniex', 'bitstamp',
-# 'gemini', 'bittrex', 'kraken', 'bitflyer']
-
-start_date = "01-01-2016"
-EXC_start_date = "04-18-2020"
-
-
-day_in_sec = 86400
-
 
 # set today
 today_str = datetime.now().strftime("%Y-%m-%d")
@@ -55,7 +20,7 @@ today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
 
 
 # define the array containing the date where the index uses CW feed data
-CW_date_arr = data_setup.date_gen(start_date, EXC_start_date)
+CW_date_arr = data_setup.date_gen(START_DATE, EXC_START_DATE)
 CW_date_str = [str(date) for date in CW_date_arr]
 
 # ######################## setup MongoDB connection ###########################

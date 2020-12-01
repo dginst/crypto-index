@@ -65,6 +65,11 @@ collection_dict_upload = mongo_coll()
 # querying all raw data from EXC_rawdata
 all_data = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_raw"))
 
+# correcting the Crypto Volume information for Bitflyer and pair BTCJPY
+all_data.loc[(
+    all_data.Exchange == "bitflyer") & (all_data.Pair == "BTCJPY"), "Crypto Volume"] = all_data.loc[(
+        all_data.Exchange == "bitflyer") & (all_data.Pair == "BTCJPY"), "volume_by_product"]
+
 
 # changing the "Time" values format from integer to string
 all_data["Time"] = [str(element) for element in all_data["Time"]]
@@ -78,11 +83,14 @@ all_00, _, _, _ = exc_time_split(all_data)
 # information in rawdata
 all_00 = all_00.loc[:, CLEAN_DATA_HEAD]
 
-# selecting the date corresponding to 12:00 AM
-# all_data = all_data.loc[all_data["Time"].isin(date_array_str)]
 
 # changing some features in "Pair" field
 all_00_clean = exc_pair_cleaning(all_00)
+
+# changing an error in "bitstamp" exc
+all_00_clean["Exchange"] = [
+    element.replace("bistamp", "bitstamp") for element in all_00_clean["Exchange"]]
+
 
 # selecting the crypto-fiat pairs used in the index computation
 all_00_clean = all_00_clean.loc[all_00_clean["Pair"].isin(cryptofiat_array)]
@@ -91,7 +99,7 @@ all_00_clean = all_00_clean.loc[all_00_clean["Pair"].isin(cryptofiat_array)]
 all_00_clean = all_00_clean.loc[all_00_clean["Exchange"].isin(EXCHANGES)]
 
 # fixing 1598486400 day
-prev_day = 1598486400 - 86400
+prev_day = 1598486400 - DAY_IN_SEC
 prev_day_mat = all_00_clean.loc[all_00_clean["Time"] == str(prev_day)]
 prev_day_new_time = prev_day_mat
 
@@ -109,6 +117,10 @@ all_00_clean["Crypto Volume"] = [float(element)
 all_00_clean["Pair Volume"] = all_00_clean["Close Price"] * \
     all_00_clean["Crypto Volume"]
 
+all_00_clean.sort_values(by=['Time'], inplace=True, ascending=True)
+all_00_clean.reset_index(drop=True, inplace=True)
+
+mongo_upload(all_00_clean, "collection_exc_uniform")
 
 # ########## DEAD AND NEW CRYPTO-FIAT MANAGEMENT ############################
 
@@ -235,6 +247,25 @@ for crypto in CRYPTO_ASSET:
 new_clean = new_clean.drop(columns=["key"])
 # ##########
 
+# #### correcting missing dowmload period using CW
+
+start_miss = 1602288000
+stop_miss = 1603843200
+cw_data = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_clean"))
+cw_subset = cw_data.loc[cw_data.Time.between(
+    start_miss, stop_miss, inclusive=True)]
+cw_subset["Time"] = [int(d) for d in cw_subset["Time"]]
+
+while not start_miss > stop_miss:
+
+    new_clean = new_clean.loc[new_clean.Time != (start_miss)]
+    start_miss = start_miss + 86400
+
+new_clean = new_clean.append(cw_subset)
+
+# ##################################
+
+# #################################
 mongo_upload(new_clean, "collection_exc_clean")
 
 # ################# DATA CONVERSION MAIN PART ##################
