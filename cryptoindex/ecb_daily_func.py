@@ -132,9 +132,6 @@ def ecb_daily_op(day=None):
 
     else:
 
-        # prima scarico, se c'è aggiorno, altriemnti no ######
-        print("here")
-
         ecb_daily_up(day_to_download_TS)
 
         ecb_day_clean = ECB_daily_setup(ECB_FIAT, day)
@@ -151,8 +148,8 @@ def ecb_hist_download(start_date):
 
     # set today as end_date
     end_date = datetime.now().strftime("%Y-%m-%d")
-    # create an array of date containing the list of date to download
 
+    # create an array of date containing the list of date to download
     date_list = date_gen(start_date, end_date,
                          timeST="N", clss="list", EoD="N")
 
@@ -167,7 +164,7 @@ def ecb_hist_download(start_date):
         single_date_ex_matrix = ECB_rates_extractor(
             ECB_FIAT, date)
         # put a sllep time in order to do not overuse API connection
-        time.sleep(0.05)
+        time.sleep(0.02)
 
         # put all the downloaded data into a DafaFrame
         if ecb_hist_series.size == 0:

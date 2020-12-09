@@ -323,20 +323,18 @@ def cw_hist_operation(start_date=START_DATE):
 
     mongo_indexing()
     collection_dict_upload = mongo_coll()
-    # deleting previous MongoDB collection for rawdata
 
-    print("Downloading all CW history")
-    mongo_coll_drop("cw_hist_d")
+    # deleting previous MongoDB collection for rawdata
+    mongo_coll_drop("cw_hist_down")
+
+    print("Downloading all CW history...")
     cw_raw_data = cw_hist_download(start_date)
     mongo_upload(cw_raw_data, "collection_cw_raw")
     print("CW series download completed")
 
-    # deleting today value if present
-    # assign date of interest to variables
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    today = datetime.strptime(today_str, "%Y-%m-%d")
-    today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
-    query_ = {'Time': today_TS}
+    # deleting 31/12/2015 values if present
+    last_2015_TS = 1451520000
+    query_ = {'Time': last_2015_TS}
     collection_dict_upload.get("collection_cw_raw").delete_many(query_)
 
     # deleting previous MongoDB collections

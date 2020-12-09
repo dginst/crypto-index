@@ -70,7 +70,6 @@ def ECB_rates_extractor(
         main_df = df.filter(
             ["TIME_PERIOD", "OBS_VALUE", "CURRENCY", "CURRENCY_DENOM"], axis=1
         )
-        print(main_df)
         # transform date from datetime to string
         date_to_string = main_df["TIME_PERIOD"].to_string(
             index=False).strip()
@@ -124,10 +123,10 @@ def CW_raw_to_mongo(
         end_date = datetime.now().strftime("%m-%d-%Y")
 
     end_date = datetime.strptime(end_date, "%m-%d-%Y")
-    # transform date into timestamps
+    # transform date into timestamps at 12:00 AM UTC
     start_date = str(int(start_date.replace(tzinfo=timezone.utc).timestamp()))
     end_date = str(int(end_date.replace(
-        tzinfo=timezone.utc).timestamp()) - DAY_IN_SEC)
+        tzinfo=timezone.utc).timestamp()))  # changed, no more - DAY in SEC ##
     # API settings
     entrypoint = "https://api.cryptowat.ch/markets/"
     key = (
@@ -154,7 +153,7 @@ def CW_raw_to_mongo(
             r = response["result"]["86400"]
             Exchange = exchange
             Pair = currencypair
-            Time = r[i][0]
+            Time = r[i][0] - DAY_IN_SEC
             Open = r[i][1]
             High = r[i][2]
             Low = r[i][3]
@@ -224,7 +223,7 @@ def cw_raw_download(
         end_date = datetime.now().strftime("%m-%d-%Y")
         end_date = datetime.strptime(end_date, "%m-%d-%Y")
         end_date = str(int(end_date.replace(
-            tzinfo=timezone.utc).timestamp()) - DAY_IN_SEC)
+            tzinfo=timezone.utc).timestamp()))  # changed no more - DAY in sec ##
 
     else:
 
@@ -235,8 +234,6 @@ def cw_raw_download(
     # transform date into timestamps
     start_date = str(int(start_date.replace(tzinfo=timezone.utc).timestamp()))
 
-    print(start_date)
-    print(end_date)
     # API settings
     entrypoint = "https://api.cryptowat.ch/markets/"
     key = (
@@ -251,7 +248,6 @@ def cw_raw_download(
         + end_date
     )
     request_url = entrypoint + key
-    print(request_url)
     # API call
     response = requests.get(request_url)
     response = response.json()
@@ -263,7 +259,7 @@ def cw_raw_download(
             r = response["result"]["86400"]
             Exchange = exchange
             Pair = currencypair
-            Time = r[i][0]
+            Time = r[i][0] - DAY_IN_SEC
             Open = r[i][1]
             High = r[i][2]
             Low = r[i][3]

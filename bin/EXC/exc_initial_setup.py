@@ -117,6 +117,10 @@ all_00_clean["Crypto Volume"] = [float(element)
 all_00_clean["Pair Volume"] = all_00_clean["Close Price"] * \
     all_00_clean["Crypto Volume"]
 
+# transpose everything by 1 day
+all_00_clean["Time"] = [str(int(element) - DAY_IN_SEC)
+                        for element in all_00_clean["Time"]]
+
 all_00_clean.sort_values(by=['Time'], inplace=True, ascending=True)
 all_00_clean.reset_index(drop=True, inplace=True)
 
@@ -249,19 +253,19 @@ new_clean = new_clean.drop(columns=["key"])
 
 # #### correcting missing dowmload period using CW
 
-start_miss = 1602288000
-stop_miss = 1603843200
-cw_data = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_clean"))
-cw_subset = cw_data.loc[cw_data.Time.between(
-    start_miss, stop_miss, inclusive=True)]
-cw_subset["Time"] = [int(d) for d in cw_subset["Time"]]
+# start_miss = 1602288000
+# stop_miss = 1603843200
+# cw_data = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_clean"))
+# cw_subset = cw_data.loc[cw_data.Time.between(
+#     start_miss, stop_miss, inclusive=True)]
+# cw_subset["Time"] = [int(d) for d in cw_subset["Time"]]
 
-while not start_miss > stop_miss:
+# while not start_miss > stop_miss:
 
-    new_clean = new_clean.loc[new_clean.Time != (start_miss)]
-    start_miss = start_miss + 86400
+#     new_clean = new_clean.loc[new_clean.Time != (start_miss)]
+#     start_miss = start_miss + 86400
 
-new_clean = new_clean.append(cw_subset)
+# new_clean = new_clean.append(cw_subset)
 
 # ##################################
 

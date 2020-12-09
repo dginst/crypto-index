@@ -269,11 +269,11 @@ def fix_zero_value(matrix):
 # start_Period and End_Period
 
 
-def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N",
+def ECB_setup(key_curr_vector, start_period, end_period, timeST="N",
               db=DB_NAME, coll_raw="coll_ecb_raw"):
 
     # defining the array of date to be used
-    date_ECB = date_gen(start_period, End_Period, EoD="Y")
+    date_ECB = date_gen(start_period, end_period, EoD="N")
 
     # defining the headers of the returning data frame
     header = ["Date", "Currency", "Rate"]
@@ -289,7 +289,6 @@ def ECB_setup(key_curr_vector, start_period, End_Period, timeST="N",
         # retrieving data from MongoDB 'index' and 'ecb_raw' collection
         single_date_ex_matrix = query_mongo(db, MONGO_DICT.get(coll_raw), query)
 
-        print(single_date_ex_matrix)
         # check if rates exist in the specified date
         if len(single_date_ex_matrix) != 0:
 
