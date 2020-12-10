@@ -15,6 +15,6 @@ ecb_daily_op()
 cw_daily_operation()
 exc_daily_op()
 data_feed_op()
-# index daily on default use coll_to_use="coll_data_feed" ad param,
+# index daily on default use coll_to_use="coll_data_feed" as param,
 # use "coll_cw_final" otherwise
 index_daily()

@@ -62,7 +62,6 @@ def cw_daily_download(day_to_download):
     # day_before_TS, _ = days_variable(day_to_download)
     date_long = datetime.fromtimestamp(int(day_to_download))
     date_h = date_long.strftime("%m-%d-%Y")
-    print(date_h)
     cw_raw = pd.DataFrame(columns=CW_RAW_HEAD)
 
     for Crypto in CRYPTO_ASSET:
@@ -433,7 +432,7 @@ def cw_daily_operation(day=None):
 
         if daily_check_mongo("coll_cw_raw", {"Exchange": "coinbase-pro", "Pair": "btcusd"}) is False:
 
-            cw_rawdata_daily = cw_daily_download(day_before_TS)
+            cw_rawdata_daily = cw_daily_download(day_before_TS + DAY_IN_SEC)
             mongo_upload(cw_rawdata_daily, "collection_cw_raw")
 
         else:

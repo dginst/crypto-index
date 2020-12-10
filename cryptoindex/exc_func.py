@@ -12,15 +12,23 @@ from cryptoindex.calc import (
 from cryptoindex.config import (
     DAY_IN_SEC, DB_NAME, EXCHANGES,
     MONGO_DICT, EXC_START_DATE,
-    START_DATE, STABLE_COIN, CONVERSION_FIAT
+    START_DATE, STABLE_COIN, CONVERSION_FIAT,
+    PAIR_ARRAY, EXCHANGES, CRYPTO_ASSET,
+    CLEAN_DATA_HEAD
 )
 # local import
 from cryptoindex.data_setup import (daily_fix_miss, date_gen,
-                                    exc_pair_cleaning, pair_vol_fix)
+                                    exc_pair_cleaning, pair_vol_fix,
+                                    homogenize_series
+                                    )
 from cryptoindex.mongo_setup import (mongo_coll, mongo_upload,
                                      query_mongo, df_reorder,
-                                     mongo_coll_drop
+                                     mongo_coll_drop, mongo_indexing
                                      )
+
+from cryptoindex.cw_hist_func import (
+    crypto_fiat_pair_gen
+)
 
 
 def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
@@ -336,7 +344,7 @@ def exc_daily_cleaning(exc_list, day_to_clean):
 
     # download from MongoDB the exc raw data of yesterday
     q_dict: Dict[str, str] = {}
-    q_dict = {"Time": str(day_to_clean)}
+    q_dict = {"Time": str(day_to_clean + DAY_IN_SEC)}
     daily_mat = query_mongo(
         DB_NAME, MONGO_DICT.get("coll_exc_raw"), q_dict)
 
@@ -345,6 +353,12 @@ def exc_daily_cleaning(exc_list, day_to_clean):
 
     # creating different df based on the hour of download
     (daily_mat_00, daily_mat_12, _, _) = exc_time_split(daily_mat_vol_fix)
+
+    # transpose the Time information by 86400 seconds (1 day) ###### str o int???
+    daily_mat_00["Time"] = [str(int(element) - DAY_IN_SEC)
+                            for element in daily_mat_00["Time"]]
+    daily_mat_12["Time"] = [str(int(element) - DAY_IN_SEC)
+                            for element in daily_mat_12["Time"]]
 
     # completing the daily matrix with dead crypto-fiat pair
     daily_mat_complete = exc_daily_key_mngm(
@@ -455,3 +469,259 @@ def data_feed_op():
 
 
 # ########## HISTORICAL EXC RAW DATA OPERATION ##############
+
+# set today
+today_str = datetime.now().strftime("%Y-%m-%d")
+today = datetime.strptime(today_str, "%Y-%m-%d")
+today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+y_TS = today_TS - DAY_IN_SEC
+
+# creating the timestamp array at 12:00 AM
+date_array = date_gen(EXC_START_DATE)
+date_array_str = [str(el) for el in date_array]
+
+
+def all_crypto_fiat_gen():
+
+    # defining the crypto-fiat pairs array
+    all_crypto_fiat_array = []
+
+    for crypto in CRYPTO_ASSET:
+
+        for fiat in PAIR_ARRAY:
+
+            all_crypto_fiat_array.append(crypto.lower() + fiat)
+
+    return all_crypto_fiat_array
+
+
+def exc_initial_clean(all_data, crypto_fiat_arr):
+
+    # correcting the Crypto Volume information for Bitflyer and pair BTCJPY
+    all_data.loc[(
+        all_data.Exchange == "bitflyer") & (all_data.Pair == "BTCJPY"), "Crypto Volume"] = all_data.loc[(
+            all_data.Exchange == "bitflyer") & (all_data.Pair == "BTCJPY"), "volume_by_product"]
+
+    # changing the "Time" values format from integer to string
+    all_data["Time"] = [str(element) for element in all_data["Time"]]
+    all_data["date"] = [str(element) for element in all_data["date"]]
+
+    # creating a column containing the hour of extraction
+    all_data["hour"] = all_data["date"].str[11:16]
+
+    # isolating the df referred to midnights
+    all_00, _, _, _ = exc_time_split(all_data)
+
+    # keeping only the columns of interest among all the
+    # information in rawdata
+    all_00 = all_00.loc[:, CLEAN_DATA_HEAD]
+
+    # changing some features in "Pair" field
+    all_00_clean = exc_pair_cleaning(all_00)
+
+    # changing an error in "bitstamp" spelling
+    all_00_clean["Exchange"] = [
+        element.replace("bistamp", "bitstamp") for element in all_00_clean["Exchange"]]
+
+    # selecting the crypto-fiat pairs used in the index computation
+    all_00_clean = all_00_clean.loc[all_00_clean["Pair"].isin(crypto_fiat_arr)]
+
+    # selecting the exchange used in the index computation
+    all_00_clean = all_00_clean.loc[all_00_clean["Exchange"].isin(EXCHANGES)]
+
+    # fixing 1598486400 day
+    prev_day = 1598486400 - DAY_IN_SEC
+    prev_day_mat = all_00_clean.loc[all_00_clean["Time"] == str(prev_day)]
+    prev_day_new_time = prev_day_mat
+
+    prev_day_new_time["Time"] = str(1598486400)
+
+    all_00_clean = all_00_clean.loc[all_00_clean.Time != str(1598486400)]
+    all_00_clean = all_00_clean.append(prev_day_new_time)
+
+    # correcting the "Pair Volume" field
+    all_00_clean["Close Price"] = [float(element)
+                                   for element in all_00_clean["Close Price"]]
+    all_00_clean["Crypto Volume"] = [float(element)
+                                     for element in all_00_clean["Crypto Volume"]]
+
+    all_00_clean["Pair Volume"] = all_00_clean["Close Price"] * \
+        all_00_clean["Crypto Volume"]
+
+    # transpose everything by 1 day (86400 secs)
+    all_00_clean["Time"] = [str(int(element) - DAY_IN_SEC)
+                            for element in all_00_clean["Time"]]
+
+    all_00_clean.sort_values(by=['Time'], inplace=True, ascending=True)
+    all_00_clean.reset_index(drop=True, inplace=True)
+
+    return all_00_clean
+
+
+def exc_key_mngmt(exc_clean_df):
+
+    # downloading from MongoDB the matrix containing the exchange-pair logic values
+    logic_key = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_keys"))
+
+    # creating the exchange-pair couples key for the daily matrix
+    exc_clean_df["key"] = exc_clean_df["Exchange"] + "&" + exc_clean_df["Pair"]
+
+    # ## adding the dead series to the daily values
+
+    # selecting only the exchange-pair couples present in the historical series
+    key_present = logic_key.loc[logic_key.logic_value == 1]
+    key_present = key_present.drop(columns=["logic_value"])
+
+    exc_clean_df = exc_clean_df.loc[exc_clean_df.Time != str(today_TS)]
+
+    # selecting the last day of the EXC "historical" series
+    last_day_with_val = max(exc_clean_df.Time)
+    last_day = exc_clean_df.loc[exc_clean_df.Time
+                                == last_day_with_val]
+
+    # applying a left join between the prresent keys matrix and the last_day
+    # matrix, this operation returns a matrix containing all the keys in
+    # "key_present" and, if some keys are missing in "all_data" put NaN
+    merged = pd.merge(key_present, last_day, on="key", how="left")
+
+    # selecting only the absent keys
+    merg_absent = merged.loc[merged["Close Price"].isnull()]
+
+    header = CLEAN_DATA_HEAD
+    header.extend(["key"])
+
+    # create the historical series for each selected element
+    for k in merg_absent["key"]:
+
+        mat_to_add = pd.DataFrame(columns=header)
+        mat_to_add["Time"] = date_array_str
+        split_val = k.split("&")
+        mat_to_add["Exchange"] = split_val[0]
+        mat_to_add["Pair"] = split_val[1]
+        mat_to_add["Close Price"] = 0.0
+        mat_to_add["Crypto Volume"] = 0.0
+        mat_to_add["Pair Volume"] = 0.0
+        exc_clean_df = exc_clean_df.append(mat_to_add)
+
+    # uploading the cleaned data on MongoDB in the collection EXC_cleandata
+    exc_clean_df = exc_clean_df.drop(columns=["key"])
+    exc_clean_df["Time"] = [int(element) for element in exc_clean_df["Time"]]
+
+    # deleting the 17/04/2020 from the df (if presents)
+    exc_complete_df = exc_clean_df.loc[exc_clean_df.Time != 1587081600]
+
+    return exc_complete_df
+
+
+def exc_hist_fix(exc_complete_df):
+
+    exc_fixed_df = pd.DataFrame(columns=CLEAN_DATA_HEAD)
+
+    for crypto in CRYPTO_ASSET:
+
+        pair_arr = crypto_fiat_pair_gen(crypto)
+
+        for exchange in EXCHANGES:
+
+            ex_matrix = exc_complete_df.loc[exc_complete_df.Exchange == exchange]
+
+            for cp in pair_arr:
+
+                crypto = cp[:3]
+
+                cp_matrix = ex_matrix.loc[ex_matrix["Pair"] == cp]
+                cp_matrix = cp_matrix.drop(columns=["Exchange", "Pair"])
+
+                if exchange == "poloniex" and (cp == "bchusdc" or cp == "bchusdt"):
+
+                    cp_matrix = cp_matrix.loc[cp_matrix["Close Price"] != 0.000000]
+
+                # checking if the matrix is not empty
+                if cp_matrix.shape[0] > 1:
+
+                    # check if the historical series start at the same date as
+                    # the start date if not fill the dataframe with zero values
+                    cp_matrix = homogenize_series(
+                        cp_matrix, date_array)
+
+                    if cp_matrix.shape[0] != len(date_array_str):
+
+                        date_df = pd.DataFrame(columns=["Time"])
+                        date_df["Time"] = np.array(date_array)
+                        merged_cp = pd.merge(
+                            date_df, cp_matrix, on="Time", how="left")
+                        merged_cp.fillna("NaN", inplace=True)
+                        nan_list = list(
+                            merged_cp.loc[merged_cp["Close Price"] == "NaN", "Time"])
+                        for nan in nan_list:
+
+                            prev_price = merged_cp.loc[merged_cp.Time
+                                                       == nan - 86400, "Close Price"]
+                            prev_p_vol = merged_cp.loc[merged_cp.Time
+                                                       == nan - 86400, "Pair Volume"]
+                            prev_c_vol = merged_cp.loc[merged_cp.Time
+                                                       == nan - 86400, "Crypto Volume"]
+                            merged_cp.loc[merged_cp.Time
+                                          == nan, "Close Price"] = prev_price
+                            merged_cp.loc[merged_cp.Time
+                                          == nan, "Pair Volume"] = prev_p_vol
+                            merged_cp.loc[merged_cp.Time
+                                          == nan, "Crypto Volume"] = prev_c_vol
+
+                        cp_matrix = merged_cp
+
+                cp_matrix.fillna(0, inplace=True)
+                cp_matrix["Exchange"] = exchange
+                cp_matrix["Pair"] = cp
+
+                exc_fixed_df = exc_fixed_df.append(cp_matrix)
+
+    exc_fixed_df = exc_fixed_df.drop(columns=["key"])
+
+    return exc_fixed_df
+
+
+def exc_hist_conv(exc_fix_df):
+
+    # querying the rates collection from MongoDB
+    matrix_rate = query_mongo(DB_NAME, MONGO_DICT.get("coll_ecb_clean"))
+    matrix_rate = matrix_rate.rename({"Date": "Time"}, axis="columns")
+    matrix_rate = matrix_rate.loc[matrix_rate.Time.isin(date_array_str)]
+
+    # querying the stable rates collection from MongoDB
+    matrix_rate_stable = query_mongo(
+        DB_NAME, MONGO_DICT.get("coll_stable_rate"))
+    matrix_rate_stable = matrix_rate_stable.loc[matrix_rate_stable.Time.isin(
+        date_array_str)]
+
+    converted_data = conv_into_usd(DB_NAME, exc_fix_df, matrix_rate,
+                                   matrix_rate_stable, CONVERSION_FIAT, STABLE_COIN)
+
+    converted_data["Time"] = [int(element)
+                              for element in converted_data["Time"]]
+
+    return converted_data
+
+
+def exc_hist_op():
+
+    mongo_coll_drop("exc")
+
+    mongo_indexing()
+
+    # defining the crytpo_fiat array
+    crypto_fiat_arr = all_crypto_fiat_gen()
+    # querying all raw data from EXC_rawdata
+    exc_raw_df = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_raw"))
+
+    midnight_clean = exc_initial_clean(exc_raw_df, crypto_fiat_arr)
+    mongo_upload(midnight_clean, "collection_exc_uniform")
+
+    exc_complete_df = exc_key_mngmt(midnight_clean)
+    exc_fixed_df = exc_hist_fix(exc_complete_df)
+    mongo_upload(exc_fixed_df, "collection_exc_clean")
+
+    exc_converted = exc_hist_conv(exc_fixed_df)
+    mongo_upload(exc_converted, "collection_exc_final_data")
+
+    return None

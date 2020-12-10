@@ -124,10 +124,8 @@ def loop_exc_value_hist(single_crypto, exc_price, exc_vol,
     # adding "Time" column to both Exchanges dataframe
     exc_vol_df["Time"] = ref_date_arr
     exc_price_df["Time"] = ref_date_arr
-    print(EXCHANGES)
-    print(exc_vol_df)
     exc_vol_tot_new = exc_all_vol(single_crypto, exc_vol_df, exc_vol_tot_old)
-    print(exc_vol_df)
+
     # for each CryptoAsset compute the first logic array
     first_logic_array = first_logic_matrix(exc_vol_df, EXCHANGES)
 
@@ -166,8 +164,7 @@ def index_hist_loop(data_matrix, crypto_asset, exc_list,
                     pair_list):
 
     ref_date_arr = date_gen()
-    print(len(ref_date_arr))
-    print(ref_date_arr)
+
     # initialize the matrices that will contain the prices
     # and volumes of all the single_cryptosset
     crypto_asset_price = np.matrix([])
