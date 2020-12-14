@@ -40,5 +40,7 @@ def daily_op(day=None):
 # data_feed_op()
 # daily_op()
 # index_daily(coll_to_use="coll_cw_final")
-ecb_daily_op()
-cw_daily_operation()
+# ecb_daily_op()
+# cw_daily_operation()
+
+daily_op()

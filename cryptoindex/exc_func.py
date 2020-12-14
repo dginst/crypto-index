@@ -725,3 +725,37 @@ def exc_hist_op():
     mongo_upload(exc_converted, "collection_exc_final_data")
 
     return None
+
+
+def hist_data_feed_op():
+
+    # define the array containing the date where the index uses CW feed data
+    CW_date_arr = date_gen(START_DATE, EXC_START_DATE)
+    CW_date_str = [str(date) for date in CW_date_arr]
+
+    # drop the pre-existing collection (if there is one)
+    mongo_coll_drop("index_feed")
+
+    # downloading the EXC series from MongoDB
+    EXC_series = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_final"))
+    EXC_series = EXC_series[
+        ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]]
+
+    # downloading the CW series from MongoDB and selecting only the date
+    # from 2016-01-01 to 2020-04-17
+    CW_series = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_final"))
+    CW_sub_series = CW_series.loc[CW_series.Time.isin(CW_date_str)]
+    CW_sub_series = CW_sub_series[
+        ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]]
+
+    # creting an unique dataframe containing the two different data source
+    data_feed = CW_sub_series.append(EXC_series, sort=True)
+    data_feed.reset_index(drop=True, inplace=True)
+
+    data_feed = data_feed[
+        ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]]
+
+    # put the converted data on MongoDB
+    mongo_upload(data_feed, "collection_data_feed")
+
+    return None
