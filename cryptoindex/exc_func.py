@@ -754,7 +754,7 @@ def hist_data_feed_op():
 
     data_feed = data_feed[
         ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]]
-
+    print(data_feed)
     # put the converted data on MongoDB
     mongo_upload(data_feed, "collection_data_feed")
 
