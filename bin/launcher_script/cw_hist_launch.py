@@ -16,10 +16,6 @@ from cryptoindex.index_wrap_func import (
     hist_complete
 )
 
-from cryptoindex.exc_func import (
-    hist_data_feed_op
-)
-
 
 # ecb_hist_op()
 # cw_hist_operation()
