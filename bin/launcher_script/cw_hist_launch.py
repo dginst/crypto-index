@@ -16,10 +16,17 @@ from cryptoindex.index_wrap_func import (
     hist_complete
 )
 
+from cryptoindex.exc_func import (
+    data_feed_op, exc_hist_op, hist_data_feed_op
+)
+
 
 # ecb_hist_op()
 # cw_hist_operation()
 
 # index_hist_total(coll_to_use="coll_cw_final")
-hist_complete()
+# hist_complete()
 # index_hist_total()
+
+exc_hist_op()
+hist_data_feed_op()
