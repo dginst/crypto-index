@@ -13,7 +13,7 @@ from cryptoindex.index_hist import (
 )
 
 from cryptoindex.index_wrap_func import (
-    hist_complete
+    hist_complete, hist_no_download
 )
 
 from cryptoindex.exc_func import (
@@ -25,7 +25,8 @@ from cryptoindex.exc_func import (
 # cw_hist_operation()
 
 # index_hist_total(coll_to_use="coll_cw_final")
-hist_complete()
+# hist_complete()
+hist_no_download()
 # index_hist_total()
 
 # exc_hist_op()

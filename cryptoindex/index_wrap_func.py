@@ -21,3 +21,12 @@ def hist_complete(coll_to_use="coll_data_feed"):
     index_hist_total(coll_to_use)
 
     return None
+
+
+def hist_no_download(coll_to_use="coll_data_feed"):
+
+    exc_hist_op()
+    hist_data_feed_op()
+    index_hist_total(coll_to_use)
+
+    return None
