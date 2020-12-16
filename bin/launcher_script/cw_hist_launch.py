@@ -28,5 +28,5 @@ from cryptoindex.exc_func import (
 # hist_complete()
 # index_hist_total()
 
-exc_hist_op()
-hist_data_feed_op()
+# exc_hist_op()
+# hist_data_feed_op()
