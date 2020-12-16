@@ -1629,7 +1629,7 @@ def divisor_reshape(
                 "Divisor Value"
             ]
         )
-
+        print(copied_element)
         if len(copied_element) == 0:
 
             pass
