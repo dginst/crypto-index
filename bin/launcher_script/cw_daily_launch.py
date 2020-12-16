@@ -10,11 +10,16 @@ from cryptoindex.index_func import (
 from cryptoindex.exc_func import (
     exc_daily_op, data_feed_op
 )
+from cryptoindex.index_wrap_func import (
+    daily_complete
+)
 
-ecb_daily_op()
-cw_daily_operation()
-exc_daily_op()
-data_feed_op()
+
+daily_complete()
+# ecb_daily_op()
+# cw_daily_operation()
+# exc_daily_op()
+# data_feed_op()
 # index daily on default use coll_to_use="coll_data_feed" as param,
 # use "coll_cw_final" otherwise
 # index_daily()
