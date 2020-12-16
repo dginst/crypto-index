@@ -1629,7 +1629,7 @@ def divisor_reshape(
                 "Divisor Value"
             ]
         )
-        print(copied_element)
+
         if len(copied_element) == 0:
 
             pass
@@ -1640,10 +1640,7 @@ def divisor_reshape(
                 reshaped_matrix.Time.between(
                     start, stop, inclusive=True), column_name
             ] = copied_element[0]
-            print(reshaped_matrix.loc[
-                reshaped_matrix.Time.between(
-                    start, stop, inclusive=True), column_name
-            ])
+
     if time_column == "N":
 
         reshaped_matrix = reshaped_matrix.drop(columns="Time")
