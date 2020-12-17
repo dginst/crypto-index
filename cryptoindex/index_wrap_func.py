@@ -44,7 +44,8 @@ def daily_complete():
     ecb_daily_op()
     cw_daily_operation()
     exc_daily_op()
-    data_feed_op()
+    hist_data_feed_op()
+    # data_feed_op()
     index_daily()
 
     return None
