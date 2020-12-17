@@ -9,7 +9,7 @@ from cryptoindex.index_hist import (
 )
 from cryptoindex.exc_func import (
     data_feed_op, exc_hist_op, hist_data_feed_op,
-    exc_daily_op
+    exc_daily_op, exc_daily_feed
 )
 from cryptoindex.cw_daily_func import (
     cw_daily_operation
@@ -44,8 +44,9 @@ def daily_complete():
     ecb_daily_op()
     cw_daily_operation()
     exc_daily_op()
-    hist_data_feed_op()
+    # hist_data_feed_op()
     # data_feed_op()
+    exc_daily_feed()
     index_daily()
 
     return None

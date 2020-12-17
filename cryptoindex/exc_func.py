@@ -468,7 +468,29 @@ def data_feed_op():
     return None
 
 
+def exc_daily_feed(day=None):
+
+    day_before_TS, _ = days_variable(day)
+
+    if day is None:
+
+        if daily_check_mongo("coll_data_feed", {"Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
+
+            query_data = {"Time": int(day_before_TS)}
+            exc_daily_df = query_mongo(
+                DB_NAME, MONGO_DICT.get("coll_exc_final"), query_data)
+            mongo_upload(exc_daily_df, "collection_data_feed")
+
+        else:
+            print("The collection index_data_feed is already updated")
+
+    else:
+        pass
+
+    return None
+
 # ########## HISTORICAL EXC RAW DATA OPERATION ##############
+
 
 # set today
 today_str = datetime.now().strftime("%Y-%m-%d")
