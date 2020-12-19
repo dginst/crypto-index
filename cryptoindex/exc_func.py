@@ -745,6 +745,7 @@ def exc_hist_op():
     mongo_upload(exc_fixed_df, "collection_exc_clean")
 
     exc_converted = exc_hist_conv(exc_fixed_df)
+    exc_converted.fillna(0, inplace=True)
     mongo_upload(exc_converted, "collection_exc_final_data")
 
     return None

@@ -32,8 +32,8 @@ def hist_complete(coll_to_use="coll_data_feed"):
 
 def hist_no_download(coll_to_use="coll_data_feed"):
 
-    # exc_hist_op()
-    # hist_data_feed_op()
+    exc_hist_op()
+    hist_data_feed_op()
     index_hist_total(coll_to_use)
 
     return None
