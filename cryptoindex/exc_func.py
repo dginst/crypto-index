@@ -424,6 +424,7 @@ def exc_daily_op(day=None):
         if daily_check_mongo("coll_exc_final", {"Exchange": "coinbase-pro", "Pair": "ethusd"}) is False:
 
             converted_df = daily_conv_op(day_before_TS, series="EXC")
+            converted_df.fillna(0, inplace=True)
             mongo_upload(converted_df, "collection_exc_final_data")
 
         else:
