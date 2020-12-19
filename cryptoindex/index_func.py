@@ -684,21 +684,24 @@ def index_normal_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
     # create the indexing for MongoDB
     mongo_indexing()
 
-    if day is None:
+    day_before_TS, two_before_TS = days_variable(day)
+    two_before_human = timestamp_to_human([two_before_TS])
 
-        day_str = datetime.now().strftime("%Y-%m-%d")
-        day_date = datetime.strptime(day_str, "%Y-%m-%d")
-        day_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
-        day_before_TS = day_TS - DAY_IN_SEC
-        two_before_TS = day_before_TS - DAY_IN_SEC
-        two_before_human = timestamp_to_human([two_before_TS])
+    # if day is None:
 
-    else:
+    #     day_str = datetime.now().strftime("%Y-%m-%d")
+    #     day_date = datetime.strptime(day_str, "%Y-%m-%d")
+    #     day_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
+    #     day_before_TS = day_TS - DAY_IN_SEC
+    #     two_before_TS = day_before_TS - DAY_IN_SEC
+    #     two_before_human = timestamp_to_human([two_before_TS])
 
-        day_date = datetime.strptime(day, "%Y-%m-%d")
-        day_before_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
-        two_before_TS = day_before_TS - DAY_IN_SEC
-        two_before_human = timestamp_to_human([two_before_TS])
+    # else:
+
+    #     day_date = datetime.strptime(day, "%Y-%m-%d")
+    #     day_before_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
+    #     two_before_TS = day_before_TS - DAY_IN_SEC
+    #     two_before_human = timestamp_to_human([two_before_TS])
 
     # defining the dictionary for the MongoDB query
     query_dict = {"Time": int(day_before_TS)}
@@ -949,6 +952,7 @@ def index_daily(coll_to_use="coll_data_feed", day=None):
 
     else:
 
+        print("Normal day")
         index_normal_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
                          coll_to_use, day=day)
 
