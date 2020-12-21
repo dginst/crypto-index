@@ -689,22 +689,6 @@ def index_normal_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
     day_before_TS, two_before_TS = days_variable(day)
     two_before_human = timestamp_to_human([two_before_TS])
 
-    # if day is None:
-
-    #     day_str = datetime.now().strftime("%Y-%m-%d")
-    #     day_date = datetime.strptime(day_str, "%Y-%m-%d")
-    #     day_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
-    #     day_before_TS = day_TS - DAY_IN_SEC
-    #     two_before_TS = day_before_TS - DAY_IN_SEC
-    #     two_before_human = timestamp_to_human([two_before_TS])
-
-    # else:
-
-    #     day_date = datetime.strptime(day, "%Y-%m-%d")
-    #     day_before_TS = int(day_date.replace(tzinfo=timezone.utc).timestamp())
-    #     two_before_TS = day_before_TS - DAY_IN_SEC
-    #     two_before_human = timestamp_to_human([two_before_TS])
-
     # defining the dictionary for the MongoDB query
     query_dict = {"Time": int(day_before_TS)}
     # retriving the needed information on MongoDB
@@ -725,11 +709,8 @@ def index_normal_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
     return_df = two_before_price.append(crypto_asset_price)
     price_ret = return_df.pct_change()
     price_ret = price_ret.iloc[[1]]
-    print(price_ret)
     price_ret = price_ret.replace(-1, 0)
-    print(price_ret)
     price_ret.fillna(0, inplace=True)
-    print(price_ret)
     # then add the 'Time' column
     time_header = ["Time"]
     time_header.extend(CRYPTO_ASSET)
@@ -948,18 +929,21 @@ def index_daily(coll_to_use="coll_data_feed", day=None):
     if day_TS in start_q_list:
 
         print("First day of the quarter")
+        mongo_daily_delete(day, "index")
         index_start_q_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
                           coll_to_use, day=day)
 
     elif day_TS in board_eve_list:
 
         print("Board day")
+        mongo_daily_delete(day, "index")
         index_board_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
                         coll_to_use, day=day)
 
     else:
 
         print("Normal day")
+        mongo_daily_delete(day, "index")
         index_normal_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
                          coll_to_use, day=day)
 
