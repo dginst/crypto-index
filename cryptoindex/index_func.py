@@ -363,6 +363,8 @@ def index_daily_operation(crypto_asset, crypto_asset_price,
     return_df = two_before_price.append(crypto_asset_price)
     price_ret = return_df.pct_change()
     price_ret = price_ret.iloc[[1]]
+    price_ret = price_ret.replace(-1, 0)
+    price_ret.fillna(0, inplace=True)
     # then add the 'Time' column
     time_header = ["Time"]
     time_header.extend(crypto_asset)
@@ -723,6 +725,8 @@ def index_normal_day(crypto_asset, exc_list, pair_list, coll_to_use, day=None):
     return_df = two_before_price.append(crypto_asset_price)
     price_ret = return_df.pct_change()
     price_ret = price_ret.iloc[[1]]
+    price_ret = price_ret.replace(-1, 0)
+    price_ret.fillna(0, inplace=True)
     # then add the 'Time' column
     time_header = ["Time"]
     time_header.extend(CRYPTO_ASSET)
