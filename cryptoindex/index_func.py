@@ -923,6 +923,7 @@ def index_daily(coll_to_use="coll_data_feed", day=None):
 
     start_q_list = next_start()
     board_eve_list = day_before_board()
+    print(board_eve_list)
 
     day_TS = days_variable(day)
 
