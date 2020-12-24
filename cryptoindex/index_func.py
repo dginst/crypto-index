@@ -925,28 +925,28 @@ def index_daily(coll_to_use="coll_data_feed", day=None):
     board_eve_list = day_before_board()
     print(board_eve_list)
 
-    day_TS = days_variable(day)
+    day_TS, _ = days_variable(day)
 
     if day_TS in start_q_list:
 
         print("First day of the quarter")
-        mongo_daily_delete(day, "index")
-        index_start_q_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
-                          coll_to_use, day=day)
+        # mongo_daily_delete(day, "index")
+        # index_start_q_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
+        #                   coll_to_use, day=day)
 
     elif day_TS in board_eve_list:
 
         print("Board day")
-        mongo_daily_delete(day, "index")
-        index_board_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
-                        coll_to_use, day=day)
+        # mongo_daily_delete(day, "index")
+        # index_board_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
+        #                 coll_to_use, day=day)
 
     else:
 
         print("Normal day")
-        mongo_daily_delete(day, "index")
-        index_normal_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
-                         coll_to_use, day=day)
+        # mongo_daily_delete(day, "index")
+        # index_normal_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
+        #                  coll_to_use, day=day)
 
 
 # ##############################################àà
