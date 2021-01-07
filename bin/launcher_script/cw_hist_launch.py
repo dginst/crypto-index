@@ -25,8 +25,8 @@ from cryptoindex.exc_func import (
 # cw_hist_operation()
 
 # index_hist_total(coll_to_use="coll_cw_final")
-# hist_complete()
-hist_no_download()
+hist_complete()
+# hist_no_download()
 # index_hist_total()
 
 # exc_hist_op()
