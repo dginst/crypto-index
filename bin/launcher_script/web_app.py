@@ -17,6 +17,7 @@ app = dash.Dash(__name__)
 # -------------------
 # Data
 df = query_mongo("index", "index_level_1000")
+print(df)
 df["Year"] = df['Date'].str[:4]
 df = df.drop(columns="Time")
 y_list = list(pd.unique(df["Year"]))
