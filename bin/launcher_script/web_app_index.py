@@ -78,6 +78,12 @@ df_no_time = df_weight.drop(columns="Date")
 
 col_list = list(df_no_time.columns)
 
+fig = px.line(
+    data_frame=df,
+    x="Date",
+    y="Index Value",
+    template='plotly_dark')
+
 
 # ----------------
 # app layout: bootstrap
@@ -95,15 +101,15 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
 
-            dcc.RangeSlider(
-                id="slct_years",
-                marks={int(i): ' {}'.format(i) for i in y_list},
-                min=y_list[0],
-                max=y_list[len(y_list) - 1],
-                value=[2017, 2018, 2019, 2020, 2021]
-            ),
+            # dcc.RangeSlider(
+            #     id="slct_years",
+            #     marks={int(i): ' {}'.format(i) for i in y_list},
+            #     min=y_list[0],
+            #     max=y_list[len(y_list) - 1],
+            #     value=[2017, 2018, 2019, 2020, 2021]
+            # ),
 
-            dcc.Graph(id="my_index_level", figure={}),
+            dcc.Graph(id="my_index_level", figure=fig),
         ])
 
     ]),
@@ -138,28 +144,28 @@ app.layout = dbc.Container([
 # crypto-index values graph
 
 
-@app.callback(
-    Output(component_id="my_index_level", component_property="figure"),
-    Input(component_id="slct_years", component_property="value")
-)
-def update_graph(year_slct):
+# @app.callback(
+#     Output(component_id="my_index_level", component_property="figure"),
+#     Input(component_id="slct_years", component_property="value")
+# )
+# def update_graph(year_slct):
 
-    dff = df.copy()
-    dff_filtered = pd.DataFrame(columns=dff.columns)
+#     dff = df.copy()
+#     dff_filtered = pd.DataFrame(columns=dff.columns)
 
-    for y in year_slct:
+#     for y in year_slct:
 
-        df_v = dff.loc[dff["Year"] == y]
-        dff_filtered = dff_filtered.append(df_v)
+#         df_v = dff.loc[dff["Year"] == y]
+#         dff_filtered = dff_filtered.append(df_v)
 
-    fig = px.line(
-        data_frame=dff_filtered,
-        x="Date",
-        y="Index Value",
-        template='plotly_dark'
-    )
+#     fig = px.line(
+#         data_frame=dff_filtered,
+#         x="Date",
+#         y="Index Value",
+#         template='plotly_dark'
+#     )
 
-    return fig
+#     return fig
 
 # crypto-composition graph
 
@@ -182,7 +188,8 @@ def update_pie(my_dropdown):
         values=df_val,
         names=df_col,
         # names=my_dropdown,
-        hole=.3
+        hole=.3,
+        template='plotly_dark'
     )
 
     return pie_fig
