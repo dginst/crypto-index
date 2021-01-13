@@ -2,3 +2,4 @@ pandas
 requests
 pymongo
 dash
+dash-bootstrap-components
