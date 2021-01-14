@@ -75,10 +75,11 @@ date_list = np.array(df_weight["Date"])
 df_weight = df_weight.drop(columns=["Time"])
 df_no_time = df_weight.drop(columns="Date")
 
-
 col_list = list(df_no_time.columns)
 
-fig = px.line(
+df_volume = query_mongo_x("index", "crypto_volume")
+
+index_line = px.line(
     data_frame=df,
     x="Date",
     y="Index Value",
@@ -109,7 +110,7 @@ app.layout = dbc.Container([
             #     value=[2017, 2018, 2019, 2020, 2021]
             # ),
 
-            dcc.Graph(id="my_index_level", figure=fig),
+            dcc.Graph(id="my_index_level", figure=index_line),
         ])
 
     ]),
@@ -135,6 +136,24 @@ app.layout = dbc.Container([
         ])
 
     ]),
+
+    dbc.Row([
+            dbc.Col([
+
+                html.Label(['Crypto Assets']),
+                dcc.Checklist(
+                    id='my_crypto_check',
+                    options=[
+                        {'label': x, 'value': x} for x in col_list
+                    ],
+                    value=["BTC", "ETH", "XRP", "LTC", "BCH"],
+                    labelStyle={'display': 'inline-block'},
+                    inputStyle={"margin-right": "10px",
+                                "margin-left": "10px"}
+                ),
+                dcc.Graph(id="my_volume_level", figure={}),
+            ])
+            ])
 
 ])
 
@@ -193,6 +212,26 @@ def update_pie(my_dropdown):
     )
 
     return pie_fig
+
+
+@ app.callback(
+    Output(component_id="my_volume_level", component_property="figure"),
+    Input(component_id="my_crypto_check", component_property="value")
+)
+def update_vol(my_checklist):
+
+    dff_vol = df_volume.copy()
+    dff_date = dff_vol["Date"]
+    dff_filtered = dff_vol[my_checklist]
+    dff_filtered["Date"] = dff_date
+
+    volume_line = px.line(
+        data_frame=dff_filtered,
+        x="Date",
+        y=my_checklist,
+        template='plotly_dark')
+
+    return volume_line
 
 
 print("Done")
