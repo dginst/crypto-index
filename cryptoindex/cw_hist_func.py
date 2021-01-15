@@ -188,12 +188,12 @@ def cw_hist_raw_bugfix(bug_mat):
 
     new_mat.loc[(new_mat.Time == 1544486400)
                 & (new_mat["Exchange"] == "bittrex")
-                & (new_mat["Pair"] == "btcusdt"),
+                & (new_mat["Pair"] == "btcusd"),
                 "Crypto Volume"] = value_to_sub
 
     new_mat.loc[(new_mat.Time == 1544572800)
                 & (new_mat["Exchange"] == "bittrex")
-                & (new_mat["Pair"] == "btcusdt"),
+                & (new_mat["Pair"] == "btcusd"),
                 "Crypto Volume"] = value_to_sub
 
     return new_mat
