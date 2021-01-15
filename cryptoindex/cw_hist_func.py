@@ -160,18 +160,38 @@ def cw_hist_raw_bugfix(bug_mat):
     new_mat = new_mat.sort_values(by=['Time'])
     new_mat = new_mat.drop(columns=['key'])
 
+    # correcting some wrong values for bittrex - btcusdt
+
     sub_mat = new_mat.loc[new_mat["Exchange"] == "bittrex"]
     sub_mat = sub_mat.loc[sub_mat["Pair"] == "btcusdt"]
 
     value_to_sub = np.array(
-        sub_mat.loc[sub_mat.Time == 1544486400, "Crypto Volume"])
+        sub_mat.loc[sub_mat.Time == 1544400000, "Crypto Volume"])
+
+    new_mat.loc[(new_mat.Time == 1544486400)
+                & (new_mat["Exchange"] == "bittrex")
+                & (new_mat["Pair"] == "btcusdt"),
+                "Crypto Volume"] = value_to_sub
 
     new_mat.loc[(new_mat.Time == 1544572800)
                 & (new_mat["Exchange"] == "bittrex")
                 & (new_mat["Pair"] == "btcusdt"),
                 "Crypto Volume"] = value_to_sub
 
-    new_mat.loc[(new_mat.Time == 1544659200)
+    # correcting some wrong values for bittrex - btcusd
+
+    sub_mat_2 = new_mat.loc[new_mat["Exchange"] == "bittrex"]
+    sub_mat_2 = sub_mat_2.loc[sub_mat_2["Pair"] == "btcusd"]
+
+    value_to_sub = np.array(
+        sub_mat_2.loc[sub_mat_2.Time == 1544400000, "Crypto Volume"])
+
+    new_mat.loc[(new_mat.Time == 1544486400)
+                & (new_mat["Exchange"] == "bittrex")
+                & (new_mat["Pair"] == "btcusdt"),
+                "Crypto Volume"] = value_to_sub
+
+    new_mat.loc[(new_mat.Time == 1544572800)
                 & (new_mat["Exchange"] == "bittrex")
                 & (new_mat["Pair"] == "btcusdt"),
                 "Crypto Volume"] = value_to_sub
