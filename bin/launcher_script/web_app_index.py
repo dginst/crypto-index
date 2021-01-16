@@ -79,6 +79,8 @@ col_list = list(df_no_time.columns)
 
 df_volume = query_mongo_x("index", "crypto_volume")
 
+df_price = query_mongo_x("index", "crypto_price")
+
 index_line = px.line(
     data_frame=df,
     x="Date",
@@ -101,7 +103,9 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col([
-
+                html.H2("Crypto Index Level",
+                        className='text-center'),
+                width=8)
             # dcc.RangeSlider(
             #     id="slct_years",
             #     marks={int(i): ' {}'.format(i) for i in y_list},
@@ -152,6 +156,21 @@ app.layout = dbc.Container([
                                 "margin-left": "10px"}
                 ),
                 dcc.Graph(id="my_volume_level", figure={}),
+            ]),
+            dbc.Col([
+
+                html.Label(['Crypto Assets']),
+                dcc.Checklist(
+                    id='my_crypto_check',
+                    options=[
+                        {'label': x, 'value': x} for x in col_list
+                    ],
+                    value=["BTC", "ETH", "XRP", "LTC", "BCH"],
+                    labelStyle={'display': 'inline-block'},
+                    inputStyle={"margin-right": "10px",
+                                "margin-left": "10px"}
+                ),
+                dcc.Graph(id="my_price_level", figure={}),
             ])
             ])
 
@@ -195,20 +214,20 @@ app.layout = dbc.Container([
 )
 def update_pie(my_dropdown):
 
-    dff_w = df_weight.copy()
-    dff_w_filt = dff_w.loc[dff_w["Date"] == my_dropdown]
+    dff_w=df_weight.copy()
+    dff_w_filt=dff_w.loc[dff_w["Date"] == my_dropdown]
 
-    dff_w_filt = dff_w_filt.drop(columns="Date")
-    df_val = np.array(dff_w_filt)[0]
-    df_col = list(dff_w_filt.columns)
+    dff_w_filt=dff_w_filt.drop(columns = "Date")
+    df_val=np.array(dff_w_filt)[0]
+    df_col=list(dff_w_filt.columns)
 
-    pie_fig = px.pie(
+    pie_fig=px.pie(
         # data_frame=dff_w_filt,
-        values=df_val,
-        names=df_col,
+        values = df_val,
+        names = df_col,
         # names=my_dropdown,
-        hole=.3,
-        template='plotly_dark'
+        hole = .3,
+        template = 'plotly_dark'
     )
 
     return pie_fig
@@ -225,11 +244,32 @@ def update_vol(my_checklist):
     dff_filtered = dff_vol[my_checklist]
     dff_filtered["Date"] = dff_date
 
-    volume_line = px.line(
+    price_line = px.line(
         data_frame=dff_filtered,
         x="Date",
         y=my_checklist,
         template='plotly_dark')
+
+    return price_line
+
+
+@ app.callback(
+    Output(component_id="my_price_level", component_property="figure"),
+    Input(component_id="my_crypto_check", component_property="value")
+)
+def update_price(my_checklist):
+
+    dff_vol = df_price.copy()
+    dff_date = dff_vol["Date"]
+    dff_filtered = dff_vol[my_checklist]
+    dff_filtered["Date"] = dff_date
+
+    volume_line = px.line(
+        data_frame=dff_filtered,
+        x="Date",
+        y=my_checklist,
+        template='plotly_dark',
+        title='Crypto Prices')
 
     return volume_line
 
