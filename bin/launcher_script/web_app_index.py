@@ -85,7 +85,8 @@ index_line = px.line(
     data_frame=df,
     x="Date",
     y="Index Value",
-    template='plotly_dark')
+    template='plotly_dark',
+    title='Crypto Index Level')
 
 
 # ----------------
@@ -103,8 +104,6 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col([
-                html.H2("Crypto Index Level",
-                        className='text-center'),
                 # dcc.RangeSlider(
                 #     id="slct_years",
                 #     marks={int(i): ' {}'.format(i) for i in y_list},
@@ -221,12 +220,11 @@ def update_pie(my_dropdown):
     df_col = list(dff_w_filt.columns)
 
     pie_fig = px.pie(
-        # data_frame=dff_w_filt,
         values=df_val,
         names=df_col,
-        # names=my_dropdown,
         hole=.3,
-        template='plotly_dark'
+        template='plotly_dark',
+        title='Index Weights'
     )
 
     return pie_fig
@@ -268,7 +266,8 @@ def update_vol(my_checklist):
         data_frame=dff_filtered,
         x="Date",
         y=my_checklist,
-        template='plotly_dark')
+        template='plotly_dark',
+        title='Crypto Volumes')
 
     return volume_line
 
