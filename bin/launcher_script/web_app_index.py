@@ -7,6 +7,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+import urllib.parse
 
 # connection = MongoClient("3.138.244.245", 27017)py
 connection = MongoClient("localhost", 27017)
@@ -57,6 +58,10 @@ def query_mongo_x(database, collection, query_dict=None):
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
                 meta_tags=[{'name': 'viewport',
                             'content': 'width=device-width, initial-scale=1.0'}])
+
+app.css.append_css(
+    {"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"})
+
 server = app.server
 
 # -------------------
@@ -81,6 +86,9 @@ df_volume = query_mongo_x("index", "crypto_volume")
 
 df_price = query_mongo_x("index", "crypto_price")
 
+# ----------------------
+# index level graph and link to download
+
 index_line = px.line(
     data_frame=df,
     x="Date",
@@ -88,6 +96,34 @@ index_line = px.line(
     template='plotly_dark',
     title='Crypto Index Level')
 
+dff_index = df.copy()
+dff_index = dff_index.drop(columns="Year")
+csv_string_index = df.to_csv(index=False, encoding='utf-8')
+csv_string_index = "data:text/csv;charset=utf-8," + \
+    urllib.parse.quote(csv_string_index)
+
+# weights link to download
+
+dff_weights = df_weight.copy()
+csv_string_weight = dff_weights.to_csv(index=False, encoding='utf-8')
+csv_string_weight = "data:text/csv;charset=utf-8," + \
+    urllib.parse.quote(csv_string_weight)
+
+# crypto prices link to download
+
+dff_prices = df_price.copy()
+dff_prices = dff_prices.drop(columns="Time")
+csv_string_price = dff_prices.to_csv(index=False, encoding='utf-8')
+csv_string_price = "data:text/csv;charset=utf-8," + \
+    urllib.parse.quote(csv_string_price)
+
+# crypto volumes link to download
+
+dff_volume = df_volume.copy()
+dff_volume = dff_volume.drop(columns="Time")
+csv_string_volume = dff_volume.to_csv(index=False, encoding='utf-8')
+csv_string_volume = "data:text/csv;charset=utf-8," + \
+    urllib.parse.quote(csv_string_volume)
 
 # ----------------
 # app layout: bootstrap
@@ -104,16 +140,19 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col([
-                # dcc.RangeSlider(
-                #     id="slct_years",
-                #     marks={int(i): ' {}'.format(i) for i in y_list},
-                #     min=y_list[0],
-                #     max=y_list[len(y_list) - 1],
-                #     value=[2017, 2018, 2019, 2020, 2021]
-                # ),
 
                 dcc.Graph(id="my_index_level", figure=index_line),
+
+                html.A(
+                    'Download Data',
+                    id='download-link_index',
+                    download="index_level.csv",
+                    href=csv_string_index,
+                    target="_blank"
+                )
+
                 ])
+
 
     ]),
 
@@ -134,7 +173,15 @@ app.layout = dbc.Container([
             ),
 
 
-            dcc.Graph(id='my_weight_pie', figure={})
+            dcc.Graph(id='my_weight_pie', figure={}),
+
+            html.A(
+                'Download Data',
+                id='download-link_weight',
+                download="index_weight.csv",
+                href=csv_string_weight,
+                target="_blank"
+            )
         ])
 
     ]),
@@ -154,6 +201,14 @@ app.layout = dbc.Container([
                                 "margin-left": "10px"}
                 ),
                 dcc.Graph(id="my_volume_level", figure={}),
+
+                html.A(
+                    'Download Data',
+                    id='download-link_volume',
+                    download="crypto_volume.csv",
+                    href=csv_string_volume,
+                    target="_blank"
+                )
             ]),
             dbc.Col([
 
@@ -169,6 +224,14 @@ app.layout = dbc.Container([
                                 "margin-left": "10px"}
                 ),
                 dcc.Graph(id="my_price_level", figure={}),
+
+                html.A(
+                    'Download Data',
+                    id='download-link_price',
+                    download="crypto_price.csv",
+                    href=csv_string_price,
+                    target="_blank"
+                )
             ])
             ])
 
@@ -177,34 +240,8 @@ app.layout = dbc.Container([
 # --------------------------
 # Callbacks part
 
-# crypto-index values graph
 
-
-# @app.callback(
-#     Output(component_id="my_index_level", component_property="figure"),
-#     Input(component_id="slct_years", component_property="value")
-# )
-# def update_graph(year_slct):
-
-#     dff = df.copy()
-#     dff_filtered = pd.DataFrame(columns=dff.columns)
-
-#     for y in year_slct:
-
-#         df_v = dff.loc[dff["Year"] == y]
-#         dff_filtered = dff_filtered.append(df_v)
-
-#     fig = px.line(
-#         data_frame=dff_filtered,
-#         x="Date",
-#         y="Index Value",
-#         template='plotly_dark'
-#     )
-
-#     return fig
-
-# crypto-composition graph
-
+# crypto-composition portfolio graph
 
 @ app.callback(
     Output(component_id="my_weight_pie", component_property="figure"),
