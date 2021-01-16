@@ -465,6 +465,7 @@ def index_hist_op(crypto_asset_price_arr,
         board_date_eve,
         CRYPTO_ASSET,
     )
+    syntethic.fillna(0, inplace=True)
 
     syntethic_relative_matrix = relative_syntethic_matrix(
         syntethic, CRYPTO_ASSET)
