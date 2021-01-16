@@ -160,7 +160,7 @@ app.layout = dbc.Container([
 
                 html.Label(['Crypto Assets']),
                 dcc.Checklist(
-                    id='my_crypto_check',
+                    id='my_crypto_check_2',
                     options=[
                         {'label': x, 'value': x} for x in col_list
                     ],
@@ -233,6 +233,27 @@ def update_pie(my_dropdown):
 
 
 @ app.callback(
+    Output(component_id="my_price_level", component_property="figure"),
+    Input(component_id="my_crypto_check_2", component_property="value")
+)
+def update_price(my_checklist):
+
+    dff_vol = df_price.copy()
+    dff_date = dff_vol["Date"]
+    dff_filtered = dff_vol[my_checklist]
+    dff_filtered["Date"] = dff_date
+
+    price_line = px.line(
+        data_frame=dff_filtered,
+        x="Date",
+        y=my_checklist,
+        template='plotly_dark',
+        title='Crypto Prices')
+
+    return price_line
+
+
+@ app.callback(
     Output(component_id="my_volume_level", component_property="figure"),
     Input(component_id="my_crypto_check", component_property="value")
 )
@@ -243,32 +264,11 @@ def update_vol(my_checklist):
     dff_filtered = dff_vol[my_checklist]
     dff_filtered["Date"] = dff_date
 
-    price_line = px.line(
-        data_frame=dff_filtered,
-        x="Date",
-        y=my_checklist,
-        template='plotly_dark')
-
-    return price_line
-
-
-@ app.callback(
-    Output(component_id="my_price_level", component_property="figure"),
-    Input(component_id="my_crypto_check", component_property="value")
-)
-def update_price(my_checklist):
-
-    dff_vol = df_price.copy()
-    dff_date = dff_vol["Date"]
-    dff_filtered = dff_vol[my_checklist]
-    dff_filtered["Date"] = dff_date
-
     volume_line = px.line(
         data_frame=dff_filtered,
         x="Date",
         y=my_checklist,
-        template='plotly_dark',
-        title='Crypto Prices')
+        template='plotly_dark')
 
     return volume_line
 
