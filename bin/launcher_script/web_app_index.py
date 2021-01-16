@@ -105,17 +105,16 @@ app.layout = dbc.Container([
         dbc.Col([
                 html.H2("Crypto Index Level",
                         className='text-center'),
-                width=8)
-            # dcc.RangeSlider(
-            #     id="slct_years",
-            #     marks={int(i): ' {}'.format(i) for i in y_list},
-            #     min=y_list[0],
-            #     max=y_list[len(y_list) - 1],
-            #     value=[2017, 2018, 2019, 2020, 2021]
-            # ),
+                # dcc.RangeSlider(
+                #     id="slct_years",
+                #     marks={int(i): ' {}'.format(i) for i in y_list},
+                #     min=y_list[0],
+                #     max=y_list[len(y_list) - 1],
+                #     value=[2017, 2018, 2019, 2020, 2021]
+                # ),
 
-            dcc.Graph(id="my_index_level", figure=index_line),
-        ])
+                dcc.Graph(id="my_index_level", figure=index_line),
+                ])
 
     ]),
 
@@ -214,20 +213,20 @@ app.layout = dbc.Container([
 )
 def update_pie(my_dropdown):
 
-    dff_w=df_weight.copy()
-    dff_w_filt=dff_w.loc[dff_w["Date"] == my_dropdown]
+    dff_w = df_weight.copy()
+    dff_w_filt = dff_w.loc[dff_w["Date"] == my_dropdown]
 
-    dff_w_filt=dff_w_filt.drop(columns = "Date")
-    df_val=np.array(dff_w_filt)[0]
-    df_col=list(dff_w_filt.columns)
+    dff_w_filt = dff_w_filt.drop(columns="Date")
+    df_val = np.array(dff_w_filt)[0]
+    df_col = list(dff_w_filt.columns)
 
-    pie_fig=px.pie(
+    pie_fig = px.pie(
         # data_frame=dff_w_filt,
-        values = df_val,
-        names = df_col,
+        values=df_val,
+        names=df_col,
         # names=my_dropdown,
-        hole = .3,
-        template = 'plotly_dark'
+        hole=.3,
+        template='plotly_dark'
     )
 
     return pie_fig
