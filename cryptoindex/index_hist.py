@@ -408,6 +408,7 @@ def index_hist_op(crypto_asset_price_arr,
 
     # compute the price returns over the defined period
     price_ret = crypto_asset_price.pct_change()
+    price_ret.fillna(0, inplace=True)
 
     # add the 'Time' column
     crypto_asset_price["Time"] = ref_date_arr
