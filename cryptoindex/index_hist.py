@@ -469,6 +469,7 @@ def index_hist_op(crypto_asset_price_arr,
 
     syntethic_relative_matrix = relative_syntethic_matrix(
         syntethic, CRYPTO_ASSET)
+    syntethic_relative_matrix.fillna(0, inplace=True)
 
     # changing the "Time" column of the second logic matrix
     # using the rebalance date
