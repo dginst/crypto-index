@@ -216,21 +216,30 @@ def update_pie(my_dropdown):
     dff_w_filt = dff_w.loc[dff_w["Date"] == my_dropdown]
 
     dff_w_filt = dff_w_filt.drop(columns="Date")
-    df_val = np.array(dff_w_filt)[0]
+
     df_col = list(dff_w_filt.columns)
+
+    for col in df_col:
+
+        val = np.array(dff_w_filt[col])[0]
+        if val == 0.0000:
+
+            dff_w_filt = dff_w_filt.drop(columns=col)
+
+    df_val = np.array(dff_w_filt)[0]
+    df_col_2 = list(dff_w_filt.columns)
 
     pie_fig = px.pie(
         values=df_val,
-        names=df_col,
+        names=df_col_2,
         hole=.3,
         template='plotly_dark',
         title='Index Weights',
-        color_discrete_map={
-            "BTC": "#FEAF16",
-            "ETH": "#511CFB",
-            "XRP": "#F6222E",
-            "LTC": "#E2E2E2",
-            "BCH": "#86CE00"}
+        color_discrete_sequence=["#FEAF16",
+                                 "#511CFB",
+                                 "#F6222E",
+                                 "#E2E2E2",
+                                 "#86CE00"]
     )
 
     return pie_fig
@@ -252,7 +261,22 @@ def update_price(my_checklist):
         x="Date",
         y=my_checklist,
         template='plotly_dark',
-        title='Crypto Prices')
+        title='Crypto Prices',
+        color_discrete_map={
+            "BTC": "#FEAF16",
+            "ETH": "#511CFB",
+            "XRP": "#F6222E",
+            "LTC": "#E2E2E2",
+            "BCH": "#86CE00",
+            "EOS": "#FBE426",
+            "ETC": "#DA16FF",
+            "ZEC": "#B68100",
+            "ADA": "#00B5F7",
+            "XLM": "#750D86",
+            "XMR": "#A777F1",
+            "BSV": "#F58518"
+        }
+    )
 
     return price_line
 
@@ -273,7 +297,22 @@ def update_vol(my_checklist):
         x="Date",
         y=my_checklist,
         template='plotly_dark',
-        title='Crypto Volumes')
+        title='Crypto Volumes',
+        color_discrete_map={
+            "BTC": "#FEAF16",
+            "ETH": "#511CFB",
+            "XRP": "#F6222E",
+            "LTC": "#E2E2E2",
+            "BCH": "#86CE00",
+            "EOS": "#FBE426",
+            "ETC": "#DA16FF",
+            "ZEC": "#B68100",
+            "ADA": "#00B5F7",
+            "XLM": "#750D86",
+            "XMR": "#A777F1",
+            "BSV": "#F58518"
+        }
+    )
 
     return volume_line
 
@@ -281,4 +320,4 @@ def update_vol(my_checklist):
 print("Done")
 # --------------------
 if __name__ == '__main__':
-    app.run_server(debug=True, port=3000, host='0.0.0.0')
+    app.run_server(debug=True, port=3000)  # , host='0.0.0.0')
