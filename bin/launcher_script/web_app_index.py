@@ -224,7 +224,13 @@ def update_pie(my_dropdown):
         names=df_col,
         hole=.3,
         template='plotly_dark',
-        title='Index Weights'
+        title='Index Weights',
+        color_discrete_map={
+            "BTC": "#FEAF16",
+            "ETH": "#511CFB",
+            "XRP": "#F6222E",
+            "LTC": "#E2E2E2",
+            "BCH": "#86CE00"}
     )
 
     return pie_fig
