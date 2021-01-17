@@ -357,4 +357,4 @@ def update_vol(my_checklist):
 print("Done")
 # --------------------
 if __name__ == '__main__':
-    app.run_server(debug=True, port=3000)  # , host='0.0.0.0')
+    app.run_server(debug=True, port=3000, host='0.0.0.0')
