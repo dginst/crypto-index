@@ -59,7 +59,9 @@ dff_t = dff_last[dff_last['Date']
 
 
 variation = (dff_t >= dff_y)
+print(variation)
 dff["Var"] = variation
+print(dff.tail(10))
 
 # index_line = px.line(
 #     data_frame=df,
