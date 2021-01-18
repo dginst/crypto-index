@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import plotly.express as px
-from pymongo import MongoClient
+import plotly.graph_objects as go
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -49,12 +49,38 @@ df_price = query_mongo("index", "crypto_price")
 # ----------------------
 # index level graph and link to download
 
-index_line = px.line(
+dff = df.copy()
+dff_last = dff.tail(2)
+dff_y = dff_last[dff_last['Date']
+                 == dff_last['Date'].min()]['Index Value'].values[0]
+dff_t = dff_last[dff_last['Date']
+                 == dff_last['Date'].max()]['Index Value'].values[0]
+
+if dff_t >= dff_y:
+
+    color = '#00FE35'
+
+elif dff_t < dff_y:
+
+    color = '#FD3216'
+
+# index_line = px.line(
+#     data_frame=df,
+#     x="Date",
+#     y="Index Value",
+#     template='plotly_dark',
+#     title='Crypto Index Level')
+
+index_area = px.area(
     data_frame=df,
     x="Date",
     y="Index Value",
     template='plotly_dark',
-    title='Crypto Index Level')
+    title='Crypto Index Level',
+    color_discrete_map={
+        "Index Value": color,
+    }
+)
 
 dff_index = df.copy()
 dff_index = dff_index.drop(columns="Year")
@@ -95,25 +121,70 @@ app.layout = dbc.Container([
         dbc.Col(html.H1("Crypto Index Dashboard",
                         className='text-center text-primary, mb-4'),
                 width=12)
-
     ]),
 
     dbc.Row([
         dbc.Col([
 
-                dcc.Graph(id="my_index_level", figure=index_line),
+            dbc.Card(
+                [
+                    dbc.CardBody(
+                        [
+                            dbc.Row(
+                                [
+                                    dbc.Col([
+                                        dcc.Graph(id="my_index_indicator", figure={},
+                                                  config={'displayModeBar': False})
+                                    ])
+                                ]),
 
-                html.A(
-                    'Download Data',
-                    id='download-link_index',
-                    download="index_level.csv",
-                    href=csv_string_index,
-                    target="_blank"
-                )
+                            dbc.Row(
+                                [
+                                    dbc.Col([
 
-                ])
+                                        dcc.Graph(id="my_index_level", figure=index_area,
+                                                  config={'displayModeBar': False}),
 
-    ]),
+                                        html.A(
+                                            'Download Data',
+                                            id='download-link_index',
+                                            download="index_level.csv",
+                                            href=csv_string_index,
+                                            target="_blank"
+                                        ),
+
+                                    ])
+                                ]),
+
+                        ]),
+                ],
+                style={"width": "70rem"},
+                className="mt-3"
+            )
+
+
+            #         # figure=index_line),
+            #         dcc.Graph(id="my_index_level", figure=index_line),
+
+            #         html.A(
+            #             'Download Data',
+            #             id='download-link_index',
+            #             download="index_level.csv",
+            #             href=csv_string_index,
+            #             target="_blank"
+            #         ),
+
+            #         ], width=9),
+
+            # dbc.Col([
+
+            #     dcc.Graph(id="my_index_indicator", figure={}),
+
+
+            # ])
+        ]),
+
+    ], justify='center'),
 
     dbc.Row([
         dbc.Col([
@@ -141,7 +212,6 @@ app.layout = dbc.Container([
                 target="_blank"
             )
         ])
-
     ]),
 
     dbc.Row([
@@ -191,15 +261,48 @@ app.layout = dbc.Container([
                     target="_blank"
                 )
             ])
-            ])
+            ]),
+
+    dcc.Interval(id='update', n_intervals=0, interval=1000 * 5)
 
 ])
 
 # --------------------------
 # Callbacks part
 
+# index value part and elements
+
+
+@ app.callback(
+    Output('my_index_indicator', 'figure'),
+    Input('update', 'n_intervals')
+)
+def update_indicator(timer):
+
+    dff = df.copy()
+    dff_last = dff.tail(2)
+    dff_y = dff_last[dff_last['Date']
+                     == dff_last['Date'].min()]['Index Value'].values[0]
+    dff_t = dff_last[dff_last['Date']
+                     == dff_last['Date'].max()]['Index Value'].values[0]
+
+    fig = go.Figure(go.Indicator(
+        mode="delta",
+        value=dff_t,
+        delta={'reference': dff_y, 'relative': True, 'valueformat': '.2%'}))
+    fig.update_traces(delta_font={'size': 12})
+    fig.update_layout(height=30, width=70)
+
+    if dff_t >= dff_y:
+        fig.update_traces(delta_increasing_color='green')
+    elif dff_t < dff_y:
+        fig.update_traces(delta_decreasing_color='red')
+
+    return fig
+
 
 # crypto-composition portfolio graph
+
 
 @ app.callback(
     Output(component_id="my_weight_pie", component_property="figure"),
