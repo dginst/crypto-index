@@ -8,49 +8,9 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 import urllib.parse
-
-# connection = MongoClient("3.138.244.245", 27017)py
-connection = MongoClient("localhost", 27017)
-
-
-def query_mongo_x(database, collection, query_dict=None):
-
-    # defining the variable that allows to work with MongoDB
-    db = connection[database]
-    coll = db[collection]
-    if query_dict is None:
-
-        df = pd.DataFrame(list(coll.find()))
-
-        try:
-
-            df = df.drop(columns="_id")
-
-        except AttributeError:
-
-            df = []
-
-        except KeyError:
-
-            df = []
-
-    else:
-
-        df = pd.DataFrame(list(coll.find(query_dict)))
-
-        try:
-
-            df = df.drop(columns="_id")
-
-        except AttributeError:
-
-            df = []
-
-        except KeyError:
-
-            df = []
-
-    return df
+from cryptoindex.mongo_setup import (
+    query_mongo
+)
 
 # start app
 
@@ -66,14 +26,14 @@ server = app.server
 
 # -------------------
 # Data
-df = query_mongo_x("index", "index_level_1000")
+df = query_mongo("index", "index_level_1000")
 df["Year"] = df['Date'].str[:4]
 df = df.drop(columns="Time")
 y_list = list(pd.unique(df["Year"]))
 y_list = [int(y) for y in y_list]
 df["Year"] = [int(y) for y in df["Year"]]
 
-df_weight = query_mongo_x("index", "index_weights")
+df_weight = query_mongo("index", "index_weights")
 last_row_date = np.array(df_weight.tail(1)["Date"])[0]
 date_list = np.array(df_weight["Date"])
 
@@ -82,9 +42,9 @@ df_no_time = df_weight.drop(columns="Date")
 
 col_list = list(df_no_time.columns)
 
-df_volume = query_mongo_x("index", "crypto_volume")
+df_volume = query_mongo("index", "crypto_volume")
 
-df_price = query_mongo_x("index", "crypto_price")
+df_price = query_mongo("index", "crypto_price")
 
 # ----------------------
 # index level graph and link to download
@@ -153,7 +113,6 @@ app.layout = dbc.Container([
 
                 ])
 
-
     ]),
 
     dbc.Row([
@@ -171,7 +130,6 @@ app.layout = dbc.Container([
                 style={"width": "50%"},
                 clearable=False
             ),
-
 
             dcc.Graph(id='my_weight_pie', figure={}),
 
@@ -288,9 +246,11 @@ def update_pie(my_dropdown):
 )
 def update_price(my_checklist):
 
-    dff_vol = df_price.copy()
-    dff_date = dff_vol["Date"]
-    dff_filtered = dff_vol[my_checklist]
+    df_price = query_mongo("index", "crypto_price")
+
+    dff_price = df_price.copy()
+    dff_date = dff_price["Date"]
+    dff_filtered = dff_price[my_checklist]
     dff_filtered["Date"] = dff_date
 
     price_line = px.line(
