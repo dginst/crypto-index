@@ -271,8 +271,8 @@ def update_indicator(timer):
         mode="delta",
         value=dff_t,
         delta={'reference': dff_ind_y, 'relative': True, 'valueformat': '.2%'}))
-    fig_indicator.update_traces(delta_font={'size': 12})
-    fig_indicator.update_layout(height=30, width=70)
+    fig_indicator.update_traces(delta_font={'size': 18})
+    fig_indicator.update_layout(height=50, width=100)
 
     if dff_ind_t >= dff_ind_y:
         fig_indicator.update_traces(delta_increasing_color='green')
