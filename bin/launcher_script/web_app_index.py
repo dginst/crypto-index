@@ -50,19 +50,16 @@ df_price = query_mongo("index", "crypto_price")
 # index level graph and link to download
 
 dff = df.copy()
+dff = dff.loc[dff["Date"] > "2016-09-30"]
 dff_last = dff.tail(2)
 dff_y = dff_last[dff_last['Date']
                  == dff_last['Date'].min()]['Index Value'].values[0]
 dff_t = dff_last[dff_last['Date']
                  == dff_last['Date'].max()]['Index Value'].values[0]
 
-if dff_t >= dff_y:
 
-    color = '#00FE35'
-
-elif dff_t < dff_y:
-
-    color = '#FD3216'
+variation = (dff_t >= dff_y)
+dff["Var"] = variation
 
 # index_line = px.line(
 #     data_frame=df,
@@ -72,15 +69,18 @@ elif dff_t < dff_y:
 #     title='Crypto Index Level')
 
 index_area = px.area(
-    data_frame=df,
+    data_frame=dff,
     x="Date",
     y="Index Value",
     template='plotly_dark',
     title='Crypto Index Level',
+    color="Var",
     color_discrete_map={
-        "Index Value": color,
+        True: '#1CA71C',
+        False: '#00FE35'
     }
 )
+index_area.update_layout(showlegend=False)
 
 dff_index = df.copy()
 dff_index = dff_index.drop(columns="Year")
@@ -162,26 +162,6 @@ app.layout = dbc.Container([
                 className="mt-3"
             )
 
-
-            #         # figure=index_line),
-            #         dcc.Graph(id="my_index_level", figure=index_line),
-
-            #         html.A(
-            #             'Download Data',
-            #             id='download-link_index',
-            #             download="index_level.csv",
-            #             href=csv_string_index,
-            #             target="_blank"
-            #         ),
-
-            #         ], width=9),
-
-            # dbc.Col([
-
-            #     dcc.Graph(id="my_index_indicator", figure={}),
-
-
-            # ])
         ]),
 
     ], justify='center'),
@@ -279,26 +259,26 @@ app.layout = dbc.Container([
 )
 def update_indicator(timer):
 
-    dff = df.copy()
-    dff_last = dff.tail(2)
-    dff_y = dff_last[dff_last['Date']
-                     == dff_last['Date'].min()]['Index Value'].values[0]
-    dff_t = dff_last[dff_last['Date']
-                     == dff_last['Date'].max()]['Index Value'].values[0]
+    dff_ind = df.copy()
+    dff_last_ind = dff_ind.tail(2)
+    dff_ind_y = dff_last_ind[dff_last_ind['Date']
+                             == dff_last_ind['Date'].min()]['Index Value'].values[0]
+    dff_ind_t = dff_last_ind[dff_last_ind['Date']
+                             == dff_last_ind['Date'].max()]['Index Value'].values[0]
 
-    fig = go.Figure(go.Indicator(
+    fig_indicator = go.Figure(go.Indicator(
         mode="delta",
         value=dff_t,
-        delta={'reference': dff_y, 'relative': True, 'valueformat': '.2%'}))
-    fig.update_traces(delta_font={'size': 12})
-    fig.update_layout(height=30, width=70)
+        delta={'reference': dff_ind_y, 'relative': True, 'valueformat': '.2%'}))
+    fig_indicator.update_traces(delta_font={'size': 12})
+    fig_indicator.update_layout(height=30, width=70)
 
-    if dff_t >= dff_y:
-        fig.update_traces(delta_increasing_color='green')
-    elif dff_t < dff_y:
-        fig.update_traces(delta_decreasing_color='red')
+    if dff_ind_t >= dff_ind_y:
+        fig_indicator.update_traces(delta_increasing_color='green')
+    elif dff_ind_t < dff_ind_y:
+        fig_indicator.update_traces(delta_decreasing_color='red')
 
-    return fig
+    return fig_indicator
 
 
 # crypto-composition portfolio graph
@@ -333,11 +313,21 @@ def update_pie(my_dropdown):
         hole=.3,
         template='plotly_dark',
         title='Index Weights',
-        color_discrete_sequence=["#FEAF16",
-                                 "#511CFB",
-                                 "#F6222E",
-                                 "#E2E2E2",
-                                 "#86CE00"]
+        color=df_col_2,
+        color_discrete_map={
+            "BTC": "#FEAF16",
+            "ETH": "#511CFB",
+            "XRP": "#F6222E",
+            "LTC": "#E2E2E2",
+            "BCH": "#86CE00",
+            "EOS": "#FBE426",
+            "ETC": "#DA16FF",
+            "ZEC": "#B68100",
+            "ADA": "#00B5F7",
+            "XLM": "#750D86",
+            "XMR": "#A777F1",
+            "BSV": "#F58518"
+        }
     )
 
     return pie_fig
