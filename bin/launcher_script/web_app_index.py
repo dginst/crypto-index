@@ -59,9 +59,7 @@ dff_t = dff_last[dff_last['Date']
 
 
 variation = (dff_t >= dff_y)
-print(variation)
 dff["Var"] = variation
-print(dff.tail(10))
 
 # index_line = px.line(
 #     data_frame=df,
@@ -78,8 +76,9 @@ index_area = px.area(
     title='Crypto Index Level',
     color="Var",
     color_discrete_map={
+        False: '#FD3216',
         True: '#1CA71C',
-        False: '#00FE35'
+
     }
 )
 index_area.update_layout(showlegend=False)
