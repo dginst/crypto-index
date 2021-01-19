@@ -256,7 +256,7 @@ app.layout = dbc.Container([
 
 @app.callback(
     Output('my_index_level', 'data'),
-    Input('graph-update', 'n_intervals')
+    Input('df-update', 'n_intervals')
 )
 def update_index_df(n):
 
