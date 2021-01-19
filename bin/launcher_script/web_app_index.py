@@ -244,12 +244,26 @@ app.layout = dbc.Container([
             ])
             ]),
 
-    dcc.Interval(id='update', n_intervals=0, interval=1000 * 5)
+    dcc.Interval(id='update', n_intervals=0, interval=1000 * 5),
+
+    dcc.Interval(id='df-update', interval=10000, n_intervals=0)
 
 ])
 
 # --------------------------
 # Callbacks part
+
+
+@app.callback(
+    Output('my_index_level', 'data'),
+    Input('graph-update', 'n_intervals')
+)
+def update_index_df(n):
+
+    df = query_mongo("index", "index_level_1000")
+
+    return df
+
 
 # index value part and elements
 
