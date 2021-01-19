@@ -143,6 +143,7 @@ app.layout = dbc.Container([
                                 [
                                     dbc.Col([
 
+
                                         dcc.Graph(id="my_index_level", figure=index_area,
                                                   config={'displayModeBar': False}),
 
@@ -246,7 +247,7 @@ app.layout = dbc.Container([
 
     dcc.Interval(id='update', n_intervals=0, interval=1000 * 5),
 
-    dcc.Interval(id='df-update', interval=10000, n_intervals=0)
+    dcc.Interval(id='df-update', interval=100000, n_intervals=0)
 
 ])
 
@@ -254,15 +255,15 @@ app.layout = dbc.Container([
 # Callbacks part
 
 
-@app.callback(
-    Output('my_index_level', 'data'),
-    Input('df-update', 'n_intervals')
-)
-def update_index_df(n):
+# @app.callback(
+#     Output('my_index_level', 'figure'),
+#     Input('df-update', 'n_intervals')
+# )
+# def update_index_df(n):
 
-    df = query_mongo("index", "index_level_1000")
+#     df = query_mongo("index", "index_level_1000")
 
-    return df
+#     return df.to_dict('records')
 
 
 # index value part and elements
