@@ -198,6 +198,8 @@ app.layout = dbc.Container([
 
     dbc.Row([
 
+        dbc.Col([
+
             html.Label(['Crypto Assets']),
             dcc.Checklist(
                 id='my_crypto_check_2',
@@ -218,31 +220,34 @@ app.layout = dbc.Container([
                 href=csv_string_price,
                 target="_blank"
             )
-            ]),
+
+        ])
+    ]),
 
     dbc.Row([
 
-        html.Label(['Crypto Assets']),
-        dcc.Checklist(
-            id='my_crypto_check',
-            options=[
-                {'label': x, 'value': x} for x in col_list
-            ],
-            value=["BTC", "ETH", "XRP", "LTC", "BCH"],
-            labelStyle={'display': 'inline-block'},
-            inputStyle={"margin-right": "10px",
-                        "margin-left": "10px"}
-        ),
-        dcc.Graph(id="my_volume_level", figure={}),
+        dbc.Col([
+            html.Label(['Crypto Assets']),
+            dcc.Checklist(
+                id='my_crypto_check',
+                options=[
+                    {'label': x, 'value': x} for x in col_list
+                ],
+                value=["BTC", "ETH", "XRP", "LTC", "BCH"],
+                labelStyle={'display': 'inline-block'},
+                inputStyle={"margin-right": "10px",
+                            "margin-left": "10px"}
+            ),
+            dcc.Graph(id="my_volume_level", figure={}),
 
-        html.A(
-            'Download Data',
-            id='download-link_volume',
-            download="crypto_volume.csv",
-            href=csv_string_volume,
-            target="_blank"
-        )
-
+            html.A(
+                'Download Data',
+                id='download-link_volume',
+                download="crypto_volume.csv",
+                href=csv_string_volume,
+                target="_blank"
+            )
+        ])
     ]),
 
     dcc.Interval(id='update', n_intervals=0, interval=1000 * 5),
