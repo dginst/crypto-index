@@ -11,9 +11,27 @@ import urllib.parse
 from cryptoindex.mongo_setup import (
     query_mongo
 )
+from cryptoindex.dashboard_func import (
+    web_app_data
+)
+from cryptoindex.global_variable import (
+    df_index, df_price, df_volume, df_weight,
+    last_start_q, start_q_list, index_area_fig
+)
+from cryptoindex.config import (
+    CRYPTO_ASSET
+)
+
+# global variables
+global df_index
+global df_price
+global df_volume
+global df_weight
+global last_start_q
+global start_q_list
+global index_area_fig
 
 # start app
-
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
                 meta_tags=[{'name': 'viewport',
@@ -25,92 +43,56 @@ app.css.append_css(
 server = app.server
 
 # -------------------
-# Data
-df = query_mongo("index", "index_level_1000")
-df["Year"] = df['Date'].str[:4]
-df = df.drop(columns="Time")
-y_list = list(pd.unique(df["Year"]))
-y_list = [int(y) for y in y_list]
-df["Year"] = [int(y) for y in df["Year"]]
+# Data initialization for global functions
 
-df_weight = query_mongo("index", "index_weights")
-last_row_date = np.array(df_weight.tail(1)["Date"])[0]
-date_list = np.array(df_weight["Date"])
-
-df_weight = df_weight.drop(columns=["Time"])
-df_no_time = df_weight.drop(columns="Date")
-
-col_list = list(df_no_time.columns)
+df_index = query_mongo("index", "index_level_1000")
 
 df_volume = query_mongo("index", "crypto_volume")
 
 df_price = query_mongo("index", "crypto_price")
 
-# ----------------------
-# index level graph and link to download
+df_weight = query_mongo("index", "index_weights")
 
-dff = df.copy()
-dff = dff.loc[dff["Date"] > "2016-09-30"]
-dff_last = dff.tail(2)
-dff_y = dff_last[dff_last['Date']
-                 == dff_last['Date'].min()]['Index Value'].values[0]
-dff_t = dff_last[dff_last['Date']
-                 == dff_last['Date'].max()]['Index Value'].values[0]
+last_start_q = np.array(df_weight.tail(1)["Date"])[0]
+start_q_list = np.array(df_weight["Date"])
 
 
-variation = (dff_t >= dff_y)
-dff["Var"] = variation
+# -----------------------------------
+# data updates through multithread class
+# thread_update_dfs = web_app_data(
+#     "thread_update_dfs", 60)
+# thread_update_dfs.start()
 
-# index_line = px.line(
-#     data_frame=df,
-#     x="Date",
-#     y="Index Value",
-#     template='plotly_dark',
-#     title='Crypto Index Level')
 
-index_area = px.area(
-    data_frame=dff,
-    x="Date",
-    y="Index Value",
-    template='plotly_dark',
-    title='Crypto Index Level',
-    color="Var",
-    color_discrete_map={
-        False: '#FD3216',
-        True: '#1CA71C',
+# -----------------------------
+# # index to download
+# dff_index = df_index.copy()
+# csv_string_index = dff_index.to_csv(index=False, encoding='utf-8')
+# csv_string_index = "data:text/csv;charset=utf-8," + \
+#     urllib.parse.quote(csv_string_index)
 
-    }
-)
-index_area.update_layout(showlegend=False)
+# # weights link to download
 
-dff_index = df.copy()
-dff_index = dff_index.drop(columns="Year")
-csv_string_index = df.to_csv(index=False, encoding='utf-8')
-csv_string_index = "data:text/csv;charset=utf-8," + \
-    urllib.parse.quote(csv_string_index)
+# dff_weights = df_weight.copy()
+# csv_string_weight = dff_weights.to_csv(index=False, encoding='utf-8')
+# csv_string_weight = "data:text/csv;charset=utf-8," + \
+#     urllib.parse.quote(csv_string_weight)
 
-# weights link to download
+# # crypto prices link to download
 
-dff_weights = df_weight.copy()
-csv_string_weight = dff_weights.to_csv(index=False, encoding='utf-8')
-csv_string_weight = "data:text/csv;charset=utf-8," + \
-    urllib.parse.quote(csv_string_weight)
+# dff_prices = df_price.copy()
+# dff_prices = dff_prices.drop(columns="Time")
+# csv_string_price = dff_prices.to_csv(index=False, encoding='utf-8')
+# csv_string_price = "data:text/csv;charset=utf-8," + \
+#     urllib.parse.quote(csv_string_price)
 
-# crypto prices link to download
+# # crypto volumes link to download
 
-dff_prices = df_price.copy()
-dff_prices = dff_prices.drop(columns="Time")
-csv_string_price = dff_prices.to_csv(index=False, encoding='utf-8')
-csv_string_price = "data:text/csv;charset=utf-8," + \
-    urllib.parse.quote(csv_string_price)
-
-# crypto volumes link to download
-
-dff_volume = df_volume.copy()
-dff_volume = dff_volume.drop(columns="Time")
-csv_string_volume = dff_volume.to_csv(index=False, encoding='utf-8')
-csv_string_volume = "data:text/csv;charset=utf-8," + \
-    urllib.parse.quote(csv_string_volume)
+# dff_volume = df_volume.copy()
+# dff_volume = dff_volume.drop(columns="Time")
+# csv_string_volume = dff_volume.to_csv(index=False, encoding='utf-8')
+# csv_string_volume = "data:text/csv;charset=utf-8," + \
+#     urllib.parse.quote(csv_string_volume)
 
 # ----------------
 # app layout: bootstrap
@@ -144,14 +126,14 @@ app.layout = dbc.Container([
                                     dbc.Col([
 
 
-                                        dcc.Graph(id="my_index_level", figure=index_area,
+                                        dcc.Graph(id="my_index_level", figure={},
                                                   config={'displayModeBar': False}),
 
                                         html.A(
                                             'Download Data',
                                             id='download-link_index',
                                             download="index_level.csv",
-                                            href=csv_string_index,
+                                            href='',
                                             target="_blank"
                                         ),
 
@@ -176,10 +158,11 @@ app.layout = dbc.Container([
             dcc.Dropdown(
                 id='my_dropdown',
                 options=[
-                    {'label': x, 'value': x} for x in date_list
+                    {'label': x, 'value': x} for x in start_q_list
+
                 ],
                 multi=False,
-                value=str(last_row_date),
+                value=str(last_start_q),
                 style={"width": "50%"},
                 clearable=False
             ),
@@ -190,7 +173,7 @@ app.layout = dbc.Container([
                 'Download Data',
                 id='download-link_weight',
                 download="index_weight.csv",
-                href=csv_string_weight,
+                href='',
                 target="_blank"
             )
         ])
@@ -204,7 +187,7 @@ app.layout = dbc.Container([
             dcc.Checklist(
                 id='my_crypto_check_2',
                 options=[
-                    {'label': x, 'value': x} for x in col_list
+                    {'label': x, 'value': x} for x in CRYPTO_ASSET
                 ],
                 value=["BTC", "ETH", "XRP", "LTC", "BCH"],
                 labelStyle={'display': 'inline-block'},
@@ -217,7 +200,7 @@ app.layout = dbc.Container([
                 'Download Data',
                 id='download-link_price',
                 download="crypto_price.csv",
-                href=csv_string_price,
+                href='',
                 target="_blank"
             )
 
@@ -231,7 +214,7 @@ app.layout = dbc.Container([
             dcc.Checklist(
                 id='my_crypto_check',
                 options=[
-                    {'label': x, 'value': x} for x in col_list
+                    {'label': x, 'value': x} for x in CRYPTO_ASSET
                 ],
                 value=["BTC", "ETH", "XRP", "LTC", "BCH"],
                 labelStyle={'display': 'inline-block'},
@@ -244,7 +227,7 @@ app.layout = dbc.Container([
                 'Download Data',
                 id='download-link_volume',
                 download="crypto_volume.csv",
-                href=csv_string_volume,
+                href='',
                 target="_blank"
             )
         ])
@@ -260,27 +243,58 @@ app.layout = dbc.Container([
 # Callbacks part
 
 
-# @app.callback(
-#     Output('my_index_level', 'figure'),
-#     Input('df-update', 'n_intervals')
-# )
-# def update_index_df(n):
+@app.callback(
+    Output('my_index_level', 'figure'),
+    Input('df-update', 'n_intervals')
+)
+def update_index_df(n):
 
-#     df = query_mongo("index", "index_level_1000")
+    global df_index
 
-#     return df.to_dict('records')
+    df_index = query_mongo("index", "index_level_1000")
+
+    dff = df_index.copy()
+    dff = dff.loc[dff["Date"] > "2016-09-30"]
+    dff_last = dff.tail(2)
+    dff_y = dff_last[dff_last['Date']
+                     == dff_last['Date'].min()]['Index Value'].values[0]
+    dff_t = dff_last[dff_last['Date']
+                     == dff_last['Date'].max()]['Index Value'].values[0]
+
+    variation = (dff_t >= dff_y)
+    dff["Var"] = variation
+
+    index_area = px.area(
+        data_frame=dff,
+        x="Date",
+        y="Index Value",
+        template='plotly_dark',
+        title='Crypto Index Level',
+        color="Var",
+        color_discrete_map={
+            False: '#FD3216',
+            True: '#1CA71C',
+
+        }
+    )
+    index_area.update_layout(showlegend=False)
+
+    return index_area
 
 
 # index value part and elements
 
 
 @ app.callback(
-    Output('my_index_indicator', 'figure'),
+    [Output('my_index_indicator', 'figure'),
+     Output('download-link_index', 'href')],
     Input('update', 'n_intervals')
 )
 def update_indicator(timer):
 
-    dff_ind = df.copy()
+    global df_index
+
+    dff_ind = df_index.copy()
     dff_last_ind = dff_ind.tail(2)
     dff_ind_y = dff_last_ind[dff_last_ind['Date']
                              == dff_last_ind['Date'].min()]['Index Value'].values[0]
@@ -289,7 +303,7 @@ def update_indicator(timer):
 
     fig_indicator = go.Figure(go.Indicator(
         mode="delta",
-        value=dff_t,
+        value=dff_ind_t,
         delta={'reference': dff_ind_y, 'relative': True, 'valueformat': '.2%'}))
     fig_indicator.update_traces(delta_font={'size': 18})
     fig_indicator.update_layout(height=50, width=100)
@@ -299,20 +313,30 @@ def update_indicator(timer):
     elif dff_ind_t < dff_ind_y:
         fig_indicator.update_traces(delta_decreasing_color='red')
 
-    return fig_indicator
+    csv_string_index = dff_ind.to_csv(index=False, encoding='utf-8')
+    csv_string_index = "data:text/csv;charset=utf-8," + \
+        urllib.parse.quote(csv_string_index)
+
+    return fig_indicator, csv_string_index
 
 
 # crypto-composition portfolio graph
 
 
 @ app.callback(
-    Output(component_id="my_weight_pie", component_property="figure"),
+    [Output(component_id="my_weight_pie", component_property="figure"),
+     Output(component_id="download-link_weight", component_property="href")],
     Input(component_id="my_dropdown", component_property="value")
 )
 def update_pie(my_dropdown):
 
-    dff_w = df_weight.copy()
-    dff_w_filt = dff_w.loc[dff_w["Date"] == my_dropdown]
+    global df_weight
+
+    df_weight = query_mongo("index", "index_weights")
+
+    dff_weight = df_weight.copy()
+    dff_weight = dff_weight.drop(columns="Time")
+    dff_w_filt = dff_weight.loc[dff_weight["Date"] == my_dropdown]
 
     dff_w_filt = dff_w_filt.drop(columns="Date")
 
@@ -351,24 +375,31 @@ def update_pie(my_dropdown):
         }
     )
 
-    return pie_fig
+    csv_string_weight = dff_weight.to_csv(index=False, encoding='utf-8')
+    csv_string_weight = "data:text/csv;charset=utf-8," + \
+        urllib.parse.quote(csv_string_weight)
+
+    return pie_fig, csv_string_weight
 
 
 @ app.callback(
-    Output(component_id="my_price_level", component_property="figure"),
+    [Output(component_id="my_price_level", component_property="figure"),
+     Output(component_id="download-link_price", component_property="href")],
     Input(component_id="my_crypto_check_2", component_property="value")
 )
 def update_price(my_checklist):
+
+    global df_price
 
     df_price = query_mongo("index", "crypto_price")
 
     dff_price = df_price.copy()
     dff_date = dff_price["Date"]
-    dff_filtered = dff_price[my_checklist]
-    dff_filtered["Date"] = dff_date
+    dff_price_filtered = dff_price[my_checklist]
+    dff_price_filtered["Date"] = dff_date
 
     price_line = px.line(
-        data_frame=dff_filtered,
+        data_frame=dff_price_filtered,
         x="Date",
         y=my_checklist,
         template='plotly_dark',
@@ -389,22 +420,33 @@ def update_price(my_checklist):
         }
     )
 
-    return price_line
+    dff_price_d = df_price.copy()
+    dff_price_d = dff_price_d.drop(columns="Time")
+    csv_string_price = dff_price_d.to_csv(index=False, encoding='utf-8')
+    csv_string_price = "data:text/csv;charset=utf-8," + \
+        urllib.parse.quote(csv_string_price)
+
+    return price_line, csv_string_price
 
 
 @ app.callback(
-    Output(component_id="my_volume_level", component_property="figure"),
+    [Output(component_id="my_volume_level", component_property="figure"),
+     Output(component_id="download-link_volume", component_property="href")],
     Input(component_id="my_crypto_check", component_property="value")
 )
 def update_vol(my_checklist):
 
+    global df_volume
+
+    df_volume = query_mongo("index", "crypto_volume")
+
     dff_vol = df_volume.copy()
     dff_date = dff_vol["Date"]
-    dff_filtered = dff_vol[my_checklist]
-    dff_filtered["Date"] = dff_date
+    dff_vol_filtered = dff_vol[my_checklist]
+    dff_vol_filtered["Date"] = dff_date
 
     volume_line = px.line(
-        data_frame=dff_filtered,
+        data_frame=dff_vol_filtered,
         x="Date",
         y=my_checklist,
         template='plotly_dark',
@@ -425,7 +467,13 @@ def update_vol(my_checklist):
         }
     )
 
-    return volume_line
+    dff_volume = df_volume.copy()
+    dff_volume = dff_volume.drop(columns="Time")
+    csv_string_volume = dff_volume.to_csv(index=False, encoding='utf-8')
+    csv_string_volume = "data:text/csv;charset=utf-8," + \
+        urllib.parse.quote(csv_string_volume)
+
+    return volume_line, csv_string_volume
 
 
 print("Done")
