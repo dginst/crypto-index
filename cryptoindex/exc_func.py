@@ -740,6 +740,15 @@ def exc_hist_op():
     midnight_clean = exc_initial_clean(exc_raw_df, crypto_fiat_arr)
     mongo_upload(midnight_clean, "collection_exc_uniform")
 
+    # deleting the values for xrp in the coinbase-pro exchange
+    midnight_clean["key"] = midnight_clean["Exchange"] + \
+        "&" + midnight_clean["Pair"]
+    midnight_clean = midnight_clean.loc[midnight_clean.key
+                                        != "coinbase-pro&xrpusd"]
+    midnight_clean = midnight_clean.loc[midnight_clean.key
+                                        != "coinbase-pro&xrpeur"]
+    midnight_clean = midnight_clean.drop(columns="key")
+
     exc_complete_df = exc_key_mngmt(midnight_clean)
     exc_fixed_df = exc_hist_fix(exc_complete_df)
     mongo_upload(exc_fixed_df, "collection_exc_clean")
