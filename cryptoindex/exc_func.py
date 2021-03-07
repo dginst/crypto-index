@@ -747,13 +747,15 @@ def exc_hist_op():
                                         != "coinbase-pro&xrpusd"]
     midnight_clean = midnight_clean.loc[midnight_clean.key
                                         != "coinbase-pro&xrpeur"]
-    # deleting the values for zec in the bittrex exchange
+    # deleting the values for zec and xmr in the bittrex exchange
     midnight_clean = midnight_clean.loc[midnight_clean.key
                                         != "bittrex&zecusd"]
     midnight_clean = midnight_clean.loc[midnight_clean.key
                                         != "bittrex&zecusdt"]
     midnight_clean = midnight_clean.loc[midnight_clean.key
                                         != "bittrex&zecusdc"]
+    midnight_clean = midnight_clean.loc[midnight_clean.key
+                                        != "bittrex&xmrusdt"]
 
     midnight_clean = midnight_clean.drop(columns="key")
 
