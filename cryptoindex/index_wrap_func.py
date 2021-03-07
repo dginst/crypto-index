@@ -22,9 +22,9 @@ from cryptoindex.index_func import (
 def hist_complete(coll_to_use="coll_data_feed"):
 
     # ecb_hist_op()
-    cw_hist_operation()
-    exc_hist_op()
-    hist_data_feed_op()
+    # cw_hist_operation()
+    # exc_hist_op()
+    # hist_data_feed_op()
     index_hist_total(coll_to_use)
 
     return None
