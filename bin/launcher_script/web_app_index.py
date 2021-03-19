@@ -40,7 +40,7 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
 app.css.append_css(
     {"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"})
 
-server = app.server(debug=False)
+server = app.server()
 
 # -------------------
 # Data initialization for global functions
