@@ -151,87 +151,148 @@ app.layout = dbc.Container([
     ], justify='center'),
 
     dbc.Row([
-        dbc.Col([
+            dbc.Col([
 
-            html.Label(['Period']),
+                dbc.Card(
+                    [
+                        dbc.CardBody(
+                            [
 
-            dcc.Dropdown(
-                id='my_dropdown',
-                options=[
-                    {'label': x, 'value': x} for x in start_q_list
+                                dbc.Row([
+                                    dbc.Col([
 
-                ],
-                multi=False,
-                value=str(last_start_q),
-                style={"width": "50%"},
-                clearable=False
-            ),
+                                        html.Label(['Period']),
 
-            dcc.Graph(id='my_weight_pie', figure={}),
+                                        dcc.Dropdown(
+                                            id='my_dropdown',
+                                            options=[
+                                                {'label': x, 'value': x} for x in start_q_list
 
-            html.A(
-                'Download Data',
-                id='download-link_weight',
-                download="index_weight.csv",
-                href='',
-                target="_blank"
-            )
-        ])
-    ]),
+                                            ],
+                                            multi=False,
+                                            value=str(last_start_q),
+                                            style={"width": "50%"},
+                                            clearable=False
+                                        ),
 
-    dbc.Row([
+                                        dcc.Graph(
+                                            id='my_weight_pie', figure={}),
 
-        dbc.Col([
+                                        html.A(
+                                            'Download Data',
+                                            id='download-link_weight',
+                                            download="index_weight.csv",
+                                            href='',
+                                            target="_blank"
+                                        )
+                                    ])
+                                ]),
 
-            html.Label(['Crypto Assets']),
-            dcc.Checklist(
-                id='my_crypto_check_2',
-                options=[
-                    {'label': x, 'value': x} for x in CRYPTO_ASSET
-                ],
-                value=["BTC", "ETH", "XRP", "LTC", "BCH"],
-                labelStyle={'display': 'inline-block'},
-                inputStyle={"margin-right": "10px",
-                            "margin-left": "10px"}
-            ),
-            dcc.Graph(id="my_price_level", figure={}),
+                            ]),
+                    ],
+                    style={"width": "70rem"},
+                    className="mt-3"
+                )
 
-            html.A(
-                'Download Data',
-                id='download-link_price',
-                download="crypto_price.csv",
-                href='',
-                target="_blank"
-            )
+            ]),
 
-        ])
-    ]),
+            ], justify='center'),
+
 
     dbc.Row([
+            dbc.Col([
 
-        dbc.Col([
-            html.Label(['Crypto Assets']),
-            dcc.Checklist(
-                id='my_crypto_check',
-                options=[
-                    {'label': x, 'value': x} for x in CRYPTO_ASSET
-                ],
-                value=["BTC", "ETH", "XRP", "LTC", "BCH"],
-                labelStyle={'display': 'inline-block'},
-                inputStyle={"margin-right": "10px",
-                            "margin-left": "10px"}
-            ),
-            dcc.Graph(id="my_volume_level", figure={}),
+                dbc.Card(
+                    [
+                        dbc.CardBody(
+                            [
+                                dbc.Row([
 
-            html.A(
-                'Download Data',
-                id='download-link_volume',
-                download="crypto_volume.csv",
-                href='',
-                target="_blank"
-            )
-        ])
-    ]),
+                                    dbc.Col([
+
+                                        html.Label(['Crypto Assets']),
+                                        dcc.Checklist(
+                                            id='my_crypto_check_2',
+                                            options=[
+                                                {'label': x, 'value': x} for x in CRYPTO_ASSET
+                                            ],
+                                            value=["BTC", "ETH",
+                                                   "XRP", "LTC", "BCH"],
+                                            labelStyle={
+                                                'display': 'inline-block'},
+                                            inputStyle={"margin-right": "10px",
+                                                        "margin-left": "10px"}
+                                        ),
+                                        dcc.Graph(
+                                            id="my_price_level", figure={}),
+
+                                        html.A(
+                                            'Download Data',
+                                            id='download-link_price',
+                                            download="crypto_price.csv",
+                                            href='',
+                                            target="_blank"
+                                        )
+
+                                    ])
+                                ]),
+
+                            ]),
+                    ],
+                    style={"width": "70rem"},
+                    className="mt-3"
+                )
+
+            ]),
+
+            ], justify='center'),
+
+    dbc.Row([
+            dbc.Col([
+
+                dbc.Card(
+                    [
+                        dbc.CardBody(
+                            [
+                                dbc.Row([
+
+                                    dbc.Col([
+                                        html.Label(['Crypto Assets']),
+                                        dcc.Checklist(
+                                            id='my_crypto_check',
+                                            options=[
+                                                {'label': x, 'value': x} for x in CRYPTO_ASSET
+                                            ],
+                                            value=["BTC", "ETH",
+                                                   "XRP", "LTC", "BCH"],
+                                            labelStyle={
+                                                'display': 'inline-block'},
+                                            inputStyle={"margin-right": "10px",
+                                                        "margin-left": "10px"}
+                                        ),
+                                        dcc.Graph(
+                                            id="my_volume_level", figure={}),
+
+                                        html.A(
+                                            'Download Data',
+                                            id='download-link_volume',
+                                            download="crypto_volume.csv",
+                                            href='',
+                                            target="_blank"
+                                        )
+                                    ])
+                                ]),
+
+                            ]),
+                    ],
+                    style={"width": "70rem"},
+                    className="mt-3"
+                )
+
+            ]),
+
+            ], justify='center'),
+
 
     dcc.Interval(id='update', n_intervals=0, interval=1000 * 5),
 
