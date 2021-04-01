@@ -278,3 +278,33 @@ def check_missing(tot_date_arr, coll_to_check, query, days_to_check=10):
         date_to_add = None
 
     return date_to_add
+
+
+
+# #############################
+# function for table with exchange rate and coinbase-pro BTCUSD value
+
+def daily_table():
+
+    # assign date of interest to variables
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.strptime(today_str, "%Y-%m-%d")
+    today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+    y_TS = today_TS - DAY_IN_SEC
+
+    ecb_query = {"Date": str(y_TS), "Currency": "EUR/USD"}
+    btcusd_query = {"Time": y_TS, "Exchange": "coinbase-pro", "Pair": "btcusd"}
+
+    eurusd = query_mongo(DB_NAME, "ecb_clean", ecb_query)
+    btcusd = query_mongo(DB_NAME, "index_data_feed", btcusd_query)
+
+    btcusd_value = np.array(btcusd["Close Price"])
+    eurusd_value = np.array(eurusd["Rate"])
+    human_date = np.array(eurusd["Standard Date"])
+
+    df = pd.DataFrame(columns=["Date", "EUR/USD", "BTCUSD"])
+    df["Date"] = human_date
+    df["EUR/USD"] = eurusd_value
+    df["BTCUSD"] = btcusd_value
+
+    return df

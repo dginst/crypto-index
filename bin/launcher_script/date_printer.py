@@ -5,13 +5,28 @@ from cryptoindex.calc import (
 
 from cryptoindex.data_setup import (timestamp_to_human)
 
+from cryptoindex.index_func import days_variable
 
-print(timestamp_to_human(start_q()))
-print(timestamp_to_human(next_start()))
-print(timestamp_to_human(stop_q(next_start())))
-print(timestamp_to_human(board_meeting_day()))
-for x, y in next_quarterly_period(initial_val=0):
-    print(timestamp_to_human([x]))
-    print(timestamp_to_human([y]))
+day = None
 
-print(timestamp_to_human(start_q("03-23-2020")))
+start_q_list = next_start()
+board_eve_list = day_before_board()
+print(start_q_list)
+print(board_eve_list)
+
+day_TS, _ = days_variable(day)
+day_TS = day_TS + 86400
+print(day_TS)
+
+if day_TS in start_q_list:
+
+    print("First day of the quarter")
+
+
+elif day_TS in board_eve_list:
+
+    print("Board day")
+
+else:
+
+    print("Normal day")

@@ -1,26 +1,20 @@
-import pandas as pd
-import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
+import urllib.parse
+
 import dash
+import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-import dash_bootstrap_components as dbc
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from cryptoindex.config import CRYPTO_ASSET
+from cryptoindex.dashboard_func import web_app_data
+from cryptoindex.global_variable import (df_index, df_price, df_volume,
+                                         df_weight, index_area_fig,
+                                         last_start_q, start_q_list)
+from cryptoindex.mongo_setup import query_mongo
 from dash.dependencies import Input, Output
-import urllib.parse
-from cryptoindex.mongo_setup import (
-    query_mongo
-)
-from cryptoindex.dashboard_func import (
-    web_app_data
-)
-from cryptoindex.global_variable import (
-    df_index, df_price, df_volume, df_weight,
-    last_start_q, start_q_list, index_area_fig
-)
-from cryptoindex.config import (
-    CRYPTO_ASSET
-)
 
 # global variables
 global df_index
