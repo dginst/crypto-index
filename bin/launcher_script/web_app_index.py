@@ -10,20 +10,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from cryptoindex.config import CRYPTO_ASSET
 from cryptoindex.dashboard_func import web_app_data
-from cryptoindex.global_variable import (df_index, df_price, df_volume,
-                                         df_weight, index_area_fig,
-                                         last_start_q, start_q_list)
 from cryptoindex.mongo_setup import query_mongo
 from dash.dependencies import Input, Output
-
-# global variables
-global df_index
-global df_price
-global df_volume
-global df_weight
-global last_start_q
-global start_q_list
-global index_area_fig
 
 # start app
 
@@ -37,56 +25,12 @@ app.css.append_css(
 server = app.server
 
 # -------------------
-# Data initialization for global functions
-
-df_index = query_mongo("index", "index_level_1000")
-
-df_volume = query_mongo("index", "crypto_volume")
-
-df_price = query_mongo("index", "crypto_price")
+# Important date lists definition
 
 df_weight = query_mongo("index", "index_weights")
 
 last_start_q = np.array(df_weight.tail(1)["Date"])[0]
 start_q_list = np.array(df_weight["Date"])
-
-
-# -----------------------------------
-# data updates through multithread class
-# thread_update_dfs = web_app_data(
-#     "thread_update_dfs", 60)
-# thread_update_dfs.start()
-
-
-# -----------------------------
-# # index to download
-# dff_index = df_index.copy()
-# csv_string_index = dff_index.to_csv(index=False, encoding='utf-8')
-# csv_string_index = "data:text/csv;charset=utf-8," + \
-#     urllib.parse.quote(csv_string_index)
-
-# # weights link to download
-
-# dff_weights = df_weight.copy()
-# csv_string_weight = dff_weights.to_csv(index=False, encoding='utf-8')
-# csv_string_weight = "data:text/csv;charset=utf-8," + \
-#     urllib.parse.quote(csv_string_weight)
-
-# # crypto prices link to download
-
-# dff_prices = df_price.copy()
-# dff_prices = dff_prices.drop(columns="Time")
-# csv_string_price = dff_prices.to_csv(index=False, encoding='utf-8')
-# csv_string_price = "data:text/csv;charset=utf-8," + \
-#     urllib.parse.quote(csv_string_price)
-
-# # crypto volumes link to download
-
-# dff_volume = df_volume.copy()
-# dff_volume = dff_volume.drop(columns="Time")
-# csv_string_volume = dff_volume.to_csv(index=False, encoding='utf-8')
-# csv_string_volume = "data:text/csv;charset=utf-8," + \
-#     urllib.parse.quote(csv_string_volume)
 
 # ----------------
 # app layout: bootstrap
@@ -304,8 +248,6 @@ app.layout = dbc.Container([
 )
 def update_index_df(n):
 
-    global df_index
-
     df_index = query_mongo("index", "index_level_1000")
 
     dff = df_index.copy()
@@ -347,7 +289,7 @@ def update_index_df(n):
 )
 def update_indicator(timer):
 
-    global df_index
+    df_index = query_mongo("index", "index_level_1000")
 
     dff_ind = df_index.copy()
     dff_last_ind = dff_ind.tail(2)
@@ -384,8 +326,6 @@ def update_indicator(timer):
     Input(component_id="my_dropdown", component_property="value")
 )
 def update_pie(my_dropdown):
-
-    global df_weight
 
     df_weight = query_mongo("index", "index_weights")
 
@@ -444,8 +384,6 @@ def update_pie(my_dropdown):
 )
 def update_price(my_checklist):
 
-    global df_price
-
     df_price = query_mongo("index", "crypto_price")
 
     dff_price = df_price.copy()
@@ -490,8 +428,6 @@ def update_price(my_checklist):
     Input(component_id="my_crypto_check", component_property="value")
 )
 def update_vol(my_checklist):
-
-    global df_volume
 
     df_volume = query_mongo("index", "crypto_volume")
 
