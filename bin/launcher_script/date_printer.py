@@ -15,7 +15,7 @@ print(start_q_list)
 print(board_eve_list)
 
 day_TS, _ = days_variable(day)
-day_TS = day_TS + 86400
+# day_TS = day_TS + 86400
 print(day_TS)
 
 if day_TS in start_q_list:

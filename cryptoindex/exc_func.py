@@ -1,34 +1,20 @@
-# standard library import
 from datetime import datetime, timezone
 from typing import Dict
 
 import numpy as np
-# third party import
 import pandas as pd
 
-from cryptoindex.calc import (
-    conv_into_usd
-)
-from cryptoindex.config import (
-    DAY_IN_SEC, DB_NAME, EXCHANGES,
-    MONGO_DICT, EXC_START_DATE,
-    START_DATE, STABLE_COIN, CONVERSION_FIAT,
-    PAIR_ARRAY, EXCHANGES, CRYPTO_ASSET,
-    CLEAN_DATA_HEAD
-)
-# local import
+from cryptoindex.calc import conv_into_usd
+from cryptoindex.config import (CLEAN_DATA_HEAD, CONVERSION_FIAT, CRYPTO_ASSET,
+                                DAY_IN_SEC, DB_NAME, EXC_START_DATE, EXCHANGES,
+                                MONGO_DICT, PAIR_ARRAY, STABLE_COIN,
+                                START_DATE)
+from cryptoindex.cw_hist_func import crypto_fiat_pair_gen
 from cryptoindex.data_setup import (daily_fix_miss, date_gen,
-                                    exc_pair_cleaning, pair_vol_fix,
-                                    homogenize_series
-                                    )
-from cryptoindex.mongo_setup import (mongo_coll, mongo_upload,
-                                     query_mongo, df_reorder,
-                                     mongo_coll_drop, mongo_indexing
-                                     )
-
-from cryptoindex.cw_hist_func import (
-    crypto_fiat_pair_gen
-)
+                                    exc_pair_cleaning, homogenize_series,
+                                    pair_vol_fix)
+from cryptoindex.mongo_setup import (df_reorder, mongo_coll, mongo_coll_drop,
+                                     mongo_indexing, mongo_upload, query_mongo)
 
 
 def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
