@@ -1,30 +1,18 @@
-# standard library import
 from datetime import datetime, timezone
 
-# third party import
 import numpy as np
 import pandas as pd
 
-# local import
-
-from cryptoindex.calc import (start_q, stop_q, day_before_board,
-                              next_start, daily_first_logic,
-                              daily_ewma_crypto_volume, daily_ewma_fraction,
-                              daily_double_log_check, quarter_weights,
-                              new_divisor_comp
-                              )
-from cryptoindex.data_setup import (
-    date_gen, timestamp_to_human
-)
-from cryptoindex.mongo_setup import (
-    mongo_indexing, mongo_upload,
-    query_mongo, mongo_daily_delete
-)
-from cryptoindex.config import (
-    START_DATE, MONGO_DICT, PAIR_ARRAY,
-    CRYPTO_ASSET, EXCHANGES, DB_NAME,
-    DAY_IN_SEC, SYNT_PTF_VALUE
-)
+from cryptoindex.calc import (daily_double_log_check, daily_ewma_crypto_volume,
+                              daily_ewma_fraction, daily_first_logic,
+                              day_before_board, new_divisor_comp, next_start,
+                              quarter_weights, start_q, stop_q)
+from cryptoindex.config import (CRYPTO_ASSET, DAY_IN_SEC, DB_NAME, EXCHANGES,
+                                MONGO_DICT, PAIR_ARRAY, START_DATE,
+                                SYNT_PTF_VALUE)
+from cryptoindex.data_setup import date_gen, timestamp_to_human
+from cryptoindex.mongo_setup import (mongo_daily_delete, mongo_indexing,
+                                     mongo_upload, query_mongo)
 
 
 def days_variable(day):

@@ -336,26 +336,31 @@ def cw_hist_conv_op(cleaned_df, conv_fiat=CONVERSION_FIAT, stable=STABLE_COIN):
     return converted_df
 
 
+def cw_hist_download_op(start_date=START_DATE):
+
+    # deleting previous MongoDB collection for rawdata
+    mongo_coll_drop("cw_hist_down")
+    collection_dict_upload = mongo_coll()
+
+    print("Downloading all CW history...")
+    cw_raw_data = cw_hist_download(start_date)
+    mongo_upload(cw_raw_data, "collection_cw_raw")
+    print("CW series download completed")
+
+    # deleting 31/12/2015 values if present
+    last_2015_TS = 1451520000
+    query_ = {'Time': last_2015_TS}
+    collection_dict_upload.get("collection_cw_raw").delete_many(query_)
+
+    return None
+
+
 def cw_hist_operation(start_date=START_DATE):
 
     date_tot = date_gen(start_date)
     last_day_TS = date_tot[len(date_tot) - 1]
 
     mongo_indexing()
-    collection_dict_upload = mongo_coll()
-
-    # deleting previous MongoDB collection for rawdata
-    # mongo_coll_drop("cw_hist_down")
-
-    # print("Downloading all CW history...")
-    # cw_raw_data = cw_hist_download(start_date)
-    # mongo_upload(cw_raw_data, "collection_cw_raw")
-    # print("CW series download completed")
-
-    # # deleting 31/12/2015 values if present
-    # last_2015_TS = 1451520000
-    # query_ = {'Time': last_2015_TS}
-    # collection_dict_upload.get("collection_cw_raw").delete_many(query_)
 
     # deleting previous MongoDB collections
     mongo_coll_drop("cw_hist_clean")

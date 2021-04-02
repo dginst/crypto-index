@@ -1,26 +1,16 @@
-# standard library import
 from datetime import datetime, timedelta, timezone
 
-# third party import
 import numpy as np
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 
+from cryptoindex.config import (DAY_IN_SEC, DB_NAME, EXCHANGES,
+                                FIRST_BOARD_DATE, MONGO_DICT, START_DATE)
+from cryptoindex.data_setup import timestamp_to_human
+from cryptoindex.mongo_setup import df_reorder, query_mongo
 
-# local import
 from . import data_setup
-from cryptoindex.data_setup import (
-    timestamp_to_human
-)
 from . import mongo_setup as mongo
-from cryptoindex.mongo_setup import (
-    df_reorder, query_mongo
-)
-from cryptoindex.config import (
-    DB_NAME, MONGO_DICT, DAY_IN_SEC,
-    START_DATE, EXCHANGES, FIRST_BOARD_DATE,
-    MONGO_DICT
-)
 
 # ###########################################################################
 # ######################## DATE SETTINGS FUNCTIONS ##########################
