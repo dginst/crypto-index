@@ -776,6 +776,7 @@ def hist_data_feed_op():
     CW_sub_series = CW_series.loc[CW_series.Time.isin(CW_date_str)]
     CW_sub_series = CW_sub_series[
         ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]]
+    CW_sub_series.reset_index(drop=True, inplace=True)
     print(CW_sub_series)
 
     # creting an unique dataframe containing the two different data source
