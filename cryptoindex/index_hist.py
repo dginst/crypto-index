@@ -318,7 +318,7 @@ def index_hist_uploader(crypto_asset_price, crypto_asset_vol, exc_vol_tot,
     weights_for_board["Date"] = weight_human_date
     mongo_upload(weights_for_board, "collection_weights",
                  reorder="Y", column_set_val="complete")
-
+    print(weights_for_board)
     # put the first logic matrix on MongoDB
     first_date = timestamp_to_human(first_logic_matrix_df["Time"])
     first_logic_matrix_df["Date"] = first_date
