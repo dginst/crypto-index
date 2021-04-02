@@ -23,11 +23,22 @@ db = connection.index
 #  the pair btcjpy and the time value is greater than 1580774400
 
 
+def mongo_index_conn():
+
+    # connecting to mongo in local
+    connection = MongoClient("localhost", 27017)
+
+    db = connection.index
+
+    return db
+
+
 def query_mongo(database, collection, query_dict=None):
 
     # defining the variable that allows to work with MongoDB
     db = connection[database]
     coll = db[collection]
+
     if query_dict is None:
 
         df = pd.DataFrame(list(coll.find()))
@@ -61,16 +72,6 @@ def query_mongo(database, collection, query_dict=None):
             df = []
 
     return df
-
-
-def mongo_index_conn():
-
-    # connecting to mongo in local
-    connection = MongoClient("localhost", 27017)
-
-    db = connection.index
-
-    return db
 
 
 def mongo_indexing():
@@ -157,9 +158,6 @@ def mongo_coll():
         "collection_weights": db.index_weights,
         "collection_index_level_1000": db.index_level_1000,
         "collection_index_level_raw": db.index_level_raw,
-        # test
-
-        'test_mongo': db.test_mongo
 
     }
 
