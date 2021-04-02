@@ -483,9 +483,6 @@ def index_hist_op(crypto_asset_price_arr,
 
         weights_for_period["Time"] = reb_start_date[1:]
 
-    print(second_logic_matrix_df)
-    print(weights_for_period)
-
     divisor_array = divisor_adjustment(
         crypto_asset_price,
         weights_for_period,
@@ -532,7 +529,7 @@ def index_hist_total(coll_to_use="coll_data_feed", crypto_asset=CRYPTO_ASSET,
                                                                       crypto_asset_vol_arr,
                                                                       logic_matrix_one
                                                                       )
-
+    print(weights_for_board)
     index_hist_uploader(crypto_asset_price, crypto_asset_vol, exc_vol_tot,
                         price_ret, weights_for_board, first_logic_matrix_df,
                         second_logic_matrix_df, ewma_df, double_checked_EWMA,
