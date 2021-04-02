@@ -23,7 +23,7 @@ The DGI crypto Index is a volume-weighted index and is composed of the most rele
 </p>
 
 
-## Data Download
+# 1) Data Download
 
 The software downloads the daily crypto-asset data in terms of trade volume and price of the 8 selected pricing sources that proved to be reliable in matter of real volumes and legal compliance: 
 
@@ -56,7 +56,7 @@ The Mongo DB chosen tree structure is the following:
 Is it possible to find the download functions in the utils/data_download.py file.
 
 
-## Data Management
+# 2) Data Management
 
 The Data Management process mainly consists in: retriving the raw data from Mongo DB through querying, manipulating the data and structuring them as needed for the Index computation.
 
@@ -104,3 +104,22 @@ Is possible to split the index calculation in six main parts.
 
 6) Initial Divisor computation
 
+
+## Repository clone and usage
+
+Once cloned, in order to properly use the repository two main actions are needed:
+
+1) install the requirements.txt file "pip install -U -r requirements.txt"
+2) install the setup.py file that allows to use the functions contained in "cryptoindex" folder 
+
+The repository has the following structure:
+
+CRYPTO-INDEX
+|
+|--- bin --> 
+|
+|--- cryptoindex -->contains the scripts that upload the data into MongoDB collections
+|
+|--- dashboard --> folder containing the scripts that launch the dashbopard app
+|
+|--- excel creator
