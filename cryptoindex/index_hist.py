@@ -418,7 +418,7 @@ def index_hist_op(crypto_asset_price_arr,
 
     first_logic_matrix_df["Time"] = next_reb_date[1: len(
         next_reb_date)]
-    print(first_logic_matrix_df)
+
     # computing the Exponential Moving Weighted Average of the selected period
     ewma_df = ewma_crypto_volume(
         crypto_asset_vol, CRYPTO_ASSET, ref_date_arr, time_column="N"
@@ -432,7 +432,6 @@ def index_hist_op(crypto_asset_price_arr,
         ref_date_arr,
         time_column="Y",
     )
-    print(second_logic_matrix_df)
     # computing the ewma checked with both the first and second logic matrices
     double_checked_EWMA = ewma_second_logic_check(
         first_logic_matrix_df,
@@ -450,7 +449,6 @@ def index_hist_op(crypto_asset_price_arr,
     weights_for_board = quarter_weights(
         double_checked_EWMA, board_date_eve[1:], CRYPTO_ASSET
     )
-    print(weights_for_board)
     # compute the syntethic matrix and the relative syntethic matrix
     syntethic = quarterly_synt_matrix(
         crypto_asset_price,
@@ -467,8 +465,7 @@ def index_hist_op(crypto_asset_price_arr,
 
     # changing the "Time" column of the second logic matrix
     # using the rebalance date
-    second_logic_matrix_df["Time"] = next_reb_date[1: len(
-        next_reb_date)]
+    second_logic_matrix_df["Time"] = next_reb_date[1: len(next_reb_date)]
 
     if reference_day_TS == reb_start_date[len(reb_start_date) - 1]:
 
@@ -485,6 +482,9 @@ def index_hist_op(crypto_asset_price_arr,
     else:
 
         weights_for_period["Time"] = reb_start_date[1:]
+
+    print(second_logic_matrix_df)
+    print(weights_for_period)
 
     divisor_array = divisor_adjustment(
         crypto_asset_price,
@@ -539,8 +539,6 @@ def index_hist_total(coll_to_use="coll_data_feed", crypto_asset=CRYPTO_ASSET,
                         syntethic, syntethic_relative_matrix, divisor_array,
                         reshaped_divisor, index_values, index_1000_base
                         )
-
-    return None
 
 
 def ref_day_TS(lag="Y"):

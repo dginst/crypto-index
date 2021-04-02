@@ -44,3 +44,8 @@ print(timestamp_to_human([last_reb_start]))
 print(timestamp_to_human([last_reb_stop]))
 print(timestamp_to_human([next_reb_stop]))
 print(timestamp_to_human([curr_board_eve]))
+
+rebalance_period = next_quarterly_period(initial_val=1)
+for start, stop in rebalance_period:
+    print(timestamp_to_human([start]))
+    print(timestamp_to_human([stop]))
