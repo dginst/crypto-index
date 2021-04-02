@@ -19,7 +19,7 @@ def hist_complete(coll_to_use="coll_data_feed"):
 
 def hist_no_download(coll_to_use="coll_data_feed"):
 
-    cw_hist_operation()
+    # cw_hist_operation()
     exc_hist_op()
     hist_data_feed_op()
     index_hist_total(coll_to_use)
