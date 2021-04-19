@@ -59,6 +59,8 @@ app.layout = dbc.Container([
                                     ])
                                 ]),
 
+                            html.Hr(),
+
                             dbc.Row(
                                 [
                                     dbc.Col([
@@ -397,6 +399,8 @@ def update_price(my_checklist):
         y=my_checklist,
         template='plotly_dark',
         title='Crypto Prices',
+        labels={"value": "Price (USD)",
+                "variable": ""},
         color_discrete_map={
             "BTC": "#FEAF16",
             "ETH": "#511CFB",
@@ -442,6 +446,8 @@ def update_vol(my_checklist):
         y=my_checklist,
         template='plotly_dark',
         title='Crypto Volumes',
+        labels={"value": "Volume (USD)",
+                "variable": ""},
         color_discrete_map={
             "BTC": "#FEAF16",
             "ETH": "#511CFB",
