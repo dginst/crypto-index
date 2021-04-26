@@ -235,6 +235,14 @@ def ecb_hist_op(start_date_d=ECB_START_DATE_D, start_date_s=ECB_START_DATE, fiat
     return None
 
 
+def ecb_hist_no_download(start_date_s=ECB_START_DATE, fiat_curr=ECB_FIAT):
+
+    ecb_hist_clean = ecb_hist_setup(start_date_s, fiat_curr)
+    mongo_upload(ecb_hist_clean, "collection_ecb_clean")
+
+    return None
+
+
 def check_missing(tot_date_arr, coll_to_check, query, days_to_check=10):
 
     # selecting the last five days and put them into an array
@@ -278,7 +286,6 @@ def check_missing(tot_date_arr, coll_to_check, query, days_to_check=10):
         date_to_add = None
 
     return date_to_add
-
 
 
 # #############################
