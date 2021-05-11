@@ -267,7 +267,8 @@ def update_index_df(n):
         data_frame=dff,
         x="Date",
         y="Index Value",
-        template='plotly_dark',
+        # template='plotly_dark',
+        template='plotly_white',
         title='Crypto Index Level',
         color="Var",
         color_discrete_map={
@@ -353,7 +354,8 @@ def update_pie(my_dropdown):
         values=df_val,
         names=df_col_2,
         hole=.3,
-        template='plotly_dark',
+        # template='plotly_dark',
+        template='plotly_white',
         title='Index Weights',
         color=df_col_2,
         color_discrete_map={
