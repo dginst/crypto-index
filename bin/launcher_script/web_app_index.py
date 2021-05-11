@@ -9,7 +9,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from cryptoindex.config import CRYPTO_ASSET
-from cryptoindex.dashboard_func import web_app_data
 from cryptoindex.mongo_setup import query_mongo
 from dash.dependencies import Input, Output
 
