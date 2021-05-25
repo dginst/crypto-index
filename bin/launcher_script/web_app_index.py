@@ -44,6 +44,43 @@ app.layout = dbc.Container([
     ]),
 
     dbc.Row([
+
+            dbc.Col([
+
+                dbc.Card(
+                    [
+                        dbc.CardBody(
+                            [
+
+                                dbc.Row([
+
+                                    dbc.Col([
+
+
+                                        html.Label(['Mode:']),
+
+                                        dcc.Dropdown(
+                                            id='color_mode',
+                                            options=[
+                                                {'label': 'Light Mode',
+                                                 'value': 'plotly_white'},
+                                                {'label': 'Dark Mode',
+                                                 'value': 'plotly_dark'}
+
+                                            ],
+                                            multi=False,
+                                            value="plotly_dark",
+                                            style={"width": "50%"},
+                                            clearable=False
+                                        ),
+                                    ]),
+                                ]),
+                            ]),
+                    ]),
+            ]),
+            ]),
+
+    dbc.Row([
         dbc.Col([
 
             dbc.Card(
@@ -245,9 +282,11 @@ app.layout = dbc.Container([
 
 @app.callback(
     Output('my_index_level', 'figure'),
-    Input('df-update', 'n_intervals')
+    [Input('df-update', 'n_intervals'),
+     Input(component_id="color_mode", component_property="value")
+     ]
 )
-def update_index_df(n):
+def update_index_df(n, sel_col):
 
     df_index = query_mongo("index", "index_level_1000")
 
@@ -267,7 +306,7 @@ def update_index_df(n):
         x="Date",
         y="Index Value",
         # template='plotly_dark',
-        template='plotly_white',
+        template=sel_col,
         title='Crypto Index Level',
         color="Var",
         color_discrete_map={
@@ -325,9 +364,10 @@ def update_indicator(timer):
 @ app.callback(
     [Output(component_id="my_weight_pie", component_property="figure"),
      Output(component_id="download-link_weight", component_property="href")],
-    Input(component_id="my_dropdown", component_property="value")
+    [Input(component_id="my_dropdown", component_property="value"),
+     Input(component_id="color_mode", component_property="value")]
 )
-def update_pie(my_dropdown):
+def update_pie(my_dropdown, sel_col):
 
     df_weight = query_mongo("index", "index_weights")
 
@@ -353,8 +393,7 @@ def update_pie(my_dropdown):
         values=df_val,
         names=df_col_2,
         hole=.3,
-        # template='plotly_dark',
-        template='plotly_white',
+        template=sel_col,
         title='Index Weights',
         color=df_col_2,
         color_discrete_map={
@@ -383,9 +422,10 @@ def update_pie(my_dropdown):
 @ app.callback(
     [Output(component_id="my_price_level", component_property="figure"),
      Output(component_id="download-link_price", component_property="href")],
-    Input(component_id="my_crypto_check_2", component_property="value")
+    [Input(component_id="my_crypto_check_2", component_property="value"),
+     Input(component_id="color_mode", component_property="value")]
 )
-def update_price(my_checklist):
+def update_price(my_checklist, sel_col):
 
     df_price = query_mongo("index", "crypto_price")
 
@@ -398,7 +438,7 @@ def update_price(my_checklist):
         data_frame=dff_price_filtered,
         x="Date",
         y=my_checklist,
-        template='plotly_dark',
+        template=sel_col,
         title='Crypto Prices',
         labels={"value": "Price (USD)",
                 "variable": ""},
@@ -430,9 +470,10 @@ def update_price(my_checklist):
 @ app.callback(
     [Output(component_id="my_volume_level", component_property="figure"),
      Output(component_id="download-link_volume", component_property="href")],
-    Input(component_id="my_crypto_check", component_property="value")
+    [Input(component_id="my_crypto_check", component_property="value"),
+     Input(component_id="color_mode", component_property="value")]
 )
-def update_vol(my_checklist):
+def update_vol(my_checklist, sel_col):
 
     df_volume = query_mongo("index", "crypto_volume")
 
@@ -445,7 +486,7 @@ def update_vol(my_checklist):
         data_frame=dff_vol_filtered,
         x="Date",
         y=my_checklist,
-        template='plotly_dark',
+        template=sel_col,
         title='Crypto Volumes',
         labels={"value": "Volume (USD)",
                 "variable": ""},
