@@ -379,7 +379,8 @@ def update_today_val(timer):
     fig_indicator = go.Figure(go.Indicator(
         mode="number",
         value=today_val,
-        number={'suffix': "$"}
+        number={'suffix': "$",
+                'font': {'color': 'black'}}
     )
     )
     fig_indicator.update_traces(delta_font={'size': 18})
