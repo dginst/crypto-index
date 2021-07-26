@@ -349,8 +349,8 @@ def update_indicator(timer):
         mode="delta",
         value=dff_ind_t,
         delta={'reference': dff_ind_y, 'relative': True, 'valueformat': '.2%'}))
-    fig_indicator.update_traces(delta_font={'size': 18})
-    fig_indicator.update_layout(height=50, width=100)
+    fig_indicator.update_traces(delta_font={'size': 22})
+    fig_indicator.update_layout(height=60, width=100)
 
     if dff_ind_t >= dff_ind_y:
         fig_indicator.update_traces(delta_increasing_color='green')
@@ -374,17 +374,29 @@ def update_today_val(timer):
 
     dff_ind = df_index.copy()
     dff_last_ind = dff_ind.tail(1)
+    dff_prev = (dff_ind.tail(2)).head(1)
     today_val = dff_last_ind["Index Value"].values[0]
+    yesterday_val = dff_prev["Index Value"].values[0]
 
     fig_indicator = go.Figure(go.Indicator(
-        mode="number",
+        mode="number+delta",
         value=today_val,
+        delta={'relative': False,
+               'reference': yesterday_val,
+               'valueformat': ',.2f',
+               'position': "right",
+               },
         number={'suffix': "$",
-                'font': {'color': 'black'}}
+                'valueformat': ',.2f',
+                'font': {'color': 'black',
+                         'size': 22}
+                },
     )
     )
-    fig_indicator.update_traces(delta_font={'size': 18})
-    fig_indicator.update_layout(height=50, width=100)
+    fig_indicator.update_traces(delta_font={'size': 20})
+    fig_indicator.update_layout(height=60,
+                                width=300,
+                                )
 
     return fig_indicator
 
