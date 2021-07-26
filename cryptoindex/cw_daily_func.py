@@ -1,4 +1,5 @@
 # standard library import
+import logging
 from datetime import datetime, timezone
 from typing import Dict
 
@@ -432,7 +433,11 @@ def cw_daily_operation(day=None):
 
         if daily_check_mongo("coll_cw_raw", {"Exchange": "coinbase-pro", "Pair": "btcusd"}) is False:
 
-            cw_rawdata_daily = cw_daily_download(day_before_TS + DAY_IN_SEC)
+            try:
+                cw_rawdata_daily = cw_daily_download(day_before_TS + DAY_IN_SEC)
+            except Exception:
+                logging.error("Exception occurred", exc_info=True)
+                logging.info('Daily download from CryptoWatch failed')
             mongo_upload(cw_rawdata_daily, "collection_cw_raw")
 
         else:

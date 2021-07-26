@@ -1,5 +1,6 @@
 # standard library import
 import time
+import logging
 from datetime import datetime, timezone
 
 # third party import
@@ -94,8 +95,11 @@ def ecb_daily_download(day_to_download_TS):
 
 def ecb_daily_up(day_to_download_TS):
 
-    ecb_day_raw = ecb_daily_download(day_to_download_TS)
-
+    try:
+        ecb_day_raw = ecb_daily_download(day_to_download_TS)
+    except Exception:
+        logging.error("Exception occurred", exc_info=True)
+        logging.info('Daily download form ECB failed')
     try:
 
         mongo_upload(ecb_day_raw, "collection_ecb_raw")
