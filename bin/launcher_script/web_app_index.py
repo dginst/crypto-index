@@ -74,6 +74,7 @@ app.layout = dbc.Container([
                                             clearable=False
                                         ),
                                     ]),
+
                                 ]),
                             ]),
                     ]),
@@ -91,6 +92,11 @@ app.layout = dbc.Container([
                                 [
                                     dbc.Col([
                                         dcc.Graph(id="my_index_indicator", figure={},
+                                                  config={'displayModeBar': False})
+                                    ]),
+
+                                    dbc.Col([
+                                        dcc.Graph(id="my_index_today", figure={},
                                                   config={'displayModeBar': False})
                                     ])
                                 ]),
@@ -357,6 +363,29 @@ def update_indicator(timer):
 
     return fig_indicator, csv_string_index
 
+
+@ app.callback(
+    Output('my_index_today', 'figure'),
+    Input('update', 'n_intervals')
+)
+def update_today_val(timer):
+
+    df_index = query_mongo("index", "index_level_1000")
+
+    dff_ind = df_index.copy()
+    dff_last_ind = dff_ind.tail(1)
+    today_val = dff_last_ind["Index Value"].values[0]
+
+    fig_indicator = go.Figure(go.Indicator(
+        mode="number",
+        value=today_val,
+        number={'suffix': "$"}
+    )
+    )
+    fig_indicator.update_traces(delta_font={'size': 18})
+    fig_indicator.update_layout(height=50, width=100)
+
+    return fig_indicator
 
 # crypto-composition portfolio graph
 
