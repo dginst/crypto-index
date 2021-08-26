@@ -8,6 +8,39 @@
 Following these steps will allow you tu run the code on your machine and obtain the DGI Crypto-Index Time series.
 Note that a needed requirement is the installation of MongoDB on your laptop.
 
+
+### 0) Virtual Environment setup 
+
+Install the Crypto Index and its prerequisites into a
+python virtual environment; e.g. from the root folder:
+
+Bash shell
+
+    python -m venv venv
+    source venv/bin/activate
+    pip install --upgrade -r requirements.txt
+    pip install --upgrade -r requirements-dev.txt
+    pip install --upgrade -e ./
+
+Windows CMD or PowerShell:
+
+    python -m venv venv
+    .\venv\Scripts\activate
+    pip install --upgrade -r requirements.txt
+    pip install --upgrade -r requirements-dev.txt
+    pip install --upgrade -e ./
+
+Windows Git bash shell:
+
+    python -m venv venv
+    cd ./venv/Scripts
+    . activate
+    cd ../..
+    pip install --upgrade -r requirements.txt
+    pip install --upgrade -r requirements-dev.txt
+    pip install --upgrade -e ./
+
+
 ### 1) Run ECB_hist_download.py
 
 The file allows to download from the European Central Bank Websites the exchange rates for the following currencies:
@@ -62,5 +95,4 @@ The file retrieves data from MongoDB collection "cleandata" and, for each Crypto
 
 Once everything is converted into USD the historical series is saved on MongoDB in the collection "converted_data"
 
-### 6) Run TEST_MAIN.py
 
