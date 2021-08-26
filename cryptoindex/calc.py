@@ -4,13 +4,10 @@ import numpy as np
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 
-from cryptoindex.config import (DAY_IN_SEC, DB_NAME, EXCHANGES,
-                                FIRST_BOARD_DATE, MONGO_DICT, START_DATE)
-from cryptoindex.data_setup import timestamp_to_human
+from cryptoindex.config import (DAY_IN_SEC, DB_NAME, FIRST_BOARD_DATE,
+                                MONGO_DICT, START_DATE)
+from cryptoindex.data_setup import date_gen, timestamp_to_human
 from cryptoindex.mongo_setup import df_reorder, query_mongo
-
-from . import data_setup
-from . import mongo_setup as mongo
 
 # ###########################################################################
 # ######################## DATE SETTINGS FUNCTIONS ##########################
@@ -620,7 +617,8 @@ def ewma_crypto_volume(
 
                 ewma_matrix = np.row_stack(
                     (ewma_matrix, np.array(period_average)))
-        except:
+
+        except KeyError:  # checkout if is actually a Key error
 
             zero_array = np.zeros(len(Crypto_list))
 
@@ -1208,9 +1206,9 @@ def daily_quart_synt_matrix(
 ):
 
     # retrieving the EWMA df from MongoDB
-    price_tot = mongo.query_mongo(db_name, coll_name)
-    before_start = last_reb_start - 86400
-    before_eve = curr_board_eve - 86400
+    price_tot = query_mongo(db_name, coll_name)
+    before_start = last_reb_start - DAY_IN_SEC
+    before_eve = curr_board_eve - DAY_IN_SEC
     period_price = price_tot.loc[
         price_tot["Time"].between(before_start, before_eve, inclusive=True)
     ]
@@ -1241,11 +1239,11 @@ def daily_quart_synt_matrix(
     price_return = period_price.pct_change()
     price_return = price_return.loc[1:, :]
     # adding Time Column
-    human_start = data_setup.timestamp_to_human(
+    human_start = timestamp_to_human(
         last_reb_start, date_format="%m-%d-%y")
-    human_curr = data_setup.timestamp_to_human(
+    human_curr = timestamp_to_human(
         curr_board_eve, date_format="%m-%d-%y")
-    period_date_list = data_setup.date_gen(human_start, human_curr, EoD="N")
+    period_date_list = date_gen(human_start, human_curr, EoD="N")
     price_return["Time"] = period_date_list
 
     #
@@ -1402,7 +1400,8 @@ def divisor_adjustment(
             # new rebalance date
             yesterday_price = np.array(
                 Crypto_Price_Matrix.loc[
-                    Crypto_Price_Matrix.Time == (int(date) - 86400), Crypto_list
+                    Crypto_Price_Matrix.Time == (
+                        int(date) - DAY_IN_SEC), Crypto_list
                 ]
             )
             # find current and old weights
@@ -1472,7 +1471,7 @@ def new_divisor(
         new_reb_start = int(new_reb_start)
 
     # use the function to compute the initial divisor
-    old_divisor_df = mongo.query_mongo(db_name, coll_name)
+    old_divisor_df = query_mongo(db_name, coll_name)
     old_divisor = old_divisor_df.loc[
         old_divisor_df.Time == int(old_reb_start), ["Divisor Value"]
     ]

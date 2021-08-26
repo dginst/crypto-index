@@ -1,5 +1,5 @@
 # standard library import
-import logging
+from logging import info, error
 from datetime import datetime, timezone
 from typing import Dict
 
@@ -18,8 +18,7 @@ from cryptoindex.calc import (
 )
 from cryptoindex.mongo_setup import (
     mongo_coll, mongo_indexing,
-    query_mongo, mongo_upload,
-    mongo_daily_delete
+    query_mongo, mongo_upload
 )
 from cryptoindex.config import (
     START_DATE, MONGO_DICT, DAY_IN_SEC,
@@ -436,8 +435,8 @@ def cw_daily_operation(day=None):
             try:
                 cw_rawdata_daily = cw_daily_download(day_before_TS + DAY_IN_SEC)
             except Exception:
-                logging.error("Exception occurred", exc_info=True)
-                logging.info('Daily download from CryptoWatch failed')
+                error("Exception occurred", exc_info=True)
+                info('Daily download from CryptoWatch failed')
             mongo_upload(cw_rawdata_daily, "collection_cw_raw")
 
         else:

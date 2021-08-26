@@ -7,18 +7,16 @@ from cryptoindex.calc import (board_meeting_day, day_before_board,
                               divisor_adjustment, divisor_reshape,
                               ewma_crypto_volume, ewma_second_logic_check,
                               first_logic_matrix, index_based,
-                              index_level_calc, next_quarterly_period,
-                              next_start, quarter_weights, quarterly_period,
+                              index_level_calc, next_start, quarter_weights,
                               quarterly_synt_matrix, relative_syntethic_matrix,
                               second_logic_matrix, start_q, stop_q)
 from cryptoindex.config import (CRYPTO_ASSET, DAY_IN_SEC, DB_NAME, EXCHANGES,
                                 MONGO_DICT, PAIR_ARRAY, START_DATE)
 from cryptoindex.data_setup import date_gen, timestamp_to_human
 from cryptoindex.index_func import (crypto_fiat_gen, exc_all_vol,
-                                    loop_crypto_asset, loop_crypto_fiat,
-                                    loop_exc_value, loop_single_exc)
-from cryptoindex.mongo_setup import (mongo_coll, mongo_coll_drop,
-                                     mongo_indexing, mongo_upload, query_mongo)
+                                    loop_crypto_asset)
+from cryptoindex.mongo_setup import (mongo_coll_drop, mongo_indexing,
+                                     mongo_upload, query_mongo)
 
 
 def loop_crypto_fiat_hist(ccy_fiat_vol, ccy_fiat_price_vol, ref_date_arr):

@@ -1,20 +1,10 @@
-# standard library import
 from datetime import datetime, timezone
-# import holidays
-# third party import
-# from pymongo import MongoClient
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 
-# local import
-from cryptoindex.mongo_setup import (
-    query_mongo
-)
-from cryptoindex.config import (
-    DB_NAME, MONGO_DICT, DAY_IN_SEC,
-    START_DATE
-)
-
+from cryptoindex.config import DAY_IN_SEC, DB_NAME, MONGO_DICT, START_DATE
+from cryptoindex.mongo_setup import query_mongo
 
 # TIME AND TIME ARRAYS FUNCTIONS
 
@@ -61,28 +51,6 @@ def is_business_day(date):
     return bool(len(pd.bdate_range(date, date)))
 
 
-def date_gen_no_holiday(start_date, end_date=None):
-
-    it_holiday = holidays.CountryHoliday("IT", prov="MI")
-    print(it_holiday)
-
-    if end_date is None:
-
-        end_date = datetime.now().strftime("%m-%d-%Y")
-
-    tot_arr = date_gen(start_date, end_date)
-
-    for date in tot_arr:
-
-        if date in it_holiday:
-
-            tot_arr = tot_arr.remove(date)
-
-    date_arr = tot_arr
-
-    return date_arr
-
-
 def timestamp_to_human(ts_array, date_format="%Y-%m-%d"):
 
     human_date = [datetime.fromtimestamp(int(float(date))) for date in ts_array]
@@ -92,11 +60,11 @@ def timestamp_to_human(ts_array, date_format="%Y-%m-%d"):
 
 
 # function that creates a date array in timestamp format adding the choosen
-# lag (1 day = 86400 sec on default) the input start and stop has to be
+# lag (1 day = DAY_IN_SEC sec on default) the input start and stop has to be
 # timestamp date in INTEGER format
 
 
-def timestamp_vector(start, stop, lag=86400):
+def timestamp_vector(start, stop, lag=DAY_IN_SEC):
 
     array = np.array([start])
 
@@ -146,7 +114,7 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check=1)
     if test_matrix.empty is True:
 
         first_date = np.array(series_to_check["Time"].iloc[0])
-        # last_missing_date = (int(first_date) - 86400) ##
+        # last_missing_date = (int(first_date) - DAY_IN_SEC) ##
         first_missing_date = reference_date_array_TS[0]
         missing_date_array = timestamp_vector(first_missing_date, first_date)
 
@@ -189,7 +157,7 @@ def homogenize_dead_series(series_to_check, reference_date_array_TS, days_to_che
         last_date = np.array(
             series_to_check["Time"].iloc[len(series_to_check["Time"]) - 1]
         )
-        first_missing_date = int(last_date) + 86400
+        first_missing_date = int(last_date) + DAY_IN_SEC
         last_missing_date = last_day
 
         missing_date_array = timestamp_vector(
@@ -237,17 +205,18 @@ def fix_zero_value(matrix):
 
                 previous_price = np.array(
                     matrix.loc[matrix.Time == int(
-                        int(date) - 86400), "Close Price"]
+                        int(date) - DAY_IN_SEC), "Close Price"]
                 )
 
                 matrix.loc[matrix.Time == date, "Close Price"] = previous_price
 
             previous_c_vol = np.array(
                 matrix.loc[matrix.Time == int(
-                    int(date) - 86400), "Crypto Volume"]
+                    int(date) - DAY_IN_SEC), "Crypto Volume"]
             )
             previous_p_vol = np.array(
-                matrix.loc[matrix.Time == int(int(date) - 86400), "Pair Volume"]
+                matrix.loc[matrix.Time == int(
+                    int(date) - DAY_IN_SEC), "Pair Volume"]
             )
 
             matrix.loc[matrix.Time == date, "Crypto Volume"] = previous_c_vol
@@ -588,7 +557,7 @@ def CW_series_fix_missing(
 
     for element in missing_item_time:
 
-        prev_val = merged.loc[merged.Time == int(element) - 86400]
+        prev_val = merged.loc[merged.Time == int(element) - DAY_IN_SEC]
 
         price_var = float(
             fixing_price_df.loc[fixing_price_df["missing date"]
@@ -657,7 +626,7 @@ def substitute_finder(broken_array, reference_array, where_to_lookup, position):
 
             yesterday_value = float(
                 where_to_lookup[where_to_lookup["Time"]
-                                == element - 86400][position]
+                                == element - DAY_IN_SEC][position]
             )
 
             numerator = today_value - yesterday_value

@@ -665,11 +665,11 @@ def exc_hist_fix(exc_complete_df):
                         for nan in nan_list:
 
                             prev_price = merged_cp.loc[merged_cp.Time
-                                                       == nan - 86400, "Close Price"]
+                                                       == nan - DAY_IN_SEC, "Close Price"]
                             prev_p_vol = merged_cp.loc[merged_cp.Time
-                                                       == nan - 86400, "Pair Volume"]
+                                                       == nan - DAY_IN_SEC, "Pair Volume"]
                             prev_c_vol = merged_cp.loc[merged_cp.Time
-                                                       == nan - 86400, "Crypto Volume"]
+                                                       == nan - DAY_IN_SEC, "Crypto Volume"]
                             merged_cp.loc[merged_cp.Time
                                           == nan, "Close Price"] = prev_price
                             merged_cp.loc[merged_cp.Time

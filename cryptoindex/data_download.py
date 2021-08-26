@@ -1,17 +1,11 @@
-# standard library import
 import io
 from datetime import datetime, timezone
 
-# third party import
 import pandas as pd
-
 import requests
 from requests import get
 
-from cryptoindex.config import (
-    START_DATE, DAY_IN_SEC
-)
-
+from cryptoindex.config import DAY_IN_SEC, START_DATE
 
 # #################### ECB rates download function ###################
 

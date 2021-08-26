@@ -1,30 +1,19 @@
-# standard library import
 import time
-import logging
 from datetime import datetime, timezone
+from logging import error, info
 
-# third party import
 import numpy as np
 import pandas as pd
 
-# local import
-from cryptoindex.data_setup import (
-    date_gen, Diff, ECB_daily_setup,
-    ECB_setup
-)
+from cryptoindex.config import (DAY_IN_SEC, DB_NAME, ECB_FIAT, ECB_START_DATE,
+                                ECB_START_DATE_D, MONGO_DICT)
 from cryptoindex.data_download import ECB_rates_extractor
-from cryptoindex.mongo_setup import (
-    mongo_upload, mongo_indexing,
-    query_mongo, mongo_coll_drop,
-    mongo_daily_delete
-)
-from cryptoindex.config import (
-    ECB_START_DATE, ECB_START_DATE_D,
-    ECB_FIAT, DAY_IN_SEC,
-    DB_NAME, MONGO_DICT
-)
+from cryptoindex.data_setup import Diff, ECB_daily_setup, ECB_setup, date_gen
+from cryptoindex.mongo_setup import (mongo_coll_drop, mongo_indexing,
+                                     mongo_upload, query_mongo)
 
-# DAILY
+
+# --------- ECB DAILY FUNCTIONS -----
 
 
 def daily_check_mongo(coll_to_check, query, day_to_check=None, coll_kind=None):
@@ -98,8 +87,8 @@ def ecb_daily_up(day_to_download_TS):
     try:
         ecb_day_raw = ecb_daily_download(day_to_download_TS)
     except Exception:
-        logging.error("Exception occurred", exc_info=True)
-        logging.info('Daily download form ECB failed')
+        error("Exception occurred", exc_info=True)
+        info('Daily download form ECB failed')
     try:
 
         mongo_upload(ecb_day_raw, "collection_ecb_raw")
@@ -143,7 +132,7 @@ def ecb_daily_op(day=None):
         mongo_upload(ecb_day_clean, "collection_ecb_clean")
 
 
-# HIST
+# --------- ECB HISTORICAL FUNCTIONS -----
 
 def ecb_hist_download(start_date):
 
@@ -277,9 +266,6 @@ def check_missing(tot_date_arr, coll_to_check, query, days_to_check=10):
 
     last_days_db = date_list[(len(date_list) - days_to_check):len(date_list)]
 
-    # last_days_db_str = [str(single_date)
-    #                     for single_date in last_days_db]
-
     # finding the date to download as difference between
     # complete array of date and date now stored on MongoDB
     date_to_add = Diff(last_days, last_days_db)
@@ -292,7 +278,6 @@ def check_missing(tot_date_arr, coll_to_check, query, days_to_check=10):
     return date_to_add
 
 
-# #############################
 # function for table with exchange rate and coinbase-pro BTCUSD value
 
 def daily_table():

@@ -79,7 +79,7 @@ def coinbase_ticker(Crypto, Fiat, collection):
         return err
 
 
-# KAREN
+# KRAKEN
 
 # The REST API OHLC endpoint only provides a limited amount of historical data, specifically
 # 720 data points of the requested interval.
@@ -140,7 +140,7 @@ def kraken_ticker(Crypto, Fiat, collection):
 
         return pair
 
-    except:
+    except KeyError:
 
         err = "This key doesn't exist"
         print(err)
@@ -385,9 +385,9 @@ def bitflyer_ticker(Crypto, Fiat, collection):
             "Time": time,
             "date": date,
             "ticker_time": ticker_time,
-            "Crypto Volume": volume_by_product,  # changed from volume into
+            "Crypto Volume": volume_by_product,  # changed from "volume" into present
             "Close Price": price,
-            "volume_by_product": volume_by_product,
+            "other_volume": volume,
             "best_bid": best_bid,
             "best_ask": best_ask,
             "best_bid_size": best_bid_size,

@@ -1,13 +1,9 @@
 from datetime import datetime, timezone
-# third party packages
-import pandas as pd
 
+import pandas as pd
 from pymongo import MongoClient
 
-from cryptoindex.config import (
-    DAY_IN_SEC
-)
-
+from cryptoindex.config import DAY_IN_SEC
 
 # connecting to mongo in local
 connection = MongoClient("localhost", 27017)

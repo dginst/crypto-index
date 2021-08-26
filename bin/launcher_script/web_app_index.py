@@ -1,22 +1,21 @@
-import urllib.parse
+from urllib.parse import quote
 
-import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-import numpy as np
-import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 from cryptoindex.config import CRYPTO_ASSET
 from cryptoindex.mongo_setup import query_mongo
+from dash import Dash
 from dash.dependencies import Input, Output
+from numpy import array
+from plotly.express import area, line, pie
 
 # start app
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
-                meta_tags=[{'name': 'viewport',
-                            'content': 'width=device-width, initial-scale=1.0'}])
+app = Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
+           meta_tags=[{'name': 'viewport',
+                       'content': 'width=device-width, initial-scale=1.0'}])
 
 app.css.append_css(
     {"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"})
@@ -28,8 +27,8 @@ server = app.server
 
 df_weight = query_mongo("index", "index_weights")
 
-last_start_q = np.array(df_weight.tail(1)["Date"])[0]
-start_q_list = np.array(df_weight["Date"])
+last_start_q = array(df_weight.tail(1)["Date"])[0]
+start_q_list = array(df_weight["Date"])
 
 # ----------------
 # app layout: bootstrap
@@ -307,7 +306,7 @@ def update_index_df(n, sel_col):
     variation = (dff_t >= dff_y)
     dff["Var"] = variation
 
-    index_area = px.area(
+    index_area = area(
         data_frame=dff,
         x="Date",
         y="Index Value",
@@ -358,8 +357,7 @@ def update_indicator(timer):
         fig_indicator.update_traces(delta_decreasing_color='red')
 
     csv_string_index = dff_ind.to_csv(index=False, encoding='utf-8')
-    csv_string_index = "data:text/csv;charset=utf-8," + \
-        urllib.parse.quote(csv_string_index)
+    csv_string_index = "data:text/csv;charset=utf-8," + quote(csv_string_index)
 
     return fig_indicator, csv_string_index
 
@@ -423,15 +421,15 @@ def update_pie(my_dropdown, sel_col):
 
     for col in df_col:
 
-        val = np.array(dff_w_filt[col])[0]
+        val = array(dff_w_filt[col])[0]
         if val == 0.0000:
 
             dff_w_filt = dff_w_filt.drop(columns=col)
 
-    df_val = np.array(dff_w_filt)[0]
+    df_val = array(dff_w_filt)[0]
     df_col_2 = list(dff_w_filt.columns)
 
-    pie_fig = px.pie(
+    pie_fig = pie(
         values=df_val,
         names=df_col_2,
         hole=.3,
@@ -456,7 +454,7 @@ def update_pie(my_dropdown, sel_col):
 
     csv_string_weight = dff_weight.to_csv(index=False, encoding='utf-8')
     csv_string_weight = "data:text/csv;charset=utf-8," + \
-        urllib.parse.quote(csv_string_weight)
+        quote(csv_string_weight)
 
     return pie_fig, csv_string_weight
 
@@ -476,7 +474,7 @@ def update_price(my_checklist, sel_col):
     dff_price_filtered = dff_price[my_checklist]
     dff_price_filtered["Date"] = dff_date
 
-    price_line = px.line(
+    price_line = line(
         data_frame=dff_price_filtered,
         x="Date",
         y=my_checklist,
@@ -503,8 +501,7 @@ def update_price(my_checklist, sel_col):
     dff_price_d = df_price.copy()
     dff_price_d = dff_price_d.drop(columns="Time")
     csv_string_price = dff_price_d.to_csv(index=False, encoding='utf-8')
-    csv_string_price = "data:text/csv;charset=utf-8," + \
-        urllib.parse.quote(csv_string_price)
+    csv_string_price = "data:text/csv;charset=utf-8," + quote(csv_string_price)
 
     return price_line, csv_string_price
 
@@ -524,7 +521,7 @@ def update_vol(my_checklist, sel_col):
     dff_vol_filtered = dff_vol[my_checklist]
     dff_vol_filtered["Date"] = dff_date
 
-    volume_line = px.line(
+    volume_line = line(
         data_frame=dff_vol_filtered,
         x="Date",
         y=my_checklist,
@@ -552,7 +549,7 @@ def update_vol(my_checklist, sel_col):
     dff_volume = dff_volume.drop(columns="Time")
     csv_string_volume = dff_volume.to_csv(index=False, encoding='utf-8')
     csv_string_volume = "data:text/csv;charset=utf-8," + \
-        urllib.parse.quote(csv_string_volume)
+        quote(csv_string_volume)
 
     return volume_line, csv_string_volume
 

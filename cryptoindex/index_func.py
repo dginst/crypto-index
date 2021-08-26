@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-import logging
+from logging import error, info
 
 import numpy as np
 import pandas as pd
@@ -918,33 +918,33 @@ def index_daily(coll_to_use="coll_data_feed", day=None):
 
     if day_TS in start_q_list:
 
-        logging.info('Index daily for quarter start starting...')
+        info('Index daily for quarter start starting...')
         mongo_daily_delete(day, "index")
         try:
             index_start_q_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
                               coll_to_use, day=day)
         except Exception:
-            logging.error("Exception occurred", exc_info=True)
+            error("Exception occurred", exc_info=True)
 
     elif day_TS in board_eve_list:
 
-        logging.info('Index daily for board day starting...')
+        info('Index daily for board day starting...')
         mongo_daily_delete(day, "index")
         try:
             index_board_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
                             coll_to_use, day=day)
         except Exception:
-            logging.error("Exception occurred", exc_info=True)
+            error("Exception occurred", exc_info=True)
 
     else:
 
-        logging.info('Index daily for normal day starting...')
+        info('Index daily for normal day starting...')
         mongo_daily_delete(day, "index")
         try:
             index_normal_day(CRYPTO_ASSET, EXCHANGES, PAIR_ARRAY,
                              coll_to_use, day=day)
         except Exception:
-            logging.error("Exception occurred", exc_info=True)
+            error("Exception occurred", exc_info=True)
 
 
 # ##############################################àà
