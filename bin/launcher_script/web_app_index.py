@@ -310,9 +310,11 @@ def update_index_df(n, sel_col):
         data_frame=dff,
         x="Date",
         y="Index Value",
-        # template='plotly_dark',
+        labels={"value": "",
+                "Index Value": "",
+                "Date": ""},
         template=sel_col,
-        title='Crypto Index Level',
+        title='Crypto Index Level (USD)',
         color="Var",
         color_discrete_map={
             False: '#FD3216',
@@ -320,7 +322,7 @@ def update_index_df(n, sel_col):
 
         }
     )
-    index_area.update_layout(showlegend=False)
+    # index_area.update_layout(showlegend=False)
 
     return index_area
 
