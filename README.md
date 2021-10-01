@@ -64,8 +64,9 @@ The Data Management process mainly consists in: retriving the raw data from Mong
 
 As for the exchange rates, being expressed in Euro and missing of weekends and holidays (due to closed markets), each rate is converted into USD based value (EUR/USD, CAD/USD, GBP/USD, JPY/USD) and each missing day simply takes the value of the last fixing day.
 
+For the cryptocurrencies data there are some steps to be performed.
 
-As for the cryptocurrencies raw data the main data managing rules are the followings:
+The first step is to homogeneize each crypto-fiat pair in terms of series lenght, the rules are the following:
 
 * if a certain Crypto-Fiat pair does not start at the beginning of the period but later, for example because the pair does not exist before, the code will put a series of zeros from the start date until the actual beginning of the series;
 
@@ -73,7 +74,13 @@ As for the cryptocurrencies raw data the main data managing rules are the follow
 
 * if, trying to fix a series as described above in the second point, the code finds out that just one exchange has the values for a certain Crypto-Fiat pair, the file will put a 0-values array for all the missing date;
 
-Once the data is manipulated and the series has been homogeineized, everything is converted in USD values using the above descripted exchange rates.
+Once all the series have been homogeineized everything is converted in USD values using the above descripted exchange rates.
+
+The final step is the computation of single price for each cryptocurrency: 
+
+* the daily price of the single coin in the single exchange is the volume weighted average of the prices of the selected coin for each fiat pair
+
+* the daily price of the single coin is the volume weighted average of the prices of the selected coin in each exchange
 
 
 # 3) Index Computation
@@ -81,7 +88,7 @@ Once the data is manipulated and the series has been homogeineized, everything i
 Once all the data has been processed, the code can compute the index value. 
 The process of index computation can be summarized into six main parts.
 
-1) First logic atrix 
+1) First logic matrix 
 
   The first logic matrix has the role of a first screening of all the crypto-assets in order to decide wheter or not the single crypto-asset can be eligible, for the index composition, in a determined interval of time. The interval of interest goes from each start date of the quarter to the end date of the quarter itself; follows that the specified interval is the period of application where a cryptoasset can be considered eligible. For the actual computation of the eligible cryptoassets is considered the period between the start date of each quarter and the day before the board day meeting of the quarter itself. Here the rule: if, for a single cryptoasset, one single exchange has traded more than the 80% of the total volume of the period, the cryptoasset is excluded.
 
@@ -106,7 +113,7 @@ The process of index computation can be summarized into six main parts.
 4) Quarter Weights computation
 
   The weights computation is performed for each quarter on the day before the board meeting day. 
-  The first step is to leave out from the ewma dataframe all the cryptoassets that have been ideintified as non eligible with the logic matrices; done that the code simply find the relative weights of the cryptoassets ewma: these are the weights of the next quarter.
+  The first step is to leave out from the ewma dataframe all the cryptoassets that have been ideintified as non eligible with the logic matrices; done that the code simply finds the relative weights of the cryptoassets ewma: these are the weights of the next quarter.
 
 5) Synthetic Market Cap computation
 
