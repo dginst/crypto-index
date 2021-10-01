@@ -108,7 +108,7 @@ app.layout = dbc.Container([
 
 
                                         dcc.Graph(id="my_index_level", figure={},
-                                                  config={'displayModeBar': False}),
+                                                  config={'displayModeBar': True}),
 
                                         html.A(
                                             'Download Data',
@@ -322,7 +322,7 @@ def update_index_df(n, sel_col):
 
         }
     )
-    # index_area.update_layout(showlegend=False)
+    index_area.update_layout(showlegend=False)
 
     return index_area
 
