@@ -324,6 +324,10 @@ def update_index_df(n, sel_col):
     )
     index_area.update_layout(showlegend=False)
 
+    index_area.update_yaxes(
+        tickprefix="$"
+    )
+
     return index_area
 
 
