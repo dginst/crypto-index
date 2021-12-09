@@ -792,6 +792,7 @@ def hist_data_feed_op():
 
     print(data_feed)
     data_feed = homogeneize_feed(data_feed)
+    print("post hom")
     print(data_feed)
 
     # put the converted data on MongoDB
@@ -817,7 +818,8 @@ def homogeneize_feed(initial_df):
 
     for ex in list_of_exchanges:
         for p in list_of_pair:
-            sub_df = df.loc[(df.Exchange == ex) & (df.Pair) == p]
+            sub_df = df.loc[(df.Exchange == ex)]
+            sub_df = sub_df.loc[sub_df.Pair == p]
             print(ex)
             print(p)
             print(sub_df.shape)
