@@ -818,6 +818,9 @@ def homogeneize_feed(initial_df):
     for ex in list_of_exchanges:
         for p in list_of_pair:
             sub_df = df.loc[(df.Exchange == ex) & (df.Pair) == p]
+            print(ex)
+            print(p)
+            print(sub_df.shape)
             if sub_df.shape[0] == ref_shape:
                 pass
             elif sub_df.shape[0] == 1569:
