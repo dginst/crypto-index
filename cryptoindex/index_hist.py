@@ -516,7 +516,7 @@ def index_hist_total(coll_to_use="coll_data_feed", crypto_asset=CRYPTO_ASSET,
     (crypto_asset_price_arr, crypto_asset_vol_arr,
      exc_vol_tot, logic_matrix_one) = index_hist_loop(data_df, crypto_asset, exc_list,
                                                       pair_list)
-
+    print(crypto_asset_vol_arr)
     (crypto_asset_price, crypto_asset_vol,
      price_ret, weights_for_board, first_logic_matrix_df,
      second_logic_matrix_df, ewma_df, double_checked_EWMA,
