@@ -597,6 +597,7 @@ def ewma_crypto_volume(
 
     ewma_matrix = np.array([])
     smoothing_array = smoothing_factor()
+    print(Crypto_Volume_Matrix)
 
     for date in reference_date_array:
         stop = date
@@ -607,6 +608,7 @@ def ewma_crypto_volume(
                 Crypto_Volume_Matrix.Time.between(start, stop, inclusive=True),
                 Crypto_list,
             ]
+            print(period_volume)
             period_average = (period_volume * smoothing_array[:, None]).sum()
 
             if ewma_matrix.size == 0:
