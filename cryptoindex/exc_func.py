@@ -773,6 +773,7 @@ def hist_data_feed_op():
     # downloading the CW series from MongoDB and selecting only the date
     # from 2016-01-01 to 2020-04-17
     CW_series = query_mongo(DB_NAME, MONGO_DICT.get("coll_cw_final"))
+    CW_series["Time"] = [str(x) for x in CW_series["Time"]]
     print("CW")
     print(CW_series)
     CW_sub_series = CW_series.loc[CW_series.Time.isin(CW_date_str)]
