@@ -789,8 +789,49 @@ def hist_data_feed_op():
 
     data_feed = data_feed[
         ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]]
+
     print(data_feed)
+    data_feed = homogeneize_feed(data_feed)
+    print(data_feed)
+
     # put the converted data on MongoDB
     mongo_upload(data_feed, "collection_data_feed")
 
     return None
+
+
+def homogeneize_feed(initial_df):
+
+    df = initial_df.copy()
+    list_of_exchanges = list(np.array(df["Exchange"].unique()))
+    list_of_pair = list(np.array(df["Pair"].unique()))
+
+    # today_str = datetime.now().strftime("%Y-%m-%d")
+    # today = datetime.strptime(today_str, "%Y-%m-%d")
+    # today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
+    # day_before_TS = today_TS - DAY_IN_SEC
+    list_of_missing = date_gen(EXC_START_DATE)
+
+    ref_shape = df.loc[(df.Exchange == "coinbase-pro")
+                       & (df.Pair) == "btcusd"].shape[0]
+
+    for ex in list_of_exchanges:
+        for p in list_of_pair:
+            sub_df = df.loc[(df.Exchange == ex) & (df.Pair) == p]
+            if sub_df.shape[0] == ref_shape:
+                pass
+            elif sub_df.shape[0] == 1569:
+                print(ex)
+                print(p)
+                zero_mat = np.zeros((len(list_of_missing), 6))
+                zero_sub_df = pd.DataFrame(zero_mat, columns=df.columns)
+                zero_sub_df["Time"] = list_of_missing
+                zero_sub_df["Exchange"] = ex
+                zero_sub_df["Pair"] = p
+                print(zero_sub_df)
+
+                df = df.append(zero_sub_df)
+
+    new_df = df.copy()
+
+    return new_df
