@@ -632,6 +632,18 @@ def ewma_crypto_volume(
 
                 ewma_matrix = np.row_stack((ewma_matrix, zero_array))
 
+        except ValueError:  # for the first days
+
+            zero_array = np.zeros(len(Crypto_list))
+
+            if ewma_matrix.size == 0:
+
+                ewma_matrix = zero_array
+
+            else:
+
+                ewma_matrix = np.row_stack((ewma_matrix, zero_array))
+
     ewma_matrix = np.column_stack((reference_date_array, ewma_matrix))
     header = ["Time"]
     header.extend(Crypto_list)
