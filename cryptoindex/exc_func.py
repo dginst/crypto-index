@@ -780,6 +780,7 @@ def hist_data_feed_op():
     print(CW_sub_series)
     CW_sub_series = CW_sub_series[
         ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]]
+    CW_sub_series["Time"] = [int(x) for x in CW_sub_series["Time"]]
     CW_sub_series.reset_index(drop=True, inplace=True)
     print(CW_sub_series)
 
