@@ -16,8 +16,8 @@ exc_raw_collection = db.EXC_rawdata
 
 # bittrex
 
-assets = ["BTC", "ETH", "BCH", "BSV"]
-assets1 = ["LTC", "XRP", "ZEC", "EOS", "ETC"]
+assets = ["BTC", "ETH", "BCH", "BSV", "DOGE", "ADA", "DOT"]
+assets1 = ["LTC", "XRP", "ZEC", "EOS", "ETC", "MATIC", "LUNA", "AVAX"]
 assets2 = ["XLM", "XMR"]
 stbc = ["USD", "EUR", "USDT"]
 stbc1 = ["USD", "USDT"]

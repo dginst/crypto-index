@@ -17,7 +17,7 @@ exc_raw_collection = db.EXC_rawdata
 
 # assets
 assets = ["BTC", "ETH"]
-assets1 = ["XLM", "ADA", "XMR", "EOS", "ETC", "ZEC"]
+assets1 = ["XLM", "ADA", "XMR", "EOS", "ETC", "ZEC", "SHIB", "DOGE", "SOL", "MATIC", "LUNA", "AVAX", "DOT"]
 assets2 = ["XRP"]
 assets3 = ["LTC", "BCH"]
 

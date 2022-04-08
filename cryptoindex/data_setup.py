@@ -822,8 +822,48 @@ def exc_pair_cleaning(exc_df):
     exc_df["Pair"] = [
         element.replace("USDT_ETH", "ethusdt") for element in exc_df["Pair"]
     ]
+    exc_df["Pair"] = [
+        element.replace("USDT_SHIB", "shibusdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_SHIB", "shibusdc") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDT_MATIC", "maticusdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_MATIC", "maticusdc") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDT_ADA", "adausdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_ADA", "adausdc") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDT_AVAX", "avaxusdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_AVAX", "avaxusdc") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDT_DOGE", "dogeusdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_DOGE", "dogeusdc") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDT_DOT", "dotusdt") for element in exc_df["Pair"]
+    ]
+    exc_df["Pair"] = [
+        element.replace("USDC_DOT", "dotusdc") for element in exc_df["Pair"]
+    ]
     exc_df["Pair"] = [element.lower() for element in exc_df["Pair"]]
     exc_df["Pair"] = [element.replace("xbt", "btc")
+                      for element in exc_df["Pair"]]
+    exc_df["Pair"] = [element.replace("xdg", "doge")
+                      for element in exc_df["Pair"]]
+    exc_df["Pair"] = [element.replace("dog", "doge")
                       for element in exc_df["Pair"]]
 
     clean_df = exc_df

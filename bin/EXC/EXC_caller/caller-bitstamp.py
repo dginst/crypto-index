@@ -15,7 +15,7 @@ exc_raw_collection = db.EXC_rawdata
 
 # bitstamp
 
-assets2 = ["BTC", "ETH", "XRP", "LTC", "BCH"]
+assets2 = ["BTC", "ETH", "XRP", "LTC", "BCH", "AVAX", "ADA", "MATIC"]
 fiat1 = ["EUR", "USD"]
 
 for Crypto in assets2:

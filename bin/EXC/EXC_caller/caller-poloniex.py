@@ -28,7 +28,13 @@ assets = [
     "ETC",
     "STR",
     "XMR",
-]
+    "SOL",
+    "SHIB",
+    "MATIC",
+    "ADA",
+    "AVAX",
+    "DOGE",
+    "DOT"]
 stbc = ["USDC", "USDT"]
 
 call = [

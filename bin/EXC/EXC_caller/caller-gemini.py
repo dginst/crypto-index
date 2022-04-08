@@ -16,7 +16,7 @@ exc_raw_collection = db.EXC_rawdata
 
 # gemini
 
-assets3 = ["BTC", "ETH", "LTC", "BCH", "ZEC"]
+assets3 = ["BTC", "ETH", "LTC", "BCH", "ZEC", "DOGE", "MATIC", "SHIB", "LUNA", "SOL"]
 fiat2 = ["USD"]
 
 for Crypto in assets3:

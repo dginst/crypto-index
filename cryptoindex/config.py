@@ -34,6 +34,14 @@ CRYPTO_ASSET = [
     "XLM",
     "XMR",
     "BSV",
+    "SHIB",
+    "MATIC",
+    "ADA",
+    "AVAX",
+    "DOGE",
+    "DOT",
+    "LUNA",
+    "SOL"
 ]
 # crypto complete ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'EOS',
 # 'ETC', 'ZEC', 'ADA', 'XLM', 'XMR', 'BSV']

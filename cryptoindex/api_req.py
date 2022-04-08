@@ -94,8 +94,9 @@ def kraken_ticker(Crypto, Fiat, collection):
     fiat = Fiat.lower()
 
     if asset == "btc":
-
         asset = "xbt"
+    elif (asset == "dog" or asset == "doge"):
+        asset = "xdg"
 
     entrypoint = "https://api.kraken.com/0/public/Ticker?pair="
     key = asset + fiat
@@ -106,19 +107,37 @@ def kraken_ticker(Crypto, Fiat, collection):
     try:
         asset = asset.upper()
         fiat = fiat.upper()
-        pair = "X" + asset + "Z" + fiat
-        exchange = "kraken"
+
         if (
-            fiat == "USDT"
-            or fiat == "USDC"
-            or fiat == "CHF"
-            or asset == "ADA"
-            or asset == "EOS"
-            or asset == "BCH"
-            or (asset == "XRP" and fiat == "GBP")
-            or (asset == "LTC" and fiat == "GBP")
+        fiat != "USDT"
+        or fiat != "USDC"
+        or fiat != "CHF"
+        or asset == "XBT"
+        or asset == "ETH"
+        or (asset == "XRP" and fiat != "GBP")
+        or asset == "ZEC"
+        or asset == "XDG"
+        or asset == "XLM"
+        or asset == "XMR"
+        or (asset == "LTC" and fiat != "GBP")
+        or asset == "ETC"
         ):
-            pair = asset + fiat
+
+            pair = "X" + asset + "Z" + fiat
+        else:
+           pair = asset + fiat
+        exchange = "kraken"
+        # if (
+        #     fiat == "USDT"
+        #     or fiat == "USDC"
+        #     or fiat == "CHF"
+        #     or asset == "ADA"
+        #     or asset == "EOS"
+        #     or asset == "BCH"
+        #     or (asset == "XRP" and fiat == "GBP")
+        #     or (asset == "LTC" and fiat == "GBP")
+        # ):
+        #     pair = asset + fiat
         r = response["result"][pair]
         pair = asset + fiat
         print(pair)
