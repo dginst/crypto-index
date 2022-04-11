@@ -229,7 +229,7 @@ def cw_hist_cleaning(vol_fixed_df, start_date, crypto_list=CRYPTO_ASSET, exc_lis
                 # crypto = cp[:3]
 
                 cp_matrix = ex_matrix.loc[ex_matrix["Pair"] == cp]
-                print(cp_matrix)
+                # print(cp_matrix)
                 cp_matrix = cp_matrix.drop(columns=["Exchange", "Pair"])
                 # checking if the matrix is not empty
                 if cp_matrix.shape[0] >= 1:
@@ -238,9 +238,7 @@ def cw_hist_cleaning(vol_fixed_df, start_date, crypto_list=CRYPTO_ASSET, exc_lis
                     # the start date if not fill the dataframe with zero values
                     cp_matrix = homogenize_series(
                         cp_matrix, tot_date_arr)
-                    if cp == "avaxusd":
-                        print("AVAX")
-                        print(cp_matrix)
+
                     # check if the series stopped at certain point in
                     # the past, if yes fill with zero
                     cp_matrix = homogenize_dead_series(
