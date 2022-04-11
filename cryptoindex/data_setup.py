@@ -113,6 +113,7 @@ def homogenize_series(series_to_check, reference_date_array_TS, days_to_check=1)
 
     if test_matrix.empty is True:
 
+        print("homogeneizing past...")
         first_date = np.array(series_to_check["Time"].iloc[0])
         # last_missing_date = (int(first_date) - DAY_IN_SEC) ##
         first_missing_date = reference_date_array_TS[0]
@@ -579,7 +580,7 @@ def CW_series_fix_missing(
 
         else:
 
-            print(prev_val)
+            # print(prev_val)
             merged.loc[merged.Time == element, "Close Price"] = float(
                 prev_val["Close Price"]
             ) * (1 + price_var)
