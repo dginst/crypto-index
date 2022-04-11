@@ -232,7 +232,7 @@ def cw_hist_cleaning(vol_fixed_df, start_date, crypto_list=CRYPTO_ASSET, exc_lis
                 print(cp_matrix)
                 cp_matrix = cp_matrix.drop(columns=["Exchange", "Pair"])
                 # checking if the matrix is not empty
-                if cp_matrix.shape[0] > 1:
+                if cp_matrix.shape[0] >= 1:
 
                     # check if the historical series start at the same date as
                     # the start date if not fill the dataframe with zero values
