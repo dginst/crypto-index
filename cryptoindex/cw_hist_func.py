@@ -282,6 +282,7 @@ def cw_hist_zero_vol_fill_op(converted_df, head=CLEAN_DATA_HEAD):
     for crypto in CRYPTO_ASSET:
 
         cry_matrix = converted_df.loc[converted_df.Crypto == crypto.lower()]
+        print(cry_matrix)
         exc_list = list(converted_df["Exchange"].unique())
 
         for exc in exc_list:
