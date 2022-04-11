@@ -30,7 +30,6 @@ CRYPTO_ASSET = [
     "EOS",
     "ETC",
     "ZEC",
-    "ADA",
     "XLM",
     "XMR",
     "BSV",
