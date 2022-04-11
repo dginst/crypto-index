@@ -197,9 +197,10 @@ def fix_zero_value(matrix):
 
         value_to_check = np.array(
             matrix.loc[matrix.Time == date, "Crypto Volume"])
+        print(value_to_check)
         price_check = np.array(matrix.loc[matrix.Time == date, "Close Price"])
 
-        if val_sum != 0 and int(value_to_check) == 0:
+        if (val_sum != 0 and int(value_to_check) == 0):
 
             if int(price_check) == 0:
 
