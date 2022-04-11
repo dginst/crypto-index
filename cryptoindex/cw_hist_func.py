@@ -273,10 +273,11 @@ def cw_hist_cleaning(vol_fixed_df, start_date, crypto_list=CRYPTO_ASSET, exc_lis
 def cw_hist_zero_vol_fill_op(converted_df, head=CLEAN_DATA_HEAD):
 
     converted_df["Crypto"] = converted_df["Pair"] # .str[:3]
-    print(converted_df.loc[converted_df.Crypto != "btc"])
+    
 
     for f in ["usdt", "usdc", "gbp", "usd", "cad", "jpy", "eur"]:
         converted_df["Crypto"] = [x.replace(f, "") for x in converted_df["Crypto"]]
+    print(converted_df.loc[converted_df.Crypto != "btc"])
 
     final_matrix = pd.DataFrame(columns=head)
 
@@ -302,7 +303,6 @@ def cw_hist_zero_vol_fill_op(converted_df, head=CLEAN_DATA_HEAD):
 
                     if cp_matrix.shape[0] >= 1:
                         
-                        print(cp_matrix)
                         cp_matrix = fix_zero_value(cp_matrix)
 
                         final_matrix = final_matrix.append(cp_matrix)
