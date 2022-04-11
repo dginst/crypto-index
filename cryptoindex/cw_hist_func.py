@@ -279,6 +279,7 @@ def cw_hist_zero_vol_fill_op(converted_df, head=CLEAN_DATA_HEAD):
 
     for f in ["usdt", "usdc", "gbp", "usd", "cad", "jpy", "eur"]:
         converted_df["Crypto"] = [x.replace(f, "") for x in converted_df["Crypto"]]
+        
     print(converted_df.loc[converted_df.Crypto != "btc"])
 
     final_matrix = pd.DataFrame(columns=head)

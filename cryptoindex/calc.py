@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 
-from cryptoindex.config import (DAY_IN_SEC, DB_NAME, FIRST_BOARD_DATE,
+from cryptoindex.config import (CRYPTO_ASSET, DAY_IN_SEC, DB_NAME, FIRST_BOARD_DATE,
                                 MONGO_DICT, START_DATE)
 from cryptoindex.data_setup import date_gen, timestamp_to_human
 from cryptoindex.mongo_setup import df_reorder, query_mongo
@@ -1756,7 +1756,11 @@ def conv_into_usd(data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_l
 
     # creating a column containing the fiat currency
     fiat_rate_df["fiat"] = [x[:3].lower() for x in fiat_rate_df["Currency"]]
-    data_df["fiat"] = [x[3:].lower() for x in data_df["Pair"]]
+    
+    data_df["fiat"] = data_df["Pair"]
+    for c in CRYPTO_ASSET:
+        data_df["fiat"] = [x.replace(c, "") for x in data_df["fiat"]]
+
     stable_rate_df["fiat"] = [x[:4].lower()
                               for x in stable_rate_df["Currency"]]
 
