@@ -211,6 +211,7 @@ def crypto_fiat_pair_gen(crypto):
 
 def cw_hist_cleaning(vol_fixed_df, start_date, crypto_list=CRYPTO_ASSET, exc_list=EXCHANGES):
 
+    print(vol_fixed_df)
     tot_date_arr = date_gen(start_date)
 
     cleaned_df = pd.DataFrame(columns=CLEAN_DATA_HEAD)
@@ -228,6 +229,7 @@ def cw_hist_cleaning(vol_fixed_df, start_date, crypto_list=CRYPTO_ASSET, exc_lis
                 # crypto = cp[:3]
 
                 cp_matrix = ex_matrix.loc[ex_matrix["Pair"] == cp]
+                print(cp_matrix)
                 cp_matrix = cp_matrix.drop(columns=["Exchange", "Pair"])
                 # checking if the matrix is not empty
                 if cp_matrix.shape[0] > 1:

@@ -22,7 +22,7 @@ CONVERSION_FIAT = ["gbp", "cad", "jpy", "eur"]
 STABLE_COIN = ["usdt", "usdc"]
 
 CRYPTO_ASSET = [
-    "BTC",
+    # "BTC",
     # "ETH",
     # "XRP",
     # "LTC",
@@ -35,7 +35,7 @@ CRYPTO_ASSET = [
     # "BSV",
     "SHIB",
     "MATIC",
-    "ADA",
+    # "ADA",
     "AVAX",
     "DOGE",
     "DOT",
