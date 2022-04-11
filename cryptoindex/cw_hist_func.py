@@ -296,7 +296,8 @@ def cw_hist_zero_vol_fill_op(converted_df, head=CLEAN_DATA_HEAD):
                 try:
 
                     if cp_matrix.shape[0] > 1:
-
+                        
+                        print(cp_matrix)
                         cp_matrix = fix_zero_value(cp_matrix)
 
                         final_matrix = final_matrix.append(cp_matrix)
