@@ -154,7 +154,7 @@ def homogenize_dead_series(series_to_check, reference_date_array_TS, days_to_che
 
     if test_matrix.empty is True:
 
-        print("inside")
+        print("homogeneizing future...")
         last_date = np.array(
             series_to_check["Time"].iloc[len(series_to_check["Time"]) - 1]
         )
