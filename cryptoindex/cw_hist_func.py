@@ -267,6 +267,8 @@ def cw_hist_cleaning(vol_fixed_df, start_date, crypto_list=CRYPTO_ASSET, exc_lis
                         cp_matrix, column_set="conversion")
                     cleaned_df = cleaned_df.append(reordered)
 
+    print(cleaned_df)
+
     return cleaned_df
 
 
@@ -321,7 +323,7 @@ def cw_hist_conv_op(cleaned_df, conv_fiat=CONVERSION_FIAT, stable=STABLE_COIN):
 
     # converting the "matrix_rate" df
     converted_df = conv_into_usd(
-        DB_NAME, cleaned_df, matrix_rate,
+        cleaned_df, matrix_rate,
         matrix_rate_stable, conv_fiat, stable)
 
     return converted_df

@@ -1747,7 +1747,7 @@ def index_based(index_df, base=1000):
 # ##########################################################################
 # ################### CONVERSION FUNCTION ##################################
 
-def conv_into_usd(db, data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_list):
+def conv_into_usd(data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_list):
 
     fiat_rate_df = fiat_rate_df.rename({"Date": "Time"}, axis="columns")
     # [int(date) for date in fiat_rate_df["Time"]]
