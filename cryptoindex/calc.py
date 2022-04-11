@@ -1757,12 +1757,12 @@ def conv_into_usd(data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_l
     # creating a column containing the fiat currency
     fiat_rate_df["fiat"] = [x[:3].lower() for x in fiat_rate_df["Currency"]]
 
-    data_df["fiat"] = data_df["Pair"]
-    for c in CRYPTO_ASSET:
-        data_df["fiat"] = [x.replace(c, "") for x in data_df["fiat"]]
+    data_df["fiat"] = [x[-3:] for x in data_df["Pair"]]
+    # for c in CRYPTO_ASSET:
+    #     data_df["fiat"] = [x.replace(c, "") for x in data_df["fiat"]]
 
     print(data_df)
-    
+
     stable_rate_df["fiat"] = [x[:4].lower()
                               for x in stable_rate_df["Currency"]]
 
