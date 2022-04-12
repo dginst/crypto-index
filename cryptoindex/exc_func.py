@@ -709,8 +709,10 @@ def exc_hist_conv(exc_fix_df):
 
     converted_data = conv_into_usd(exc_fix_df, matrix_rate,
                                    matrix_rate_stable, CONVERSION_FIAT, STABLE_COIN)
+    print(converted_data)
+    print(x)
 
-    converted_data["Time"] = [str(element)
+    converted_data["Time"] = [int(element)
                               for element in converted_data["Time"]]
 
     return converted_data

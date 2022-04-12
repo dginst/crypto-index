@@ -1751,6 +1751,10 @@ def conv_into_usd(data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_l
 
     fiat_rate_df = fiat_rate_df.rename({"Date": "Time"}, axis="columns")
 
+    fiat_rate_df["Time"] = [str(x) for x in fiat_rate_df["Time"]]
+    stable_rate_df["Time"] = [str(x) for x in stable_rate_df["Time"]]
+    data_df["Time"] = [str(x) for x in data_df["Time"]]
+
     # leave out the rates referred to 2015-12-31
     fiat_rate_df = fiat_rate_df.loc[fiat_rate_df.Time != "1451520000"]
 
