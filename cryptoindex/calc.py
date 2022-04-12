@@ -1761,14 +1761,16 @@ def conv_into_usd(data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_l
     # creating a column containing the fiat currency in each dataframe
 
     fiat_rate_df["fiat"] = [x[:3].lower() for x in fiat_rate_df["Currency"]]
+    print(fiat_rate_df)
 
     # columns with fiat in both stablecoin "fiat" and fiat
     data_df["fiat"] = [x[-4:] for x in data_df["Pair"]]
     stable_data_df = data_df.loc[data_df.fiat.isin(stablecoin_list)]
     print(stable_data_df)
 
-    data_df["fiat"] = [x[-3:] for x in data_df["Pair"]]
+    data_df["fiat"] = [x[:3] for x in data_df["Pair"]]
     data_df = data_df.loc[data_df.fiat.isin(CONVERSION_FIAT)]
+    print(data_df)
 
 
     print(stable_rate_df)
