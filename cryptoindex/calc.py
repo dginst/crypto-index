@@ -1770,7 +1770,7 @@ def conv_into_usd(data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_l
 
     data_df["fiat"] = [x[-3:] for x in data_df["Pair"]]
     print(data_df)
-    data_df = data_df.loc[data_df.fiat.isin(CONVERSION_FIAT)]
+    data_df = data_df.loc[data_df.fiat.isin(["usd", "gbp", "cad", "jpy", "eur"])]
     print(data_df)
 
     stable_rate_df["fiat"] = [x[:4].lower()
