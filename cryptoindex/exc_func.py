@@ -701,11 +701,12 @@ def exc_hist_conv(exc_fix_df):
     # querying the stable rates collection from MongoDB
     matrix_rate_stable = query_mongo(
         DB_NAME, MONGO_DICT.get("coll_stable_rate"))
+    matrix_rate["Time"] = [str(x) for x in matrix_rate["Time"]]
     matrix_rate_stable = matrix_rate_stable.loc[matrix_rate_stable.Time.isin(
         date_array_str)]
     print(matrix_rate)
     print(matrix_rate_stable)
-    print(x)
+
     converted_data = conv_into_usd(exc_fix_df, matrix_rate,
                                    matrix_rate_stable, CONVERSION_FIAT, STABLE_COIN)
 
