@@ -636,7 +636,7 @@ def exc_hist_fix(exc_complete_df):
 
             for cp in pair_arr:
 
-                crypto = cp[:3]
+                #crypto = cp[:3]
 
                 cp_matrix = ex_matrix.loc[ex_matrix["Pair"] == cp]
                 cp_matrix = cp_matrix.drop(columns=["Exchange", "Pair"])
@@ -646,7 +646,7 @@ def exc_hist_fix(exc_complete_df):
                     cp_matrix = cp_matrix.loc[cp_matrix["Close Price"] != 0.000000]
 
                 # checking if the matrix is not empty
-                if cp_matrix.shape[0] > 1:
+                if cp_matrix.shape[0] >= 1:
 
                     # check if the historical series start at the same date as
                     # the start date if not fill the dataframe with zero values
