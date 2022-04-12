@@ -860,7 +860,7 @@ def homogeneize_feed(initial_df):
             elif sub_df.shape[0] == (ref_shape - 1569):
                 print(ex)
                 print(p)
-                zero_mat = np.zeros((len(1569), 6))
+                zero_mat = np.zeros((1569, 6))
                 zero_sub_df = pd.DataFrame(zero_mat, columns=df.columns)
                 zero_sub_df["Time"] = cw_list_of_missing
                 zero_sub_df["Exchange"] = ex
