@@ -249,8 +249,6 @@ def index_hist_loop(data_matrix, crypto_asset, exc_list,
         crypto_asset_price, crypto_asset_vol = loop_crypto_asset(
             exc_price, exc_vol, crypto_asset_price, crypto_asset_vol)
 
-    print(crypto_asset_price)
-    print(x)
     return crypto_asset_price, crypto_asset_vol, exc_vol_tot, logic_matrix_one
 
 
