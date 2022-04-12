@@ -704,7 +704,7 @@ def exc_hist_conv(exc_fix_df):
     matrix_rate_stable = matrix_rate_stable.loc[matrix_rate_stable.Time.isin(
         date_array_str)]
 
-    converted_data = conv_into_usd(DB_NAME, exc_fix_df, matrix_rate,
+    converted_data = conv_into_usd(exc_fix_df, matrix_rate,
                                    matrix_rate_stable, CONVERSION_FIAT, STABLE_COIN)
 
     converted_data["Time"] = [int(element)
