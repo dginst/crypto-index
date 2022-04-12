@@ -65,3 +65,10 @@ def daily_complete():
     info("index_daily function start")
     index_daily()
     info("index_daily function end")
+
+
+def hist_only_exc(coll_to_use="coll_data_feed"):
+
+    exc_hist_op()
+    hist_data_feed_op()
+    index_hist_total(coll_to_use)
