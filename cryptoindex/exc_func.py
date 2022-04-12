@@ -527,6 +527,7 @@ def exc_initial_clean(all_data, crypto_fiat_arr):
 
     # changing some features in "Pair" field
     all_00_clean = exc_pair_cleaning(all_00)
+    print("mid clean done")
 
     # changing an error in "bitstamp" spelling
     all_00_clean["Exchange"] = [
@@ -723,6 +724,7 @@ def exc_hist_op():
 
     # querying all raw data from EXC_rawdata
     exc_raw_df = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_raw"))
+    print(exc_raw_df)
 
     midnight_clean = exc_initial_clean(exc_raw_df, crypto_fiat_arr)
     mongo_upload(midnight_clean, "collection_exc_uniform")

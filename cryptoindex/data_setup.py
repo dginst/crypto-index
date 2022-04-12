@@ -860,14 +860,17 @@ def exc_pair_cleaning(exc_df):
         element.replace("USDC_DOT", "dotusdc") for element in exc_df["Pair"]
     ]
     exc_df["Pair"] = [element.lower() for element in exc_df["Pair"]]
+
     exc_df["Pair"] = [element.replace("xbt", "btc")
                       for element in exc_df["Pair"]]
+
     exc_df["Pair"] = [element.replace("xdg", "doge")
                       for element in exc_df["Pair"]]
+
     exc_df["Pair"] = [element.replace("dog", "doge")
                       for element in exc_df["Pair"]]
 
-    clean_df = exc_df
+    clean_df = exc_df.copy()
 
     return clean_df
 
