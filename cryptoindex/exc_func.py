@@ -849,9 +849,9 @@ def homogeneize_feed(initial_df):
                 df = df.append(zero_sub_df)
                 print(zero_sub_df)
             
-            elif sub_df.shape[0] > 1569:
+            elif sub_df.shape[0] > ref_shape:
                 
-                df = df.loc[(df.Exchange != ex & df.Pair != p)]
+                df = df.loc[(df.Exchange != ex) & (df.Pair != p)]
                 new_sub_df = sub_df.drop_duplicates(subset=["Time"], keep='first')
                 print(ex)
                 print(p)
