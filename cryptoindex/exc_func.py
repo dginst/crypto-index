@@ -721,7 +721,8 @@ def exc_hist_op():
 
     # defining the crytpo_fiat array
     crypto_fiat_arr = all_crypto_fiat_gen()
-
+    print(crypto_fiat_arr)
+    
     # querying all raw data from EXC_rawdata
     exc_raw_df = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_raw"))
     print(exc_raw_df)
