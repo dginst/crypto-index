@@ -833,12 +833,14 @@ def homogeneize_feed(initial_df):
 
     ref_shape = df.loc[(df.Exchange == "coinbase-pro")
                        & (df.Pair) == "btcusd"].shape[0]
-
+    print(df)
+    print(ref_shape)
     for ex in list_of_exchanges:
         
         for p in list_of_pair:
-            sub_df = df.loc[(df.Exchange == ex)]
-            sub_df = sub_df.loc[sub_df.Pair == p]
+
+            sub_df = df.loc[(df.Exchange == ex) & (df.Pair == p)]
+
             print(ex)
             print(p)
             print(sub_df.shape)
