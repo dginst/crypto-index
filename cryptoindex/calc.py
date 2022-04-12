@@ -1769,13 +1769,13 @@ def conv_into_usd(data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_l
     print(stable_data_df)
 
     data_df["fiat"] = [x[:3] for x in data_df["Pair"]]
+    print(data_df)
     data_df = data_df.loc[data_df.fiat.isin(CONVERSION_FIAT)]
     print(data_df)
 
-
-    print(stable_rate_df)
     stable_rate_df["fiat"] = [x[:4].lower()
                               for x in stable_rate_df["Currency"]]
+    print(stable_rate_df)
 
     # ############ creating a USD subset which will not be converted #########
 
@@ -1820,8 +1820,6 @@ def conv_into_usd(data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_l
     # creating a matrix for stablecoins
     stablecoin_matrix = stable_data_df #data_df.loc[data_df["fiat"].isin(stablecoin_list)]
 
-    print(stablecoin_matrix)
-    print(stable_rate_df)
     # merging the dataset on 'Time' and 'fiat' column
     stable_merged = pd.merge(
         stablecoin_matrix, stable_rate_df, on=["Time", "fiat"])
