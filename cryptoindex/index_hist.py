@@ -242,12 +242,15 @@ def index_hist_loop(data_matrix, crypto_asset, exc_list,
                                                  exc_list, logic_matrix_one,
                                                  ref_date_arr)
 
+        print(exc_price)
         # creating every loop the matrices of all the single_cryptossets
         # Crypto_Asset_Price contains the prices of all the cryptocurrencies
         # crypto_asset_vol contains the volume of all the cryptocurrencies
         crypto_asset_price, crypto_asset_vol = loop_crypto_asset(
             exc_price, exc_vol, crypto_asset_price, crypto_asset_vol)
 
+    print(crypto_asset_price)
+    print(x)
     return crypto_asset_price, crypto_asset_vol, exc_vol_tot, logic_matrix_one
 
 

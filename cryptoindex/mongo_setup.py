@@ -236,10 +236,17 @@ def df_reorder(df_to_reorder, column_set):
                 "EOS",
                 "ETC",
                 "ZEC",
-                "ADA",
                 "XLM",
                 "XMR",
                 "BSV",
+                "SHIB",
+                "MATIC",
+                "ADA",
+                "AVAX",
+                "DOGE",
+                "DOT",
+                "LUNA",
+                "SOL"
             ]
         ]
 
