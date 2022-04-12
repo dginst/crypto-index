@@ -1750,25 +1750,24 @@ def index_based(index_df, base=1000):
 def conv_into_usd(data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_list):
 
     fiat_rate_df = fiat_rate_df.rename({"Date": "Time"}, axis="columns")
-    # [int(date) for date in fiat_rate_df["Time"]]
+
     # leave out the rates referred to 2015-12-31
     fiat_rate_df = fiat_rate_df.loc[fiat_rate_df.Time != "1451520000"]
 
-    # creating a column containing the fiat currency
+    # creating a column containing the fiat currency in each dataframe
+
     fiat_rate_df["fiat"] = [x[:3].lower() for x in fiat_rate_df["Currency"]]
 
+    # columns with fiat in both stablecoin "fiat" and fiat
     data_df["fiat"] = [x[-4:] for x in data_df["Pair"]]
     stable_data_df = data_df.loc[data_df.fiat.isin(stablecoin_list)]
     print(stable_data_df)
+
     data_df["fiat"] = [x[-3:] for x in data_df["Pair"]]
     data_df = data_df.loc[data_df.fiat.isin(CONVERSION_FIAT)]
-    print(data_df)
 
-    # for c in CRYPTO_ASSET:
-    #     data_df["fiat"] = [x.replace(c, "") for x in data_df["fiat"]]
 
     print(stable_rate_df)
-
     stable_rate_df["fiat"] = [x[:4].lower()
                               for x in stable_rate_df["Currency"]]
 

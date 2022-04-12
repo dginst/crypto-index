@@ -827,14 +827,17 @@ def homogeneize_feed(initial_df):
                        & (df.Pair) == "btcusd"].shape[0]
 
     for ex in list_of_exchanges:
+        
         for p in list_of_pair:
             sub_df = df.loc[(df.Exchange == ex)]
             sub_df = sub_df.loc[sub_df.Pair == p]
             print(ex)
             print(p)
             print(sub_df.shape)
+            # check if the lenght is the same as it should be
             if sub_df.shape[0] == ref_shape:
                 pass
+            # if the lenght refers only to the CW series do the following
             elif sub_df.shape[0] == 1569:
                 print(ex)
                 print(p)
@@ -843,9 +846,17 @@ def homogeneize_feed(initial_df):
                 zero_sub_df["Time"] = list_of_missing
                 zero_sub_df["Exchange"] = ex
                 zero_sub_df["Pair"] = p
-                print(zero_sub_df)
-
                 df = df.append(zero_sub_df)
+                print(zero_sub_df)
+            
+            elif sub_df.shape[0] > 1569:
+                
+                df = df.loc[(df.Exchange != ex & df.Pair != p)]
+                new_sub_df = sub_df.drop_duplicates(subset=["Time"], keep='first')
+                print(ex)
+                print(p)
+                print(new_sub_df)
+                df = df.append(new_sub_df)
 
     new_df = df.copy()
 
