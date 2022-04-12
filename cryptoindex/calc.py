@@ -1802,7 +1802,7 @@ def conv_into_usd(data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_l
 
     # subsetting the dataset with only the relevant columns
     conv_merged = df_reorder(conv_merged, "conversion")
-    conv_merged["Time"] = [int(date) for date in conv_merged["Time"]]
+    conv_merged["Time"] = [str(date) for date in conv_merged["Time"]]
 
     # ############## converting STABLECOINS currencies #################
 
