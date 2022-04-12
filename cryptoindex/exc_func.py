@@ -808,7 +808,6 @@ def hist_data_feed_op():
     data_feed = homogeneize_feed(data_feed)
     print("post hom")
     print(data_feed)
-    print(x)
 
     # put the converted data on MongoDB
     mongo_upload(data_feed, "collection_data_feed")
@@ -831,7 +830,7 @@ def homogeneize_feed(initial_df):
     list_of_missing = date_gen(EXC_START_DATE)
 
     ref_shape = df.loc[(df.Exchange == "coinbase-pro")
-                       & (df.Pair) == "btcusd"].shape[0]
+                       & (df.Pair == "btcusd")].shape[0]
     print(df)
     print(ref_shape)
     for ex in list_of_exchanges:
