@@ -415,7 +415,7 @@ def first_logic_matrix_reshape(
 
         if start == 1451606400:
 
-            zero_element = np.zeros((1, 12))
+            zero_element = np.zeros((1, 19))
             reshaped_matrix.loc[
                 reshaped_matrix.Time.between(
                     start, stop, inclusive=True), Crypto_list
@@ -973,7 +973,7 @@ def second_logic_matrix_reshape(
 
         if start == 1451606400:
 
-            zero_element = np.zeros((1, 12))
+            zero_element = np.zeros((1, 19))
             reshaped_matrix.loc[
                 reshaped_matrix.Time.between(
                     start, stop, inclusive=True), Crypto_list
