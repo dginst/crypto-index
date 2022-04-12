@@ -821,6 +821,9 @@ def homogeneize_feed(initial_df):
     df = initial_df.copy()
     list_of_exchanges = list(np.array(df["Exchange"].unique()))
     list_of_pair = list(np.array(df["Pair"].unique()))
+    print(list_of_exchanges)
+    print(list_of_pair)
+    print(x)
 
     # today_str = datetime.now().strftime("%Y-%m-%d")
     # today = datetime.strptime(today_str, "%Y-%m-%d")
