@@ -828,6 +828,7 @@ def homogeneize_feed(initial_df):
     # today_TS = int(today.replace(tzinfo=timezone.utc).timestamp())
     # day_before_TS = today_TS - DAY_IN_SEC
     list_of_missing = date_gen(EXC_START_DATE)
+    cw_list_of_missing = date_gen(START_DATE, EXC_START_DATE)
 
     ref_shape = df.loc[(df.Exchange == "coinbase-pro")
                        & (df.Pair == "btcusd")].shape[0]
@@ -855,7 +856,16 @@ def homogeneize_feed(initial_df):
                 zero_sub_df["Exchange"] = ex
                 zero_sub_df["Pair"] = p
                 df = df.append(zero_sub_df)
-                print(zero_sub_df)
+            
+            elif sub_df.shape[0] == (ref_shape - 1569):
+                print(ex)
+                print(p)
+                zero_mat = np.zeros((len(1569), 6))
+                zero_sub_df = pd.DataFrame(zero_mat, columns=df.columns)
+                zero_sub_df["Time"] = cw_list_of_missing
+                zero_sub_df["Exchange"] = ex
+                zero_sub_df["Pair"] = p
+                df = df.append(zero_sub_df)
             
             elif sub_df.shape[0] > ref_shape:
                 
