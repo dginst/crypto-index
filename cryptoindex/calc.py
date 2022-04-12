@@ -1809,6 +1809,8 @@ def conv_into_usd(data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_l
     # creating a matrix for stablecoins
     stablecoin_matrix = data_df.loc[data_df["fiat"].isin(stablecoin_list)]
 
+    print(stablecoin_matrix)
+    print(stable_rate_df)
     # merging the dataset on 'Time' and 'fiat' column
     stable_merged = pd.merge(
         stablecoin_matrix, stable_rate_df, on=["Time", "fiat"])
