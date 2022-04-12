@@ -780,6 +780,7 @@ def hist_data_feed_op():
     EXC_series = query_mongo(DB_NAME, MONGO_DICT.get("coll_exc_final"))
     EXC_series = EXC_series[
         ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]]
+    # EXC_series["Time"] = [str(x) for x in EXC_series["Time"]]
 
     # downloading the CW series from MongoDB and selecting only the date
     # from 2016-01-01 to 2020-04-17
@@ -789,6 +790,7 @@ def hist_data_feed_op():
     print(CW_series)
     CW_sub_series = CW_series.loc[CW_series.Time.isin(CW_date_str)]
     print(CW_sub_series)
+
     CW_sub_series = CW_sub_series[
         ["Time", "Close Price", "Crypto Volume", "Pair Volume", "Exchange", "Pair"]]
     CW_sub_series["Time"] = [int(x) for x in CW_sub_series["Time"]]
@@ -806,6 +808,7 @@ def hist_data_feed_op():
     data_feed = homogeneize_feed(data_feed)
     print("post hom")
     print(data_feed)
+    print(x)
 
     # put the converted data on MongoDB
     mongo_upload(data_feed, "collection_data_feed")
