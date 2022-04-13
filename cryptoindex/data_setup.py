@@ -205,18 +205,18 @@ def fix_zero_value(matrix):
             if int(price_check) == 0:
 
                 previous_price = np.array(
-                    matrix.loc[matrix.Time == int(
+                    matrix.loc[matrix.Time == str(
                         int(date) - DAY_IN_SEC), "Close Price"]
                 )
 
                 matrix.loc[matrix.Time == date, "Close Price"] = previous_price
 
             previous_c_vol = np.array(
-                matrix.loc[matrix.Time == int(
+                matrix.loc[matrix.Time == str(
                     int(date) - DAY_IN_SEC), "Crypto Volume"]
             )
             previous_p_vol = np.array(
-                matrix.loc[matrix.Time == int(
+                matrix.loc[matrix.Time == str(
                     int(date) - DAY_IN_SEC), "Pair Volume"]
             )
 
