@@ -2032,7 +2032,7 @@ def key_list_creation(exchange_list, asset_list, fiat_list):
 def key_log_mat(db, collection, time_to_query, exchange_list, asset_list, fiat_list):
 
     # retriving the needed information on MongoDB
-    q_dict = {"Time": int(time_to_query)}
+    q_dict = {"Time": str(time_to_query)}
     matrix_last_day = query_mongo(
         db, MONGO_DICT.get(collection), q_dict)
 
