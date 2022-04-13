@@ -733,13 +733,14 @@ def exc_hist_op():
     mongo_upload(midnight_clean, "collection_exc_uniform")
 
     print("initial_clean passed")
-    # deleting the values for xrp in the coinbase-pro exchange
+    # deleting the values for xrp in the coinbase-pro exchange # FIXME
     midnight_clean["key"] = midnight_clean["Exchange"] + \
         "&" + midnight_clean["Pair"]
-    midnight_clean = midnight_clean.loc[midnight_clean.key
-                                        != "coinbase-pro&xrpusd"]
-    midnight_clean = midnight_clean.loc[midnight_clean.key
-                                        != "coinbase-pro&xrpeur"]
+
+    # midnight_clean = midnight_clean.loc[midnight_clean.key
+    #                                     != "coinbase-pro&xrpusd"]
+    # midnight_clean = midnight_clean.loc[midnight_clean.key
+    #                                     != "coinbase-pro&xrpeur"]
     # deleting the values for zec and xmr in the bittrex exchange
     midnight_clean = midnight_clean.loc[midnight_clean.key
                                         != "bittrex&zecusd"]
