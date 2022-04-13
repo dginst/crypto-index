@@ -1843,9 +1843,6 @@ def conv_into_usd(data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_l
     stable_merged = df_reorder(stable_merged, "conversion")
 
     # reunite the dataframes
-    print(conv_merged)
-    print(stable_merged)
-    print(usd_matrix)
     converted_data = conv_merged.append([stable_merged, usd_matrix])
     # converted_data = converted_data.append(stable_merged)
     # converted_data = converted_data.append(usd_matrix)
