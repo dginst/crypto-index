@@ -471,7 +471,8 @@ def index_hist_op(crypto_asset_price_arr,
     # changing the "Time" column of the weights in order to
     # display the quarter start date of each row
     weights_for_period = weights_for_board
-
+    print(weights_for_period)
+    print(reb_start_date)
     if reference_day_TS >= int(curr_board_eve) and reference_day_TS <= int(last_reb_stop):
 
         weights_for_period['Time'] = next_reb_date[1:]
