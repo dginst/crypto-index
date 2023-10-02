@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-
+import re 
 import numpy as np
 import pandas as pd
 from dateutil.relativedelta import relativedelta
@@ -1747,6 +1747,16 @@ def index_based(index_df, base=1000):
 # ##########################################################################
 # ################### CONVERSION FUNCTION ##################################
 
+def clean_volume(volume_str):
+    try:
+        cleaned_str = re.sub(r'[^0-9.]', '', volume_str)
+        return float(cleaned_str)
+    except (ValueError, TypeError):
+        print(f"Valore problematico in 'Pair Volume': {volume_str}")
+        return 0.0  # Sostituisci il valore problematico con zero
+
+
+
 def conv_into_usd(data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_list):
 
     fiat_rate_df = fiat_rate_df.rename({"Date": "Time"}, axis="columns")
@@ -1802,6 +1812,9 @@ def conv_into_usd(data_df, fiat_rate_df, stable_rate_df, fiat_list, stablecoin_l
         [np.inf, -np.inf], np.nan
     )
     conv_merged["Close Price"].fillna(0, inplace=True)
+
+    # test FIXME
+    conv_merged["Pair Volume"] = conv_merged["Pair Volume"].apply(clean_volume)
 
     conv_merged["Pair Volume"] = conv_merged["Pair Volume"] / \
         conv_merged["Rate"]
